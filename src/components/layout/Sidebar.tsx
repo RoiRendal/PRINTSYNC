@@ -27,14 +27,14 @@ export const Sidebar = () => {
   return (
     <aside 
       className={cn(
-        "bg-slate-900 text-white flex flex-col border-r border-slate-800 shrink-0 transition-all duration-300 ease-in-out dark:bg-black dark:border-slate-900 overflow-hidden",
+        "bg-gray-50 text-gray-900 flex flex-col border-r border-gray-200 shrink-0 transition-all duration-300 ease-in-out dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 overflow-hidden",
         isCollapsed ? "w-16" : "w-52"
       )}
     >
-      <div className={cn("p-4 border-b border-slate-800 flex items-center shrink-0 h-12 justify-center")}>
+      <div className={cn("p-4 border-b border-gray-200 dark:border-zinc-800 flex items-center shrink-0 h-12 justify-center")}>
         <button 
           onClick={toggleCollapse}
-          className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-white transition-colors"
+          className="p-1.5 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
           title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -50,8 +50,8 @@ export const Sidebar = () => {
               cn(
                 "flex items-center gap-3 px-3 py-2 rounded text-sm transition-all duration-200 group relative",
                 isActive 
-                  ? "bg-blue-600 text-white font-medium shadow-lg shadow-blue-900/20" 
-                  : "text-slate-400 hover:text-white hover:bg-slate-800",
+                  ? "bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/20" 
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800",
                 isCollapsed && "justify-center px-0"
               )
             }
@@ -71,7 +71,7 @@ export const Sidebar = () => {
               )}
             </AnimatePresence>
             {isCollapsed && (
-              <div className="absolute left-full ml-3 px-2 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity font-bold uppercase tracking-wider z-50 whitespace-nowrap shadow-xl border border-slate-700">
+              <div className="absolute left-full ml-3 px-2 py-1 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity font-bold uppercase tracking-wider z-50 whitespace-nowrap shadow-xl border border-gray-200 dark:border-zinc-800">
                 {item.label}
               </div>
             )}
@@ -79,13 +79,13 @@ export const Sidebar = () => {
         ))}
       </nav>
 
-      <div className="p-3 border-t border-slate-800 space-y-4">
+      <div className="p-3 border-t border-gray-200 dark:border-zinc-800 space-y-4">
         {/* Theme Toggle */}
         <button 
           onClick={toggleTheme}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors group",
-            isCollapsed && "justify-center px-0 text-amber-500 hover:text-amber-400"
+            "w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors group",
+            isCollapsed && "justify-center px-0 text-amber-500 hover:text-amber-600"
           )}
           title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         >
