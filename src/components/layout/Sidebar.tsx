@@ -78,30 +78,6 @@ export const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      <div className="p-3 border-t border-gray-200 dark:border-zinc-800 space-y-4">
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800 transition-colors group",
-            isCollapsed && "justify-center px-0 text-amber-500 hover:text-amber-600"
-          )}
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? (
-            <>
-              <Moon className="w-4 h-4" />
-              {!isCollapsed && <span>Dark Mode</span>}
-            </>
-          ) : (
-            <>
-              <Sun className="w-4 h-4" />
-              {!isCollapsed && <span>Light Mode</span>}
-            </>
-          )}
-        </button>
-      </div>
     </aside>
   );
 };

@@ -2,7 +2,8 @@ import React from 'react';
 import { Sidebar } from './Sidebar';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 import { NAV_ITEMS, APP_NAME } from '../../constants';
 
@@ -10,6 +11,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
@@ -30,6 +32,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
 
           <div className="flex items-center gap-4 border-l pl-4 dark:border-zinc-800">
+            <button 
+              onClick={toggleTheme}
+              className="p-1 text-gray-400 hover:text-gray-900 dark:text-zinc-500 dark:hover:text-zinc-100 transition-colors"
+              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </button>
             <button className="relative p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors group">
               <Bell className="w-4 h-4" />
               <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-zinc-900" />
