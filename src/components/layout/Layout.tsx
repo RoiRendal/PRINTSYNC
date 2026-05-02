@@ -11,7 +11,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
@@ -35,9 +35,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             <button 
               onClick={toggleTheme}
               className="p-1 text-gray-400 hover:text-gray-900 dark:text-zinc-500 dark:hover:text-zinc-100 transition-colors"
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              title={`Current theme: ${theme}. Click to cycle themes.`}
             >
-              {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+              {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
             <button className="relative p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors group">
               <Bell className="w-4 h-4" />
