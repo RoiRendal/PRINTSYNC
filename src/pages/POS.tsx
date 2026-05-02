@@ -193,7 +193,7 @@ export default function POS() {
             </div>
 
             <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 xl:gap-4">
                 {filteredProducts.map(product => (
                   <button 
                     key={product.id}
@@ -201,9 +201,9 @@ export default function POS() {
                     disabled={product.stock <= 0}
                     className={`bg-white border border-gray-200 rounded p-2 text-left hover:border-blue-500 transition-all group flex flex-col shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-blue-700 ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                   >
-                    <div className="h-32 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
+                    <div className="h-32 xl:h-40 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
                        <div className="flex flex-col items-center text-gray-300 group-hover:text-blue-500 transition-colors dark:text-zinc-700 dark:group-hover:text-blue-400">
-                          <ShoppingBag className="w-8 h-8 stroke-1" />
+                          <ShoppingBag className="w-8 h-8 xl:w-10 xl:h-10 stroke-1" />
                           <span className="text-[8px] mt-1 font-mono uppercase tracking-widest">IMG_PENDING</span>
                        </div>
                        <div className="absolute top-1 right-1">
@@ -213,9 +213,9 @@ export default function POS() {
                        </div>
                     </div>
                     <div>
-                      <h3 className="font-bold text-[11px] uppercase tracking-tight line-clamp-2 text-gray-800 dark:text-zinc-100">{product.name}</h3>
+                      <h3 className="font-bold text-[11px] xl:text-[12px] uppercase tracking-tight line-clamp-2 text-gray-800 dark:text-zinc-100">{product.name}</h3>
                       <div className="flex justify-between items-center mt-2 group-hover:translate-x-0.5 transition-transform">
-                        <p className="text-blue-600 font-mono text-[10px] font-bold dark:text-blue-400">₱{product.price.toFixed(2)}</p>
+                        <p className="text-blue-600 font-mono text-[10px] xl:text-[11px] font-bold dark:text-blue-400">₱{product.price.toFixed(2)}</p>
                         <Plus className="w-3 h-3 text-gray-300 group-hover:text-blue-500 dark:text-zinc-600 dark:group-hover:text-blue-400" />
                       </div>
                     </div>
@@ -226,7 +226,7 @@ export default function POS() {
           </div>
 
           {/* Cart / Checkout */}
-          <div className="w-80 bg-slate-900 text-white rounded-lg shadow-xl flex flex-col h-full border border-slate-800 relative overflow-hidden">
+          <div className="w-80 lg:w-96 xl:w-[400px] bg-slate-900 text-white rounded-lg shadow-xl flex flex-col h-full border border-slate-800 relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                 <ShoppingBag className="w-48 h-48" />
              </div>

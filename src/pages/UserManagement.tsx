@@ -25,8 +25,8 @@ export default function UserManagement() {
         <TableActions exportLabel="Export Staff List" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-        <div className="lg:col-span-1 space-y-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 xl:gap-8">
+        <div className="md:col-span-2 lg:col-span-1 xl:col-span-1 space-y-5">
            <div className="bg-white border border-gray-200 p-5 rounded shadow-sm space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
               <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">Station Overview</h2>
               {[
@@ -63,7 +63,7 @@ export default function UserManagement() {
            </div>
         </div>
 
-        <div className="lg:col-span-3">
+        <div className="md:col-span-2 lg:col-span-3 xl:col-span-4">
            <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
               <table className="w-full text-left text-xs">
                  <thead>

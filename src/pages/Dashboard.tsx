@@ -24,17 +24,17 @@ const StatCard = ({ title, value, icon: Icon, trend }: any) => (
 export default function Dashboard() {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6">
         <StatCard title="Daily Revenue" value="₱24,250.00" icon={DollarSign} trend={12.5} />
         <StatCard title="Pending Jobs" value="84" icon={ShoppingBag} trend={5.2} />
         <StatCard title="Inventory Alerts" value="12" icon={Package} trend={-10} />
         <StatCard title="Completed Today" value="156" icon={CheckCircle2} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">
         {/* Table Area */}
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="p-4 border-b border-gray-100 flex justify-between items-center dark:border-zinc-800">
+        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+          <div className="p-4 md:p-5 border-b border-gray-100 flex justify-between items-center dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Current Production Queue</h3>
             <div className="flex items-center gap-2">
               <TableActions exportLabel="Export Queue" />
@@ -45,21 +45,21 @@ export default function Dashboard() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                  <th className="py-2.5 px-4 font-medium uppercase text-[10px] tracking-wider">Order ID</th>
-                  <th className="py-2.5 px-4 font-medium uppercase text-[10px] tracking-wider">Client</th>
-                  <th className="py-2.5 px-4 font-medium uppercase text-[10px] tracking-wider">Item</th>
-                  <th className="py-2.5 px-4 font-medium text-center uppercase text-[10px] tracking-wider">Qty</th>
-                  <th className="py-2.5 px-4 font-medium uppercase text-[10px] tracking-wider">Status</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Order ID</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Client</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Item</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium text-center uppercase text-[10px] tracking-wider">Qty</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {MOCK_ORDERS.map((order) => (
                   <tr key={order.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
-                    <td className="py-3 px-4 font-mono text-blue-600 font-medium dark:text-blue-400">#{order.id.replace('ORD-', 'PS-')}</td>
-                    <td className="py-3 px-4 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-zinc-400">{order.item}</td>
-                    <td className="py-3 px-4 text-center font-mono dark:text-zinc-300">{order.quantity}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4 md:px-6 font-mono text-blue-600 font-medium dark:text-blue-400">#{order.id.replace('ORD-', 'PS-')}</td>
+                    <td className="py-3 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
+                    <td className="py-3 px-4 md:px-6 text-gray-600 dark:text-zinc-400">{order.item}</td>
+                    <td className="py-3 px-4 md:px-6 text-center font-mono dark:text-zinc-300">{order.quantity}</td>
+                    <td className="py-3 px-4 md:px-6">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                         order.status === 'In Production' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                         order.status === 'Pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
@@ -76,7 +76,7 @@ export default function Dashboard() {
         </div>
 
         {/* Inventory Snapshot */}
-        <div className="bg-slate-900 border border-slate-800 rounded shadow-lg flex flex-col p-5 text-white">
+        <div className="md:col-span-2 lg:col-span-1 bg-slate-900 border border-slate-800 rounded shadow-lg flex flex-col p-5 xl:p-8 text-white">
           <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-5">
             <h3 className="text-sm font-bold uppercase tracking-wide">Stock Levels</h3>
             <TableActions exportLabel="Export Snapshot" />

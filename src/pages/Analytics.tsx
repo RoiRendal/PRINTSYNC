@@ -14,8 +14,8 @@ export default function Analytics() {
         <TableActions exportLabel="Export Intelligence Report" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-white border border-gray-200 rounded p-6 shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">
+        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded p-6 xl:p-8 shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
            <div className="flex justify-between items-start mb-10">
               <div>
                  <h2 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 dark:text-zinc-200">Production Output Intensity</h2>
@@ -28,7 +28,7 @@ export default function Analytics() {
               </div>
            </div>
            
-           <div className="flex-1 flex items-end gap-1.5 min-h-[200px] border-b border-gray-100 pb-2 dark:border-zinc-800">
+           <div className="flex-1 flex items-end gap-1.5 md:gap-2.5 lg:gap-3 xl:gap-4 min-h-[200px] xl:min-h-[300px] border-b border-gray-100 pb-2 dark:border-zinc-800">
               {[40, 65, 30, 85, 45, 90, 70, 55, 75, 40, 60, 50, 65, 80, 45].map((val, i) => (
                 <div key={i} className="flex-1 group relative">
                    <motion.div 
@@ -46,8 +46,8 @@ export default function Analytics() {
            </div>
         </div>
 
-        <div className="space-y-5">
-           <div className="bg-slate-900 border border-slate-800 text-white p-6 rounded shadow-lg dark:bg-black dark:border-zinc-900">
+        <div className="md:col-span-2 lg:col-span-1 space-y-5">
+           <div className="bg-slate-900 border border-slate-800 text-white p-6 xl:p-8 rounded shadow-lg dark:bg-black dark:border-zinc-900">
               <div className="flex items-center gap-2 mb-4">
                  <Zap className="w-4 h-4 text-blue-400" />
                  <h2 className="text-[10px] uppercase font-bold tracking-[0.3em]">Operational Efficiency</h2>
@@ -98,8 +98,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-         <div className="bg-white border border-gray-200 p-6 rounded shadow-sm flex flex-col items-center justify-center min-h-[160px] dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5">
+         <div className="bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm flex flex-col items-center justify-center min-h-[160px] dark:bg-zinc-900 dark:border-zinc-800">
             <div className="bg-gray-50 p-3 rounded-full mb-3 dark:bg-zinc-800">
                <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
@@ -107,14 +107,16 @@ export default function Analytics() {
             <p className="text-2xl font-mono font-bold tracking-tight mt-1 text-gray-900 dark:text-zinc-100">82<span className="text-gray-400 dark:text-zinc-600">%</span></p>
          </div>
 
-         <div className="md:col-span-2 bg-white border border-gray-200 p-6 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+         <div className="md:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
             <h3 className="text-[10px] uppercase font-bold tracking-[0.2em] mb-4 text-gray-800 border-b border-gray-50 pb-3 dark:text-zinc-200 dark:border-zinc-800">Best Performing Skus</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                {[
                  { label: 'Premium Tee', sold: '1.2k', up: true },
                  { label: 'Sport Jersey', sold: '840', up: true },
                  { label: 'Worker Polo', sold: '650', up: false },
                  { label: 'Soft Hoodie', sold: '420', up: true },
+                 { label: 'Canvas Bag', sold: '310', up: true },
+                 { label: 'Flex Cap', sold: '280', up: false },
                ].map(stat => (
                  <div key={stat.label} className="space-y-1">
                     <p className="text-[9px] font-bold uppercase text-gray-400 truncate dark:text-zinc-500">{stat.label}</p>

@@ -85,22 +85,22 @@ export default function Inventory() {
 
   return (
     <div className="space-y-5">
-      <div className="flex gap-4 items-center bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+      <div className="flex gap-4 items-center bg-white p-3 md:p-4 xl:p-6 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
           <input 
             type="text" 
             placeholder="Search SKU, material or category..."
-            className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-blue-500 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
+            className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-blue-500 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
           <TableActions exportLabel="Export Inventory" />
           <button 
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm transition-all ml-2"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm transition-all ml-0 md:ml-2"
             id="add-stock-btn"
           >
             <Plus className="w-3.5 h-3.5" /> Add Stock
@@ -110,16 +110,16 @@ export default function Inventory() {
 
       <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-xs xl:text-sm">
             <thead>
               <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider">SKU</th>
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider">Material Description</th>
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider">Category</th>
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider text-right">Stock</th>
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider text-right">Price</th>
-                <th className="py-2.5 px-4 font-bold uppercase text-[10px] tracking-wider">Status</th>
-                <th className="py-2.5 px-4 text-right">Actions</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">SKU</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">Material Description</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-center">Category</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Stock</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Price</th>
+                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">Status</th>
+                <th className="py-2.5 px-4 md:px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
@@ -134,21 +134,21 @@ export default function Inventory() {
                       exit={{ opacity: 0 }}
                       className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
                     >
-                      <td className="py-3 px-4 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
-                      <td className="py-3 px-4 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
-                      <td className="py-3 px-4 text-gray-500 dark:text-zinc-400">
+                      <td className="py-3 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
+                      <td className="py-3 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
+                      <td className="py-3 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-[10px]">
                           {item.category}
                         </span>
                       </td>
-                      <td className="py-3 px-4 font-mono font-medium dark:text-zinc-300 text-right">
+                      <td className="py-3 px-4 md:px-6 font-mono font-medium dark:text-zinc-300 text-right">
                         <span className={isLowStock ? 'text-red-500' : ''}>
                           {item.stock}
                         </span>
                         <span className="text-[9px] text-gray-400 ml-1">PCS</span>
                       </td>
-                      <td className="py-3 px-4 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
+                      <td className="py-3 px-4 md:px-6">
                         {isLowStock ? (
                           <span className="flex items-center w-fit gap-1 text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30">
                             <AlertTriangle className="w-2.5 h-2.5" /> Low Stock
@@ -159,8 +159,8 @@ export default function Inventory() {
                           </span>
                         )}
                       </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <td className="py-3 px-4 md:px-6 text-right">
+                        <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => handleOpenModal(item)}
                             className="p-1 px-2 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded dark:hover:bg-blue-900/20"

@@ -201,10 +201,8 @@ export default function Finance() {
             Generate Statement
           </button>
         </div>
-      </div>
-
-      {/* Summary Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      </div>      {/* Summary Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6">
         <FinanceSummary label="Gross Revenue" amount={stats.totalRevenue} trend={12.5} icon={TrendingUp} />
         <FinanceSummary label="Operational Cost" amount={stats.totalExpenses} trend={-3.2} icon={Scissors} />
         <FinanceSummary label="Company Net" amount={stats.netProfit} trend={18.7} icon={DollarSign} />
@@ -212,23 +210,23 @@ export default function Finance() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white border border-gray-200 p-6 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 xl:gap-8">
+        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-blue-600 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
             <div className="flex gap-4">
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
                 <div className="w-2 h-2 rounded-full bg-blue-600" /> Income
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500">
+              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
                 <div className="w-2 h-2 rounded-full bg-gray-300" /> Expense
               </div>
             </div>
           </div>
-          <div className="h-[280px] w-full min-w-0 relative">
+          <div className="h-[280px] xl:h-[350px] w-full min-w-0 relative">
             {isMounted && (
-              <ResponsiveContainer width="99%" height={280}>
-                <AreaChart data={chartData}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ left: -20 }}>
                   <defs>
                     <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
@@ -263,18 +261,18 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 p-6 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
+        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
           <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-8 text-gray-800 border-l-2 border-slate-600 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
-          <div className="h-[200px] w-full relative min-w-0">
+          <div className="h-[200px] xl:h-[260px] w-full relative min-w-0">
             {isMounted && (
-              <ResponsiveContainer width="99%" height={200}>
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
+                    innerRadius="60%"
+                    outerRadius="85%"
                     paddingAngle={5}
                     dataKey="value"
                   >
@@ -288,12 +286,12 @@ export default function Finance() {
             )}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-[10px] uppercase font-bold text-gray-400">Total</span>
-              <span className="text-lg font-bold font-mono">100%</span>
+              <span className="text-lg xl:text-xl font-bold font-mono">100%</span>
             </div>
           </div>
-          <div className="mt-6 space-y-2">
+          <div className="mt-8 space-y-3">
             {pieData.map((item) => (
-              <div key={item.name} className="flex justify-between items-center text-[10px] font-bold uppercase tracking-tight">
+              <div key={item.name} className="flex justify-between items-center text-[10px] xl:text-[11px] font-bold uppercase tracking-tight">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
                   <span className="text-gray-500">{item.name}</span>
@@ -307,7 +305,7 @@ export default function Finance() {
 
       {/* Ledger Table Section */}
       <div className="bg-white border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors overflow-hidden">
-        <div className="p-4 border-b border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="p-4 md:p-6 border-b border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 flex items-center gap-2 dark:text-zinc-200">
             <Receipt className="w-4 h-4 text-blue-600" />
             Transaction Ledger
