@@ -7,6 +7,8 @@ import {
   Printer, 
   Scissors, 
   Droplets,
+  Trash2,
+  Edit2,
   Plus,
   Search,
   Filter,
@@ -55,10 +57,12 @@ const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
 );
 
 export default function Finance() {
-  const { records, stats, addRecord } = useFinance();
+  const { records, stats, addRecord, updateRecord, deleteRecord } = useFinance();
   const [isMounted, setIsMounted] = React.useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   React.useEffect(() => {
@@ -95,6 +99,47 @@ export default function Finance() {
       description: '',
       amount: ''
     });
+  };
+
+  const handleEditInitiate = (record: FinancialRecord) => {
+    setEditingId(record.id);
+    setFormData({
+      date: record.date,
+      type: record.type,
+      category: record.category,
+      description: record.description,
+      amount: record.amount.toString()
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateRecord = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !formData.category || !formData.amount || !formData.description) return;
+
+    updateRecord(editingId, {
+      date: formData.date,
+      type: formData.type,
+      category: formData.category,
+      description: formData.description,
+      amount: parseFloat(formData.amount)
+    });
+
+    setIsEditOpen(false);
+    setEditingId(null);
+    setFormData({
+      date: new Date().toISOString().split('T')[0],
+      type: 'Income',
+      category: '',
+      description: '',
+      amount: ''
+    });
+  };
+
+  const handleDeleteRecord = (id: string) => {
+    if (confirm('Are you sure you want to delete this record?')) {
+      deleteRecord(id);
+    }
   };
 
   // Chart Data
@@ -278,6 +323,7 @@ export default function Finance() {
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Description</th>
                 <th className="px-6 py-4 text-right">Amount</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
@@ -293,6 +339,22 @@ export default function Finance() {
                   <td className="px-6 py-4 text-xs text-gray-600 dark:text-zinc-400">{record.description}</td>
                   <td className={`px-6 py-4 text-right font-mono font-bold text-xs ${record.type === 'Income' ? 'text-green-600' : 'text-red-600'}`}>
                     {record.type === 'Income' ? '+' : '-'}₱{record.amount.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => handleEditInitiate(record)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteRecord(record.id)}
+                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -391,6 +453,87 @@ export default function Finance() {
             className="w-full py-3 mt-2 bg-black dark:bg-white dark:text-black text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
           >
             Authorize Entry
+          </button>
+        </form>
+      </Modal>
+
+      {/* Edit Record Modal */}
+      <Modal
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setEditingId(null);
+        }}
+        title="Edit Transaction Entry"
+        maxWidth="max-w-md"
+      >
+        <form className="space-y-4" onSubmit={handleUpdateRecord}>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Date</label>
+              <input 
+                type="date" 
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full p-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-xs" 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Type</label>
+              <select 
+                value={formData.type}
+                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Income' | 'Expense' })}
+                className="w-full p-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-xs uppercase font-bold"
+              >
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Category</label>
+              <input 
+                type="text" 
+                placeholder="Material, Rent..." 
+                required
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                className="w-full p-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-xs" 
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Amount (PHP)</label>
+              <input 
+                type="number" 
+                placeholder="0.00" 
+                required
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                className="w-full p-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-xs font-mono font-bold" 
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Description</label>
+            <textarea 
+              placeholder="Transaction details..." 
+              required
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="w-full p-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-xs h-16 resize-none" 
+            />
+          </div>
+          
+          <button 
+            type="submit"
+            className="w-full py-3 mt-2 bg-black dark:bg-white dark:text-black text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
+          >
+            Confirm Changes
           </button>
         </form>
       </Modal>

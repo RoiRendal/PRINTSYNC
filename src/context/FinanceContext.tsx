@@ -6,6 +6,7 @@ interface FinanceContextType {
   records: FinancialRecord[];
   stats: FinancialStats;
   addRecord: (record: Omit<FinancialRecord, 'id'>) => void;
+  updateRecord: (id: string, record: Partial<FinancialRecord>) => void;
   deleteRecord: (id: string) => void;
 }
 
@@ -35,12 +36,16 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setRecords(prev => [newRecord, ...prev]);
   };
 
+  const updateRecord = (id: string, updatedRecord: Partial<FinancialRecord>) => {
+    setRecords(prev => prev.map(r => r.id === id ? { ...r, ...updatedRecord } : r));
+  };
+
   const deleteRecord = (id: string) => {
     setRecords(prev => prev.filter(r => r.id !== id));
   };
 
   return (
-    <FinanceContext.Provider value={{ records, stats, addRecord, deleteRecord }}>
+    <FinanceContext.Provider value={{ records, stats, addRecord, updateRecord, deleteRecord }}>
       {children}
     </FinanceContext.Provider>
   );
