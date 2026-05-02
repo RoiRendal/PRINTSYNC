@@ -1,46 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../constants';
 import { motion, AnimatePresence } from 'motion/react';
-import { Printer, Moon, Sun, ChevronLeft, PanelLeft } from 'lucide-react';
+import { PanelLeft } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { useTheme } from '../../context/ThemeContext';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const Sidebar = () => {
-  const { theme, toggleTheme } = useTheme();
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved === 'true';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(isCollapsed));
-  }, [isCollapsed]);
-
-  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
-
+export const Sidebar = ({ isCollapsed }: { isCollapsed: boolean }) => {
   return (
     <aside 
       className={cn(
-        "bg-gray-50 text-gray-900 flex flex-col border-r border-gray-200 shrink-0 transition-all duration-300 ease-in-out dark:bg-zinc-950 dark:text-zinc-100 dark:border-zinc-800 overflow-hidden",
-        isCollapsed ? "w-16" : "w-52"
+        "bg-gray-50 text-gray-900 flex flex-col shrink-0 transition-all duration-300 ease-in-out dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
+        isCollapsed ? "w-0 border-r-0" : "w-52 border-r border-gray-200 dark:border-zinc-800"
       )}
     >
-      <div className={cn("p-4 border-b border-gray-200 dark:border-zinc-800 flex items-center shrink-0 h-12 justify-center")}>
-        <button 
-          onClick={toggleCollapse}
-          className="p-1.5 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-      </div>
-
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {NAV_ITEMS.map((item) => (
           <NavLink

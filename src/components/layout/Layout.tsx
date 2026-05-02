@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'react-router-dom';
-import { Bell, Sun, Moon } from 'lucide-react';
+import { Bell, Sun, Moon, PanelLeft, ChevronLeft } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
 import { NAV_ITEMS, APP_NAME } from '../../constants';
@@ -13,12 +13,22 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
 
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', String(isCollapsed));
+  }, [isCollapsed]);
+
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
       <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-10">
         <div className="flex items-center gap-8">
-          {/* Logo Section */}
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
             <div className="w-5 h-5 bg-blue-500 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
             <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base">{APP_NAME}</h1>
@@ -57,13 +67,24 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
+      {/* New Header */}
+      <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-10">
+        <button 
+          onClick={toggleCollapse}
+          className="p-1.5 mr-4 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+        <span className="text-sm font-bold tracking-tight text-gray-900 dark:text-zinc-100">{currentLabel}</span>
+      </div>
+
       {/* Main Content Area (Sidebar + Content) */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar isCollapsed={isCollapsed} />
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-6 lg:p-8 xl:p-10 scrollbar-hide">
             <div className="mb-6 flex flex-col">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-zinc-100">{currentLabel}</h2>
               <div className="text-[11px] text-gray-400 font-mono mt-1 dark:text-zinc-500 uppercase tracking-widest">
                 System Log • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
