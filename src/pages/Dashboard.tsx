@@ -34,11 +34,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">
         {/* Table Area */}
         <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="p-4 md:p-5 border-b border-gray-100 flex justify-between items-center dark:border-zinc-800">
+          <div className="p-4 md:p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Current Production Queue</h3>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <TableActions exportLabel="Export Queue" />
-              <button className="text-[10px] bg-gray-100 px-3 py-1.5 rounded border border-gray-300 font-bold uppercase hover:bg-gray-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">View All Jobs</button>
+              <button className="text-[10px] whitespace-nowrap shrink-0 bg-gray-100 px-3 py-1.5 rounded border border-gray-300 font-bold uppercase hover:bg-gray-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">View All Jobs</button>
             </div>
           </div>
           <div className="flex-1 overflow-x-auto text-xs">
@@ -77,9 +77,9 @@ export default function Dashboard() {
 
         {/* Inventory Snapshot */}
         <div className="md:col-span-2 lg:col-span-1 bg-slate-900 border border-slate-800 rounded shadow-lg flex flex-col p-5 xl:p-8 text-white">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-4 mb-5">
-            <h3 className="text-sm font-bold uppercase tracking-wide">Stock Levels</h3>
-            <TableActions exportLabel="Export Snapshot" />
+          <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-4 mb-5">
+            <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap">Stock Levels</h3>
+            <TableActions exportLabel="Export" />
           </div>
           
           <div className="space-y-5 flex-1">
@@ -108,11 +108,11 @@ export default function Dashboard() {
 
           <div className="mt-6 p-4 bg-slate-800/50 rounded border border-slate-800">
              <p className="text-[10px] text-slate-400 font-medium mb-3 uppercase tracking-widest">Command Center Actions</p>
-             <div className="grid grid-cols-2 gap-2">
-                <button className="py-2 px-3 bg-blue-600 hover:bg-blue-500 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
+             <div className="flex flex-wrap gap-2">
+                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-blue-600 hover:bg-blue-500 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
                   Restock
                 </button>
-                <button className="py-2 px-3 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
+                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
                   Logistics
                 </button>
              </div>

@@ -43,11 +43,11 @@ export const TableActions: React.FC<TableActionsProps> = ({
   };
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex flex-wrap gap-2 items-center">
       <button 
         onClick={handleRefresh}
         disabled={isRefreshing}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
+        className="flex whitespace-nowrap shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
         title="Refresh data"
       >
         <RefreshCcw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -56,7 +56,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
       <button 
         onClick={handleExport}
         disabled={isExporting}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
+        className="flex whitespace-nowrap shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
         title={exportLabel}
       >
         {isExporting ? (
