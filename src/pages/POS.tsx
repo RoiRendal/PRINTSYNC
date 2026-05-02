@@ -226,40 +226,40 @@ export default function POS() {
           </div>
 
           {/* Cart / Checkout */}
-          <div className="w-80 lg:w-96 xl:w-[400px] bg-slate-900 text-white rounded-lg shadow-xl flex flex-col h-full border border-slate-800 relative overflow-hidden">
+          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col h-full border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                 <ShoppingBag className="w-48 h-48" />
              </div>
 
-             <div className="p-4 border-b border-slate-800 flex justify-between items-center z-10">
-                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em]">Transaction Cart</h2>
-                <span className="text-[9px] font-mono bg-blue-600/20 text-blue-400 border border-blue-600/30 px-2 py-0.5 rounded">{cart.length} ITEMS</span>
+             <div className="p-4 border-b border-gray-100 flex justify-between items-center z-10 dark:border-zinc-800">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800 dark:text-zinc-200">Transaction Cart</h2>
+                <span className="text-[9px] font-mono bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded dark:bg-blue-600/20 dark:text-blue-400 dark:border-blue-600/30">{cart.length} ITEMS</span>
              </div>
 
              <div className="flex-1 overflow-y-auto p-4 space-y-3 z-10 scrollbar-hide">
                 {cart.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-50 space-y-3 p-10 text-center">
+                  <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50 space-y-3 p-10 text-center">
                      <ShoppingBag className="w-6 h-6 mx-auto" />
                      <p className="text-[9px] uppercase tracking-widest font-mono">Cart holds no items</p>
                   </div>
                 ) : (
                   cart.map(item => (
-                    <div key={item.id} className="flex gap-3 bg-slate-800/40 p-2 rounded-sm border border-slate-800 group transition-all hover:bg-slate-800/60">
-                       <div className="w-10 h-10 bg-slate-800 flex-shrink-0 rounded-sm" />
+                    <div key={item.id} className="flex gap-3 bg-gray-50 p-2 rounded-sm border border-gray-100 group transition-all hover:bg-gray-100 dark:bg-zinc-800/40 dark:border-zinc-800 dark:hover:bg-zinc-800/60">
+                       <div className="w-10 h-10 bg-gray-200 flex-shrink-0 rounded-sm dark:bg-zinc-800" />
                        <div className="flex-1 flex flex-col min-w-0">
                           <div className="flex justify-between items-start gap-2">
-                             <span className="text-[10px] font-bold uppercase truncate leading-tight">{item.name}</span>
-                             <button onClick={() => removeFromCart(item.id)} className="text-slate-600 hover:text-red-400">
+                             <span className="text-[10px] font-bold uppercase truncate leading-tight text-gray-900 dark:text-zinc-100">{item.name}</span>
+                             <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500">
                                <Trash2 className="w-3 h-3" />
                              </button>
                           </div>
                           <div className="flex justify-between items-end mt-2">
-                             <div className="flex bg-slate-900 rounded overflow-hidden">
-                                <button onClick={() => updateQty(item.id, -1)} className="p-1 hover:bg-slate-700 hover:text-white transition-colors text-slate-500"><Minus className="w-2.5 h-2.5" /></button>
-                                <span className="w-6 text-center text-[10px] font-mono py-1 select-none">{item.qty}</span>
-                                <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:bg-slate-700 hover:text-white transition-colors text-slate-500"><Plus className="w-2.5 h-2.5" /></button>
+                             <div className="flex bg-gray-200 rounded overflow-hidden dark:bg-zinc-900">
+                                <button onClick={() => updateQty(item.id, -1)} className="p-1 hover:bg-gray-300 hover:text-gray-900 transition-colors text-gray-600 dark:hover:bg-zinc-700 dark:text-zinc-500"><Minus className="w-2.5 h-2.5" /></button>
+                                <span className="w-6 text-center text-[10px] font-mono py-1 select-none text-gray-900 dark:text-zinc-200">{item.qty}</span>
+                                <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:bg-gray-300 hover:text-gray-900 transition-colors text-gray-600 dark:hover:bg-zinc-700 dark:text-zinc-500"><Plus className="w-2.5 h-2.5" /></button>
                              </div>
-                             <span className="text-[10px] font-mono text-blue-400">₱{(item.price * item.qty).toFixed(2)}</span>
+                             <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">₱{(item.price * item.qty).toFixed(2)}</span>
                           </div>
                        </div>
                     </div>
@@ -267,24 +267,24 @@ export default function POS() {
                 )}
              </div>
 
-             <div className="p-4 bg-slate-900 border-t border-slate-800 space-y-3 z-10 shrink-0">
+             <div className="p-4 bg-gray-50 border-t border-gray-100 space-y-3 z-10 shrink-0 dark:bg-zinc-900 dark:border-zinc-800">
                 <div className="space-y-1.5">
-                   <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                   <div className="flex justify-between text-[10px] font-mono text-gray-500 dark:text-zinc-500">
                       <span className="font-bold">SUBTOTAL</span>
-                      <span>₱{subtotal.toFixed(2)}</span>
+                      <span className="text-gray-900 dark:text-zinc-300">₱{subtotal.toFixed(2)}</span>
                    </div>
-                   <div className="flex justify-between text-[10px] font-mono text-slate-500">
+                   <div className="flex justify-between text-[10px] font-mono text-gray-500 dark:text-zinc-500">
                       <span className="font-bold">VAT (12%)</span>
-                      <span>₱{tax.toFixed(2)}</span>
+                      <span className="text-gray-900 dark:text-zinc-300">₱{tax.toFixed(2)}</span>
                    </div>
-                   <div className="flex justify-between text-xl font-bold tracking-tight text-white border-t border-slate-800 pt-2 mt-1">
+                   <div className="flex justify-between text-xl font-bold tracking-tight text-gray-900 border-t border-gray-200 pt-2 mt-1 dark:border-zinc-800 dark:text-zinc-100">
                       <span>TOTAL</span>
-                      <span className="font-mono text-blue-400">₱{total.toFixed(2)}</span>
+                      <span className="font-mono text-blue-600 dark:text-blue-400">₱{total.toFixed(2)}</span>
                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                   <button onClick={() => setCart([])} className="py-2.5 bg-slate-800 hover:bg-slate-700 text-[10px] font-bold uppercase tracking-widest rounded transition-all">
+                   <button onClick={() => setCart([])} className="py-2.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold uppercase tracking-widest rounded transition-all text-gray-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300">
                       Empty
                    </button>
                    <button 

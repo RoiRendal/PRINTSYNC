@@ -47,13 +47,13 @@ export default function Analytics() {
         </div>
 
         <div className="md:col-span-2 lg:col-span-1 space-y-5">
-           <div className="bg-slate-900 border border-slate-800 text-white p-6 xl:p-8 rounded shadow-lg dark:bg-black dark:border-zinc-900">
+           <div className="bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <div className="flex items-center gap-2 mb-4">
-                 <Zap className="w-4 h-4 text-blue-400" />
-                 <h2 className="text-[10px] uppercase font-bold tracking-[0.3em]">Operational Efficiency</h2>
+                 <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                 <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] text-gray-800 dark:text-zinc-200">Operational Efficiency</h2>
               </div>
               <div className="flex items-baseline gap-2">
-                 <span className="text-4xl font-mono font-bold tracking-tighter italic">94.2<span className="text-blue-500 text-2xl">%</span></span>
+                 <span className="text-4xl font-mono font-bold tracking-tighter italic text-gray-900 dark:text-zinc-100">94.2<span className="text-blue-600 dark:text-blue-400 text-2xl">%</span></span>
               </div>
               <div className="mt-6 space-y-4">
                  {[
@@ -61,12 +61,12 @@ export default function Analytics() {
                    { label: 'Yield', val: 91 },
                  ].map(m => (
                    <div key={m.label} className="space-y-1">
-                      <div className="flex justify-between text-[9px] uppercase font-mono text-slate-500 dark:text-zinc-600">
+                      <div className="flex justify-between text-[9px] uppercase font-mono text-gray-500 dark:text-zinc-600">
                         <span>{m.label}</span>
-                        <span className="text-slate-300 dark:text-zinc-400">{m.val}%</span>
+                        <span className="text-gray-900 dark:text-zinc-100">{m.val}%</span>
                       </div>
-                      <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-500" style={{ width: `${m.val}%` }} />
+                      <div className="h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
+                        <div className="h-full bg-blue-600 dark:bg-blue-500" style={{ width: `${m.val}%` }} />
                       </div>
                    </div>
                  ))}

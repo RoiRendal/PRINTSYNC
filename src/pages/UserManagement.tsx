@@ -43,21 +43,20 @@ export default function UserManagement() {
                 </div>
               ))}
            </div>
-           
-           <div className="bg-slate-900 text-white p-5 rounded shadow-lg border border-slate-800 dark:bg-black dark:border-zinc-900">
-              <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-slate-400">System Logs</h2>
+                      <div className="bg-white border border-gray-200 p-5 rounded shadow-sm space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+              <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">System Logs</h2>
               <div className="space-y-3">
                  <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-slate-500 uppercase">Active Sessions</span>
-                    <span className="text-blue-400">14</span>
+                    <span className="text-gray-500 uppercase dark:text-zinc-500">Active Sessions</span>
+                    <span className="text-blue-600 dark:text-blue-400">14</span>
                  </div>
                  <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-slate-500 uppercase">Auth Failures</span>
-                    <span className="text-red-500">0</span>
+                    <span className="text-gray-500 uppercase dark:text-zinc-500">Auth Failures</span>
+                    <span className="text-red-500 dark:text-red-400">0</span>
                  </div>
                  <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-slate-500 uppercase">Audit Records</span>
-                    <span className="text-slate-300">1,248</span>
+                    <span className="text-gray-500 uppercase dark:text-zinc-500">Audit Records</span>
+                    <span className="text-gray-700 dark:text-zinc-300">1,248</span>
                  </div>
               </div>
            </div>

@@ -76,26 +76,26 @@ export default function Dashboard() {
         </div>
 
         {/* Inventory Snapshot */}
-        <div className="md:col-span-2 lg:col-span-1 bg-slate-900 border border-slate-800 rounded shadow-lg flex flex-col p-5 xl:p-8 text-white">
-          <div className="flex flex-wrap justify-between items-center gap-3 border-b border-slate-800 pb-4 mb-5">
-            <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap">Stock Levels</h3>
+        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-5 xl:p-8 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+          <div className="flex flex-wrap justify-between items-center gap-3 border-b border-gray-100 pb-4 mb-5 dark:border-zinc-800">
+            <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap text-gray-900 dark:text-zinc-200">Stock Levels</h3>
             <TableActions exportLabel="Export" />
           </div>
           
           <div className="space-y-5 flex-1">
             {[
-              { label: 'Cotton T-Shirts', qty: '1,240 Units', val: 82, color: 'bg-blue-500' },
-              { label: 'Polo Shirts', qty: '412 Units', val: 45, color: 'bg-blue-500' },
-              { label: 'Jersey Fabric', qty: '85 Rolls', val: 68, color: 'bg-blue-500' },
+              { label: 'Cotton T-Shirts', qty: '1,240 Units', val: 82, color: 'bg-blue-600' },
+              { label: 'Polo Shirts', qty: '412 Units', val: 45, color: 'bg-blue-600' },
+              { label: 'Jersey Fabric', qty: '85 Rolls', val: 68, color: 'bg-blue-600' },
               { label: 'Long Sleeves', qty: '12 Units', val: 4, color: 'bg-red-500' },
               { label: 'Hoodies', qty: '98 Units', val: 22, color: 'bg-amber-500' },
             ].map(item => (
               <div key={item.label}>
                 <div className="flex justify-between text-[10px] mb-1.5 font-mono uppercase">
-                  <span className="text-slate-400">{item.label}</span>
-                  <span className="text-blue-400 font-bold">{item.qty}</span>
+                  <span className="text-gray-500 dark:text-zinc-500">{item.label}</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">{item.qty}</span>
                 </div>
-                <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: `${item.val}%` }}
@@ -106,13 +106,13 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-slate-800/50 rounded border border-slate-800">
-             <p className="text-[10px] text-slate-400 font-medium mb-3 uppercase tracking-widest">Command Center Actions</p>
+          <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-100 dark:bg-zinc-800/50 dark:border-zinc-800 transition-colors duration-300">
+             <p className="text-[10px] text-gray-500 font-medium mb-3 uppercase tracking-widest dark:text-zinc-400">Command Center Actions</p>
              <div className="flex flex-wrap gap-2">
-                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-blue-600 hover:bg-blue-500 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
+                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-blue-600 hover:bg-blue-500 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-white">
                   Restock
                 </button>
-                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-slate-700 hover:bg-slate-600 rounded text-[10px] font-bold uppercase tracking-wider transition-colors">
+                <button className="flex-1 min-w-[100px] whitespace-nowrap py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-gray-800 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300">
                   Logistics
                 </button>
              </div>
