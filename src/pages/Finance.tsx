@@ -62,7 +62,9 @@ export default function Finance() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<FinancialRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   React.useEffect(() => {
@@ -136,9 +138,16 @@ export default function Finance() {
     });
   };
 
-  const handleDeleteRecord = (id: string) => {
-    if (confirm('Are you sure you want to delete this record?')) {
-      deleteRecord(id);
+  const handleDeleteInitiate = (record: FinancialRecord) => {
+    setRecordToDelete(record);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (recordToDelete) {
+      deleteRecord(recordToDelete.id);
+      setIsDeleteModalOpen(false);
+      setRecordToDelete(null);
     }
   };
 
@@ -349,7 +358,7 @@ export default function Finance() {
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button 
-                        onClick={() => handleDeleteRecord(record.id)}
+                        onClick={() => handleDeleteInitiate(record)}
                         className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -536,6 +545,37 @@ export default function Finance() {
             Confirm Changes
           </button>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Remove Transaction"
+        maxWidth="max-w-sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg">
+            <TrendingUp className="w-6 h-6 flex-shrink-0 rotate-180" />
+            <p className="text-xs font-medium">
+              Are you sure you want to remove this <span className="font-bold underline">{recordToDelete?.category}</span> entry for <span className="font-bold">₱{recordToDelete?.amount.toLocaleString()}</span>? This will affect your balance.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="flex-1 px-4 py-2.5 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 rounded shadow-sm transition-colors"
+            >
+              Confirm Removal
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

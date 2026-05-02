@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { MOCK_INVENTORY } from '../constants';
-import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X } from 'lucide-react';
 import { TableActions } from '../components/common/TableActions';
 import { InventoryItem } from '../types';
 import { Modal } from '../components/common/Modal';
 import { motion, AnimatePresence } from 'motion/react';
+import { useInventory } from '../context/InventoryContext';
 
 export default function Inventory() {
-  const [items, setItems] = useState<InventoryItem[]>(MOCK_INVENTORY);
+  const { items, addItem, updateItem, deleteItem } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<Omit<InventoryItem, 'id'>>({
@@ -61,20 +63,23 @@ export default function Inventory() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingItem) {
-      setItems(items.map((i) => (i.id === editingItem.id ? { ...editingItem, ...formData } : i)));
+      updateItem(editingItem.id, formData);
     } else {
-      const newItem: InventoryItem = {
-        ...formData,
-        id: `INV-${String(items.length + 1).padStart(3, '0')}`,
-      };
-      setItems([...items, newItem]);
+      addItem(formData);
     }
     handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setItems(items.filter((i) => i.id !== id));
+  const handleDeleteInitiate = (item: InventoryItem) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      deleteItem(itemToDelete.id);
+      setIsDeleteModalOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -103,7 +108,7 @@ export default function Inventory() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden min-h-[400px] dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+      <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
@@ -164,7 +169,7 @@ export default function Inventory() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button 
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => handleDeleteInitiate(item)}
                             className="p-1 px-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded dark:hover:bg-red-900/20"
                             title="Delete"
                           >
@@ -296,6 +301,37 @@ export default function Inventory() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Confirm Deletion"
+        maxWidth="max-w-sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg">
+            <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+            <p className="text-xs font-medium">
+              Are you sure you want to delete <span className="font-bold">{itemToDelete?.name}</span>? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmDelete}
+              className="flex-1 px-4 py-2.5 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 rounded shadow-sm transition-colors"
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
