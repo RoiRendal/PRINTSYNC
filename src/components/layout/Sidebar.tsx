@@ -10,12 +10,13 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const Sidebar = ({ isCollapsed }: { isCollapsed: boolean }) => {
+export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
   return (
     <aside 
       className={cn(
         "bg-gray-50 text-gray-900 flex flex-col shrink-0 transition-all duration-300 ease-in-out dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
-        isCollapsed ? "w-0 border-r-0" : "w-52 border-r border-gray-200 dark:border-zinc-800"
+        isCollapsed ? "w-0 border-r-0" : "w-52 border-r border-gray-200 dark:border-zinc-800",
+        className
       )}
     >
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
@@ -23,6 +24,7 @@ export const Sidebar = ({ isCollapsed }: { isCollapsed: boolean }) => {
           <NavLink
             key={item.path}
             to={item.path}
+            onClick={onNavigate}
             className={({ isActive }) =>
               cn(
                 "flex items-center gap-2 px-2 py-2 rounded text-sm transition-all duration-200 group relative",

@@ -4,6 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useLocation } from 'react-router-dom';
 import { Bell, Sun, Moon, PanelLeft, ChevronLeft } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 import { NAV_ITEMS, APP_NAME } from '../../constants';
 
@@ -15,6 +21,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
+    // Default to collapsed (isCollapsed = true) on small screens if not explicitly saved
+    if (saved === null && typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return true;
+    }
     return saved === 'true';
   });
 
@@ -23,6 +33,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [isCollapsed]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const closeSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setIsCollapsed(true);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
@@ -80,8 +95,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isCollapsed={isCollapsed} />
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar 
+          isCollapsed={isCollapsed} 
+          onNavigate={closeSidebar}
+          className={cn(
+            "lg:static absolute top-0 left-0 bottom-0 z-50",
+            isCollapsed && "hidden lg:flex"
+          )}
+        />
+        {/* Overlay */}
+        {!isCollapsed && <div className="lg:hidden absolute inset-0 bg-black/50 z-40" onClick={toggleCollapse} />}
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-6 lg:p-8 xl:p-10 scrollbar-hide">
             <div className="mb-6 flex flex-col">
