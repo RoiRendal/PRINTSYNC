@@ -9,6 +9,7 @@ interface InventoryContextType {
   updateItem: (id: string, item: Partial<InventoryItem>) => void;
   deleteItem: (id: string) => void;
   addDesign: (design: Omit<Design, 'id' | 'createdAt'>) => void;
+  updateDesign: (id: string, design: Partial<Design>) => void;
   deleteDesign: (id: string) => void;
 }
 
@@ -47,8 +48,12 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     setDesigns(prev => prev.filter(d => d.id !== id));
   };
 
+  const updateDesign = (id: string, updatedDesign: Partial<Design>) => {
+    setDesigns(prev => prev.map(d => d.id === id ? { ...d, ...updatedDesign } : d));
+  };
+
   return (
-    <InventoryContext.Provider value={{ items, designs, addItem, updateItem, deleteItem, addDesign, deleteDesign }}>
+    <InventoryContext.Provider value={{ items, designs, addItem, updateItem, deleteItem, addDesign, updateDesign, deleteDesign }}>
       {children}
     </InventoryContext.Provider>
   );

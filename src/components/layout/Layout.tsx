@@ -77,7 +77,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4 border-l pl-4 dark:border-zinc-800">
+          <div className="flex items-center gap-4 dark:border-zinc-800">
             <button 
               onClick={toggleTheme}
               className="p-1 text-gray-400 hover:text-gray-900 dark:text-zinc-500 dark:hover:text-zinc-100 transition-colors"
@@ -92,7 +92,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             
             <div 
               id="user-profile-trigger"
-              className="relative flex items-center gap-3 px-2 py-1 border-l dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              className="relative flex items-center gap-3 px-2 py-1 dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
               <div className="flex flex-col text-right hidden sm:block">

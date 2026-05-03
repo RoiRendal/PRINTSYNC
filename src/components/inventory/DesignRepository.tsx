@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye } from 'lucide-react';
+import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } from 'lucide-react';
 import { useInventory } from '../../context/InventoryContext';
 import { Design } from '../../types';
 import { Modal } from '../common/Modal';
 
 export function DesignRepository() {
-  const { designs, addDesign, deleteDesign } = useInventory();
+  const { designs, addDesign, deleteDesign, updateDesign } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
+  const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
   
   const [newDesign, setNewDesign] = useState<Omit<Design, 'id' | 'createdAt'>>({
     name: '',
@@ -17,7 +20,11 @@ export function DesignRepository() {
     imageUrl: '',
     tags: []
   });
+
+  const [editDesignData, setEditDesignData] = useState<Design | null>(null);
+  
   const [tagInput, setTagInput] = useState('');
+  const [editTagInput, setEditTagInput] = useState('');
 
   const filteredDesigns = designs.filter(design => 
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,6 +63,57 @@ export function DesignRepository() {
   const openViewModal = (design: Design) => {
     setSelectedDesign(design);
     setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (design: Design) => {
+    setEditDesignData({ ...design });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editDesignData) {
+      updateDesign(editDesignData.id, {
+        name: editDesignData.name,
+        category: editDesignData.category,
+        imageUrl: editDesignData.imageUrl,
+        tags: editDesignData.tags
+      });
+      setIsEditModalOpen(false);
+      setEditDesignData(null);
+    }
+  };
+
+  const handleEditAddTag = () => {
+    if (editTagInput.trim() && editDesignData) {
+      setEditDesignData(prev => prev ? ({
+        ...prev,
+        tags: [...prev.tags, editTagInput.trim()]
+      }) : null);
+      setEditTagInput('');
+    }
+  };
+
+  const removeEditTag = (tagToRemove: string) => {
+    if (editDesignData) {
+      setEditDesignData(prev => prev ? ({
+        ...prev,
+        tags: prev.tags.filter(tag => tag !== tagToRemove)
+      }) : null);
+    }
+  };
+
+  const confirmDelete = (design: Design) => {
+    setDesignToDelete(design);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (designToDelete) {
+      deleteDesign(designToDelete.id);
+      setIsDeleteConfirmOpen(false);
+      setDesignToDelete(null);
+    }
   };
 
   return (
@@ -118,12 +176,22 @@ export function DesignRepository() {
                       <Calendar className="w-2.5 h-2.5" /> Added on {design.createdAt}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => deleteDesign(design.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex gap-1 items-start">
+                    <button 
+                      onClick={() => openEditModal(design)}
+                      className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 rounded transition-colors"
+                      title="Edit design"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => confirmDelete(design)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors"
+                      title="Delete design"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {design.tags.map(tag => (
@@ -312,6 +380,146 @@ export function DesignRepository() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        title="Edit Design"
+        disableAnimation
+      >
+        {editDesignData && (
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                Design Name
+              </label>
+              <input
+                required
+                type="text"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                value={editDesignData.name}
+                onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                Category
+              </label>
+              <select
+                required
+                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                value={editDesignData.category}
+                onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}
+              >
+                <option value="">Select Category</option>
+                <option value="Logo">Logo</option>
+                <option value="Abstract">Abstract</option>
+                <option value="Typography">Typography</option>
+                <option value="Graphic">Graphic</option>
+                <option value="Pattern">Pattern</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                Image URL
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                value={editDesignData.imageUrl}
+                onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 block">
+                Tags
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="flex-1 px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                  placeholder="Add a tag..."
+                  value={editTagInput}
+                  onChange={(e) => setEditTagInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())}
+                />
+                <button 
+                  type="button"
+                  onClick={handleEditAddTag}
+                  className="px-4 py-2 bg-gray-800 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-black transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1 mt-2">
+                {editDesignData.tags.map(tag => (
+                  <span key={tag} className="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-medium rounded flex items-center gap-1 dark:bg-blue-900/20 dark:text-blue-400">
+                    {tag}
+                    <button type="button" onClick={() => removeEditTag(tag)} className="hover:text-blue-800">
+                      <Plus className="w-3 h-3 rotate-45" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteConfirmOpen}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        title="Confirm Deletion"
+        disableAnimation
+      >
+        <div className="space-y-4 text-center py-2">
+          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
+            <Trash2 className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-zinc-100 italic">Delete Design?</h3>
+            <p className="text-xs text-gray-500 dark:text-zinc-400">
+              Are you sure you want to delete <span className="font-bold text-gray-800 dark:text-zinc-200">"{designToDelete?.name}"</span>? 
+              This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setIsDeleteConfirmOpen(false)}
+              className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              className="flex-1 px-4 py-2 bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-red-700 shadow-sm transition-colors"
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
