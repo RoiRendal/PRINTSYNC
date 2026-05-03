@@ -1,15 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2 } from 'lucide-react';
-import { MOCK_INVENTORY } from '../constants';
 import { TableActions } from '../components/common/TableActions';
 import { InventoryItem, CartItem, Transaction } from '../types';
 import { Modal } from '../components/common/Modal';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFinance } from '../context/FinanceContext';
+import { useInventory } from '../context/InventoryContext';
 
 export default function POS() {
   const { addRecord } = useFinance();
-  const [inventory, setInventory] = useState<InventoryItem[]>(MOCK_INVENTORY);
+  const { items: inventory, updateItem } = useInventory();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,13 +98,12 @@ export default function POS() {
     };
 
     // Reduce stock
-    setInventory(prev => prev.map(item => {
-      const cartItem = cart.find(c => c.id === item.id);
-      if (cartItem) {
-        return { ...item, stock: item.stock - cartItem.qty };
+    cart.forEach(cartItem => {
+      const product = inventory.find(i => i.id === cartItem.id);
+      if (product) {
+        updateItem(product.id, { stock: product.stock - cartItem.qty });
       }
-      return item;
-    }));
+    });
 
     setTransactions([newTransaction, ...transactions]);
 
@@ -223,7 +222,7 @@ export default function POS() {
           </div>
 
           {/* Cart / Checkout */}
-          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300 sticky top-4 self-start">
+          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                 <ShoppingBag className="w-48 h-48" />
              </div>
