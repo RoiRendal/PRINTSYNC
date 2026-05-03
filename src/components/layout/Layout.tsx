@@ -68,7 +68,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
-      <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-30">
+      <header className="relative h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-[60]">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
             <div className="w-5 h-5 bg-blue-500 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
@@ -106,7 +106,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {/* Dropdown Menu */}
               {isProfileOpen && (
                 <div 
-                  className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md shadow-xl py-1 z-50"
+                  className="absolute top-full right-0 mt-1.5 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md shadow-xl py-1 z-[100]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button className="w-full text-left px-4 py-1 text-xs text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
@@ -123,7 +123,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* New Header */}
-      <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-20">
+      <div className="relative h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-[40]">
         <button 
           onClick={toggleCollapse}
           className="p-1.5 mr-4 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
