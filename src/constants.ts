@@ -16,7 +16,7 @@ export const NAV_ITEMS = [
   { label: 'Point of Sale', path: '/pos', icon: ShoppingCart },
   { label: 'Finance', path: '/finance', icon: Banknote },
   { label: 'Analytics', path: '/analytics', icon: BarChart3 },
-  { label: 'User Management', path: '/users', icon: Users },
+  { label: 'Users', path: '/users', icon: Users },
   { label: 'Settings', path: '/settings', icon: SettingsIcon },
 ];
 

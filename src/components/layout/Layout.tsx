@@ -97,14 +97,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             
             <div 
               id="user-profile-trigger"
-              className="relative flex items-center gap-3 pl-2 border-l dark:border-zinc-800 cursor-pointer group"
+              className="relative flex items-center gap-3 px-2 py-1 border-l dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
               <div className="flex flex-col text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none group-hover:text-blue-600 transition-colors">Admin Terminal</p>
+                <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none">Admin Terminal</p>
                 <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">Station 01-MNL</p>
               </div>
-              <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10 group-hover:bg-blue-600 transition-all duration-300">
+              <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
                 AD
               </div>
 
