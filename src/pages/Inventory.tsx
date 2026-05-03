@@ -154,7 +154,6 @@ export default function Inventory() {
                 <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-center">Category</th>
                 <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Stock</th>
                 <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Price</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">Status</th>
                 <th className="py-2.5 px-4 md:px-6 text-right">Actions</th>
               </tr>
             </thead>
@@ -180,17 +179,6 @@ export default function Inventory() {
                         <span className="text-[9px] text-gray-400 ml-1">PCS</span>
                       </td>
                       <td className="py-3 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
-                      <td className="py-3 px-4 md:px-6">
-                        {isLowStock ? (
-                          <span className="flex items-center w-fit gap-1 text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded uppercase dark:bg-red-900/20 dark:text-red-400 dark:border-red-900/30">
-                            <AlertTriangle className="w-2.5 h-2.5" /> Low Stock
-                          </span>
-                        ) : (
-                          <span className="flex items-center w-fit gap-1 text-[9px] font-bold text-green-600 bg-green-50 border border-green-100 px-2 py-0.5 rounded uppercase dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30">
-                            <Check className="w-2.5 h-2.5" /> Optimized
-                          </span>
-                        )}
-                      </td>
                       <td className="py-3 px-4 md:px-6 text-right">
                         <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100">
                           <button 
@@ -214,7 +202,7 @@ export default function Inventory() {
                 })}
               {filteredItems.length === 0 && (
                 <tr>
-                   <td colSpan={7} className="py-20 text-center">
+                   <td colSpan={6} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-2 text-gray-400">
                       <Package className="w-8 h-8 opacity-20" />
                       <p className="text-[10px] uppercase tracking-widest font-bold">No stock items found</p>
