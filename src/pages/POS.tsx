@@ -222,7 +222,7 @@ export default function POS() {
           </div>
 
           {/* Cart / Checkout */}
-          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300">
+          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300 sticky top-4 self-start">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                 <ShoppingBag className="w-48 h-48" />
              </div>
