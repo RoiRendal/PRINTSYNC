@@ -18,6 +18,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentPath = location.pathname;
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -44,6 +45,19 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('#user-profile-trigger')) {
+        setIsProfileOpen(false);
+      }
+    };
+    if (isProfileOpen) {
+      window.addEventListener('click', handleClickOutside);
+    }
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, [isProfileOpen]);
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const closeSidebar = () => {
     if (window.innerWidth < 1024) {
@@ -54,7 +68,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
-      <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-10">
+      <header className="h-12 bg-white border-b border-gray-200 flex items-center justify-between px-6 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-30">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
             <div className="w-5 h-5 bg-blue-500 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
@@ -81,7 +95,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-zinc-900" />
             </button>
             
-            <div className="flex items-center gap-3 pl-2 border-l dark:border-zinc-800 cursor-pointer group">
+            <div 
+              id="user-profile-trigger"
+              className="relative flex items-center gap-3 pl-2 border-l dark:border-zinc-800 cursor-pointer group"
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
               <div className="flex flex-col text-right hidden sm:block">
                 <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none group-hover:text-blue-600 transition-colors">Admin Terminal</p>
                 <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">Station 01-MNL</p>
@@ -89,13 +107,28 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10 group-hover:bg-blue-600 transition-all duration-300">
                 AD
               </div>
+
+              {/* Dropdown Menu */}
+              {isProfileOpen && (
+                <div 
+                  className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-md shadow-xl py-1 z-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button className="w-full text-left px-4 py-2 text-xs text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
+                    User Settings
+                  </button>
+                  <button className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       {/* New Header */}
-      <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-10">
+      <div className="h-10 bg-gray-50 border-b border-gray-200 flex items-center px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-20">
         <button 
           onClick={toggleCollapse}
           className="p-1.5 mr-4 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
