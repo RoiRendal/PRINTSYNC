@@ -171,7 +171,6 @@ export default function POS() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <TableActions exportLabel="Export CSV" />
               </div>
 
               {/* Category Filter */}
