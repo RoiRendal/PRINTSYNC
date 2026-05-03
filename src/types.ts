@@ -47,3 +47,12 @@ export interface Transaction {
   total: number;
   paymentMethod: 'Cash' | 'Card';
 }
+
+export interface Design {
+  id: string;
+  name: string;
+  category: string;
+  imageUrl: string;
+  createdAt: string;
+  tags: string[];
+}

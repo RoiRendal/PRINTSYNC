@@ -56,3 +56,38 @@ export const MOCK_FINANCIAL_RECORDS = [
   { id: 'FIN-007', date: '2024-03-18', type: 'Expense', category: 'Utilities', description: 'Electricity and Water Bill', amount: 1200 },
   { id: 'FIN-008', date: '2024-03-17', type: 'Income', category: 'Sublimation', description: 'Order #ORD-004 - Jersey Uniforms', amount: 32000 },
 ];
+
+export const MOCK_DESIGNS = [
+  { 
+    id: 'DSG-001', 
+    name: 'Vintage Skyline', 
+    category: 'Retro', 
+    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
+    createdAt: '2024-03-01',
+    tags: ['City', 'Vintage', 'Art']
+  },
+  { 
+    id: 'DSG-002', 
+    name: 'Geometric Minimal', 
+    category: 'Abstract', 
+    imageUrl: 'https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=800&auto=format&fit=crop',
+    createdAt: '2024-03-05',
+    tags: ['Simple', 'Modern']
+  },
+  { 
+    id: 'DSG-003', 
+    name: 'Tropical Punch', 
+    category: 'Summer', 
+    imageUrl: 'https://images.unsplash.com/photo-1579546128583-a44a76178a0c?q=80&w=800&auto=format&fit=crop',
+    createdAt: '2024-03-10',
+    tags: ['Bright', 'Floral']
+  },
+  { 
+    id: 'DSG-004', 
+    name: 'Cyberpunk Neon', 
+    category: 'Tech', 
+    imageUrl: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=800&auto=format&fit=crop',
+    createdAt: '2024-03-15',
+    tags: ['Futuristic', 'Neon']
+  },
+];
