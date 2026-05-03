@@ -16,10 +16,16 @@ export interface Order {
   status: 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Shipped';
   date: string;
   amount: number;
+  designId?: string;
+  notes?: string;
+  isCustom?: boolean;
 }
 
 export interface CartItem extends InventoryItem {
   qty: number;
+  isCustom?: boolean;
+  designId?: string;
+  notes?: string;
 }
 
 export interface FinancialRecord {

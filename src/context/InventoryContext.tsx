@@ -1,16 +1,19 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { InventoryItem, Design } from '../types';
-import { MOCK_INVENTORY, MOCK_DESIGNS } from '../constants';
+import { InventoryItem, Design, Order } from '../types';
+import { MOCK_INVENTORY, MOCK_DESIGNS, MOCK_ORDERS } from '../constants';
 
 interface InventoryContextType {
   items: InventoryItem[];
   designs: Design[];
+  orders: Order[];
   addItem: (item: Omit<InventoryItem, 'id'>) => void;
   updateItem: (id: string, item: Partial<InventoryItem>) => void;
   deleteItem: (id: string) => void;
   addDesign: (design: Omit<Design, 'id' | 'createdAt'>) => void;
   updateDesign: (id: string, design: Partial<Design>) => void;
   deleteDesign: (id: string) => void;
+  addOrder: (order: Omit<Order, 'id' | 'date'>) => void;
+  updateOrder: (id: string, order: Partial<Order>) => void;
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
@@ -18,6 +21,7 @@ const InventoryContext = createContext<InventoryContextType | undefined>(undefin
 export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<InventoryItem[]>(MOCK_INVENTORY);
   const [designs, setDesigns] = useState<Design[]>(MOCK_DESIGNS);
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS as Order[]);
 
   const addItem = (newItem: Omit<InventoryItem, 'id'>) => {
     const item: InventoryItem = {
@@ -52,8 +56,34 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
     setDesigns(prev => prev.map(d => d.id === id ? { ...d, ...updatedDesign } : d));
   };
 
+  const addOrder = (newOrder: Omit<Order, 'id' | 'date'>) => {
+    const order: Order = {
+      ...newOrder,
+      id: `ORD-${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      status: newOrder.status || 'Pending'
+    };
+    setOrders(prev => [order, ...prev]);
+  };
+
+  const updateOrder = (id: string, updatedOrder: Partial<Order>) => {
+    setOrders(prev => prev.map(order => order.id === id ? { ...order, ...updatedOrder } : order));
+  };
+
   return (
-    <InventoryContext.Provider value={{ items, designs, addItem, updateItem, deleteItem, addDesign, updateDesign, deleteDesign }}>
+    <InventoryContext.Provider value={{ 
+      items, 
+      designs, 
+      orders,
+      addItem, 
+      updateItem, 
+      deleteItem, 
+      addDesign, 
+      updateDesign, 
+      deleteDesign,
+      addOrder,
+      updateOrder
+    }}>
       {children}
     </InventoryContext.Provider>
   );

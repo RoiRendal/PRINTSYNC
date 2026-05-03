@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../components/common/TableActions';
-import { InventoryItem, CartItem, Transaction } from '../types';
+import { InventoryItem, CartItem, Transaction, Order } from '../types';
 import { Modal } from '../components/common/Modal';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFinance } from '../context/FinanceContext';
@@ -9,14 +9,21 @@ import { useInventory } from '../context/InventoryContext';
 
 export default function POS() {
   const { addRecord } = useFinance();
-  const { items: inventory, updateItem } = useInventory();
+  const { items: inventory, updateItem, designs, addOrder } = useInventory();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'pos' | 'history'>('pos');
+  const [posMode, setPosMode] = useState<'retail' | 'custom'>('retail');
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  
+  // Custom Order State
+  const [customerName, setCustomerName] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
+  const [currentItemToDesign, setCurrentItemToDesign] = useState<string | null>(null);
   
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
@@ -43,31 +50,31 @@ export default function POS() {
   const addToCart = (product: InventoryItem) => {
     if (product.stock <= 0) return;
     
-    const existing = cart.find(item => item.id === product.id);
-    if (existing) {
+    const existing = cart.find(item => item.id === product.id && !item.isCustom);
+    if (existing && posMode === 'retail') {
       if (existing.qty >= product.stock) return;
-      setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
+      setCart(cart.map(item => (item.id === product.id && !item.isCustom) ? { ...item, qty: item.qty + 1 } : item));
     } else {
-      setCart([...cart, { ...product, qty: 1 }]);
+      setCart([...cart, { ...product, qty: 1, isCustom: posMode === 'custom' }]);
     }
   };
 
-  const removeFromCart = (id: string) => {
-    setCart(cart.filter(item => item.id !== id));
+  const removeFromCart = (cartIndex: number) => {
+    setCart(cart.filter((_, idx) => idx !== cartIndex));
   };
 
-  const updateQty = (id: string, delta: number) => {
-    const item = cart.find(i => i.id === id);
+  const updateQty = (cartIndex: number, delta: number) => {
+    const item = cart[cartIndex];
     if (!item) return;
 
     if (item.qty === 1 && delta === -1) {
-      removeFromCart(id);
+      removeFromCart(cartIndex);
       return;
     }
 
-    setCart(cart.map(i => {
-      if (i.id === id) {
-        const product = inventory.find(inv => inv.id === id);
+    setCart(cart.map((i, idx) => {
+      if (idx === cartIndex) {
+        const product = inventory.find(inv => inv.id === i.id);
         if (!product) return i;
         
         const newQty = Math.max(1, Math.min(i.qty + delta, product.stock));
@@ -75,6 +82,20 @@ export default function POS() {
       }
       return i;
     }));
+  };
+
+  const openDesignSelector = (cartIndex: number) => {
+    setCurrentItemToDesign(cartIndex.toString());
+    setIsDesignModalOpen(true);
+  };
+
+  const selectDesignForItem = (designId: string) => {
+    if (currentItemToDesign !== null) {
+      const idx = parseInt(currentItemToDesign);
+      setCart(cart.map((item, i) => i === idx ? { ...item, designId } : item));
+      setIsDesignModalOpen(false);
+      setCurrentItemToDesign(null);
+    }
   };
 
   const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
@@ -87,37 +108,83 @@ export default function POS() {
   };
 
   const finalizeTransaction = () => {
-    const newTransaction: Transaction = {
-      id: `TRX-${Date.now()}`,
-      date: new Date().toLocaleString(),
-      items: [...cart],
-      subtotal,
-      tax,
-      total,
-      paymentMethod
-    };
+    if (cart.length === 0) return;
+    if (posMode === 'custom' && !customerName) {
+      alert('Please enter customer name for custom orders.');
+      return;
+    }
 
-    // Reduce stock
-    cart.forEach(cartItem => {
-      const product = inventory.find(i => i.id === cartItem.id);
-      if (product) {
-        updateItem(product.id, { stock: product.stock - cartItem.qty });
-      }
-    });
+    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    const tax = subtotal * 0.12;
+    const total = subtotal + tax;
 
-    setTransactions([newTransaction, ...transactions]);
+    if (posMode === 'retail') {
+      const newTransaction: Transaction = {
+        id: `TRX-${Date.now()}`,
+        date: new Date().toLocaleString(),
+        items: [...cart],
+        subtotal,
+        tax,
+        total,
+        paymentMethod
+      };
 
-    // Add to Financial Ledger
-    addRecord({
-      date: new Date().toISOString().split('T')[0],
-      type: 'Income',
-      category: 'POS Sale',
-      description: `Sales from Transaction ${newTransaction.id} (${cart.length} items)`,
-      amount: total
-    });
+      // Reduce stock
+      cart.forEach(cartItem => {
+        const product = inventory.find(i => i.id === cartItem.id);
+        if (product) {
+          updateItem(product.id, { stock: product.stock - cartItem.qty });
+        }
+      });
+
+      setTransactions([newTransaction, ...transactions]);
+
+      // Add to Financial Ledger
+      addRecord({
+        date: new Date().toISOString().split('T')[0],
+        type: 'Income',
+        category: 'POS Retail',
+        description: `Retail Sales: TRX ${newTransaction.id}`,
+        amount: total
+      });
+    } else {
+      // Create separate orders for each custom item or one grouped order?
+      // Printing services usually track by "job". Let's create one order with multiple lines or multiple orders.
+      // For simplicity in the current UI, we'll create one order record that summarizes the items.
+      const newOrder: Omit<Order, 'id' | 'date'> = {
+        customer: customerName,
+        item: cart.map(i => i.name).join(', '),
+        quantity: cart.reduce((acc, i) => acc + i.qty, 0),
+        amount: total,
+        status: 'Designing',
+        isCustom: true,
+        notes: orderNotes,
+        designId: cart[0]?.designId // Taking the first one as primary for the list view
+      };
+
+      addOrder(newOrder);
+
+      // Reduce stock of blanks
+      cart.forEach(cartItem => {
+        const product = inventory.find(i => i.id === cartItem.id);
+        if (product) {
+          updateItem(product.id, { stock: product.stock - cartItem.qty });
+        }
+      });
+
+      addRecord({
+        date: new Date().toISOString().split('T')[0],
+        type: 'Income',
+        category: 'Custom Order',
+        description: `Downpayment / Order: ${customerName}`,
+        amount: total
+      });
+    }
 
     setCheckoutSuccess(true);
     setCart([]);
+    setCustomerName('');
+    setOrderNotes('');
     
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
@@ -140,14 +207,35 @@ export default function POS() {
             onClick={() => setView('pos')}
             className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${view === 'pos' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
-            <ShoppingBag className="w-3.5 h-3.5" /> Point of Sale
+            <ShoppingBag className="w-3.5 h-3.5" /> Terminal
           </button>
           <button 
             onClick={() => setView('history')}
             className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${view === 'history' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
-            <History className="w-3.5 h-3.5" /> Transaction History
+            <History className="w-3.5 h-3.5" /> History
           </button>
+        </div>
+        <div className="flex items-center gap-2">
+            <span className="text-[9px] font-bold uppercase text-gray-400 mr-2">Mode:</span>
+            <button 
+              onClick={() => {
+                setPosMode('retail');
+                setCart([]);
+              }}
+              className={`px-3 py-1 rounded-l border-y border-l transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'retail' ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
+            >
+              Retail
+            </button>
+            <button 
+              onClick={() => {
+                setPosMode('custom');
+                setCart([]);
+              }}
+              className={`px-3 py-1 rounded-r border transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'custom' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
+            >
+              Custom
+            </button>
         </div>
         <div className="text-[9px] font-mono text-gray-400 uppercase tracking-widest px-4">
           Terminal ID: AIS-POS-01
@@ -227,37 +315,92 @@ export default function POS() {
                 <ShoppingBag className="w-48 h-48" />
              </div>
 
-             <div className="p-4 border-b border-gray-100 flex justify-between items-center z-10 dark:border-zinc-800">
-                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800 dark:text-zinc-200">Transaction Cart</h2>
-                <span className="text-[9px] font-mono bg-blue-100 text-blue-700 border border-blue-200 px-2 py-0.5 rounded dark:bg-blue-600/20 dark:text-blue-400 dark:border-blue-600/30">{cart.length} ITEMS</span>
+              <div className="p-4 border-b border-gray-100 flex justify-between items-center z-10 dark:border-zinc-800">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800 dark:text-zinc-200">
+                  {posMode === 'retail' ? 'Transaction Cart' : 'Custom Order Builder'}
+                </h2>
+                <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${posMode === 'retail' ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-600/20 dark:text-blue-400' : 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-600/20 dark:text-indigo-400'}`}>
+                  {cart.length} ITEMS
+                </span>
              </div>
 
              <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3 z-10 scrollbar-hide">
+                {posMode === 'custom' && (
+                  <div className="space-y-3 mb-4 bg-indigo-50/50 p-3 rounded-md border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30">
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-bold uppercase tracking-widest text-indigo-500">Client Name</label>
+                        <div className="relative">
+                           <User className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-indigo-400" />
+                           <input 
+                              type="text" 
+                              placeholder="Required for custom orders..."
+                              className="w-full pl-7 pr-3 py-1.5 bg-white border border-indigo-200 rounded text-[10px] focus:outline-none focus:border-indigo-500 dark:bg-zinc-800 dark:border-zinc-700"
+                              value={customerName}
+                              onChange={(e) => setCustomerName(e.target.value)}
+                           />
+                        </div>
+                     </div>
+                     <div className="space-y-1">
+                        <label className="text-[8px] font-bold uppercase tracking-widest text-indigo-500">Production Notes</label>
+                        <div className="relative">
+                           <FileText className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-indigo-400" />
+                           <input 
+                              type="text" 
+                              placeholder="Sizing, placement, deadline..."
+                              className="w-full pl-7 pr-3 py-1.5 bg-white border border-indigo-200 rounded text-[10px] focus:outline-none focus:border-indigo-500 dark:bg-zinc-800 dark:border-zinc-700"
+                              value={orderNotes}
+                              onChange={(e) => setOrderNotes(e.target.value)}
+                           />
+                        </div>
+                     </div>
+                  </div>
+                )}
+
                 {cart.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-50 space-y-3 p-10 text-center">
                      <ShoppingBag className="w-6 h-6 mx-auto" />
-                     <p className="text-[9px] uppercase tracking-widest font-mono">Cart holds no items</p>
+                     <p className="text-[9px] uppercase tracking-widest font-mono italic">Build list to proceed</p>
                   </div>
                 ) : (
-                  cart.map(item => (
-                    <div key={item.id} className="flex gap-3 bg-gray-50 p-2 rounded-sm border border-gray-100 group transition-all hover:bg-gray-100 dark:bg-zinc-800/40 dark:border-zinc-800 dark:hover:bg-zinc-800/60">
-                       <div className="w-10 h-10 bg-gray-200 flex-shrink-0 rounded-sm dark:bg-zinc-800" />
-                       <div className="flex-1 flex flex-col min-w-0">
-                          <div className="flex justify-between items-start gap-2">
-                             <span className="text-[10px] font-bold uppercase truncate leading-tight text-gray-900 dark:text-zinc-100">{item.name}</span>
-                             <button onClick={() => removeFromCart(item.id)} className="text-gray-400 hover:text-red-500">
-                               <Trash2 className="w-3 h-3" />
-                             </button>
+                  cart.map((item, idx) => (
+                    <div key={`${item.id}-${idx}`} className={`flex flex-col gap-2 p-2 rounded-sm border transition-all ${posMode === 'custom' ? 'bg-white border-indigo-100 hover:border-indigo-300 dark:bg-zinc-800/40 dark:border-indigo-900/30' : 'bg-gray-50 border-gray-100 hover:bg-gray-100 dark:bg-zinc-800/40 dark:border-zinc-800'}`}>
+                       <div className="flex gap-3">
+                          <div className="w-10 h-10 bg-gray-200 flex-shrink-0 rounded-sm dark:bg-zinc-800 overflow-hidden">
+                             {item.designId && <img src={designs.find(d => d.id === item.designId)?.imageUrl} className="w-full h-full object-cover" />}
                           </div>
-                          <div className="flex justify-between items-end mt-2">
-                             <div className="flex bg-gray-200 rounded overflow-hidden dark:bg-zinc-900">
-                                <button onClick={() => updateQty(item.id, -1)} className="p-1 hover:bg-gray-300 hover:text-gray-900 transition-colors text-gray-600 dark:hover:bg-zinc-700 dark:text-zinc-500"><Minus className="w-2.5 h-2.5" /></button>
-                                <span className="w-6 text-center text-[10px] font-mono py-1 select-none text-gray-900 dark:text-zinc-200">{item.qty}</span>
-                                <button onClick={() => updateQty(item.id, 1)} className="p-1 hover:bg-gray-300 hover:text-gray-900 transition-colors text-gray-600 dark:hover:bg-zinc-700 dark:text-zinc-500"><Plus className="w-2.5 h-2.5" /></button>
+                          <div className="flex-1 flex flex-col min-w-0">
+                             <div className="flex justify-between items-start gap-2">
+                                <span className="text-[10px] font-bold uppercase truncate leading-tight text-gray-900 dark:text-zinc-100">{item.name}</span>
+                                <button onClick={() => removeFromCart(idx)} className="text-gray-400 hover:text-red-500">
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
                              </div>
-                             <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">₱{(item.price * item.qty).toFixed(2)}</span>
+                             <div className="flex justify-between items-end mt-1">
+                                <div className="flex bg-gray-200 rounded overflow-hidden dark:bg-zinc-900">
+                                   <button onClick={() => updateQty(idx, -1)} className="p-1 hover:bg-gray-300 transition-colors dark:hover:bg-zinc-700"><Minus className="w-2.5 h-2.5" /></button>
+                                   <span className="w-6 text-center text-[10px] font-mono py-1 select-none">{item.qty}</span>
+                                   <button onClick={() => updateQty(idx, 1)} className="p-1 hover:bg-gray-300 transition-colors dark:hover:bg-zinc-700"><Plus className="w-2.5 h-2.5" /></button>
+                                </div>
+                                <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">₱{(item.price * item.qty).toFixed(2)}</span>
+                             </div>
                           </div>
                        </div>
+                       {posMode === 'custom' && (
+                         <div className="pt-2 mt-1 border-t border-indigo-50 dark:border-zinc-700 flex gap-2">
+                            <button 
+                              onClick={() => openDesignSelector(idx)}
+                              className={`flex-1 py-1 px-2 rounded text-[8px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 ${item.designId ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50'}`}
+                            >
+                               {item.designId ? <CheckCircle2 className="w-2.5 h-2.5" /> : <Edit className="w-2.5 h-2.5" />}
+                               {item.designId ? 'Change Design' : 'Select Design'}
+                            </button>
+                            {item.designId && (
+                               <div className="px-2 py-1 bg-gray-100 dark:bg-zinc-900 rounded text-[7px] font-mono flex items-center max-w-[100px] truncate">
+                                  {designs.find(d => d.id === item.designId)?.name}
+                               </div>
+                            )}
+                         </div>
+                       )}
                     </div>
                   ))
                 )}
@@ -274,23 +417,30 @@ export default function POS() {
                       <span className="text-gray-900 dark:text-zinc-300">₱{tax.toFixed(2)}</span>
                    </div>
                    <div className="flex justify-between text-xl font-bold tracking-tight text-gray-900 border-t border-gray-200 pt-2 mt-1 dark:border-zinc-800 dark:text-zinc-100">
-                      <span>TOTAL</span>
-                      <span className="font-mono text-blue-600 dark:text-blue-400">₱{total.toFixed(2)}</span>
+                      <span>{posMode === 'retail' ? 'TOTAL' : 'ORDER VAL'}</span>
+                      <span className={`font-mono ${posMode === 'retail' ? 'text-blue-600 dark:text-blue-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                        ₱{total.toFixed(2)}
+                      </span>
                    </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 mt-2">
                    <button onClick={() => setCart([])} className="py-2.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold uppercase tracking-widest rounded transition-all text-gray-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300">
-                      Empty
+                      Reset
                    </button>
                    <button 
                     onClick={handleCheckout}
-                    disabled={cart.length === 0}
-                    className="py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={cart.length === 0 || (posMode === 'custom' && !customerName)}
+                    className={`py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${posMode === 'retail' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-500/20'}`}
                    >
-                      <CreditCard className="w-3 h-3" /> Pay Now
+                      <CreditCard className="w-3 h-3" /> {posMode === 'retail' ? 'Quick Pay' : 'Create Order'}
                    </button>
                 </div>
+                {posMode === 'custom' && !customerName && cart.length > 0 && (
+                  <div className="flex items-center gap-1.5 text-amber-500 text-[8px] font-bold uppercase justify-center italic">
+                    <AlertCircle className="w-2.5 h-2.5" /> Client Name Required
+                  </div>
+                )}
              </div>
           </div>
         </div>
@@ -447,6 +597,40 @@ export default function POS() {
             </button>
           </div>
         )}
+      </Modal>
+
+      {/* Design Selector Modal */}
+      <Modal 
+        isOpen={isDesignModalOpen} 
+        onClose={() => setIsDesignModalOpen(false)} 
+        title="Select Design Template"
+        maxWidth="max-w-4xl"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+            {designs.map(design => (
+              <button 
+                key={design.id}
+                onClick={() => selectDesignForItem(design.id)}
+                className="group border border-gray-200 rounded overflow-hidden hover:border-indigo-500 transition-all text-left bg-white dark:bg-zinc-800 dark:border-zinc-700"
+              >
+                <div className="aspect-square bg-gray-100 dark:bg-zinc-900 border-b border-gray-100 dark:border-zinc-800">
+                   <img src={design.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                </div>
+                <div className="p-2">
+                   <p className="text-[10px] font-bold uppercase truncate dark:text-zinc-200">{design.name}</p>
+                   <p className="text-[8px] text-gray-500 uppercase tracking-widest">{design.category}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          {designs.length === 0 && (
+            <div className="py-20 text-center text-gray-400">
+               <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-10" />
+               <p className="text-xs uppercase font-bold tracking-widest italic">No designs found in repository</p>
+            </div>
+          )}
+        </div>
       </Modal>
 
       {/* Checkout Modal */}
