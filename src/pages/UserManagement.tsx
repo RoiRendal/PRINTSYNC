@@ -22,7 +22,7 @@ export default function UserManagement() {
             className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-blue-500 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
           />
         </div>
-        <TableActions exportLabel="Export Staff List" />
+        <TableActions />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 xl:gap-8">

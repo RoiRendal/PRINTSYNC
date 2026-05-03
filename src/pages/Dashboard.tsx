@@ -37,7 +37,7 @@ export default function Dashboard() {
           <div className="p-4 md:p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Current Production Queue</h3>
             <div className="flex flex-wrap items-center gap-2">
-              <TableActions exportLabel="Export Queue" />
+              <TableActions />
               <button className="text-[10px] whitespace-nowrap shrink-0 bg-gray-100 px-3 py-1.5 rounded border border-gray-300 font-bold uppercase hover:bg-gray-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">View All Jobs</button>
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function Dashboard() {
         <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-5 xl:p-8 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
           <div className="flex flex-wrap justify-between items-center gap-3 border-b border-gray-100 pb-4 mb-5 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap text-gray-900 dark:text-zinc-200">Stock Levels</h3>
-            <TableActions exportLabel="Export" />
+            <TableActions />
           </div>
           
           <div className="space-y-5 flex-1">

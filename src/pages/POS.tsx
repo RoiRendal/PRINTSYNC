@@ -311,7 +311,7 @@ export default function POS() {
                 />
               </div>
             </div>
-            <TableActions exportLabel="Export History" />
+            <TableActions />
           </div>
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left text-xs">

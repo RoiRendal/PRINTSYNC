@@ -11,7 +11,7 @@ export default function Analytics() {
           <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-500">Business Intelligence Hub</h2>
           <span className="text-[9px] text-gray-400 dark:text-zinc-600">Data synthesized from last 30 operational days</span>
         </div>
-        <TableActions exportLabel="Export Intelligence Report" />
+        <TableActions />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">

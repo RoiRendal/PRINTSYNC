@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { RefreshCcw, Download, Check } from 'lucide-react';
+import { Tooltip } from './Tooltip';
 
 interface TableActionsProps {
   onRefresh?: () => void;
   onExport?: () => void;
-  exportLabel?: string;
 }
 
 export const TableActions: React.FC<TableActionsProps> = ({ 
   onRefresh, 
   onExport, 
-  exportLabel = "Export Data" 
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -44,28 +43,31 @@ export const TableActions: React.FC<TableActionsProps> = ({
 
   return (
     <div className="flex flex-wrap gap-2 items-center">
-      <button 
-        onClick={handleRefresh}
-        disabled={isRefreshing}
-        className="flex whitespace-nowrap shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
-        title="Refresh data"
-      >
-        <RefreshCcw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
-        {isRefreshing ? 'Refreshing...' : 'Refresh'}
-      </button>
-      <button 
-        onClick={handleExport}
-        disabled={isExporting}
-        className="flex whitespace-nowrap shrink-0 items-center justify-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
-        title={exportLabel}
-      >
-        {isExporting ? (
-          <Check className="w-3 h-3" />
-        ) : (
-          <Download className="w-3 h-3" />
-        )}
-        {isExporting ? 'Exported' : exportLabel}
-      </button>
+      <Tooltip content="Refresh Data">
+        <button 
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="flex whitespace-nowrap shrink-0 items-center justify-center p-2 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
+          aria-label="Refresh Data"
+        >
+          <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </button>
+      </Tooltip>
+      
+      <Tooltip content="Export Data">
+        <button 
+          onClick={handleExport}
+          disabled={isExporting}
+          className="flex whitespace-nowrap shrink-0 items-center justify-center p-2 text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
+          aria-label="Export Data"
+        >
+          {isExporting ? (
+            <Check className="w-4 h-4" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
+        </button>
+      </Tooltip>
     </div>
   );
 };

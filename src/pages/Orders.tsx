@@ -42,7 +42,7 @@ export default function Orders() {
                   className="w-full pl-9 pr-4 py-1.5 md:py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-blue-500 shadow-inner dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
                />
             </div>
-            <TableActions exportLabel="Export Dispatch Queue" />
+            <TableActions />
             <button className="px-4 py-1.5 md:py-2 bg-white border border-gray-200 text-[10px] font-bold uppercase tracking-wider rounded hover:bg-gray-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">
                Search
             </button>

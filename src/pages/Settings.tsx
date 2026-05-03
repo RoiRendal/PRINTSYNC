@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Shield, Database, Download, Check, History, Bell, Cloud, Palette } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
+import { Tooltip } from '../components/common/Tooltip';
+
 export default function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -51,18 +53,20 @@ export default function Settings() {
               <p className="text-xs text-gray-500 dark:text-zinc-500">Manage system database and archival exports</p>
             </div>
           </div>
-          <button 
-            onClick={handleExportArchive}
-            disabled={isExporting}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded text-xs font-bold uppercase tracking-widest transition-all ${
-              isExporting 
-                ? 'bg-green-600 text-white' 
-                : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500'
-            }`}
-          >
-            {isExporting ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
-            {isExporting ? 'Archive Generated' : 'Export Data Archive'}
-          </button>
+          <Tooltip content="Export Data">
+            <button 
+              onClick={handleExportArchive}
+              disabled={isExporting}
+              className={`flex items-center justify-center p-2.5 rounded transition-all ${
+                isExporting 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-500'
+              }`}
+              aria-label="Export Data"
+            >
+              {isExporting ? <Check className="w-5 h-5" /> : <Download className="w-5 h-5" />}
+            </button>
+          </Tooltip>
         </div>
         
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/30 dark:bg-zinc-900/50">

@@ -133,7 +133,7 @@ export default function Inventory() {
                 />
               </div>
               <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-                <TableActions exportLabel="Export Inventory" />
+                <TableActions />
                 <button 
                   onClick={() => handleOpenModal()}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm ml-0 md:ml-2"
