@@ -77,11 +77,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center gap-2 px-3 py-0.5 bg-green-50 text-green-700 rounded-full border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/30">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-[9px] font-bold uppercase tracking-wider">Live Production</span>
-          </div>
-
           <div className="flex items-center gap-4 border-l pl-4 dark:border-zinc-800">
             <button 
               onClick={toggleTheme}
