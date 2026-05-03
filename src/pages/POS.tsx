@@ -391,28 +391,29 @@ export default function POS() {
         isOpen={!!selectedTransaction} 
         onClose={() => setSelectedTransaction(null)} 
         title="Transaction Details"
+        maxWidth="max-w-sm"
       >
         {selectedTransaction && (
-          <div className="space-y-4 max-h-[75vh] overflow-y-auto pr-1 scrollbar-hide">
-            <div className="flex justify-between items-start border-b border-gray-100 dark:border-zinc-800 pb-3">
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1 scrollbar-hide">
+            <div className="flex justify-between items-start border-b border-gray-100 dark:border-zinc-800 pb-2">
               <div className="space-y-0.5">
-                <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400">Reference ID</p>
-                <p className="text-xs font-mono font-bold">#{selectedTransaction.id}</p>
+                <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400">Reference ID</p>
+                <p className="text-[10px] font-mono font-bold">#{selectedTransaction.id}</p>
               </div>
               <div className="text-right space-y-0.5">
-                <p className="text-[8px] font-bold uppercase tracking-widest text-gray-400">Date & Time</p>
-                <p className="text-[10px] font-medium">{selectedTransaction.date}</p>
+                <p className="text-[7px] font-bold uppercase tracking-widest text-gray-400">Date & Time</p>
+                <p className="text-[9px] font-medium">{selectedTransaction.date}</p>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-[8px] font-bold uppercase tracking-widest text-gray-500">Items Purchased</p>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-hide">
+            <div className="space-y-1.5">
+              <p className="text-[7px] font-bold uppercase tracking-widest text-gray-500">Items Purchased</p>
+              <div className="space-y-1 max-h-32 overflow-y-auto pr-1 scrollbar-hide">
                 {selectedTransaction.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-[10px] bg-gray-50 dark:bg-zinc-800/50 p-2 rounded">
+                  <div key={idx} className="flex justify-between items-center text-[9px] bg-gray-50 dark:bg-zinc-800/50 p-1.5 rounded">
                     <div className="flex-1 min-w-0 pr-2">
                       <p className="font-bold text-gray-800 dark:text-zinc-200 truncate">{item.name}</p>
-                      <p className="text-[8px] text-gray-500">{item.qty} x ₱{item.price.toFixed(2)}</p>
+                      <p className="text-[7px] text-gray-500">{item.qty} x ₱{item.price.toFixed(2)}</p>
                     </div>
                     <p className="font-mono font-bold shrink-0">₱{(item.price * item.qty).toFixed(2)}</p>
                   </div>
@@ -420,28 +421,28 @@ export default function POS() {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-gray-100 dark:border-zinc-800 space-y-1.5">
-              <div className="flex justify-between text-[10px] text-gray-500">
+            <div className="pt-2 border-t border-gray-100 dark:border-zinc-800 space-y-1">
+              <div className="flex justify-between text-[9px] text-gray-500">
                 <span>Subtotal</span>
                 <span className="font-mono">₱{selectedTransaction.subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-[10px] text-gray-500">
+              <div className="flex justify-between text-[9px] text-gray-500">
                 <span>VAT (12%)</span>
                 <span className="font-mono">₱{selectedTransaction.tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-gray-50 dark:border-zinc-800 mt-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest">Total Amount</span>
-                <span className="text-base font-bold font-mono text-blue-600 dark:text-blue-400">₱{selectedTransaction.total.toFixed(2)}</span>
+                <span className="text-[9px] font-bold uppercase tracking-widest">Total Amount</span>
+                <span className="text-sm font-bold font-mono text-blue-600 dark:text-blue-400">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 p-2 rounded mt-2">
-                <span className="text-[8px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400">Payment</span>
-                <span className="text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 bg-blue-600 text-white rounded">{selectedTransaction.paymentMethod}</span>
+              <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/10 p-1.5 rounded mt-1.5">
+                <span className="text-[7px] font-bold uppercase tracking-widest text-blue-700 dark:text-blue-400">Payment</span>
+                <span className="text-[7px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-blue-600 text-white rounded">{selectedTransaction.paymentMethod}</span>
               </div>
             </div>
 
             <button
               onClick={() => setSelectedTransaction(null)}
-              className="w-full py-2 bg-slate-900 dark:bg-white dark:text-black text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all hover:bg-slate-800 dark:hover:bg-gray-200 mt-2"
+              className="w-full py-1.5 bg-slate-900 dark:bg-white dark:text-black text-white text-[9px] font-bold uppercase tracking-widest rounded transition-all hover:bg-slate-800 dark:hover:bg-gray-200 mt-1"
             >
               Done
             </button>
