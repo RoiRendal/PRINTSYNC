@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 import { useInventory } from '../../context/InventoryContext';
 import { Design } from '../../types';
 import { Modal } from '../common/Modal';
@@ -81,14 +80,9 @@ export function DesignRepository() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <AnimatePresence mode="popLayout">
           {filteredDesigns.map((design) => (
-            <motion.div
-              layout
+            <div
               key={design.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
               className="group bg-white border border-gray-200 rounded overflow-hidden shadow-sm hover:shadow-md transition-all dark:bg-zinc-900 dark:border-zinc-800"
             >
               <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 overflow-hidden">
@@ -142,9 +136,8 @@ export function DesignRepository() {
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
       </div>
 
       {filteredDesigns.length === 0 && (

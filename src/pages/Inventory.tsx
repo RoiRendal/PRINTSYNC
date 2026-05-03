@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Image as ImageIcon, LayoutGrid, List } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Image as ImageIcon } from 'lucide-react';
 import { TableActions } from '../components/common/TableActions';
 import { InventoryItem } from '../types';
 import { Modal } from '../components/common/Modal';
-import { motion, AnimatePresence } from 'motion/react';
 import { useInventory } from '../context/InventoryContext';
 import { DesignRepository } from '../components/inventory/DesignRepository';
 
@@ -119,15 +118,9 @@ export default function Inventory() {
         </div>
       </div>
 
-      <AnimatePresence mode="wait">
+      <div className="view-container">
         {viewMode === 'inventory' ? (
-          <motion.div
-            key="inventory-view"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="space-y-5"
-          >
+          <div key="inventory-view" className="space-y-5">
             <div className="flex gap-4 items-center bg-white p-3 md:p-4 xl:p-6 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
@@ -166,15 +159,11 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-              <AnimatePresence initial={false}>
                 {filteredItems.map((item) => {
                   const isLowStock = item.stock <= item.reorderLevel;
                   return (
-                    <motion.tr 
+                    <tr 
                       key={item.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
                       className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
                     >
                       <td className="py-3 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
@@ -220,10 +209,9 @@ export default function Inventory() {
                           </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   );
                 })}
-              </AnimatePresence>
               {filteredItems.length === 0 && (
                 <tr>
                    <td colSpan={7} className="py-20 text-center">
@@ -245,18 +233,13 @@ export default function Inventory() {
            <span className="font-bold opacity-30 tracking-normal italic">PRINTSYNC CLOUD SECURE SYNCED</span>
         </div>
       </div>
-    </motion.div>
+    </div>
   ) : (
-    <motion.div
-      key="designs-view"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-    >
+    <div key="designs-view">
       <DesignRepository />
-    </motion.div>
+    </div>
   )}
-</AnimatePresence>
+</div>
 
       <Modal 
         isOpen={isModalOpen} 
