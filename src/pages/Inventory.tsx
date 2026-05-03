@@ -136,7 +136,7 @@ export default function Inventory() {
                 <TableActions exportLabel="Export Inventory" />
                 <button 
                   onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm transition-all ml-0 md:ml-2"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm ml-0 md:ml-2"
                   id="add-stock-btn"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Stock
@@ -192,7 +192,7 @@ export default function Inventory() {
                         )}
                       </td>
                       <td className="py-3 px-4 md:px-6 text-right">
-                        <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                        <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100">
                           <button 
                             onClick={() => handleOpenModal(item)}
                             className="p-1 px-2 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded dark:hover:bg-blue-900/20"
@@ -245,6 +245,7 @@ export default function Inventory() {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         title={editingItem ? 'Edit Stock Item' : 'Add New Stock'}
+        disableAnimation
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
@@ -347,6 +348,7 @@ export default function Inventory() {
         onClose={() => setIsDeleteModalOpen(false)}
         title="Confirm Deletion"
         maxWidth="max-w-sm"
+        disableAnimation
       >
         <div className="space-y-4">
           <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg">

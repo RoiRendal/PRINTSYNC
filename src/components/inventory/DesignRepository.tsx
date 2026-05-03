@@ -73,7 +73,7 @@ export function DesignRepository() {
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm transition-all whitespace-nowrap"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm whitespace-nowrap"
         >
           <Plus className="w-3.5 h-3.5" /> Upload Design
         </button>
@@ -83,15 +83,15 @@ export function DesignRepository() {
           {filteredDesigns.map((design) => (
             <div
               key={design.id}
-              className="group bg-white border border-gray-200 rounded overflow-hidden shadow-sm hover:shadow-md transition-all dark:bg-zinc-900 dark:border-zinc-800"
+              className="group bg-white border border-gray-200 rounded overflow-hidden shadow-sm hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800"
             >
               <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 overflow-hidden">
                 <img 
                   src={design.imageUrl} 
                   alt={design.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
                   <button 
                     onClick={() => openViewModal(design)}
                     className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-colors"
@@ -157,6 +157,7 @@ export function DesignRepository() {
         isOpen={isAddModalOpen} 
         onClose={() => setIsAddModalOpen(false)} 
         title="Upload New Design"
+        disableAnimation
       >
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="space-y-1">
@@ -262,6 +263,7 @@ export function DesignRepository() {
         onClose={() => setIsViewModalOpen(false)}
         title={selectedDesign?.name || 'Design View'}
         maxWidth="max-w-2xl"
+        disableAnimation
       >
         {selectedDesign && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
