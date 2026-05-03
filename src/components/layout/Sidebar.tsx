@@ -15,11 +15,11 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
     <aside 
       className={cn(
         "bg-gray-50 text-gray-900 flex flex-col shrink-0 transition-all duration-300 ease-in-out dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
-        isCollapsed ? "w-0 border-r-0" : "w-52 border-r border-gray-200 dark:border-zinc-800",
+        isCollapsed ? "w-0 border-r-0" : "w-fit min-w-[3.5rem] border-r border-gray-200 dark:border-zinc-800",
         className
       )}
     >
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.path}
