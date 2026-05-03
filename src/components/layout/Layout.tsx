@@ -32,6 +32,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('sidebar-collapsed', String(isCollapsed));
   }, [isCollapsed]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const closeSidebar = () => {
     if (window.innerWidth < 1024) {
