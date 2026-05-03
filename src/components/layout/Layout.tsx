@@ -148,11 +148,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {!isCollapsed && <div className="lg:hidden absolute inset-0 bg-black/50 z-40" onClick={toggleCollapse} />}
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-6 lg:p-8 xl:p-10 scrollbar-hide">
-            <div className="mb-6 flex flex-col">
-              <div className="text-[11px] text-gray-400 font-mono mt-1 dark:text-zinc-500 uppercase tracking-widest">
-                System Log • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-              </div>
-            </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={location.pathname}
