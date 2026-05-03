@@ -3,6 +3,7 @@ import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Ima
 import { TableActions } from '../components/common/TableActions';
 import { InventoryItem } from '../types';
 import { Modal } from '../components/common/Modal';
+import { Tooltip } from '../components/common/Tooltip';
 import { useInventory } from '../context/InventoryContext';
 import { DesignRepository } from '../components/inventory/DesignRepository';
 
@@ -181,20 +182,22 @@ export default function Inventory() {
                       <td className="py-3 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
                       <td className="py-3 px-4 md:px-6 text-right">
                         <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100">
-                          <button 
-                            onClick={() => handleOpenModal(item)}
-                            className="p-1 px-2 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded dark:hover:bg-blue-900/20"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteInitiate(item)}
-                            className="p-1 px-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded dark:hover:bg-red-900/20"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <Tooltip content="Edit Item">
+                            <button 
+                              onClick={() => handleOpenModal(item)}
+                              className="p-1 px-2 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded dark:hover:bg-blue-900/20"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip content="Delete Item">
+                            <button 
+                              onClick={() => handleDeleteInitiate(item)}
+                              className="p-1 px-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>

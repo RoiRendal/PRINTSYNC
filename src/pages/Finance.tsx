@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { TableActions } from '../components/common/TableActions';
 import { Modal } from '../components/common/Modal';
+import { Tooltip as MyTooltip } from '../components/common/Tooltip';
 import { FinancialReport } from '../components/finance/FinancialReport';
 import { FinancialRecord, FinancialStats } from '../types';
 import { useFinance } from '../context/FinanceContext';
@@ -349,18 +350,22 @@ export default function Finance() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button 
-                        onClick={() => handleEditInitiate(record)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteInitiate(record)}
-                        className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <MyTooltip content="Modify Record">
+                        <button 
+                          onClick={() => handleEditInitiate(record)}
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                      </MyTooltip>
+                      <MyTooltip content="Delete Record">
+                        <button 
+                          onClick={() => handleDeleteInitiate(record)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </MyTooltip>
                     </div>
                   </td>
                 </tr>
