@@ -50,7 +50,7 @@ export default function Dashboard() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
         <StatCard title="Today's Revenue" value={`₱${stats.todayRevenue.toLocaleString()}`} icon={DollarSign} colorClass="text-green-500" />
-        <StatCard title="Active Jobs" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-slate-700" />
+        <StatCard title="Active Jobs" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-zinc-700" />
         <StatCard title="Inventory Alerts" value={stats.inventoryAlerts} icon={AlertTriangle} colorClass={stats.inventoryAlerts > 0 ? "text-red-500" : "text-gray-400"} />
         <StatCard title="Completed Today" value={stats.completedToday} icon={CheckCircle2} colorClass="text-emerald-500" />
       </div>
@@ -79,11 +79,11 @@ export default function Dashboard() {
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {productionQueue.map((order) => (
                   <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-2.5 px-4 md:px-6 font-mono text-slate-900 font-medium dark:text-zinc-200">#{order.id.slice(-6)}</td>
+                    <td className="py-2.5 px-4 md:px-6 font-mono text-zinc-900 font-medium dark:text-zinc-200">#{order.id.slice(-6)}</td>
                     <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
                     <td className="py-2.5 px-4 md:px-6">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                        order.status === 'In Production' ? 'bg-zinc-100 text-slate-800 dark:bg-zinc-800/50 dark:text-zinc-300' :
+                        order.status === 'In Production' ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-300' :
                         order.status === 'Designing' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
                         order.status === 'Pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
                         'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
@@ -115,12 +115,12 @@ export default function Dashboard() {
               <div key={item.id}>
                 <div className="flex justify-between text-[10px] mb-1.5 font-mono uppercase">
                   <span className="text-gray-500 dark:text-zinc-500 truncate max-w-[150px]">{item.name}</span>
-                  <span className={`${item.stock <= item.reorderLevel ? 'text-red-500 font-bold' : 'text-slate-900 dark:text-zinc-200'}`}>{item.stock}</span>
+                  <span className={`${item.stock <= item.reorderLevel ? 'text-red-500 font-bold' : 'text-zinc-900 dark:text-zinc-200'}`}>{item.stock}</span>
                 </div>
                 <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
                   <div
                     style={{ width: `${Math.min(100, (item.stock / 200) * 100)}%` }}
-                    className={`h-full ${item.stock <= item.reorderLevel ? 'bg-red-500' : 'bg-slate-900'}`}
+                    className={`h-full ${item.stock <= item.reorderLevel ? 'bg-red-500' : 'bg-zinc-900 dark:bg-zinc-300'}`}
                   />
                 </div>
               </div>
@@ -130,7 +130,7 @@ export default function Dashboard() {
           <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-100 dark:bg-zinc-800/50 dark:border-zinc-800 transition-colors duration-300">
              <p className="text-[10px] text-gray-500 font-medium mb-3 uppercase tracking-widest dark:text-zinc-400">Inventory Management</p>
              <div className="flex flex-wrap gap-2">
-                <Link to="/inventory" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-slate-900 hover:bg-slate-800 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-white">
+                <Link to="/inventory" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-zinc-900 hover:bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-white">
                   Restock Now
                 </Link>
                 <Link to="/analytics" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-gray-800 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300">

@@ -28,7 +28,7 @@ export const FinancialReport: React.FC<FinancialReportProps> = ({ records, stats
           <p className="text-sm uppercase tracking-[0.3em] text-gray-500 mt-2 font-medium">Financial Performance Statement</p>
         </div>
         <div className="text-right">
-          <p className="text-xs font-mono font-bold uppercase bg-black text-white px-2 py-1 inline-block">Report ID: RPT-{Math.floor(Math.random() * 100000)}</p>
+          <p className="text-xs font-mono font-bold uppercase bg-zinc-900 text-white px-2 py-1 inline-block">Report ID: RPT-{Math.floor(Math.random() * 100000)}</p>
           <p className="text-xs font-mono text-gray-500 uppercase mt-2 font-semibold">Generated: {currentDate}</p>
         </div>
       </div>
@@ -117,7 +117,7 @@ export const FinancialReport: React.FC<FinancialReportProps> = ({ records, stats
         <div className="flex gap-3 print:hidden shrink-0">
           <button 
             onClick={handlePrint}
-            className="flex items-center gap-2 px-6 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest rounded-md hover:bg-gray-800 transition-all active:scale-95 shadow-md"
+            className="flex items-center gap-2 px-6 py-3 bg-zinc-900 text-white text-xs font-bold uppercase tracking-widest rounded-md hover:bg-gray-800 transition-all active:scale-95 shadow-md"
           >
             <Printer className="w-4 h-4" />
             Print Report

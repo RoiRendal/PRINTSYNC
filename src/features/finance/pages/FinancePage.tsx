@@ -39,7 +39,7 @@ const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
   <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
     <div className="flex justify-between items-start">
       <div className="p-1.5 bg-gray-50 rounded dark:bg-zinc-800 transition-colors">
-        <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
+        <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
       </div>
       <div className={`flex items-center gap-0.5 text-[10px] font-bold ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
         {trend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
@@ -188,7 +188,7 @@ export default function Finance() {
         <div className="flex gap-2 w-full sm:w-auto">
           <button 
             onClick={() => setIsAddOpen(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-black dark:bg-white dark:text-black text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-white dark:text-zinc-950 text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200"
           >
             <Plus className="w-3.5 h-3.5" />
             Add Record
@@ -213,10 +213,10 @@ export default function Finance() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
         <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-slate-900 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
+            <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-zinc-900 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
-                <div className="w-2 h-2 rounded-full bg-slate-900" /> Income
+                <div className="w-2 h-2 rounded-full bg-zinc-900" /> Income
               </div>
               <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
                 <div className="w-2 h-2 rounded-full bg-gray-300" /> Expense
@@ -262,7 +262,7 @@ export default function Finance() {
         </div>
 
         <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
-          <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-gray-800 border-l-2 border-slate-600 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
+          <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-gray-800 border-l-2 border-zinc-500 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
           <div className="h-[200px] xl:h-[260px] w-full relative min-w-0">
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%">
@@ -307,7 +307,7 @@ export default function Finance() {
       <div className="bg-white border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors overflow-hidden">
         <div className="p-4 md:p-6 border-b border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 flex items-center gap-2 dark:text-zinc-200">
-            <Receipt className="w-4 h-4 text-slate-900" />
+            <Receipt className="w-4 h-4 text-zinc-900" />
             Transaction Ledger
           </h3>
           <div className="relative w-full sm:w-64">
@@ -352,7 +352,7 @@ export default function Finance() {
                       <MyTooltip content="Modify Record">
                         <button 
                           onClick={() => handleEditInitiate(record)}
-                          className="p-1.5 text-slate-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 rounded transition-colors"
+                          className="p-1.5 text-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 rounded transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -461,7 +461,7 @@ export default function Finance() {
           
           <button 
             type="submit"
-            className="w-full py-3 mt-2 bg-black dark:bg-white dark:text-black text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
+            className="w-full py-3 mt-2 bg-zinc-900 dark:bg-white dark:text-zinc-950 text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
           >
             Authorize Entry
           </button>
@@ -542,7 +542,7 @@ export default function Finance() {
           
           <button 
             type="submit"
-            className="w-full py-3 mt-2 bg-black dark:bg-white dark:text-black text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
+            className="w-full py-3 mt-2 bg-zinc-900 dark:bg-white dark:text-zinc-950 text-white text-[10px] uppercase font-bold tracking-widest rounded transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
           >
             Confirm Changes
           </button>

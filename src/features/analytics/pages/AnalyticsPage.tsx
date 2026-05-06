@@ -4,7 +4,7 @@ import { TableActions } from '../../../shared/components/table/TableActions';
 
 export default function Analytics() {
   return (
-    <div className="space-y-4 text-slate-900 dark:text-zinc-100">
+    <div className="space-y-4 text-zinc-900 dark:text-zinc-100">
       <div className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="flex flex-col">
           <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-500">Business Intelligence Hub</h2>
@@ -22,7 +22,7 @@ export default function Analytics() {
               </div>
               <div className="flex bg-gray-50 border border-gray-200 p-1 rounded dark:bg-zinc-800 dark:border-zinc-700">
                  {['7D', '30D', '1Y'].map(time => (
-                   <button key={time} className={`px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded ${time === '30D' ? 'bg-slate-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors dark:text-zinc-400'}`}>{time}</button>
+                   <button key={time} className={`px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest rounded ${time === '30D' ? 'bg-zinc-900 text-white shadow-sm' : 'text-gray-500 hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors dark:text-zinc-400'}`}>{time}</button>
                  ))}
               </div>
            </div>
@@ -32,7 +32,7 @@ export default function Analytics() {
                 <div key={i} className="flex-1 group relative">
                    <div
                       style={{ height: `${val}%` }}
-                      className="bg-gray-200 group-hover:bg-slate-900 transition-colors w-full rounded-t-sm dark:bg-zinc-800 dark:group-hover:bg-slate-800"
+                      className="bg-gray-200 group-hover:bg-zinc-900 transition-colors w-full rounded-t-sm dark:bg-zinc-800 dark:group-hover:bg-zinc-300"
                    />
                 </div>
               ))}
@@ -47,11 +47,11 @@ export default function Analytics() {
         <div className="md:col-span-2 lg:col-span-1 space-y-4">
            <div className="bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <div className="flex items-center gap-2 mb-4">
-                 <Zap className="w-4 h-4 text-slate-900 dark:text-zinc-200" />
+                 <Zap className="w-4 h-4 text-zinc-900 dark:text-zinc-200" />
                  <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] text-gray-800 dark:text-zinc-200">Operational Efficiency</h2>
               </div>
               <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-mono font-bold tracking-tighter italic text-gray-900 dark:text-zinc-100">94.2<span className="text-slate-900 dark:text-zinc-200 text-xl">%</span></span>
+              <span className="text-3xl font-mono font-bold tracking-tighter italic text-gray-900 dark:text-zinc-100">94.2<span className="text-zinc-900 dark:text-zinc-200 text-xl">%</span></span>
               </div>
               <div className="mt-4 space-y-3">
                  {[
@@ -64,7 +64,7 @@ export default function Analytics() {
                         <span className="text-gray-900 dark:text-zinc-100">{m.val}%</span>
                       </div>
                       <div className="h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
-                        <div className="h-full bg-slate-900 dark:bg-slate-800" style={{ width: `${m.val}%` }} />
+                        <div className="h-full bg-zinc-900 dark:bg-zinc-300" style={{ width: `${m.val}%` }} />
                       </div>
                    </div>
                  ))}
@@ -73,7 +73,7 @@ export default function Analytics() {
 
            <div className="bg-white border border-gray-200 p-4 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 mb-6 dark:text-zinc-400">
-                 <PieChart className="w-3.5 h-3.5 text-slate-700" /> Segment Density
+                 <PieChart className="w-3.5 h-3.5 text-zinc-700" /> Segment Density
               </h2>
               <div className="space-y-4">
                  {[
@@ -87,7 +87,7 @@ export default function Analytics() {
                          <span className="text-gray-900 dark:text-zinc-100">{item.val}%</span>
                       </div>
                       <div className="h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
-                         <div className="h-full bg-slate-900 dark:bg-slate-900" style={{ width: `${item.val}%` }} />
+                         <div className="h-full bg-zinc-900 dark:bg-zinc-300" style={{ width: `${item.val}%` }} />
                       </div>
                    </div>
                  ))}
@@ -99,7 +99,7 @@ export default function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
          <div className="bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm flex flex-col items-center justify-center min-h-[130px] dark:bg-zinc-900 dark:border-zinc-800">
             <div className="bg-gray-50 p-3 rounded-full mb-3 dark:bg-zinc-800">
-               <Target className="w-5 h-5 text-slate-900 dark:text-zinc-200" />
+               <Target className="w-5 h-5 text-zinc-900 dark:text-zinc-200" />
             </div>
             <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-gray-500 dark:text-zinc-500">Goal Achievement</p>
             <p className="text-2xl font-mono font-bold tracking-tight mt-1 text-gray-900 dark:text-zinc-100">82<span className="text-gray-400 dark:text-zinc-600">%</span></p>

@@ -45,7 +45,7 @@ export default function Settings() {
       <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between dark:border-zinc-800">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-zinc-100 text-slate-900 rounded dark:bg-zinc-800/40 dark:text-zinc-200">
+            <div className="p-2 bg-zinc-100 text-zinc-900 rounded dark:bg-zinc-800/40 dark:text-zinc-200">
               <Database className="w-5 h-5" />
             </div>
             <div>
@@ -60,7 +60,7 @@ export default function Settings() {
               className={`flex items-center justify-center p-2.5 rounded transition-all ${
                 isExporting 
                   ? 'bg-green-600 text-white' 
-                  : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-900 dark:hover:bg-slate-800'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
               }`}
               aria-label="Export Data"
             >
@@ -80,7 +80,7 @@ export default function Settings() {
                ].map((item, idx) => (
                  <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded hover:border-zinc-400 transition-colors cursor-pointer group dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500">
                    <div className="flex items-center gap-3">
-                     <History className="w-4 h-4 text-gray-400 group-hover:text-slate-700 dark:text-zinc-600 dark:group-hover:text-zinc-200" />
+                     <History className="w-4 h-4 text-gray-400 group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-200" />
                      <div>
                        <p className="text-xs font-semibold text-gray-800 dark:text-zinc-200">{item.name}</p>
                        <p className="text-[10px] text-gray-400 dark:text-zinc-500">{item.date}</p>
@@ -127,7 +127,7 @@ export default function Settings() {
               <button
                 key={t}
                 onClick={() => setTheme(t)}
-                className={`px-4 py-2 rounded text-xs font-bold uppercase transition-colors ${theme === t ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'}`}
+                className={`px-4 py-2 rounded text-xs font-bold uppercase transition-colors ${theme === t ? 'bg-zinc-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'}`}
               >
                 {t}
               </button>
@@ -143,7 +143,7 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded dark:bg-zinc-800">
               <span className="text-xs dark:text-zinc-300">Two-Factor Authentication</span>
-              <div className="w-8 h-4 bg-slate-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
+              <div className="w-8 h-4 bg-zinc-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded dark:bg-zinc-800">
               <span className="text-xs dark:text-zinc-300">IP Access Restriction</span>
@@ -160,11 +160,11 @@ export default function Settings() {
           <div className="space-y-4">
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded dark:bg-zinc-800">
               <span className="text-xs dark:text-zinc-300">Export Completion Alerts</span>
-              <div className="w-8 h-4 bg-slate-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
+              <div className="w-8 h-4 bg-zinc-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded dark:bg-zinc-800">
               <span className="text-xs dark:text-zinc-300">Stock Level Critical Warnings</span>
-              <div className="w-8 h-4 bg-slate-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
+              <div className="w-8 h-4 bg-zinc-900 rounded-full relative"><div className="absolute right-1 top-1 w-2 h-2 bg-white rounded-full"></div></div>
             </div>
           </div>
         </div>

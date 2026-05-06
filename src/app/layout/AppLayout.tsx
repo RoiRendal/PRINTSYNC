@@ -66,12 +66,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-slate-900 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-zinc-200 selection:text-zinc-900 dark:selection:bg-zinc-700 dark:selection:text-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
       <header className="relative h-11 bg-white border-b border-gray-300 flex items-center justify-between px-4 lg:px-5 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-[60]">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <div className="w-5 h-5 bg-slate-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
+            <div className="w-5 h-5 bg-zinc-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
             <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base">{APP_NAME}</h1>
           </div>
         </div>
@@ -99,7 +99,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none">Admin Terminal</p>
                 <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">Station 01-MNL</p>
               </div>
-              <div className="w-7 h-7 rounded-full bg-slate-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
+              <div className="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
                 AD
               </div>
 

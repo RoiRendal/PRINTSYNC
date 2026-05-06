@@ -27,7 +27,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               cn(
                 "flex items-center gap-2 px-2 py-1 rounded text-[13px] font-medium group relative",
                 isActive 
-                  ? "bg-slate-900 text-white shadow-lg shadow-black/20" 
+                  ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/10 dark:shadow-zinc-950/40" 
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800",
                 isCollapsed && "justify-center px-0"
               )

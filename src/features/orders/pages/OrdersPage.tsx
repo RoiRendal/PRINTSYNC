@@ -6,7 +6,7 @@ import { Modal } from '../../../shared/components/ui/Modal';
 import { Order } from '../../../shared/types/domain';
 
 const statusColors: any = {
-  'In Production': 'text-slate-800 bg-zinc-100 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700',
+  'In Production': 'text-zinc-800 bg-zinc-100 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700',
   'Pending': 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900/40',
   'Ready for Pickup': 'text-green-700 bg-green-50 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-900/40',
   'Designing': 'text-purple-700 bg-purple-50 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-900/40',
@@ -66,11 +66,11 @@ export default function Orders() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xl:gap-4">
          {[
            { label: 'Designing', icon: Eye, count: orders.filter(o => o.status === 'Designing').length, color: 'text-purple-500' },
-           { label: 'In Production', icon: Printer, count: orders.filter(o => o.status === 'In Production').length, color: 'text-slate-700' },
+           { label: 'In Production', icon: Printer, count: orders.filter(o => o.status === 'In Production').length, color: 'text-zinc-700' },
            { label: 'Ready', icon: CheckCircle2, count: orders.filter(o => o.status === 'Ready for Pickup').length, color: 'text-green-500' },
            { label: 'Total Active', icon: ClipboardList, count: orders.filter(o => o.status !== 'Completed').length, color: 'text-amber-500' },
          ].map((card) => (
-           <div key={card.label} className="bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm flex items-center justify-between group hover:border-slate-700 transition-all cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500">
+           <div key={card.label} className="bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm flex items-center justify-between group hover:border-zinc-500 transition-all cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500">
               <div className="flex items-center gap-3">
                  <div className={`p-1.5 md:p-2 bg-gray-50 rounded group-hover:bg-zinc-100 transition-colors dark:bg-zinc-800 dark:group-hover:bg-zinc-800/50 ${card.color}`}>
                     <card.icon className="w-4 h-4 md:w-5 md:h-5" />
@@ -89,7 +89,7 @@ export default function Orders() {
                <input 
                   type="text" 
                   placeholder="Filter active orders / client data..." 
-                  className="w-full pl-9 pr-4 py-1.5 md:py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-slate-700 shadow-inner dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
+                  className="w-full pl-9 pr-4 py-1.5 md:py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-zinc-400 shadow-inner dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                />
@@ -111,7 +111,7 @@ export default function Orders() {
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                  {filteredOrders.map((order) => (
                    <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <td className="py-2.5 px-5 md:px-6 font-mono text-slate-900 dark:text-zinc-200">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
+                      <td className="py-2.5 px-5 md:px-6 font-mono text-zinc-900 dark:text-zinc-200">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
                       <td className="py-2.5 px-5 md:px-6">
                          <div className="flex items-center gap-3">
                             {order.designId && (
@@ -134,7 +134,7 @@ export default function Orders() {
                          ₱{order.amount.toFixed(2)}
                       </td>
                       <td className="py-2.5 px-5 md:px-6 text-right">
-                         <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-slate-900 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-slate-900 dark:hover:text-white">
+                         <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-zinc-900 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white">
                             <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
                          </button>
                       </td>
@@ -193,7 +193,7 @@ export default function Orders() {
                             onClick={() => setSelectedLineItemIndex(index)}
                             className={`block text-right w-full underline-offset-2 hover:underline transition-colors ${
                               selectedLineItemIndex === index
-                                ? 'text-slate-900 dark:text-zinc-200'
+                                ? 'text-zinc-900 dark:text-zinc-200'
                                 : 'text-gray-900 dark:text-zinc-200'
                             }`}
                           >
@@ -212,7 +212,7 @@ export default function Orders() {
                     </div>
                     <div className="py-2 flex justify-between text-xs pt-2">
                       <span className="text-gray-500 font-bold uppercase">Total Value</span>
-                      <span className="font-bold text-slate-900 dark:text-zinc-200">₱{selectedOrder.amount.toFixed(2)}</span>
+                      <span className="font-bold text-zinc-900 dark:text-zinc-200">₱{selectedOrder.amount.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function Orders() {
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                       <MessageSquare className="w-3 h-3" /> Production Notes
                     </h4>
-                    <div className="bg-zinc-100 dark:bg-zinc-800/30 p-3 rounded border border-zinc-200 dark:border-zinc-700 text-xs text-slate-800 dark:text-zinc-300 italic">
+                    <div className="bg-zinc-100 dark:bg-zinc-800/30 p-3 rounded border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-300 italic">
                       "{selectedOrder.notes}"
                     </div>
                   </div>
@@ -267,7 +267,7 @@ export default function Orders() {
                     }}
                     className={`px-3 py-2 rounded text-[9px] font-bold uppercase tracking-wider transition-all border ${
                       selectedOrder.status === status
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
                         : 'bg-white text-gray-600 border-gray-200 hover:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
                     }`}
                   >
@@ -283,7 +283,7 @@ export default function Orders() {
               </button>
               <button
                 onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-2.5 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-black transition-all dark:bg-white dark:text-black"
+                className="flex-1 py-2.5 bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-zinc-800 transition-all dark:bg-white dark:text-zinc-950"
               >
                 Close View
               </button>

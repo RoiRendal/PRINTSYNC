@@ -209,13 +209,13 @@ export default function POS() {
         <div className="flex gap-2">
           <button 
             onClick={() => setView('pos')}
-            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'pos' ? 'bg-slate-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'pos' ? 'bg-zinc-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
             <ShoppingBag className="w-3.5 h-3.5" /> Terminal
           </button>
           <button 
             onClick={() => setView('history')}
-            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'history' ? 'bg-slate-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'history' ? 'bg-zinc-900 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
             <History className="w-3.5 h-3.5" /> History
           </button>
@@ -227,7 +227,7 @@ export default function POS() {
                 setPosMode('retail');
                 setCart([]);
               }}
-              className={`px-3 py-1 rounded-l border-y border-l transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'retail' ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
+              className={`px-3 py-1 rounded-l border-y border-l transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'retail' ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
             >
               Retail
             </button>
@@ -258,7 +258,7 @@ export default function POS() {
                   <input 
                     type="text" 
                     placeholder="Search blank apparel or materials..."
-                    className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-slate-700 shadow-sm transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
+                    className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-zinc-400 shadow-sm transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-200 dark:focus:border-zinc-500"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -273,7 +273,7 @@ export default function POS() {
                     onClick={() => setActiveCategory(cat)}
                     className={`whitespace-nowrap px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border transition-all ${
                       activeCategory === cat 
-                        ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900 dark:border-white' 
+                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900 dark:border-white' 
                         : 'bg-white text-gray-500 border-gray-200 hover:border-zinc-400 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400'
                     }`}
                   >
@@ -289,15 +289,15 @@ export default function POS() {
                   key={product.id}
                   onClick={() => addToCart(product)}
                   disabled={product.stock <= 0}
-                  className={`bg-white border border-gray-200 rounded p-2 text-left hover:border-slate-700 transition-all group flex flex-col shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500 ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                  className={`bg-white border border-gray-200 rounded p-2 text-left hover:border-zinc-500 transition-all group flex flex-col shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500 ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                 >
                   <div className="h-28 xl:h-32 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
-                     <div className="flex flex-col items-center text-gray-300 group-hover:text-slate-700 transition-colors dark:text-zinc-700 dark:group-hover:text-zinc-200">
+                     <div className="flex flex-col items-center text-gray-300 group-hover:text-zinc-600 transition-colors dark:text-zinc-700 dark:group-hover:text-zinc-200">
                         <ShoppingBag className="w-8 h-8 xl:w-10 xl:h-10 stroke-1" />
                         <span className="text-[8px] mt-1 font-mono uppercase tracking-widest">IMG_PENDING</span>
                      </div>
                      <div className="absolute top-1 right-1">
-                        <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-mono uppercase ${product.stock <= product.reorderLevel ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'}`}>
+                        <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-mono uppercase ${product.stock <= product.reorderLevel ? 'bg-red-600 text-white' : 'bg-zinc-900 text-white'}`}>
                           {product.stock} IN STOCK
                         </span>
                      </div>
@@ -305,8 +305,8 @@ export default function POS() {
                   <div>
                     <h3 className="font-bold text-[11px] xl:text-[12px] uppercase tracking-tight line-clamp-2 text-gray-800 dark:text-zinc-100">{product.name}</h3>
                     <div className="flex justify-between items-center mt-2 group-hover:translate-x-0.5 transition-transform">
-                      <p className="text-slate-900 font-mono text-[10px] xl:text-[11px] font-bold dark:text-zinc-200">₱{product.price.toFixed(2)}</p>
-                      <Plus className="w-3 h-3 text-gray-300 group-hover:text-slate-700 dark:text-zinc-600 dark:group-hover:text-zinc-200" />
+                      <p className="text-zinc-900 font-mono text-[10px] xl:text-[11px] font-bold dark:text-zinc-200">₱{product.price.toFixed(2)}</p>
+                      <Plus className="w-3 h-3 text-gray-300 group-hover:text-zinc-600 dark:text-zinc-600 dark:group-hover:text-zinc-200" />
                     </div>
                   </div>
                 </button>
@@ -324,7 +324,7 @@ export default function POS() {
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800 dark:text-zinc-200">
                   {posMode === 'retail' ? 'Transaction Cart' : 'Custom Order Builder'}
                 </h2>
-                <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${posMode === 'retail' ? 'bg-zinc-100 text-slate-800 border-zinc-200 dark:bg-slate-900/20 dark:text-zinc-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-600/20 dark:text-indigo-400'}`}>
+                <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${posMode === 'retail' ? 'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-600/20 dark:text-indigo-400'}`}>
                   {cart.length} ITEMS
                 </span>
              </div>
@@ -386,7 +386,7 @@ export default function POS() {
                                    <span className="w-6 text-center text-[10px] font-mono py-1 select-none">{item.qty}</span>
                                    <button onClick={() => updateQty(idx, 1)} className="p-1 hover:bg-gray-300 transition-colors dark:hover:bg-zinc-700"><Plus className="w-2.5 h-2.5" /></button>
                                 </div>
-                                <span className="text-[10px] font-mono text-slate-900 dark:text-zinc-200">₱{(item.price * item.qty).toFixed(2)}</span>
+                                <span className="text-[10px] font-mono text-zinc-900 dark:text-zinc-200">₱{(item.price * item.qty).toFixed(2)}</span>
                              </div>
                           </div>
                        </div>
@@ -423,7 +423,7 @@ export default function POS() {
                    </div>
                    <div className="flex justify-between text-xl font-bold tracking-tight text-gray-900 border-t border-gray-200 pt-2 mt-1 dark:border-zinc-800 dark:text-zinc-100">
                       <span>{posMode === 'retail' ? 'TOTAL' : 'ORDER VAL'}</span>
-                      <span className={`font-mono ${posMode === 'retail' ? 'text-slate-900 dark:text-zinc-200' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                      <span className={`font-mono ${posMode === 'retail' ? 'text-zinc-900 dark:text-zinc-200' : 'text-indigo-600 dark:text-indigo-400'}`}>
                         ₱{total.toFixed(2)}
                       </span>
                    </div>
@@ -436,7 +436,7 @@ export default function POS() {
                    <button 
                     onClick={handleCheckout}
                     disabled={cart.length === 0 || (posMode === 'custom' && !customerName)}
-                    className={`py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${posMode === 'retail' ? 'bg-slate-900 hover:bg-slate-800' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-500/20'}`}
+                    className={`py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${posMode === 'retail' ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-500/20'}`}
                    >
                       <CreditCard className="w-3 h-3" /> {posMode === 'retail' ? 'Quick Pay' : 'Create Order'}
                    </button>
@@ -459,7 +459,7 @@ export default function POS() {
                 <input 
                   type="text" 
                   placeholder="Filter by ID or item..."
-                  className="w-full pl-8 pr-4 py-1.5 bg-white border border-gray-200 rounded text-[10px] focus:outline-none focus:border-slate-700 transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300"
+                  className="w-full pl-8 pr-4 py-1.5 bg-white border border-gray-200 rounded text-[10px] focus:outline-none focus:border-zinc-400 transition-all dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-300"
                   value={historySearchTerm}
                   onChange={(e) => setHistorySearchTerm(e.target.value)}
                 />
@@ -499,7 +499,7 @@ export default function POS() {
                           {trx.paymentMethod}
                         </span>
                       </td>
-                      <td className="py-3 px-6 font-mono font-bold text-right text-slate-900 dark:text-zinc-200">
+                      <td className="py-3 px-6 font-mono font-bold text-right text-zinc-900 dark:text-zinc-200">
                         ₱{trx.total.toFixed(2)}
                       </td>
                       <td className="py-3 px-6 text-right">
@@ -582,17 +582,17 @@ export default function POS() {
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-gray-50 dark:border-zinc-800 mt-1">
                 <span className="text-[9px] font-bold uppercase tracking-widest">Total Amount</span>
-                <span className="text-sm font-bold font-mono text-slate-900 dark:text-zinc-200">₱{selectedTransaction.total.toFixed(2)}</span>
+                <span className="text-sm font-bold font-mono text-zinc-900 dark:text-zinc-200">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center bg-zinc-100 dark:bg-zinc-800/30 p-1.5 rounded mt-1.5">
-                <span className="text-[7px] font-bold uppercase tracking-widest text-slate-800 dark:text-zinc-200">Payment</span>
-                <span className="text-[7px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-slate-900 text-white rounded">{selectedTransaction.paymentMethod}</span>
+                <span className="text-[7px] font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-200">Payment</span>
+                <span className="text-[7px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-zinc-900 text-white rounded">{selectedTransaction.paymentMethod}</span>
               </div>
             </div>
 
             <button
               onClick={() => setSelectedTransaction(null)}
-              className="w-full py-1.5 bg-slate-900 dark:bg-white dark:text-black text-white text-[9px] font-bold uppercase tracking-widest rounded transition-all hover:bg-slate-800 dark:hover:bg-gray-200 mt-1"
+              className="w-full py-1.5 bg-zinc-900 dark:bg-white dark:text-zinc-950 text-white text-[9px] font-bold uppercase tracking-widest rounded transition-all hover:bg-zinc-800 dark:hover:bg-gray-200 mt-1"
             >
               Done
             </button>
@@ -660,13 +660,13 @@ export default function POS() {
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => setPaymentMethod('Cash')}
-                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Cash' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
+                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Cash' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
                     >
                       Cash
                     </button>
                     <button 
                       onClick={() => setPaymentMethod('Card')}
-                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Card' ? 'bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
+                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Card' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
                     >
                       Card
                     </button>
@@ -692,7 +692,7 @@ export default function POS() {
                 </button>
                 <button
                   onClick={finalizeTransaction}
-                  className="flex-1 px-4 py-2 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-black shadow-sm transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors flex items-center justify-center gap-2"
                 >
                   Confirm & Pay
                 </button>
