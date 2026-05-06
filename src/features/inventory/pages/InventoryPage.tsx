@@ -100,7 +100,7 @@ export default function Inventory() {
             onClick={() => setViewMode('inventory')}
             className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
               viewMode === 'inventory' 
-              ? 'bg-white text-blue-600 shadow-sm dark:bg-zinc-700 dark:text-blue-400' 
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
               : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
             }`}
           >
@@ -110,7 +110,7 @@ export default function Inventory() {
             onClick={() => setViewMode('designs')}
             className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
               viewMode === 'designs' 
-              ? 'bg-white text-blue-600 shadow-sm dark:bg-zinc-700 dark:text-blue-400' 
+              ? 'bg-white text-slate-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
               : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
             }`}
           >
@@ -128,7 +128,7 @@ export default function Inventory() {
                 <input 
                   type="text" 
                   placeholder="Search SKU, material or category..."
-                  className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-blue-500 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
+                  className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-slate-700 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -137,7 +137,7 @@ export default function Inventory() {
                 <TableActions />
                 <button 
                   onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-blue-700 shadow-sm ml-0 md:ml-2"
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-black shadow-sm ml-0 md:ml-2"
                   id="add-stock-btn"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Stock
@@ -164,7 +164,7 @@ export default function Inventory() {
                   return (
                     <tr 
                       key={item.id}
-                      className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
+                      className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group"
                     >
                       <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
                       <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
@@ -185,7 +185,7 @@ export default function Inventory() {
                           <Tooltip content="Edit Item">
                             <button 
                               onClick={() => handleOpenModal(item)}
-                              className="p-1 px-2 hover:bg-blue-50 text-blue-600 hover:text-blue-700 rounded dark:hover:bg-blue-900/20"
+                              className="p-1 px-2 hover:bg-zinc-100 text-slate-900 hover:text-slate-800 rounded dark:hover:bg-zinc-800/40"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
@@ -246,7 +246,7 @@ export default function Inventory() {
             <input
               required
               type="text"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-slate-700 transition-colors dark:text-zinc-200"
               placeholder="e.g. Premium Cotton T-shirt (Black)"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -259,7 +259,7 @@ export default function Inventory() {
             </label>
             <select
               required
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-slate-700 transition-colors dark:text-zinc-200"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
@@ -280,7 +280,7 @@ export default function Inventory() {
                 required
                 type="number"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-slate-700 transition-colors dark:text-zinc-200"
                 value={formData.stock}
                 onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
               />
@@ -293,7 +293,7 @@ export default function Inventory() {
                 required
                 type="number"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-slate-700 transition-colors dark:text-zinc-200"
                 value={formData.reorderLevel}
                 onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
               />
@@ -309,7 +309,7 @@ export default function Inventory() {
               type="number"
               step="0.01"
               min="0"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-blue-500 transition-colors dark:text-zinc-200"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-slate-700 transition-colors dark:text-zinc-200"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
             />
@@ -325,7 +325,7 @@ export default function Inventory() {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-colors"
+              className="flex-1 px-4 py-2 bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-black shadow-sm transition-colors"
             >
               {editingItem ? 'Save Changes' : 'Create Item'}
             </button>

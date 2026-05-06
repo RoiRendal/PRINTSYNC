@@ -58,7 +58,7 @@ export const TableActions: React.FC<TableActionsProps> = ({
         <button 
           onClick={handleExport}
           disabled={isExporting}
-          className="flex whitespace-nowrap shrink-0 items-center justify-center p-1.5 text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
+          className="flex whitespace-nowrap shrink-0 items-center justify-center p-1.5 text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-slate-900 dark:border-slate-900 dark:hover:bg-slate-800 dark:disabled:bg-zinc-700"
           aria-label="Export Data"
         >
           {isExporting ? (

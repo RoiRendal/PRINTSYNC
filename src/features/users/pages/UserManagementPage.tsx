@@ -19,7 +19,7 @@ export default function UserManagement() {
           <input 
             type="text" 
             placeholder="Search staff members..."
-            className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-blue-500 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
+            className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-slate-700 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
           />
         </div>
         <TableActions />
@@ -39,7 +39,7 @@ export default function UserManagement() {
                       <role.icon className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
                       <span className="text-[9px] font-bold uppercase tracking-wider dark:text-zinc-300">{role.role}</span>
                    </div>
-                   <span className="text-[9px] font-mono font-bold text-blue-600 dark:text-blue-400">{role.count}</span>
+                   <span className="text-[9px] font-mono font-bold text-slate-900 dark:text-zinc-200">{role.count}</span>
                 </div>
               ))}
            </div>
@@ -48,7 +48,7 @@ export default function UserManagement() {
               <div className="space-y-3">
                  <div className="flex justify-between items-center text-[9px] font-mono">
                     <span className="text-gray-500 uppercase dark:text-zinc-500">Active Sessions</span>
-                    <span className="text-blue-600 dark:text-blue-400">14</span>
+                    <span className="text-slate-900 dark:text-zinc-200">14</span>
                  </div>
                  <div className="flex justify-between items-center text-[9px] font-mono">
                     <span className="text-gray-500 uppercase dark:text-zinc-500">Auth Failures</span>
@@ -75,10 +75,10 @@ export default function UserManagement() {
                  </thead>
                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                     {users.map(user => (
-                      <tr key={user.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group">
+                      <tr key={user.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group">
                          <td className="py-2.5 px-6">
                             <div className="flex items-center gap-3">
-                               <div className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center text-[9px] font-bold text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors dark:bg-zinc-800 dark:text-zinc-600 dark:group-hover:bg-blue-900/30">
+                               <div className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center text-[9px] font-bold text-gray-400 group-hover:bg-zinc-100 group-hover:text-slate-900 transition-colors dark:bg-zinc-800 dark:text-zinc-600 dark:group-hover:bg-zinc-800/50">
                                   {user.name.split(' ').map(n => n[0]).join('')}
                                </div>
                                <div>

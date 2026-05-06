@@ -66,12 +66,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-blue-600 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-slate-900 selection:text-white dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
       <header className="relative h-11 bg-white border-b border-gray-300 flex items-center justify-between px-4 lg:px-5 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-[60]">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <div className="w-5 h-5 bg-blue-500 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
+            <div className="w-5 h-5 bg-slate-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
             <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base">{APP_NAME}</h1>
           </div>
         </div>

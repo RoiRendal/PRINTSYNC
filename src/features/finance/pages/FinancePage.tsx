@@ -213,10 +213,10 @@ export default function Finance() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
         <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-blue-600 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
+            <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-slate-900 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
             <div className="flex gap-4">
               <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
-                <div className="w-2 h-2 rounded-full bg-blue-600" /> Income
+                <div className="w-2 h-2 rounded-full bg-slate-900" /> Income
               </div>
               <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
                 <div className="w-2 h-2 rounded-full bg-gray-300" /> Expense
@@ -307,7 +307,7 @@ export default function Finance() {
       <div className="bg-white border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors overflow-hidden">
         <div className="p-4 md:p-6 border-b border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 flex items-center gap-2 dark:text-zinc-200">
-            <Receipt className="w-4 h-4 text-blue-600" />
+            <Receipt className="w-4 h-4 text-slate-900" />
             Transaction Ledger
           </h3>
           <div className="relative w-full sm:w-64">
@@ -352,7 +352,7 @@ export default function Finance() {
                       <MyTooltip content="Modify Record">
                         <button 
                           onClick={() => handleEditInitiate(record)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                          className="p-1.5 text-slate-900 hover:bg-zinc-100 dark:hover:bg-zinc-800/40 rounded transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
