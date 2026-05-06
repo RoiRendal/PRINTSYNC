@@ -1,8 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
-import { motion, AnimatePresence } from 'motion/react';
-import { PanelLeft } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -15,11 +13,11 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
     <aside 
       className={cn(
         "bg-gray-50 text-gray-900 flex flex-col shrink-0 dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
-        isCollapsed ? "w-0 border-r-0" : "w-fit min-w-[3.5rem] border-r border-gray-300 dark:border-zinc-800",
+        isCollapsed ? "w-0 border-r-0" : "w-fit min-w-[3.25rem] border-r border-gray-300 dark:border-zinc-800",
         className
       )}
     >
-      <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <nav className="flex-1 px-1.5 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
         {NAV_ITEMS.map((item) => (
           <NavLink
             key={item.path}
@@ -27,7 +25,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-2 px-2 py-1 rounded text-sm group relative",
+                "flex items-center gap-2 px-2 py-1 rounded text-[13px] group relative",
                 isActive 
                   ? "bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/20" 
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800",

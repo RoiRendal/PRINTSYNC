@@ -12,7 +12,7 @@ const users = [
 
 export default function UserManagement() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="flex-1 relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
@@ -25,9 +25,9 @@ export default function UserManagement() {
         <TableActions />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 xl:gap-8">
-        <div className="md:col-span-2 lg:col-span-1 xl:col-span-1 space-y-5">
-           <div className="bg-white border border-gray-200 p-5 rounded shadow-sm space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5">
+        <div className="md:col-span-2 lg:col-span-1 xl:col-span-1 space-y-4">
+           <div className="bg-white border border-gray-200 p-4 rounded shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
               <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">Station Overview</h2>
               {[
                 { role: 'Administrators', count: 2, icon: Shield },
@@ -43,7 +43,7 @@ export default function UserManagement() {
                 </div>
               ))}
            </div>
-                      <div className="bg-white border border-gray-200 p-5 rounded shadow-sm space-y-4 dark:bg-zinc-900 dark:border-zinc-800">
+                      <div className="bg-white border border-gray-200 p-4 rounded shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
               <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">System Logs</h2>
               <div className="space-y-3">
                  <div className="flex justify-between items-center text-[9px] font-mono">
@@ -76,7 +76,7 @@ export default function UserManagement() {
                  <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                     {users.map(user => (
                       <tr key={user.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group">
-                         <td className="py-3 px-6">
+                         <td className="py-2.5 px-6">
                             <div className="flex items-center gap-3">
                                <div className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center text-[9px] font-bold text-gray-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors dark:bg-zinc-800 dark:text-zinc-600 dark:group-hover:bg-blue-900/30">
                                   {user.name.split(' ').map(n => n[0]).join('')}
@@ -87,18 +87,18 @@ export default function UserManagement() {
                                </div>
                             </div>
                          </td>
-                         <td className="py-3 px-6">
+                         <td className="py-2.5 px-6">
                             <span className="text-[9px] px-2 py-0.5 border border-gray-100 text-gray-500 font-bold uppercase tracking-tighter bg-gray-50 rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400">
                               {user.role}
                             </span>
                          </td>
-                         <td className="py-3 px-6">
+                         <td className="py-2.5 px-6">
                             <div className="flex items-center gap-2">
                                <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-500' : user.status === 'On Break' ? 'bg-amber-500' : 'bg-gray-300 dark:bg-zinc-700'}`} />
                                <span className="text-[10px] uppercase font-bold text-gray-600 dark:text-zinc-400">{user.status}</span>
                             </div>
                          </td>
-                         <td className="py-3 px-6">
+                         <td className="py-2.5 px-6">
                             <span className="text-[10px] font-mono text-gray-400 uppercase dark:text-zinc-500">{user.lastActive}</span>
                          </td>
                       </tr>

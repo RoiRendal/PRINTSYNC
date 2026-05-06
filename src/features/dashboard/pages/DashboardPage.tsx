@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { motion } from 'motion/react';
 import {TrendingUp, Package, Users, DollarSign, Clock, CheckCircle2, ShoppingBag, AlertTriangle} from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
@@ -48,18 +47,18 @@ export default function Dashboard() {
   const productionQueue = orders.filter(o => o.status !== 'Completed' && o.status !== 'Shipped').slice(0, 8);
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
         <StatCard title="Today's Revenue" value={`₱${stats.todayRevenue.toLocaleString()}`} icon={DollarSign} colorClass="text-green-500" />
         <StatCard title="Active Jobs" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-blue-500" />
         <StatCard title="Inventory Alerts" value={stats.inventoryAlerts} icon={AlertTriangle} colorClass={stats.inventoryAlerts > 0 ? "text-red-500" : "text-gray-400"} />
         <StatCard title="Completed Today" value={stats.completedToday} icon={CheckCircle2} colorClass="text-emerald-500" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
         {/* Table Area */}
         <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="p-4 md:p-5 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 dark:border-zinc-800">
+          <div className="p-3 md:p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Production Pipeline</h3>
             <div className="flex flex-wrap items-center gap-2">
               <TableActions />
@@ -80,9 +79,9 @@ export default function Dashboard() {
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {productionQueue.map((order) => (
                   <tr key={order.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors">
-                    <td className="py-3 px-4 md:px-6 font-mono text-blue-600 font-medium dark:text-blue-400">#{order.id.slice(-6)}</td>
-                    <td className="py-3 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
-                    <td className="py-3 px-4 md:px-6">
+                    <td className="py-2.5 px-4 md:px-6 font-mono text-blue-600 font-medium dark:text-blue-400">#{order.id.slice(-6)}</td>
+                    <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
+                    <td className="py-2.5 px-4 md:px-6">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                         order.status === 'In Production' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
                         order.status === 'Designing' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
@@ -92,8 +91,8 @@ export default function Dashboard() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 md:px-6 text-center font-mono dark:text-zinc-300">{order.quantity}</td>
-                    <td className="py-3 px-4 md:px-6 text-right font-mono font-bold dark:text-zinc-100">₱{order.amount.toFixed(2)}</td>
+                    <td className="py-2.5 px-4 md:px-6 text-center font-mono dark:text-zinc-300">{order.quantity}</td>
+                    <td className="py-2.5 px-4 md:px-6 text-right font-mono font-bold dark:text-zinc-100">₱{order.amount.toFixed(2)}</td>
                   </tr>
                 ))}
                 {productionQueue.length === 0 && (
@@ -105,8 +104,8 @@ export default function Dashboard() {
         </div>
 
         {/* Inventory Snapshot */}
-        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-5 xl:p-8 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="flex flex-wrap justify-between items-center gap-3 border-b border-gray-100 pb-4 mb-5 dark:border-zinc-800">
+        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-4 xl:p-5 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+          <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-100 pb-3 mb-4 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap text-gray-900 dark:text-zinc-200">Stock Vitality</h3>
             <TableActions />
           </div>
@@ -119,10 +118,9 @@ export default function Dashboard() {
                   <span className={`${item.stock <= item.reorderLevel ? 'text-red-500 font-bold' : 'text-blue-600 dark:text-blue-400'}`}>{item.stock}</span>
                 </div>
                 <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min(100, (item.stock / 200) * 100)}%` }}
-                    className={`h-full ${item.stock <= item.reorderLevel ? 'bg-red-500' : 'bg-blue-600'}`} 
+                  <div
+                    style={{ width: `${Math.min(100, (item.stock / 200) * 100)}%` }}
+                    className={`h-full ${item.stock <= item.reorderLevel ? 'bg-red-500' : 'bg-blue-600'}`}
                   />
                 </div>
               </div>

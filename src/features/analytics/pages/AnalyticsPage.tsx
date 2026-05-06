@@ -1,11 +1,10 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { BarChart3, TrendingUp, PieChart, Target, Zap } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 
 export default function Analytics() {
   return (
-    <div className="space-y-6 text-slate-900 dark:text-zinc-100">
+    <div className="space-y-4 text-slate-900 dark:text-zinc-100">
       <div className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
         <div className="flex flex-col">
           <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500 dark:text-zinc-500">Business Intelligence Hub</h2>
@@ -14,9 +13,9 @@ export default function Analytics() {
         <TableActions />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 xl:gap-8">
-        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded p-6 xl:p-8 shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-           <div className="flex justify-between items-start mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
+        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded p-4 xl:p-5 shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+           <div className="flex justify-between items-start mb-6">
               <div>
                  <h2 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 dark:text-zinc-200">Production Output Intensity</h2>
                  <p className="text-[10px] text-gray-400 font-mono mt-1 uppercase tracking-wider dark:text-zinc-500">Historical print volume per station</p>
@@ -28,12 +27,11 @@ export default function Analytics() {
               </div>
            </div>
            
-           <div className="flex-1 flex items-end gap-1.5 md:gap-2.5 lg:gap-3 xl:gap-4 min-h-[200px] xl:min-h-[300px] border-b border-gray-100 pb-2 dark:border-zinc-800">
+           <div className="flex-1 flex items-end gap-1.5 md:gap-2 lg:gap-2.5 xl:gap-3 min-h-[180px] xl:min-h-[240px] border-b border-gray-100 pb-2 dark:border-zinc-800">
               {[40, 65, 30, 85, 45, 90, 70, 55, 75, 40, 60, 50, 65, 80, 45].map((val, i) => (
                 <div key={i} className="flex-1 group relative">
-                   <motion.div 
-                      initial={{ height: 0 }}
-                      animate={{ height: `${val}%` }}
+                   <div
+                      style={{ height: `${val}%` }}
                       className="bg-gray-200 group-hover:bg-blue-600 transition-colors w-full rounded-t-sm dark:bg-zinc-800 dark:group-hover:bg-blue-500"
                    />
                 </div>
@@ -46,16 +44,16 @@ export default function Analytics() {
            </div>
         </div>
 
-        <div className="md:col-span-2 lg:col-span-1 space-y-5">
-           <div className="bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+        <div className="md:col-span-2 lg:col-span-1 space-y-4">
+           <div className="bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <div className="flex items-center gap-2 mb-4">
                  <Zap className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                  <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] text-gray-800 dark:text-zinc-200">Operational Efficiency</h2>
               </div>
               <div className="flex items-baseline gap-2">
-                 <span className="text-4xl font-mono font-bold tracking-tighter italic text-gray-900 dark:text-zinc-100">94.2<span className="text-blue-600 dark:text-blue-400 text-2xl">%</span></span>
+              <span className="text-3xl font-mono font-bold tracking-tighter italic text-gray-900 dark:text-zinc-100">94.2<span className="text-blue-600 dark:text-blue-400 text-xl">%</span></span>
               </div>
-              <div className="mt-6 space-y-4">
+              <div className="mt-4 space-y-3">
                  {[
                    { label: 'Uptime', val: 98 },
                    { label: 'Yield', val: 91 },
@@ -73,7 +71,7 @@ export default function Analytics() {
               </div>
            </div>
 
-           <div className="bg-white border border-gray-200 p-6 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+           <div className="bg-white border border-gray-200 p-4 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 mb-6 dark:text-zinc-400">
                  <PieChart className="w-3.5 h-3.5 text-blue-500" /> Segment Density
               </h2>
@@ -98,8 +96,8 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5">
-         <div className="bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm flex flex-col items-center justify-center min-h-[160px] dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
+         <div className="bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm flex flex-col items-center justify-center min-h-[130px] dark:bg-zinc-900 dark:border-zinc-800">
             <div className="bg-gray-50 p-3 rounded-full mb-3 dark:bg-zinc-800">
                <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
@@ -107,7 +105,7 @@ export default function Analytics() {
             <p className="text-2xl font-mono font-bold tracking-tight mt-1 text-gray-900 dark:text-zinc-100">82<span className="text-gray-400 dark:text-zinc-600">%</span></p>
          </div>
 
-         <div className="md:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+         <div className="md:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
             <h3 className="text-[10px] uppercase font-bold tracking-[0.2em] mb-4 text-gray-800 border-b border-gray-50 pb-3 dark:text-zinc-200 dark:border-zinc-800">Best Performing Skus</h3>
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                {[

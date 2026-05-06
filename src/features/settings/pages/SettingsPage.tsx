@@ -41,9 +41,9 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto space-y-6">
+    <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto space-y-4">
       <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between dark:border-zinc-800">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between dark:border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 text-blue-600 rounded dark:bg-blue-900/20 dark:text-blue-400">
               <Database className="w-5 h-5" />
@@ -69,7 +69,7 @@ export default function Settings() {
           </Tooltip>
         </div>
         
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 bg-gray-50/30 dark:bg-zinc-900/50">
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50/30 dark:bg-zinc-900/50">
           <div className="space-y-4">
             <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-zinc-500">System Archives</h3>
             <div className="space-y-2">
@@ -116,8 +116,8 @@ export default function Settings() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-gray-200 rounded p-6 dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-200 rounded p-4 dark:bg-zinc-900 dark:border-zinc-800">
           <div className="flex items-center gap-3 mb-4">
             <Palette className="w-5 h-5 text-gray-400 dark:text-zinc-500" />
             <h3 className="text-xs font-bold uppercase tracking-tight dark:text-zinc-200">Appearance</h3>
@@ -135,7 +135,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-6 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="bg-white border border-gray-200 rounded p-4 dark:bg-zinc-900 dark:border-zinc-800">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="w-5 h-5 text-gray-400 dark:text-zinc-500" />
             <h3 className="text-xs font-bold uppercase tracking-tight dark:text-zinc-200">Security</h3>
@@ -152,7 +152,7 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded p-6 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="bg-white border border-gray-200 rounded p-4 dark:bg-zinc-900 dark:border-zinc-800">
           <div className="flex items-center gap-3 mb-4">
             <Bell className="w-5 h-5 text-gray-400 dark:text-zinc-500" />
             <h3 className="text-xs font-bold uppercase tracking-tight dark:text-zinc-200">Notifications</h3>

@@ -42,15 +42,15 @@ export const TableActions: React.FC<TableActionsProps> = ({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap gap-1.5 items-center">
       <Tooltip content="Refresh Data">
         <button 
           onClick={handleRefresh}
           disabled={isRefreshing}
-          className="flex whitespace-nowrap shrink-0 items-center justify-center p-2 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
+          className="flex whitespace-nowrap shrink-0 items-center justify-center p-1.5 text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 transition-all disabled:opacity-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-700"
           aria-label="Refresh Data"
         >
-          <RefreshCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
         </button>
       </Tooltip>
       
@@ -58,13 +58,13 @@ export const TableActions: React.FC<TableActionsProps> = ({
         <button 
           onClick={handleExport}
           disabled={isExporting}
-          className="flex whitespace-nowrap shrink-0 items-center justify-center p-2 text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
+          className="flex whitespace-nowrap shrink-0 items-center justify-center p-1.5 text-white bg-slate-900 border border-slate-900 rounded hover:bg-slate-800 transition-all disabled:bg-slate-500 dark:bg-blue-600 dark:border-blue-600 dark:hover:bg-blue-500 dark:disabled:bg-blue-900"
           aria-label="Export Data"
         >
           {isExporting ? (
-            <Check className="w-4 h-4" />
+            <Check className="w-3.5 h-3.5" />
           ) : (
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5" />
           )}
         </button>
       </Tooltip>

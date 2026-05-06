@@ -86,7 +86,7 @@ export default function Inventory() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
@@ -121,8 +121,8 @@ export default function Inventory() {
 
       <div className="view-container">
         {viewMode === 'inventory' ? (
-          <div key="inventory-view" className="space-y-5">
-            <div className="flex gap-4 items-center bg-white p-3 md:p-4 xl:p-6 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+          <div key="inventory-view" className="space-y-4">
+            <div className="flex gap-3 items-center bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
                 <input 
@@ -166,21 +166,21 @@ export default function Inventory() {
                       key={item.id}
                       className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group"
                     >
-                      <td className="py-3 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
-                      <td className="py-3 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
-                      <td className="py-3 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
+                      <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
+                      <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
+                      <td className="py-2.5 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-[10px]">
                           {item.category}
                         </span>
                       </td>
-                      <td className="py-3 px-4 md:px-6 font-mono font-medium dark:text-zinc-300 text-right">
+                      <td className="py-2.5 px-4 md:px-6 font-mono font-medium dark:text-zinc-300 text-right">
                         <span className={isLowStock ? 'text-red-500' : ''}>
                           {item.stock}
                         </span>
                         <span className="text-[9px] text-gray-400 ml-1">PCS</span>
                       </td>
-                      <td className="py-3 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
-                      <td className="py-3 px-4 md:px-6 text-right">
+                      <td className="py-2.5 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
+                      <td className="py-2.5 px-4 md:px-6 text-right">
                         <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100">
                           <Tooltip content="Edit Item">
                             <button 

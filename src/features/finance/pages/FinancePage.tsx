@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { motion } from 'motion/react';
 import { 
   DollarSign, 
   ArrowUpRight, 
@@ -37,7 +36,7 @@ import { useFinance } from '../../finance/state/FinanceContext';
 import { BUSINESS_NAME } from '../../../shared/constants/branding';
 
 const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
-  <div className="bg-white p-5 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+  <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
     <div className="flex justify-between items-start">
       <div className="p-1.5 bg-gray-50 rounded dark:bg-zinc-800 transition-colors">
         <Icon className="w-4 h-4 text-slate-600 dark:text-zinc-400" />
@@ -47,7 +46,7 @@ const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
         {Math.abs(trend)}%
       </div>
     </div>
-    <div className="mt-4">
+    <div className="mt-3">
       <p className="text-[10px] uppercase font-bold tracking-[0.1em] text-gray-500 dark:text-zinc-500">{label}</p>
       <div className="flex items-baseline gap-1.5 mt-1">
         <h3 className="text-2xl font-mono font-bold tracking-tight text-gray-900 dark:text-zinc-100">₱{amount.toLocaleString()}</h3>
@@ -176,7 +175,7 @@ export default function Finance() {
   );
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
         <div>
@@ -203,7 +202,7 @@ export default function Finance() {
           </button>
         </div>
       </div>      {/* Summary Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 xl:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
         <FinanceSummary label="Gross Revenue" amount={stats.totalRevenue} trend={12.5} icon={TrendingUp} />
         <FinanceSummary label="Operational Cost" amount={stats.totalExpenses} trend={-3.2} icon={Scissors} />
         <FinanceSummary label="Company Net" amount={stats.netProfit} trend={18.7} icon={DollarSign} />
@@ -211,8 +210,8 @@ export default function Finance() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 xl:gap-8">
-        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
+        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-blue-600 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
             <div className="flex gap-4">
@@ -224,7 +223,7 @@ export default function Finance() {
               </div>
             </div>
           </div>
-          <div className="h-[280px] xl:h-[350px] w-full min-w-0 relative">
+          <div className="h-[240px] xl:h-[300px] w-full min-w-0 relative">
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ left: -20 }}>
@@ -262,8 +261,8 @@ export default function Finance() {
           </div>
         </div>
 
-        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 p-6 xl:p-8 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
-          <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-8 text-gray-800 border-l-2 border-slate-600 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
+        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
+          <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-gray-800 border-l-2 border-slate-600 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
           <div className="h-[200px] xl:h-[260px] w-full relative min-w-0">
             {isMounted && (
               <ResponsiveContainer width="100%" height="100%">
@@ -290,7 +289,7 @@ export default function Finance() {
               <span className="text-lg xl:text-xl font-bold font-mono">100%</span>
             </div>
           </div>
-          <div className="mt-8 space-y-3">
+          <div className="mt-5 space-y-2.5">
             {pieData.map((item) => (
               <div key={item.name} className="flex justify-between items-center text-[10px] xl:text-[11px] font-bold uppercase tracking-tight">
                 <div className="flex items-center gap-2">

@@ -28,8 +28,8 @@ export default function Orders() {
   const getDesign = (id?: string) => designs.find(d => d.id === id);
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 xl:gap-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xl:gap-4">
          {[
            { label: 'Designing', icon: Eye, count: orders.filter(o => o.status === 'Designing').length, color: 'text-purple-500' },
            { label: 'In Production', icon: Printer, count: orders.filter(o => o.status === 'In Production').length, color: 'text-blue-500' },
@@ -49,7 +49,7 @@ export default function Orders() {
       </div>
 
       <div className="bg-white border border-gray-200 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
-         <div className="p-3 md:p-4 lg:p-5 xl:p-6 border-b border-gray-100 flex gap-4 bg-gray-50/50 items-center dark:bg-zinc-900/50 dark:border-zinc-800">
+         <div className="p-3 md:p-4 border-b border-gray-100 flex gap-3 bg-gray-50/50 items-center dark:bg-zinc-900/50 dark:border-zinc-800">
             <div className="relative flex-1">
                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
                <input 
@@ -67,7 +67,7 @@ export default function Orders() {
             <table className="w-full text-left text-xs xl:text-sm">
               <thead>
                  <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                    <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Order ID</th>
+                    <th className="py-2.5 px-5 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Order ID</th>
                     <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Project / Client</th>
                     <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Work Phase</th>
                     <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em] text-right">Value</th>
@@ -77,8 +77,8 @@ export default function Orders() {
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
                  {filteredOrders.map((order) => (
                    <tr key={order.id} className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <td className="py-3 px-6 md:px-8 font-mono text-blue-600 dark:text-blue-400">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
-                      <td className="py-3 px-6 md:px-8">
+                      <td className="py-2.5 px-5 md:px-6 font-mono text-blue-600 dark:text-blue-400">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
+                      <td className="py-2.5 px-5 md:px-6">
                          <div className="flex items-center gap-3">
                             {order.designId && (
                                <div className="w-8 h-8 rounded bg-gray-100 overflow-hidden shrink-0 border border-gray-200 dark:bg-zinc-800 dark:border-zinc-700">
@@ -91,15 +91,15 @@ export default function Orders() {
                             </div>
                          </div>
                       </td>
-                      <td className="py-3 px-6 md:px-8">
+                      <td className="py-2.5 px-5 md:px-6">
                          <span className={`px-2 py-0.5 border text-[9px] md:text-[10px] font-bold uppercase rounded-full ${statusColors[order.status]}`}>
                             {order.status}
                          </span>
                       </td>
-                      <td className="py-3 px-4 md:px-6 font-mono font-bold text-right text-gray-900 dark:text-zinc-100 leading-none md:text-sm">
+                      <td className="py-2.5 px-4 md:px-6 font-mono font-bold text-right text-gray-900 dark:text-zinc-100 leading-none md:text-sm">
                          ₱{order.amount.toFixed(2)}
                       </td>
-                      <td className="py-3 px-6 md:px-8 text-right">
+                      <td className="py-2.5 px-5 md:px-6 text-right">
                          <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-blue-600 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-blue-600 dark:hover:text-white">
                             <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
                          </button>

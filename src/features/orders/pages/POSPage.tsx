@@ -3,7 +3,6 @@ import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package,
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { InventoryItem, CartItem, Transaction, Order } from '../../../shared/types/domain';
 import { Modal } from '../../../shared/components/ui/Modal';
-import { motion, AnimatePresence } from 'motion/react';
 import { useFinance } from '../../finance/state/FinanceContext';
 import { useInventory } from '../../inventory/state/InventoryContext';
 
@@ -199,7 +198,7 @@ export default function POS() {
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-4">
       {/* Header / Tabs */}
       <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-2 rounded border border-gray-200 dark:border-zinc-800">
         <div className="flex gap-2">
@@ -243,9 +242,9 @@ export default function POS() {
       </div>
 
       {view === 'pos' ? (
-        <div className="flex gap-5">
+        <div className="flex gap-4">
           {/* Product Selection */}
-          <div className="flex-1 space-y-4 flex flex-col min-w-0">
+          <div className="flex-1 space-y-3 flex flex-col min-w-0">
             <div className="flex flex-col gap-3 shrink-0">
               <div className="flex gap-3 items-center">
                 <div className="relative flex-1">
@@ -278,7 +277,7 @@ export default function POS() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-3 xl:gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6 gap-2.5 xl:gap-3">
               {filteredProducts.map(product => (
                 <button 
                   key={product.id}
@@ -286,7 +285,7 @@ export default function POS() {
                   disabled={product.stock <= 0}
                   className={`bg-white border border-gray-200 rounded p-2 text-left hover:border-blue-500 transition-all group flex flex-col shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-blue-700 ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                 >
-                  <div className="h-32 xl:h-40 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
+                  <div className="h-28 xl:h-32 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
                      <div className="flex flex-col items-center text-gray-300 group-hover:text-blue-500 transition-colors dark:text-zinc-700 dark:group-hover:text-blue-400">
                         <ShoppingBag className="w-8 h-8 xl:w-10 xl:h-10 stroke-1" />
                         <span className="text-[8px] mt-1 font-mono uppercase tracking-widest">IMG_PENDING</span>
@@ -310,7 +309,7 @@ export default function POS() {
           </div>
 
           {/* Cart / Checkout */}
-          <div className="w-80 lg:w-96 xl:w-[400px] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300 sticky top-4 self-start">
+          <div className="w-80 lg:w-[22rem] xl:w-[23rem] bg-white text-gray-900 rounded-lg shadow-sm flex flex-col border border-gray-200 relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-100 transition-colors duration-300 sticky top-4 self-start">
              <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none transform translate-x-1/4 -translate-y-1/4">
                 <ShoppingBag className="w-48 h-48" />
              </div>
@@ -324,7 +323,7 @@ export default function POS() {
                 </span>
              </div>
 
-             <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3 z-10 scrollbar-hide">
+             <div className="max-h-[60vh] overflow-y-auto p-3 space-y-2.5 z-10 scrollbar-hide">
                 {posMode === 'custom' && (
                   <div className="space-y-3 mb-4 bg-indigo-50/50 p-3 rounded-md border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30">
                      <div className="space-y-1">
@@ -475,13 +474,9 @@ export default function POS() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                <AnimatePresence initial={false}>
-                  {filteredTransactions.map((trx) => (
-                    <motion.tr 
+                {filteredTransactions.map((trx) => (
+                    <tr
                       key={trx.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 10 }}
                       className="hover:bg-blue-50/20 dark:hover:bg-blue-900/10 transition-colors cursor-pointer group"
                       onClick={() => setSelectedTransaction(trx)}
                     >
@@ -515,9 +510,8 @@ export default function POS() {
                           </button>
                         </div>
                       </td>
-                    </motion.tr>
+                    </tr>
                   ))}
-                </AnimatePresence>
                 {filteredTransactions.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-20 text-center">
