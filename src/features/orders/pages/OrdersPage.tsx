@@ -124,7 +124,7 @@ export default function Orders() {
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
         title="Order Production Detail"
-        maxWidth="max-w-2xl"
+        maxWidth="max-w-5xl"
       >
         {selectedOrder && (
           <div className="space-y-6">

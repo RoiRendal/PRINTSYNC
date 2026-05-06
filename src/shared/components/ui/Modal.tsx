@@ -20,9 +20,13 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/50 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-4 md:p-6 bg-black/50 backdrop-blur-sm overflow-y-auto"
+      onClick={onClose}
+    >
       <div
-        className={`w-full ${maxWidth} bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded shadow-xl overflow-hidden`}
+        className={`w-full ${maxWidth} max-h-[90vh] my-4 md:my-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded shadow-xl overflow-hidden flex flex-col`}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-3 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
           <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-zinc-100 italic serif">
@@ -36,7 +40,7 @@ export const Modal: React.FC<ModalProps> = ({
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
-        <div className="p-4">
+        <div className="p-4 overflow-y-auto">
           {children}
         </div>
       </div>
