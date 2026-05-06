@@ -173,7 +173,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {!isCollapsed && <div className="lg:hidden absolute inset-0 bg-black/50 z-40" onClick={toggleCollapse} />}
         <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-4 lg:p-5 xl:p-6 scrollbar-hide">
-            {children}
+            <section className="min-h-full border border-gray-300 rounded-lg bg-gray-50 p-3 lg:p-4 dark:bg-zinc-950 dark:border-zinc-800">
+              {children}
+            </section>
           </div>
         </main>
       </div>

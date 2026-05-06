@@ -13,7 +13,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
     <aside 
       className={cn(
         "bg-gray-50 text-gray-900 flex flex-col shrink-0 dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
-        isCollapsed ? "w-0 border-r-0" : "w-fit min-w-[3.25rem] border-r border-gray-300 dark:border-zinc-800",
+        isCollapsed ? "w-0" : "w-fit min-w-[3.25rem]",
         className
       )}
     >
