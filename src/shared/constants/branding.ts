@@ -5,7 +5,7 @@ export const APP_NAME = 'PRINTSYNC';
  * Default company name shown in the header, reports, and exports.
  * Users can change this in Settings (stored in localStorage).
  */
-export const DEFAULT_BUSINESS_DISPLAY_NAME = 'IC Printing Services.';
+export const DEFAULT_BUSINESS_DISPLAY_NAME = 'IC Printing Services';
 
 /**
  * Brand logo served from the Vite `public/` folder.
