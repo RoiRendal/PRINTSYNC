@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
-import { Shield, Database, Download, Check, History, Bell, Cloud, Palette } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Shield, Database, Download, Check, History, Bell, Cloud, Palette, Building2 } from 'lucide-react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
+import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
+import { APP_NAME, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 
 export default function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { businessDisplayName, setBusinessDisplayName } = useBusinessBranding();
+  const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
+
+  useEffect(() => {
+    setCompanyDraft(businessDisplayName);
+  }, [businessDisplayName]);
 
   const handleExportArchive = () => {
     setIsExporting(true);
@@ -15,7 +23,7 @@ export default function Settings() {
     const archiveData = {
       timestamp: new Date().toISOString(),
       version: "2.4.0",
-      system: "PRINTSYNC ERP",
+      system: `${APP_NAME} ERP`,
       data: {
         inventory: "All stock records",
         orders: "Complete transaction history",
@@ -40,8 +48,62 @@ export default function Settings() {
     }, 2000);
   };
 
+  const handleSaveCompanyName = () => {
+    setBusinessDisplayName(companyDraft);
+  };
+
   return (
     <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto space-y-4">
+      <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="p-4 border-b border-gray-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-zinc-100 text-zinc-900 rounded dark:bg-zinc-800/40 dark:text-zinc-200">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900 dark:text-zinc-100">Business identity</h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-500">
+                Company name shown in the header and reports. The app remains {APP_NAME}.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <label htmlFor="company-display-name" className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-500">
+                Company name
+              </label>
+              <input
+                id="company-display-name"
+                type="text"
+                value={companyDraft}
+                onChange={(e) => setCompanyDraft(e.target.value)}
+                className="w-full p-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded text-sm text-gray-900 dark:text-zinc-100"
+                autoComplete="organization"
+              />
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleSaveCompanyName}
+                className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setCompanyDraft(DEFAULT_BUSINESS_DISPLAY_NAME);
+                  setBusinessDisplayName(DEFAULT_BUSINESS_DISPLAY_NAME);
+                }}
+                className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Reset default
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
         <div className="p-4 border-b border-gray-100 flex items-center justify-between dark:border-zinc-800">
           <div className="flex items-center gap-3">

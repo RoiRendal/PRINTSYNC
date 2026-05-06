@@ -33,7 +33,7 @@ import { Tooltip as MyTooltip } from '../../../shared/components/ui/Tooltip';
 import { FinancialReport } from '../components/FinancialReport';
 import { FinancialRecord, FinancialStats } from '../../../shared/types/domain';
 import { useFinance } from '../../finance/state/FinanceContext';
-import { BUSINESS_NAME } from '../../../shared/constants/branding';
+import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 
 const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
   <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
@@ -57,6 +57,7 @@ const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
 );
 
 export default function Finance() {
+  const { businessDisplayName } = useBusinessBranding();
   const { records, stats, addRecord, updateRecord, deleteRecord } = useFinance();
   const [isMounted, setIsMounted] = React.useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -385,7 +386,7 @@ export default function Finance() {
           <FinancialReport 
             records={records} 
             stats={stats} 
-            businessName={BUSINESS_NAME} 
+            businessName={businessDisplayName} 
           />
         </div>
       </Modal>

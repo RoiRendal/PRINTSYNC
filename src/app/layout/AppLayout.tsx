@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
 import { Bell, Sun, Moon, PanelLeft, ChevronLeft } from 'lucide-react';
@@ -11,14 +11,21 @@ function cn(...inputs: ClassValue[]) {
 }
 
 import { NAV_ITEMS } from '../../shared/constants/navigation';
-import { APP_NAME } from '../../shared/constants/branding';
+import { APP_NAME, BRAND_LOGO_URL } from '../../shared/constants/branding';
+import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
+  const { businessDisplayName } = useBusinessBranding();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  const handleLogoError = useCallback(() => {
+    setLogoFailed(true);
+  }, []);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -70,9 +77,27 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Global Top Header */}
       <header className="relative h-11 bg-white border-b border-gray-300 flex items-center justify-between px-4 lg:px-5 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-[60]">
         <div className="flex items-center gap-8">
-          <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-            <div className="w-5 h-5 bg-zinc-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">{APP_NAME.charAt(0)}</div>
-            <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base">{APP_NAME}</h1>
+          <div
+            className="flex items-center gap-2 overflow-hidden whitespace-nowrap"
+            title={`${APP_NAME}`}
+          >
+            {logoFailed ? (
+              <div className="w-5 h-5 bg-zinc-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+                {APP_NAME.charAt(0)}
+              </div>
+            ) : (
+              <img
+                src={BRAND_LOGO_URL}
+                alt=""
+                width={20}
+                height={20}
+                className="h-5 w-auto max-w-[7rem] object-contain object-left shrink-0 dark:brightness-0 dark:invert"
+                onError={handleLogoError}
+              />
+            )}
+            <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base truncate">
+              {businessDisplayName}
+            </h1>
           </div>
         </div>
 
