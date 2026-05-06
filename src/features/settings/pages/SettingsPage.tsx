@@ -63,7 +63,7 @@ export default function Settings() {
             <div>
               <h2 className="text-sm font-bold uppercase tracking-tight text-gray-900 dark:text-zinc-100">Business identity</h2>
               <p className="text-xs text-gray-500 dark:text-zinc-500">
-                Company name shown in the header and reports. The app remains {APP_NAME}.
+                Company name shown in the header and reports.
               </p>
             </div>
           </div>
