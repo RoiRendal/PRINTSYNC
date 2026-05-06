@@ -160,7 +160,7 @@ export default function POS() {
         })),
         quantity: cart.reduce((acc, i) => acc + i.qty, 0),
         amount: total,
-        status: 'Designing',
+        status: 'Pending',
         isCustom: true,
         notes: orderNotes,
         designId: cart[0]?.designId // Taking the first one as primary for the list view
