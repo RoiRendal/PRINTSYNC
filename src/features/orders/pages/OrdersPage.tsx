@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
@@ -18,6 +18,7 @@ export default function Orders() {
   const { orders, designs, updateOrder } = useInventory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [selectedLineItemIndex, setSelectedLineItemIndex] = useState(0);
 
   const filteredOrders = orders.filter(order => 
     order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,6 +27,39 @@ export default function Orders() {
   );
 
   const getDesign = (id?: string) => designs.find(d => d.id === id);
+  const getOrderLineItems = (order: Order) => {
+    if (order.lineItems && order.lineItems.length > 0) return order.lineItems;
+    return order.item
+      .split(',')
+      .map(name => name.trim())
+      .filter(Boolean)
+      .map(name => ({
+        name,
+        quantity: order.quantity,
+        designId: order.designId
+      }));
+  };
+
+  const selectedOrderLineItems = useMemo(() => {
+    if (!selectedOrder) return [];
+    return getOrderLineItems(selectedOrder);
+  }, [selectedOrder]);
+
+  const activeLineItem = selectedOrderLineItems[selectedLineItemIndex];
+  const activeLineItemDesign = getDesign(activeLineItem?.designId || selectedOrder?.designId);
+
+  useEffect(() => {
+    if (!selectedOrder) {
+      setSelectedLineItemIndex(0);
+      return;
+    }
+    setSelectedLineItemIndex(0);
+  }, [selectedOrder]);
+
+  useEffect(() => {
+    if (selectedLineItemIndex < selectedOrderLineItems.length) return;
+    setSelectedLineItemIndex(0);
+  }, [selectedLineItemIndex, selectedOrderLineItems.length]);
 
   return (
     <div className="space-y-4">
@@ -149,9 +183,24 @@ export default function Orders() {
                     <ClipboardList className="w-3 h-3" /> Job Specifications
                   </h4>
                   <div className="bg-gray-50 dark:bg-zinc-800/50 p-3 rounded border border-gray-100 dark:border-zinc-800 divide-y divide-gray-200 dark:divide-zinc-700">
-                    <div className="py-2 flex justify-between text-xs">
-                      <span className="text-gray-500">Item</span>
-                      <span className="font-bold">{selectedOrder.item}</span>
+                    <div className="py-2 flex justify-between items-start gap-4 text-xs">
+                      <span className="text-gray-500 pt-1">Item</span>
+                      <div className="font-bold text-right space-y-1">
+                        {selectedOrderLineItems.map((lineItem, index) => (
+                          <button
+                            key={`${lineItem.name}-${index}`}
+                            type="button"
+                            onClick={() => setSelectedLineItemIndex(index)}
+                            className={`block text-right w-full underline-offset-2 hover:underline transition-colors ${
+                              selectedLineItemIndex === index
+                                ? 'text-blue-600 dark:text-blue-400'
+                                : 'text-gray-900 dark:text-zinc-200'
+                            }`}
+                          >
+                            {lineItem.name}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <div className="py-2 flex justify-between text-xs">
                       <span className="text-gray-500">Quantity</span>
@@ -185,15 +234,15 @@ export default function Orders() {
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                     <ImageIcon className="w-3 h-3" /> Visual Assets
                   </h4>
-                  {selectedOrder.designId ? (
+                  {activeLineItemDesign ? (
                     <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
                       <img 
-                        src={getDesign(selectedOrder.designId)?.imageUrl} 
+                        src={activeLineItemDesign?.imageUrl} 
                         alt="Custom Design" 
                         className="w-full h-full object-contain"
                       />
                       <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[8px] font-bold text-white uppercase tracking-widest">
-                        Ref: {selectedOrder.designId}
+                        Ref: {activeLineItem?.designId || selectedOrder.designId}
                       </div>
                     </div>
                   ) : (

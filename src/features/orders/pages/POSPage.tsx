@@ -153,6 +153,11 @@ export default function POS() {
       const newOrder: Omit<Order, 'id' | 'date'> = {
         customer: customerName,
         item: cart.map(i => i.name).join(', '),
+        lineItems: cart.map(i => ({
+          name: i.name,
+          quantity: i.qty,
+          designId: i.designId
+        })),
         quantity: cart.reduce((acc, i) => acc + i.qty, 0),
         amount: total,
         status: 'Designing',
@@ -204,13 +209,13 @@ export default function POS() {
         <div className="flex gap-2">
           <button 
             onClick={() => setView('pos')}
-            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${view === 'pos' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'pos' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
             <ShoppingBag className="w-3.5 h-3.5" /> Terminal
           </button>
           <button 
             onClick={() => setView('history')}
-            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${view === 'history' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
+            className={`px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 ${view === 'history' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800'}`}
           >
             <History className="w-3.5 h-3.5" /> History
           </button>
@@ -241,6 +246,7 @@ export default function POS() {
         </div>
       </div>
 
+      <div className="[&_*]:!transition-none">
       {view === 'pos' ? (
         <div className="flex gap-4">
           {/* Product Selection */}
@@ -529,6 +535,7 @@ export default function POS() {
           </div>
         </div>
       )}
+      </div>
 
       <Modal 
         isOpen={!!selectedTransaction} 

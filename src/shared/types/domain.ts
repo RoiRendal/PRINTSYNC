@@ -12,6 +12,11 @@ export interface Order {
   id: string;
   customer: string;
   item: string;
+  lineItems?: Array<{
+    name: string;
+    quantity: number;
+    designId?: string;
+  }>;
   quantity: number;
   status: 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Shipped';
   date: string;
