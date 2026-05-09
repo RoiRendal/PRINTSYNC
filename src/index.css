@@ -4,5 +4,13 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ERP-first visual behavior: keep typography and motion minimal. */
+*, *::before, *::after {
+  animation: none !important;
+  transition-duration: 120ms;
+  transition-timing-function: linear;
 }
