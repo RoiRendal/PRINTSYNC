@@ -1319,7 +1319,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
             <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">
               Actual {forecastMetric === 'income' ? 'Income' : 'Expenses'}
@@ -1336,12 +1336,6 @@ export default function AnalyticsPage() {
             <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Expected Growth</p>
             <p className={`text-xs font-semibold ${financialForecastStats.expectedGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {financialForecastStats.expectedGrowth.toFixed(1)}%
-            </p>
-          </div>
-          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Forecast Delta</p>
-            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">
-              {money.format(financialForecastStats.expectedDelta)}
             </p>
           </div>
           <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">

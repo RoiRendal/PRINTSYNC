@@ -18,7 +18,7 @@ export interface Order {
     designId?: string;
   }>;
   quantity: number;
-  status: 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Shipped';
+  status: 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Delivered';
   date: string;
   amount: number;
   designId?: string;

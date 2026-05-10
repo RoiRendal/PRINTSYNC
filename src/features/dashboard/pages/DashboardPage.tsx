@@ -32,7 +32,7 @@ export default function Dashboard() {
       .filter(r => r.date === today && r.type === 'Income')
       .reduce((acc, r) => acc + r.amount, 0);
 
-    const pendingJobs = orders.filter(o => o.status !== 'Completed' && o.status !== 'Shipped').length;
+    const pendingJobs = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').length;
     const inventoryAlerts = inventory.filter(item => item.stock <= item.reorderLevel).length;
     const completedToday = orders.filter(o => o.status === 'Completed' && o.date === today).length;
 
@@ -44,7 +44,7 @@ export default function Dashboard() {
     };
   }, [orders, records, inventory]);
 
-  const productionQueue = orders.filter(o => o.status !== 'Completed' && o.status !== 'Shipped').slice(0, 8);
+  const productionQueue = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').slice(0, 8);
 
   return (
     <div className="space-y-4">
