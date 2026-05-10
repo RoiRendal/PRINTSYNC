@@ -13,6 +13,7 @@ function cn(...inputs: ClassValue[]) {
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME, BRAND_LOGO_URL } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
+import { useUserContext } from '../../features/users/state/UserContext';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -20,6 +21,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
   const { businessDisplayName } = useBusinessBranding();
+  const { currentUser, logout } = useUserContext();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
 
@@ -72,6 +74,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const initials = (currentUser?.name ?? 'Admin')
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-zinc-200 selection:text-zinc-900 dark:selection:bg-zinc-700 dark:selection:text-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
       {/* Global Top Header */}
@@ -121,11 +130,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
               <div className="flex flex-col text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none">Admin</p>
-                <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">Station 01-MNL</p>
+                <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none">
+                  {currentUser?.name ?? 'Admin'}
+                </p>
+                <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">
+                  {(currentUser?.role ?? 'admin').toUpperCase()}
+                </p>
               </div>
               <div className="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
-                AD
+                {initials}
               </div>
 
               {/* Dropdown Menu */}
@@ -137,7 +150,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <button className="w-full text-left px-4 py-1 text-xs text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
                     User Settings
                   </button>
-                  <button className="w-full text-left px-4 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                  <button
+                    onClick={logout}
+                    className="w-full text-left px-4 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
                     Logout
                   </button>
                 </div>

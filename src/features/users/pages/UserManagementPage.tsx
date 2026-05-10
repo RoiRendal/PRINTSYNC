@@ -1,113 +1,269 @@
-import React from 'react';
-import { Users, UserPlus, Settings, Shield, Mail, Key, Search } from 'lucide-react';
-import { TableActions } from '../../../shared/components/table/TableActions';
+import React, { useMemo, useState } from 'react';
+import { Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
+import { Modal } from '../../../shared/components/ui/Modal';
+import { RbacRole, UserRecord, useUserContext } from '../state/UserContext';
 
-const users = [
-  { id: 1, name: 'Marco Rossi', role: 'System Admin', status: 'Active', email: 'marco@printsync.com', lastActive: '2h ago' },
-  { id: 2, name: 'Elena Chen', role: 'Production Lead', status: 'Active', email: 'elena@printsync.com', lastActive: '15m ago' },
-  { id: 3, name: 'David Smith', role: 'Print Technician', status: 'On Break', email: 'david@printsync.com', lastActive: '1h ago' },
-  { id: 4, name: 'Sofia Garcia', role: 'Sales Executive', status: 'Active', email: 'sofia@printsync.com', lastActive: '5m ago' },
-  { id: 5, name: 'Thomas Mueller', role: 'Inventory Manager', status: 'Inactive', email: 'thomas@printsync.com', lastActive: '2 days ago' },
-];
+interface FormState {
+  name: string;
+  email: string;
+  phone: string;
+  role: RbacRole;
+  position: string;
+  createdAt: string;
+  password: string;
+}
+
+const EMPTY_FORM: FormState = {
+  name: '',
+  email: '',
+  phone: '',
+  role: 'staff',
+  position: '',
+  createdAt: '',
+  password: '',
+};
 
 export default function UserManagement() {
+  const { users, createUser, updateUser, deleteUser } = useUserContext();
+  const [search, setSearch] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState>(EMPTY_FORM);
+
+  const adminCount = users.filter((user) => user.role === 'admin').length;
+  const staffCount = users.filter((user) => user.role === 'staff').length;
+
+  const filteredUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) {
+      return users;
+    }
+    return users.filter((user) => {
+      return (
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query) ||
+        user.position.toLowerCase().includes(query) ||
+        user.phone.toLowerCase().includes(query)
+      );
+    });
+  }, [users, search]);
+
+  const openCreate = () => {
+    setEditingUserId(null);
+    setForm(EMPTY_FORM);
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (user: UserRecord) => {
+    setEditingUserId(user.id);
+    setForm({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      position: user.position,
+      createdAt: user.createdAt,
+      password: user.password,
+    });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingUserId(null);
+    setForm(EMPTY_FORM);
+  };
+
+  const submitForm = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (editingUserId) {
+      updateUser(editingUserId, {
+        ...form,
+        createdAt: form.createdAt || new Date().toISOString().slice(0, 10),
+      });
+    } else {
+      createUser(form);
+    }
+    closeModal();
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between bg-white p-3 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex-1 relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
-          <input 
-            type="text" 
-            placeholder="Search staff members..."
-            className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-zinc-400 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search users..."
+            className="w-full pl-9 pr-4 py-1.5 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-zinc-400 rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
           />
         </div>
-        <TableActions />
+        <button
+          onClick={openCreate}
+          className="inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold bg-zinc-900 text-white rounded hover:bg-zinc-800"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add User
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 xl:gap-5">
-        <div className="md:col-span-2 lg:col-span-1 xl:col-span-1 space-y-4">
-           <div className="bg-white border border-gray-200 p-4 rounded shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
-              <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">Station Overview</h2>
-              {[
-                { role: 'Administrators', count: 2, icon: Shield },
-                { role: 'Production Techs', count: 8, icon: Settings },
-                { role: 'Sales Personnel', count: 6, icon: Mail },
-              ].map(role => (
-                <div key={role.role} className="flex justify-between items-center p-2.5 bg-gray-50 border border-gray-100 rounded dark:bg-zinc-800 dark:border-zinc-700">
-                   <div className="flex items-center gap-2.5">
-                      <role.icon className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
-                      <span className="text-[9px] font-bold uppercase tracking-wider dark:text-zinc-300">{role.role}</span>
-                   </div>
-                   <span className="text-[9px] font-mono font-bold text-zinc-900 dark:text-zinc-200">{role.count}</span>
-                </div>
-              ))}
-           </div>
-                      <div className="bg-white border border-gray-200 p-4 rounded shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
-              <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">System Logs</h2>
-              <div className="space-y-3">
-                 <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-gray-500 uppercase dark:text-zinc-500">Active Sessions</span>
-                    <span className="text-zinc-900 dark:text-zinc-200">14</span>
-                 </div>
-                 <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-gray-500 uppercase dark:text-zinc-500">Auth Failures</span>
-                    <span className="text-red-500 dark:text-red-400">0</span>
-                 </div>
-                 <div className="flex justify-between items-center text-[9px] font-mono">
-                    <span className="text-gray-500 uppercase dark:text-zinc-500">Audit Records</span>
-                    <span className="text-gray-700 dark:text-zinc-300">1,248</span>
-                 </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="lg:col-span-1">
+          <div className="bg-white border border-gray-200 p-4 rounded shadow-sm space-y-3 dark:bg-zinc-900 dark:border-zinc-800">
+            <h2 className="text-[10px] uppercase font-bold tracking-[0.3em] mb-4 text-gray-800 dark:text-zinc-400">
+              Station Overview
+            </h2>
+            <div className="flex justify-between items-center p-2.5 bg-gray-50 border border-gray-100 rounded dark:bg-zinc-800 dark:border-zinc-700">
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
+                <span className="text-[9px] font-bold uppercase tracking-wider dark:text-zinc-300">Admin</span>
               </div>
-           </div>
+              <span className="text-[9px] font-mono font-bold text-zinc-900 dark:text-zinc-200">{adminCount}</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 bg-gray-50 border border-gray-100 rounded dark:bg-zinc-800 dark:border-zinc-700">
+              <div className="flex items-center gap-2.5">
+                <UserSquare className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
+                <span className="text-[9px] font-bold uppercase tracking-wider dark:text-zinc-300">Staff</span>
+              </div>
+              <span className="text-[9px] font-mono font-bold text-zinc-900 dark:text-zinc-200">{staffCount}</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 bg-gray-50 border border-gray-100 rounded dark:bg-zinc-800 dark:border-zinc-700">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-300">Total Users</span>
+              <span className="text-[9px] font-mono font-bold text-zinc-900 dark:text-zinc-200">{users.length}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="md:col-span-2 lg:col-span-3 xl:col-span-4">
-           <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
-              <table className="w-full text-left text-xs">
-                 <thead>
-                    <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                       <th className="py-2.5 px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Staff Identity</th>
-                       <th className="py-2.5 px-6 font-bold uppercase text-[9px] tracking-[0.2em]">RBAC Role</th>
-                       <th className="py-2.5 px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Status</th>
-                       <th className="py-2.5 px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Last Hit</th>
-                    </tr>
-                 </thead>
-                 <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                    {users.map(user => (
-                      <tr key={user.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group">
-                         <td className="py-2.5 px-6">
-                            <div className="flex items-center gap-3">
-                               <div className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center text-[9px] font-bold text-gray-400 group-hover:bg-zinc-100 group-hover:text-zinc-900 transition-colors dark:bg-zinc-800 dark:text-zinc-600 dark:group-hover:bg-zinc-800/50">
-                                  {user.name.split(' ').map(n => n[0]).join('')}
-                               </div>
-                               <div>
-                                  <p className="text-[11px] font-bold text-gray-800 uppercase leading-none dark:text-zinc-200">{user.name}</p>
-                                  <p className="text-[9px] text-gray-400 font-mono mt-1 dark:text-zinc-500">{user.email}</p>
-                               </div>
-                            </div>
-                         </td>
-                         <td className="py-2.5 px-6">
-                            <span className="text-[9px] px-2 py-0.5 border border-gray-100 text-gray-500 font-bold uppercase tracking-tighter bg-gray-50 rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400">
-                              {user.role}
-                            </span>
-                         </td>
-                         <td className="py-2.5 px-6">
-                            <div className="flex items-center gap-2">
-                               <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-500' : user.status === 'On Break' ? 'bg-amber-500' : 'bg-gray-300 dark:bg-zinc-700'}`} />
-                               <span className="text-[10px] uppercase font-bold text-gray-600 dark:text-zinc-400">{user.status}</span>
-                            </div>
-                         </td>
-                         <td className="py-2.5 px-6">
-                            <span className="text-[10px] font-mono text-gray-400 uppercase dark:text-zinc-500">{user.lastActive}</span>
-                         </td>
-                      </tr>
-                    ))}
-                 </tbody>
-              </table>
-           </div>
+        <div className="lg:col-span-3">
+          <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">Staff Identity</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">Email</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">Phone</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">RBAC Role</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">Position</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em]">Date Created</th>
+                  <th className="py-2.5 px-4 font-bold uppercase text-[9px] tracking-[0.2em] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
+                {filteredUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30">
+                    <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 bg-gray-100 rounded flex items-center justify-center text-[9px] font-bold text-gray-500 dark:bg-zinc-800 dark:text-zinc-400">
+                          {user.name
+                            .split(' ')
+                            .map((part) => part[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
+                        <span className="text-[11px] font-bold text-gray-800 uppercase leading-none dark:text-zinc-200">
+                          {user.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-4 text-[10px] font-mono text-gray-600 dark:text-zinc-300">{user.email}</td>
+                    <td className="py-2.5 px-4 text-[10px] font-mono text-gray-600 dark:text-zinc-300">{user.phone}</td>
+                    <td className="py-2.5 px-4">
+                      <span className="text-[9px] px-2 py-0.5 border border-gray-100 text-gray-500 font-bold uppercase tracking-tighter bg-gray-50 rounded dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400">
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-4 text-[10px] uppercase font-semibold text-gray-700 dark:text-zinc-300">{user.position}</td>
+                    <td className="py-2.5 px-4 text-[10px] font-mono text-gray-500 dark:text-zinc-400">{user.createdAt}</td>
+                    <td className="py-2.5 px-4">
+                      <div className="flex justify-end items-center gap-2">
+                        <button
+                          onClick={() => openEdit(user)}
+                          className="p-1.5 rounded border border-gray-200 text-gray-600 hover:bg-gray-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deleteUser(user.id)}
+                          className="p-1.5 rounded border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUserId ? 'Edit User' : 'Create User'} maxWidth="max-w-lg">
+        <form onSubmit={submitForm} className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input
+            required
+            value={form.name}
+            onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+            placeholder="Staff identity"
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <input
+            required
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
+            placeholder="Email"
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <input
+            required
+            value={form.phone}
+            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+            placeholder="Phone number"
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <select
+            value={form.role}
+            onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as RbacRole }))}
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          >
+            <option value="admin">admin</option>
+            <option value="staff">staff</option>
+          </select>
+          <input
+            required
+            value={form.position}
+            onChange={(e) => setForm((prev) => ({ ...prev, position: e.target.value }))}
+            placeholder="Position"
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <input
+            type="date"
+            value={form.createdAt}
+            onChange={(e) => setForm((prev) => ({ ...prev, createdAt: e.target.value }))}
+            className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <input
+            required
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+            placeholder="Password"
+            className="md:col-span-2 border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
+          />
+          <div className="md:col-span-2 flex justify-end gap-2 pt-2">
+            <button type="button" onClick={closeModal} className="px-3 py-2 text-xs rounded border border-gray-200 dark:border-zinc-700">
+              Cancel
+            </button>
+            <button type="submit" className="px-3 py-2 text-xs rounded bg-zinc-900 text-white">
+              {editingUserId ? 'Save Changes' : 'Create User'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
