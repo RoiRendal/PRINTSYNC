@@ -13,6 +13,7 @@ export interface Order {
   customer: string;
   item: string;
   lineItems?: Array<{
+    itemId?: string;
     name: string;
     quantity: number;
     designId?: string;

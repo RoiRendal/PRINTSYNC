@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon } from 'lucide-react';
+import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Order } from '../../../shared/types/domain';
+import { useNavigate } from 'react-router-dom';
 
 const statusColors: any = {
   'In Production': 'text-zinc-800 bg-zinc-100 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700',
@@ -14,8 +15,18 @@ const statusColors: any = {
   'Delivered': 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-900/40',
 };
 
+const workPhases: Order['status'][] = [
+  'Pending',
+  'In Production',
+  'Designing',
+  'Ready for Pickup',
+  'Delivered',
+  'Completed',
+];
+
 export default function Orders() {
-  const { orders, designs, updateOrder } = useInventory();
+  const { orders, designs, updateOrder, deleteOrder } = useInventory();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [selectedLineItemIndex, setSelectedLineItemIndex] = useState(0);
@@ -60,6 +71,34 @@ export default function Orders() {
     if (selectedLineItemIndex < selectedOrderLineItems.length) return;
     setSelectedLineItemIndex(0);
   }, [selectedLineItemIndex, selectedOrderLineItems.length]);
+
+  const updateOrderStatusByStep = (order: Order, direction: -1 | 1) => {
+    const currentIndex = workPhases.indexOf(order.status);
+    if (currentIndex < 0) return;
+    const nextIndex = Math.max(0, Math.min(workPhases.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex) return;
+    const nextStatus = workPhases[nextIndex];
+    updateOrder(order.id, { status: nextStatus });
+    if (selectedOrder?.id === order.id) {
+      setSelectedOrder({ ...order, status: nextStatus });
+    }
+  };
+
+  const handleDeleteOrder = (order: Order) => {
+    if (!window.confirm(`Delete order ${order.id} for ${order.customer}?`)) return;
+    deleteOrder(order.id);
+    if (selectedOrder?.id === order.id) {
+      setSelectedOrder(null);
+    }
+  };
+
+  const handleEditOrder = (order: Order) => {
+    navigate('/pos', {
+      state: {
+        editOrderId: order.id,
+      },
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -126,17 +165,79 @@ export default function Orders() {
                          </div>
                       </td>
                       <td className="py-2.5 px-5 md:px-6">
-                         <span className={`px-2 py-0.5 border text-[9px] md:text-[10px] font-bold uppercase rounded-full ${statusColors[order.status]}`}>
-                            {order.status}
-                         </span>
+                         <div className="flex items-center gap-2 max-w-[270px]">
+                           <button
+                             type="button"
+                             onClick={(event) => {
+                               event.stopPropagation();
+                               updateOrderStatusByStep(order, -1);
+                             }}
+                             disabled={workPhases.indexOf(order.status) === 0}
+                             className="p-1 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                             title="Back step"
+                           >
+                             <ChevronLeft className="w-3 h-3" />
+                           </button>
+                           <div className="flex-1">
+                             <div className="flex gap-1 mb-1">
+                               {workPhases.map((phase, index) => {
+                                 const activeIndex = workPhases.indexOf(order.status);
+                                 const isDone = index <= activeIndex;
+                                 return (
+                                   <span
+                                     key={`${order.id}-${phase}`}
+                                     className={`h-1.5 flex-1 rounded-full ${isDone ? 'bg-sky-500' : 'bg-gray-200 dark:bg-zinc-700'}`}
+                                   />
+                                 );
+                               })}
+                             </div>
+                             <span className={`px-2 py-0.5 border text-[9px] md:text-[10px] font-bold uppercase rounded-full ${statusColors[order.status]}`}>
+                               {order.status}
+                             </span>
+                           </div>
+                           <button
+                             type="button"
+                             onClick={(event) => {
+                               event.stopPropagation();
+                               updateOrderStatusByStep(order, 1);
+                             }}
+                             disabled={workPhases.indexOf(order.status) === workPhases.length - 1}
+                             className="p-1 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                             title="Next step"
+                           >
+                             <ChevronRight className="w-3 h-3" />
+                           </button>
+                         </div>
                       </td>
                       <td className="py-2.5 px-4 md:px-6 font-mono font-bold text-right text-gray-900 dark:text-zinc-100 leading-none md:text-sm">
                          ₱{order.amount.toFixed(2)}
                       </td>
                       <td className="py-2.5 px-5 md:px-6 text-right">
-                         <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-zinc-900 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white">
+                         <div className="flex justify-end gap-1.5">
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEditOrder(order);
+                            }}
+                            className="p-1.5 md:p-2 bg-gray-50 hover:bg-indigo-600 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400"
+                            title="Edit order in POS"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          </button>
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteOrder(order);
+                            }}
+                            className="p-1.5 md:p-2 bg-gray-50 hover:bg-red-600 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400"
+                            title="Delete order"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                          </button>
+                          <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-zinc-900 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white">
                             <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                         </button>
+                          </button>
+                         </div>
                       </td>
                    </tr>
                  ))}
@@ -257,23 +358,38 @@ export default function Orders() {
 
             <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Update Work Phase</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {Object.keys(statusColors).map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      updateOrder(selectedOrder.id, { status: status as any });
-                      setSelectedOrder({ ...selectedOrder, status: status as any });
-                    }}
-                    className={`px-3 py-2 rounded text-[9px] font-bold uppercase tracking-wider transition-all border ${
-                      selectedOrder.status === status
-                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => updateOrderStatusByStep(selectedOrder, -1)}
+                  disabled={workPhases.indexOf(selectedOrder.status) === 0}
+                  className="p-2 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-400"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <div className="flex-1">
+                  <div className="flex gap-1.5 mb-2">
+                    {workPhases.map((phase, index) => {
+                      const activeIndex = workPhases.indexOf(selectedOrder.status);
+                      const isDone = index <= activeIndex;
+                      return (
+                        <span
+                          key={`modal-${phase}`}
+                          className={`h-2 flex-1 rounded-full ${isDone ? 'bg-sky-500' : 'bg-gray-200 dark:bg-zinc-700'}`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className={`px-2 py-0.5 border text-[10px] font-bold uppercase rounded-full ${statusColors[selectedOrder.status]}`}>
+                    {selectedOrder.status}
+                  </span>
+                </div>
+                <button
+                  onClick={() => updateOrderStatusByStep(selectedOrder, 1)}
+                  disabled={workPhases.indexOf(selectedOrder.status) === workPhases.length - 1}
+                  className="p-2 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-400"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
             </div>
 

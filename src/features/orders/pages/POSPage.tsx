@@ -1,14 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { InventoryItem, CartItem, Transaction, Order } from '../../../shared/types/domain';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { useFinance } from '../../finance/state/FinanceContext';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function POS() {
   const { addRecord } = useFinance();
-  const { items: inventory, updateItem, designs, addOrder } = useInventory();
+  const { items: inventory, updateItem, designs, addOrder, orders, updateOrder } = useInventory();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,6 +30,7 @@ export default function POS() {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
 
@@ -45,6 +49,53 @@ export default function POS() {
       trx.items.some(item => item.name.toLowerCase().includes(historySearchTerm.toLowerCase()))
     );
   }, [transactions, historySearchTerm]);
+
+  useEffect(() => {
+    const state = location.state as { editOrderId?: string } | null;
+    const editOrderId = state?.editOrderId;
+    if (!editOrderId) return;
+
+    const orderToEdit = orders.find((order) => order.id === editOrderId);
+    if (!orderToEdit) return;
+
+    const sourceLineItems =
+      orderToEdit.lineItems && orderToEdit.lineItems.length > 0
+        ? orderToEdit.lineItems
+        : orderToEdit.item
+            .split(',')
+            .map((name) => name.trim())
+            .filter(Boolean)
+            .map((name) => ({
+              name,
+              quantity: orderToEdit.quantity,
+              designId: orderToEdit.designId,
+            }));
+
+    const hydratedCart: CartItem[] = sourceLineItems
+      .map((lineItem) => {
+        const inventoryItem =
+          (lineItem.itemId ? inventory.find((item) => item.id === lineItem.itemId) : undefined) ??
+          inventory.find((item) => item.name.toLowerCase() === lineItem.name.toLowerCase());
+
+        if (!inventoryItem) return null;
+        return {
+          ...inventoryItem,
+          qty: lineItem.quantity,
+          isCustom: true,
+          designId: lineItem.designId,
+          notes: orderToEdit.notes,
+        };
+      })
+      .filter((item): item is CartItem => item !== null);
+
+    setView('pos');
+    setPosMode('custom');
+    setCustomerName(orderToEdit.customer);
+    setOrderNotes(orderToEdit.notes || '');
+    setCart(hydratedCart);
+    setEditingOrderId(orderToEdit.id);
+    navigate('/pos', { replace: true });
+  }, [inventory, location.state, navigate, orders]);
 
   const addToCart = (product: InventoryItem) => {
     if (product.stock <= 0) return;
@@ -81,6 +132,22 @@ export default function POS() {
       }
       return i;
     }));
+  };
+
+  const applyStockDeltaForOrder = (
+    lineItems: Array<{ itemId?: string; name: string; quantity: number }>,
+    delta: 1 | -1,
+  ) => {
+    lineItems.forEach((lineItem) => {
+      const matchedInventoryItem =
+        (lineItem.itemId ? inventory.find((item) => item.id === lineItem.itemId) : undefined) ??
+        inventory.find((item) => item.name.toLowerCase() === lineItem.name.toLowerCase());
+      if (!matchedInventoryItem) return;
+
+      updateItem(matchedInventoryItem.id, {
+        stock: Math.max(0, matchedInventoryItem.stock + lineItem.quantity * delta),
+      });
+    });
   };
 
   const openDesignSelector = (cartIndex: number) => {
@@ -147,13 +214,11 @@ export default function POS() {
         amount: total
       });
     } else {
-      // Create separate orders for each custom item or one grouped order?
-      // Printing services usually track by "job". Let's create one order with multiple lines or multiple orders.
-      // For simplicity in the current UI, we'll create one order record that summarizes the items.
-      const newOrder: Omit<Order, 'id' | 'date'> = {
+      const preparedOrder: Omit<Order, 'id' | 'date'> = {
         customer: customerName,
         item: cart.map(i => i.name).join(', '),
         lineItems: cart.map(i => ({
+          itemId: i.id,
           name: i.name,
           quantity: i.qty,
           designId: i.designId
@@ -166,15 +231,47 @@ export default function POS() {
         designId: cart[0]?.designId // Taking the first one as primary for the list view
       };
 
-      addOrder(newOrder);
+      if (editingOrderId) {
+        const existingOrder = orders.find((order) => order.id === editingOrderId);
+        const previousLineItems =
+          existingOrder?.lineItems && existingOrder.lineItems.length > 0
+            ? existingOrder.lineItems
+            : existingOrder
+              ? existingOrder.item
+                  .split(',')
+                  .map((name) => name.trim())
+                  .filter(Boolean)
+                  .map((name) => ({
+                    name,
+                    quantity: existingOrder.quantity,
+                  }))
+              : [];
 
-      // Reduce stock of blanks
-      cart.forEach(cartItem => {
-        const product = inventory.find(i => i.id === cartItem.id);
-        if (product) {
-          updateItem(product.id, { stock: product.stock - cartItem.qty });
-        }
-      });
+        applyStockDeltaForOrder(previousLineItems, 1);
+        applyStockDeltaForOrder(
+          preparedOrder.lineItems?.map((item) => ({
+            itemId: item.itemId,
+            name: item.name,
+            quantity: item.quantity,
+          })) || [],
+          -1,
+        );
+
+        updateOrder(editingOrderId, {
+          ...preparedOrder,
+          status: existingOrder?.status ?? 'Pending',
+        });
+      } else {
+        addOrder(preparedOrder);
+
+        // Reduce stock of blanks
+        cart.forEach(cartItem => {
+          const product = inventory.find(i => i.id === cartItem.id);
+          if (product) {
+            updateItem(product.id, { stock: product.stock - cartItem.qty });
+          }
+        });
+      }
 
       addRecord({
         date: new Date().toISOString().split('T')[0],
@@ -189,6 +286,7 @@ export default function POS() {
     setCart([]);
     setCustomerName('');
     setOrderNotes('');
+    setEditingOrderId(null);
     
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
@@ -226,6 +324,7 @@ export default function POS() {
               onClick={() => {
                 setPosMode('retail');
                 setCart([]);
+                setEditingOrderId(null);
               }}
               className={`px-3 py-1 rounded-l border-y border-l transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'retail' ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
             >
@@ -235,6 +334,7 @@ export default function POS() {
               onClick={() => {
                 setPosMode('custom');
                 setCart([]);
+                setEditingOrderId(null);
               }}
               className={`px-3 py-1 rounded-r border transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'custom' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
             >
@@ -322,7 +422,7 @@ export default function POS() {
 
               <div className="p-4 border-b border-gray-100 flex justify-between items-center z-10 dark:border-zinc-800">
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-800 dark:text-zinc-200">
-                  {posMode === 'retail' ? 'Transaction Cart' : 'Custom Order Builder'}
+                  {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
                 </h2>
                 <span className={`text-[9px] font-mono px-2 py-0.5 rounded border ${posMode === 'retail' ? 'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-200' : 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-600/20 dark:text-indigo-400'}`}>
                   {cart.length} ITEMS
@@ -429,6 +529,11 @@ export default function POS() {
                    </div>
                 </div>
 
+                {posMode === 'custom' && editingOrderId && (
+                  <div className="flex items-center justify-center text-[8px] font-bold uppercase tracking-widest text-indigo-500">
+                    Editing Order: {editingOrderId}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-2 mt-2">
                    <button onClick={() => setCart([])} className="py-2.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold uppercase tracking-widest rounded transition-all text-gray-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300">
                       Reset
@@ -438,7 +543,7 @@ export default function POS() {
                     disabled={cart.length === 0 || (posMode === 'custom' && !customerName)}
                     className={`py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${posMode === 'retail' ? 'bg-zinc-900 hover:bg-zinc-800' : 'bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-500/20'}`}
                    >
-                      <CreditCard className="w-3 h-3" /> {posMode === 'retail' ? 'Quick Pay' : 'Create Order'}
+                      <CreditCard className="w-3 h-3" /> {posMode === 'retail' ? 'Quick Pay' : editingOrderId ? 'Update Order' : 'Create Order'}
                    </button>
                 </div>
                 {posMode === 'custom' && !customerName && cart.length > 0 && (
