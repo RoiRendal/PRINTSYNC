@@ -127,6 +127,16 @@ type ProfitPoint = {
 };
 
 type ProfitTimelineData = Record<string, ProfitPoint[]>;
+type ForecastPoint = {
+  label: string;
+  actualDemand: number;
+  forecastDemand: number;
+  forecastLower: number;
+  forecastUpper: number;
+  customPrintShare: number;
+  retailShare: number;
+};
+type ForecastTimelineData = Record<string, ForecastPoint[]>;
 
 const weeklyProfitData: ProfitTimelineData = {
   'Week 1': [
@@ -227,6 +237,105 @@ const yearlyProfitData: ProfitTimelineData = {
   ],
 };
 
+const weeklyForecastData: ForecastTimelineData = {
+  'Week 1': [
+    { label: 'Mon', actualDemand: 92, forecastDemand: 95, forecastLower: 88, forecastUpper: 103, customPrintShare: 64, retailShare: 36 },
+    { label: 'Tue', actualDemand: 98, forecastDemand: 101, forecastLower: 94, forecastUpper: 109, customPrintShare: 66, retailShare: 34 },
+    { label: 'Wed', actualDemand: 103, forecastDemand: 106, forecastLower: 98, forecastUpper: 114, customPrintShare: 67, retailShare: 33 },
+    { label: 'Thu', actualDemand: 109, forecastDemand: 112, forecastLower: 104, forecastUpper: 120, customPrintShare: 68, retailShare: 32 },
+    { label: 'Fri', actualDemand: 121, forecastDemand: 124, forecastLower: 115, forecastUpper: 133, customPrintShare: 70, retailShare: 30 },
+    { label: 'Sat', actualDemand: 132, forecastDemand: 136, forecastLower: 126, forecastUpper: 145, customPrintShare: 71, retailShare: 29 },
+    { label: 'Sun', actualDemand: 111, forecastDemand: 115, forecastLower: 106, forecastUpper: 123, customPrintShare: 69, retailShare: 31 },
+  ],
+  'Week 2': [
+    { label: 'Mon', actualDemand: 95, forecastDemand: 98, forecastLower: 90, forecastUpper: 106, customPrintShare: 65, retailShare: 35 },
+    { label: 'Tue', actualDemand: 102, forecastDemand: 104, forecastLower: 96, forecastUpper: 112, customPrintShare: 66, retailShare: 34 },
+    { label: 'Wed', actualDemand: 108, forecastDemand: 110, forecastLower: 102, forecastUpper: 118, customPrintShare: 67, retailShare: 33 },
+    { label: 'Thu', actualDemand: 114, forecastDemand: 117, forecastLower: 108, forecastUpper: 126, customPrintShare: 68, retailShare: 32 },
+    { label: 'Fri', actualDemand: 126, forecastDemand: 129, forecastLower: 120, forecastUpper: 138, customPrintShare: 70, retailShare: 30 },
+    { label: 'Sat', actualDemand: 139, forecastDemand: 142, forecastLower: 132, forecastUpper: 152, customPrintShare: 72, retailShare: 28 },
+    { label: 'Sun', actualDemand: 118, forecastDemand: 121, forecastLower: 112, forecastUpper: 130, customPrintShare: 69, retailShare: 31 },
+  ],
+  'Week 3': [
+    { label: 'Mon', actualDemand: 90, forecastDemand: 93, forecastLower: 85, forecastUpper: 101, customPrintShare: 64, retailShare: 36 },
+    { label: 'Tue', actualDemand: 96, forecastDemand: 99, forecastLower: 91, forecastUpper: 107, customPrintShare: 65, retailShare: 35 },
+    { label: 'Wed', actualDemand: 101, forecastDemand: 104, forecastLower: 96, forecastUpper: 112, customPrintShare: 66, retailShare: 34 },
+    { label: 'Thu', actualDemand: 107, forecastDemand: 110, forecastLower: 102, forecastUpper: 118, customPrintShare: 67, retailShare: 33 },
+    { label: 'Fri', actualDemand: 119, forecastDemand: 122, forecastLower: 114, forecastUpper: 131, customPrintShare: 69, retailShare: 31 },
+    { label: 'Sat', actualDemand: 128, forecastDemand: 132, forecastLower: 123, forecastUpper: 141, customPrintShare: 70, retailShare: 30 },
+    { label: 'Sun', actualDemand: 109, forecastDemand: 112, forecastLower: 104, forecastUpper: 120, customPrintShare: 68, retailShare: 32 },
+  ],
+  'Week 4': [
+    { label: 'Mon', actualDemand: 104, forecastDemand: 107, forecastLower: 99, forecastUpper: 115, customPrintShare: 66, retailShare: 34 },
+    { label: 'Tue', actualDemand: 110, forecastDemand: 114, forecastLower: 106, forecastUpper: 123, customPrintShare: 67, retailShare: 33 },
+    { label: 'Wed', actualDemand: 116, forecastDemand: 120, forecastLower: 111, forecastUpper: 129, customPrintShare: 68, retailShare: 32 },
+    { label: 'Thu', actualDemand: 123, forecastDemand: 127, forecastLower: 117, forecastUpper: 136, customPrintShare: 69, retailShare: 31 },
+    { label: 'Fri', actualDemand: 136, forecastDemand: 140, forecastLower: 130, forecastUpper: 150, customPrintShare: 71, retailShare: 29 },
+    { label: 'Sat', actualDemand: 148, forecastDemand: 152, forecastLower: 141, forecastUpper: 163, customPrintShare: 72, retailShare: 28 },
+    { label: 'Sun', actualDemand: 126, forecastDemand: 130, forecastLower: 121, forecastUpper: 140, customPrintShare: 70, retailShare: 30 },
+  ],
+};
+
+const monthlyForecastData: ForecastTimelineData = {
+  January: [
+    { label: 'Week 1', actualDemand: 680, forecastDemand: 700, forecastLower: 665, forecastUpper: 735, customPrintShare: 62, retailShare: 38 },
+    { label: 'Week 2', actualDemand: 710, forecastDemand: 730, forecastLower: 695, forecastUpper: 765, customPrintShare: 63, retailShare: 37 },
+    { label: 'Week 3', actualDemand: 704, forecastDemand: 724, forecastLower: 690, forecastUpper: 758, customPrintShare: 64, retailShare: 36 },
+    { label: 'Week 4', actualDemand: 748, forecastDemand: 770, forecastLower: 733, forecastUpper: 807, customPrintShare: 65, retailShare: 35 },
+  ],
+  February: [
+    { label: 'Week 1', actualDemand: 655, forecastDemand: 676, forecastLower: 642, forecastUpper: 710, customPrintShare: 62, retailShare: 38 },
+    { label: 'Week 2', actualDemand: 689, forecastDemand: 708, forecastLower: 675, forecastUpper: 741, customPrintShare: 63, retailShare: 37 },
+    { label: 'Week 3', actualDemand: 700, forecastDemand: 720, forecastLower: 686, forecastUpper: 754, customPrintShare: 64, retailShare: 36 },
+    { label: 'Week 4', actualDemand: 736, forecastDemand: 758, forecastLower: 722, forecastUpper: 794, customPrintShare: 65, retailShare: 35 },
+  ],
+  March: [
+    { label: 'Week 1', actualDemand: 708, forecastDemand: 730, forecastLower: 694, forecastUpper: 766, customPrintShare: 64, retailShare: 36 },
+    { label: 'Week 2', actualDemand: 742, forecastDemand: 766, forecastLower: 729, forecastUpper: 803, customPrintShare: 65, retailShare: 35 },
+    { label: 'Week 3', actualDemand: 778, forecastDemand: 802, forecastLower: 763, forecastUpper: 841, customPrintShare: 66, retailShare: 34 },
+    { label: 'Week 4', actualDemand: 806, forecastDemand: 832, forecastLower: 792, forecastUpper: 872, customPrintShare: 67, retailShare: 33 },
+  ],
+  April: [
+    { label: 'Week 1', actualDemand: 744, forecastDemand: 768, forecastLower: 730, forecastUpper: 806, customPrintShare: 65, retailShare: 35 },
+    { label: 'Week 2', actualDemand: 792, forecastDemand: 818, forecastLower: 778, forecastUpper: 858, customPrintShare: 66, retailShare: 34 },
+    { label: 'Week 3', actualDemand: 814, forecastDemand: 840, forecastLower: 799, forecastUpper: 881, customPrintShare: 67, retailShare: 33 },
+    { label: 'Week 4', actualDemand: 854, forecastDemand: 882, forecastLower: 839, forecastUpper: 925, customPrintShare: 68, retailShare: 32 },
+  ],
+  May: [
+    { label: 'Week 1', actualDemand: 761, forecastDemand: 786, forecastLower: 747, forecastUpper: 825, customPrintShare: 66, retailShare: 34 },
+    { label: 'Week 2', actualDemand: 807, forecastDemand: 834, forecastLower: 793, forecastUpper: 875, customPrintShare: 67, retailShare: 33 },
+    { label: 'Week 3', actualDemand: 838, forecastDemand: 866, forecastLower: 823, forecastUpper: 909, customPrintShare: 68, retailShare: 32 },
+    { label: 'Week 4', actualDemand: 879, forecastDemand: 909, forecastLower: 864, forecastUpper: 954, customPrintShare: 69, retailShare: 31 },
+  ],
+};
+
+const yearlyForecastData: ForecastTimelineData = {
+  2022: [
+    { label: 'Q1', actualDemand: 5900, forecastDemand: 6060, forecastLower: 5790, forecastUpper: 6330, customPrintShare: 61, retailShare: 39 },
+    { label: 'Q2', actualDemand: 6220, forecastDemand: 6400, forecastLower: 6100, forecastUpper: 6700, customPrintShare: 62, retailShare: 38 },
+    { label: 'Q3', actualDemand: 6630, forecastDemand: 6830, forecastLower: 6500, forecastUpper: 7160, customPrintShare: 63, retailShare: 37 },
+    { label: 'Q4', actualDemand: 7010, forecastDemand: 7240, forecastLower: 6890, forecastUpper: 7590, customPrintShare: 64, retailShare: 36 },
+  ],
+  2023: [
+    { label: 'Q1', actualDemand: 6450, forecastDemand: 6660, forecastLower: 6340, forecastUpper: 6980, customPrintShare: 63, retailShare: 37 },
+    { label: 'Q2', actualDemand: 6810, forecastDemand: 7040, forecastLower: 6700, forecastUpper: 7380, customPrintShare: 64, retailShare: 36 },
+    { label: 'Q3', actualDemand: 7240, forecastDemand: 7480, forecastLower: 7120, forecastUpper: 7840, customPrintShare: 65, retailShare: 35 },
+    { label: 'Q4', actualDemand: 7690, forecastDemand: 7950, forecastLower: 7560, forecastUpper: 8340, customPrintShare: 66, retailShare: 34 },
+  ],
+  2024: [
+    { label: 'Q1', actualDemand: 6910, forecastDemand: 7160, forecastLower: 6780, forecastUpper: 7540, customPrintShare: 65, retailShare: 35 },
+    { label: 'Q2', actualDemand: 7380, forecastDemand: 7650, forecastLower: 7240, forecastUpper: 8060, customPrintShare: 66, retailShare: 34 },
+    { label: 'Q3', actualDemand: 7840, forecastDemand: 8120, forecastLower: 7700, forecastUpper: 8540, customPrintShare: 67, retailShare: 33 },
+    { label: 'Q4', actualDemand: 8360, forecastDemand: 8650, forecastLower: 8210, forecastUpper: 9090, customPrintShare: 68, retailShare: 32 },
+  ],
+  2025: [
+    { label: 'Q1', actualDemand: 7580, forecastDemand: 7860, forecastLower: 7440, forecastUpper: 8280, customPrintShare: 67, retailShare: 33 },
+    { label: 'Q2', actualDemand: 8090, forecastDemand: 8390, forecastLower: 7940, forecastUpper: 8840, customPrintShare: 68, retailShare: 32 },
+    { label: 'Q3', actualDemand: 8520, forecastDemand: 8830, forecastLower: 8660, forecastUpper: 9000, customPrintShare: 69, retailShare: 31 },
+    { label: 'Q4', actualDemand: 9070, forecastDemand: 9400, forecastLower: 8910, forecastUpper: 9890, customPrintShare: 70, retailShare: 30 },
+  ],
+};
+
 const periodMap: Record<Period, TimelineData> = {
   weekly: weeklyData,
   monthly: monthlyData,
@@ -237,6 +346,12 @@ const profitPeriodMap: Record<Period, ProfitTimelineData> = {
   weekly: weeklyProfitData,
   monthly: monthlyProfitData,
   yearly: yearlyProfitData,
+};
+
+const forecastPeriodMap: Record<Period, ForecastTimelineData> = {
+  weekly: weeklyForecastData,
+  monthly: monthlyForecastData,
+  yearly: yearlyForecastData,
 };
 
 const periodLabel: Record<Period, string> = {
@@ -256,15 +371,19 @@ export default function AnalyticsPage() {
   const [salesPeriod, setSalesPeriod] = useState<Period>('monthly');
   const [profitPeriod, setProfitPeriod] = useState<Period>('monthly');
   const [trendPeriod, setTrendPeriod] = useState<Period>('monthly');
+  const [forecastPeriod, setForecastPeriod] = useState<Period>('monthly');
   const [selectionA, setSelectionA] = useState('April');
   const [selectionB, setSelectionB] = useState('January');
   const [profitSelection, setProfitSelection] = useState('April');
   const [marginSortOrder, setMarginSortOrder] = useState<'desc' | 'asc'>('desc');
   const [trendSelection, setTrendSelection] = useState('April');
+  const [forecastSelection, setForecastSelection] = useState('April');
+  const [forecastMetric, setForecastMetric] = useState<'income' | 'expenses'>('income');
 
   const salesOptions = useMemo(() => Object.keys(periodMap[salesPeriod]), [salesPeriod]);
   const profitOptions = useMemo(() => Object.keys(periodMap[profitPeriod]), [profitPeriod]);
   const trendOptions = useMemo(() => Object.keys(periodMap[trendPeriod]), [trendPeriod]);
+  const forecastOptions = useMemo(() => Object.keys(periodMap[forecastPeriod]), [forecastPeriod]);
 
   const safeSelectionA = salesOptions.includes(selectionA) ? selectionA : salesOptions[0];
   const safeSelectionB = salesOptions.includes(selectionB)
@@ -467,6 +586,9 @@ export default function AnalyticsPage() {
   const safeTrendSelection = trendOptions.includes(trendSelection)
     ? trendSelection
     : trendOptions[0];
+  const safeForecastSelection = forecastOptions.includes(forecastSelection)
+    ? forecastSelection
+    : forecastOptions[0];
 
   const productTrendData = useMemo(() => {
     const source = trendPeriodMap[trendPeriod][safeTrendSelection] ?? [];
@@ -508,11 +630,92 @@ export default function AnalyticsPage() {
     return { totals, ranked, leadingProduct, lowestProduct };
   }, [productTrendData]);
 
+  const demandForecastData = useMemo(() => {
+    return forecastPeriodMap[forecastPeriod][safeForecastSelection] ?? [];
+  }, [forecastPeriod, safeForecastSelection]);
+
+  const financialForecastData = useMemo(() => {
+    return demandForecastData.map((item) => {
+      const incomeActual = item.actualDemand * 980;
+      const incomeForecast = item.forecastDemand * 1020;
+      const incomeLower = item.forecastLower * 1010;
+      const incomeUpper = item.forecastUpper * 1030;
+      const expenseActual = item.actualDemand * 610;
+      const expenseForecast = item.forecastDemand * 635;
+      const expenseLower = item.forecastLower * 625;
+      const expenseUpper = item.forecastUpper * 645;
+
+      return {
+        label: item.label,
+        incomeActual,
+        incomeForecast,
+        incomeLower,
+        incomeUpper,
+        expenseActual,
+        expenseForecast,
+        expenseLower,
+        expenseUpper,
+      };
+    });
+  }, [demandForecastData]);
+
+  const financialForecastChartData = useMemo(() => {
+    const presentCutoffIndex = Math.max(0, financialForecastData.length - 2);
+
+    return financialForecastData.map((item, index) => {
+      const actualValue = forecastMetric === 'income' ? item.incomeActual : item.expenseActual;
+      const forecastValue = forecastMetric === 'income' ? item.incomeForecast : item.expenseForecast;
+
+      return {
+        label: item.label,
+        actualSeries: index <= presentCutoffIndex ? actualValue : null,
+        // Force the forecast to begin at the exact last actual point for a seamless continuation.
+        forecastSeries:
+          index < presentCutoffIndex
+            ? null
+            : index === presentCutoffIndex
+              ? actualValue
+              : forecastValue,
+      };
+    });
+  }, [financialForecastData, forecastMetric]);
+
+  const financialForecastStats = useMemo(() => {
+    const totals = financialForecastData.reduce(
+      (acc, item) => {
+        const actual = forecastMetric === 'income' ? item.incomeActual : item.expenseActual;
+        const forecast = forecastMetric === 'income' ? item.incomeForecast : item.expenseForecast;
+        const lower = forecastMetric === 'income' ? item.incomeLower : item.expenseLower;
+        const upper = forecastMetric === 'income' ? item.incomeUpper : item.expenseUpper;
+        acc.actual += actual;
+        acc.forecast += forecast;
+        acc.lower += lower;
+        acc.upper += upper;
+        return acc;
+      },
+      { actual: 0, forecast: 0, lower: 0, upper: 0 },
+    );
+
+    const expectedDelta = totals.forecast - totals.actual;
+    const expectedGrowth = totals.actual === 0 ? 0 : (expectedDelta / totals.actual) * 100;
+    const uncertaintyBand = totals.upper - totals.lower;
+    const forecastAccuracyProxy = totals.forecast === 0 ? 0 : 100 - (Math.abs(expectedDelta) / totals.forecast) * 100;
+
+    return {
+      ...totals,
+      expectedDelta,
+      expectedGrowth,
+      uncertaintyBand,
+      forecastAccuracyProxy,
+    };
+  }, [financialForecastData, forecastMetric]);
+
   const applyGlobalPeriod = (nextPeriod: Period) => {
     setGlobalPeriod(nextPeriod);
     setSalesPeriod(nextPeriod);
     setProfitPeriod(nextPeriod);
     setTrendPeriod(nextPeriod);
+    setForecastPeriod(nextPeriod);
 
     const nextSalesOptions = Object.keys(periodMap[nextPeriod]);
     setSelectionA(nextSalesOptions[0] ?? '');
@@ -523,6 +726,8 @@ export default function AnalyticsPage() {
 
     const nextTrendOptions = Object.keys(trendPeriodMap[nextPeriod]);
     setTrendSelection(nextTrendOptions[0] ?? '');
+    const nextForecastOptions = Object.keys(forecastPeriodMap[nextPeriod]);
+    setForecastSelection(nextForecastOptions[0] ?? '');
   };
 
   const handleSalesPeriodChange = (nextPeriod: Period) => {
@@ -542,6 +747,12 @@ export default function AnalyticsPage() {
     setTrendPeriod(nextPeriod);
     const nextOptions = Object.keys(trendPeriodMap[nextPeriod]);
     setTrendSelection(nextOptions[0] ?? '');
+  };
+
+  const handleForecastPeriodChange = (nextPeriod: Period) => {
+    setForecastPeriod(nextPeriod);
+    const nextOptions = Object.keys(forecastPeriodMap[nextPeriod]);
+    setForecastSelection(nextOptions[0] ?? '');
   };
 
   return (
@@ -869,13 +1080,17 @@ export default function AnalyticsPage() {
         <div className="mt-4 border border-gray-200 rounded overflow-hidden dark:border-zinc-700">
           <div className="p-3 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between">
             <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">Margin Ranking Table</p>
-            <button
-              type="button"
-              onClick={() => setMarginSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
-              className="px-3 py-1 text-[10px] uppercase tracking-wide border border-gray-200 rounded font-semibold text-gray-700 dark:text-zinc-200 dark:border-zinc-600"
-            >
-              Sort: {marginSortOrder === 'desc' ? 'Highest to Lowest' : 'Lowest to Highest'}
-            </button>
+            <label className="flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-wide font-semibold text-gray-500 dark:text-zinc-400">Sort</span>
+              <select
+                value={marginSortOrder}
+                onChange={(event) => setMarginSortOrder(event.target.value as 'desc' | 'asc')}
+                className="px-2 py-1 text-[10px] uppercase tracking-wide border border-gray-200 rounded font-semibold text-gray-700 dark:text-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-900"
+              >
+                <option value="desc">Highest to Lowest</option>
+                <option value="asc">Lowest to Highest</option>
+              </select>
+            </label>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -1033,6 +1248,154 @@ export default function AnalyticsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Financial Forecasting</h3>
+            <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
+              Forecasted business performance using projected income and expenses with confidence bounds.
+            </p>
+          </div>
+          <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setForecastMetric('income')}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                  forecastMetric === 'income'
+                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                    : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                }`}
+              >
+                Income
+              </button>
+              <button
+                type="button"
+                onClick={() => setForecastMetric('expenses')}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                  forecastMetric === 'expenses'
+                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                    : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                }`}
+              >
+                Expenses
+              </button>
+            </div>
+            <div className="flex gap-2">
+              {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
+                <button
+                  key={`forecast-${item}`}
+                  type="button"
+                  onClick={() => handleForecastPeriodChange(item)}
+                  className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                    forecastPeriod === item
+                      ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                      : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                  }`}
+                >
+                  {periodLabel[item]}
+                </button>
+              ))}
+            </div>
+            <label className="block w-full md:w-52">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
+                Forecast Range
+              </span>
+              <select
+                value={safeForecastSelection}
+                onChange={(event) => setForecastSelection(event.target.value)}
+                className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+              >
+                {forecastOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">
+              Actual {forecastMetric === 'income' ? 'Income' : 'Expenses'}
+            </p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">{money.format(financialForecastStats.actual)}</p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">
+              Forecast {forecastMetric === 'income' ? 'Income' : 'Expenses'}
+            </p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">{money.format(financialForecastStats.forecast)}</p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Expected Growth</p>
+            <p className={`text-xs font-semibold ${financialForecastStats.expectedGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {financialForecastStats.expectedGrowth.toFixed(1)}%
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Forecast Delta</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">
+              {money.format(financialForecastStats.expectedDelta)}
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Forecast Confidence</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">
+              {Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy)).toFixed(1)}%
+            </p>
+          </div>
+        </div>
+
+        <div className="h-[390px] w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={financialForecastChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} />
+              <YAxis
+                yAxisId="amount"
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 11, fill: '#6B7280' }}
+              />
+              <Tooltip
+                formatter={(value: number, name: string) => {
+                  return [money.format(value), name];
+                }}
+                labelStyle={{ color: '#111827', fontSize: 12 }}
+                contentStyle={{ border: '1px solid #E5E7EB', borderRadius: '6px', boxShadow: 'none', fontSize: '12px' }}
+              />
+              <Legend />
+              <Line
+                yAxisId="amount"
+                type="monotone"
+                dataKey="actualSeries"
+                name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`}
+                stroke="#111827"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                connectNulls={false}
+                isAnimationActive={false}
+              />
+              <Line
+                yAxisId="amount"
+                type="monotone"
+                dataKey="forecastSeries"
+                name={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`}
+                stroke="#16A34A"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                connectNulls={false}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
         </div>
       </section>
     </div>
