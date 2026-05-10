@@ -147,9 +147,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   className="absolute top-full right-0 mt-1.5 w-48 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-md shadow-xl py-1 z-[100]"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <button className="w-full text-left px-4 py-1 text-xs text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
-                    User Settings
-                  </button>
                   <button
                     onClick={logout}
                     className="w-full text-left px-4 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
