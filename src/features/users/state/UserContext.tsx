@@ -49,7 +49,7 @@ const AUTH_USER_STORAGE_KEY = 'printsync-auth-user';
 const INITIAL_USERS: UserRecord[] = [
   {
     id: 'u-admin-1',
-    name: 'Irene Mae C. Saquian',
+    name: 'Irene Saquian',
     email: 'admin@printsync.com',
     phone: '09171234567',
     role: 'admin',
