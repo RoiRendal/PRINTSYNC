@@ -252,21 +252,28 @@ const money = new Intl.NumberFormat('en-PH', {
 });
 
 export default function AnalyticsPage() {
-  const [period, setPeriod] = useState<Period>('monthly');
+  const [globalPeriod, setGlobalPeriod] = useState<Period>('monthly');
+  const [salesPeriod, setSalesPeriod] = useState<Period>('monthly');
+  const [profitPeriod, setProfitPeriod] = useState<Period>('monthly');
+  const [trendPeriod, setTrendPeriod] = useState<Period>('monthly');
   const [selectionA, setSelectionA] = useState('April');
   const [selectionB, setSelectionB] = useState('January');
   const [profitSelection, setProfitSelection] = useState('April');
+  const [marginSortOrder, setMarginSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [trendSelection, setTrendSelection] = useState('April');
 
-  const options = useMemo(() => Object.keys(periodMap[period]), [period]);
+  const salesOptions = useMemo(() => Object.keys(periodMap[salesPeriod]), [salesPeriod]);
+  const profitOptions = useMemo(() => Object.keys(periodMap[profitPeriod]), [profitPeriod]);
+  const trendOptions = useMemo(() => Object.keys(periodMap[trendPeriod]), [trendPeriod]);
 
-  const safeSelectionA = options.includes(selectionA) ? selectionA : options[0];
-  const safeSelectionB = options.includes(selectionB)
+  const safeSelectionA = salesOptions.includes(selectionA) ? selectionA : salesOptions[0];
+  const safeSelectionB = salesOptions.includes(selectionB)
     ? selectionB
-    : options[Math.min(1, options.length - 1)];
+    : salesOptions[Math.min(1, salesOptions.length - 1)];
 
   const comparisonData = useMemo(() => {
-    const seriesA = periodMap[period][safeSelectionA] ?? [];
-    const seriesB = periodMap[period][safeSelectionB] ?? [];
+    const seriesA = periodMap[salesPeriod][safeSelectionA] ?? [];
+    const seriesB = periodMap[salesPeriod][safeSelectionB] ?? [];
     const maxLength = Math.max(seriesA.length, seriesB.length);
 
     return Array.from({ length: maxLength }).map((_, index) => {
@@ -282,7 +289,7 @@ export default function AnalyticsPage() {
         delta: valueA - valueB,
       };
     });
-  }, [period, safeSelectionA, safeSelectionB]);
+  }, [salesPeriod, safeSelectionA, safeSelectionB]);
 
   const totals = useMemo(() => {
     const totalA = comparisonData.reduce((acc, item) => acc + item.timelineA, 0);
@@ -293,12 +300,12 @@ export default function AnalyticsPage() {
     return { totalA, totalB, absoluteDiff, growth };
   }, [comparisonData]);
 
-  const safeProfitSelection = options.includes(profitSelection)
+  const safeProfitSelection = profitOptions.includes(profitSelection)
     ? profitSelection
-    : options[0];
+    : profitOptions[0];
 
   const profitMarginData = useMemo(() => {
-    const source = profitPeriodMap[period][safeProfitSelection] ?? [];
+    const source = profitPeriodMap[profitPeriod][safeProfitSelection] ?? [];
     return source.map((item) => {
       const profit = item.revenue - item.expenses;
       const margin = item.revenue === 0 ? 0 : (profit / item.revenue) * 100;
@@ -308,7 +315,7 @@ export default function AnalyticsPage() {
         margin,
       };
     });
-  }, [period, safeProfitSelection]);
+  }, [profitPeriod, safeProfitSelection]);
 
   const profitMarginStats = useMemo(() => {
     const totalRevenue = profitMarginData.reduce((acc, item) => acc + item.revenue, 0);
@@ -334,16 +341,243 @@ export default function AnalyticsPage() {
     };
   }, [profitMarginData]);
 
-  const handlePeriodChange = (nextPeriod: Period) => {
-    setPeriod(nextPeriod);
+  const sortedMarginRows = useMemo(() => {
+    return [...profitMarginData].sort((a, b) => {
+      if (marginSortOrder === 'desc') return b.margin - a.margin;
+      return a.margin - b.margin;
+    });
+  }, [profitMarginData, marginSortOrder]);
+
+  type ProductTrendPoint = {
+    label: string;
+    tshirt: number;
+    mug: number;
+    sticker: number;
+    tarpaulin: number;
+    idLace: number;
+  };
+
+  type ProductTrendTimelineData = Record<string, ProductTrendPoint[]>;
+
+  const weeklyProductTrendData: ProductTrendTimelineData = {
+    'Week 1': [
+      { label: 'Mon', tshirt: 28, mug: 18, sticker: 35, tarpaulin: 9, idLace: 14 },
+      { label: 'Tue', tshirt: 30, mug: 19, sticker: 38, tarpaulin: 10, idLace: 15 },
+      { label: 'Wed', tshirt: 31, mug: 21, sticker: 36, tarpaulin: 11, idLace: 16 },
+      { label: 'Thu', tshirt: 34, mug: 22, sticker: 40, tarpaulin: 11, idLace: 17 },
+      { label: 'Fri', tshirt: 38, mug: 24, sticker: 44, tarpaulin: 12, idLace: 19 },
+      { label: 'Sat', tshirt: 42, mug: 26, sticker: 48, tarpaulin: 14, idLace: 21 },
+      { label: 'Sun', tshirt: 33, mug: 20, sticker: 39, tarpaulin: 10, idLace: 16 },
+    ],
+    'Week 2': [
+      { label: 'Mon', tshirt: 29, mug: 18, sticker: 36, tarpaulin: 10, idLace: 14 },
+      { label: 'Tue', tshirt: 31, mug: 20, sticker: 37, tarpaulin: 10, idLace: 15 },
+      { label: 'Wed', tshirt: 34, mug: 21, sticker: 40, tarpaulin: 11, idLace: 17 },
+      { label: 'Thu', tshirt: 36, mug: 23, sticker: 42, tarpaulin: 12, idLace: 18 },
+      { label: 'Fri', tshirt: 40, mug: 24, sticker: 46, tarpaulin: 13, idLace: 20 },
+      { label: 'Sat', tshirt: 44, mug: 27, sticker: 49, tarpaulin: 14, idLace: 22 },
+      { label: 'Sun', tshirt: 35, mug: 21, sticker: 40, tarpaulin: 11, idLace: 17 },
+    ],
+    'Week 3': [
+      { label: 'Mon', tshirt: 26, mug: 17, sticker: 33, tarpaulin: 9, idLace: 13 },
+      { label: 'Tue', tshirt: 28, mug: 18, sticker: 34, tarpaulin: 10, idLace: 14 },
+      { label: 'Wed', tshirt: 30, mug: 20, sticker: 37, tarpaulin: 10, idLace: 15 },
+      { label: 'Thu', tshirt: 32, mug: 21, sticker: 39, tarpaulin: 11, idLace: 16 },
+      { label: 'Fri', tshirt: 35, mug: 22, sticker: 42, tarpaulin: 12, idLace: 18 },
+      { label: 'Sat', tshirt: 39, mug: 24, sticker: 45, tarpaulin: 13, idLace: 20 },
+      { label: 'Sun', tshirt: 31, mug: 19, sticker: 37, tarpaulin: 10, idLace: 15 },
+    ],
+    'Week 4': [
+      { label: 'Mon', tshirt: 31, mug: 20, sticker: 38, tarpaulin: 10, idLace: 15 },
+      { label: 'Tue', tshirt: 33, mug: 21, sticker: 40, tarpaulin: 11, idLace: 16 },
+      { label: 'Wed', tshirt: 35, mug: 22, sticker: 43, tarpaulin: 12, idLace: 17 },
+      { label: 'Thu', tshirt: 37, mug: 23, sticker: 44, tarpaulin: 12, idLace: 18 },
+      { label: 'Fri', tshirt: 42, mug: 25, sticker: 48, tarpaulin: 13, idLace: 20 },
+      { label: 'Sat', tshirt: 45, mug: 28, sticker: 52, tarpaulin: 15, idLace: 23 },
+      { label: 'Sun', tshirt: 36, mug: 22, sticker: 42, tarpaulin: 11, idLace: 17 },
+    ],
+  };
+
+  const monthlyProductTrendData: ProductTrendTimelineData = {
+    January: [
+      { label: 'Week 1', tshirt: 180, mug: 110, sticker: 230, tarpaulin: 64, idLace: 92 },
+      { label: 'Week 2', tshirt: 192, mug: 118, sticker: 242, tarpaulin: 68, idLace: 98 },
+      { label: 'Week 3', tshirt: 188, mug: 116, sticker: 238, tarpaulin: 66, idLace: 95 },
+      { label: 'Week 4', tshirt: 201, mug: 124, sticker: 251, tarpaulin: 71, idLace: 102 },
+    ],
+    February: [
+      { label: 'Week 1', tshirt: 174, mug: 106, sticker: 221, tarpaulin: 61, idLace: 89 },
+      { label: 'Week 2', tshirt: 186, mug: 113, sticker: 232, tarpaulin: 64, idLace: 93 },
+      { label: 'Week 3', tshirt: 189, mug: 115, sticker: 235, tarpaulin: 66, idLace: 96 },
+      { label: 'Week 4', tshirt: 198, mug: 121, sticker: 246, tarpaulin: 70, idLace: 100 },
+    ],
+    March: [
+      { label: 'Week 1', tshirt: 191, mug: 117, sticker: 240, tarpaulin: 67, idLace: 97 },
+      { label: 'Week 2', tshirt: 202, mug: 124, sticker: 252, tarpaulin: 72, idLace: 103 },
+      { label: 'Week 3', tshirt: 214, mug: 130, sticker: 264, tarpaulin: 76, idLace: 109 },
+      { label: 'Week 4', tshirt: 220, mug: 136, sticker: 273, tarpaulin: 79, idLace: 113 },
+    ],
+    April: [
+      { label: 'Week 1', tshirt: 208, mug: 126, sticker: 258, tarpaulin: 74, idLace: 106 },
+      { label: 'Week 2', tshirt: 223, mug: 134, sticker: 272, tarpaulin: 79, idLace: 112 },
+      { label: 'Week 3', tshirt: 229, mug: 139, sticker: 281, tarpaulin: 82, idLace: 116 },
+      { label: 'Week 4', tshirt: 240, mug: 146, sticker: 294, tarpaulin: 86, idLace: 121 },
+    ],
+    May: [
+      { label: 'Week 1', tshirt: 214, mug: 131, sticker: 266, tarpaulin: 76, idLace: 110 },
+      { label: 'Week 2', tshirt: 226, mug: 138, sticker: 279, tarpaulin: 81, idLace: 116 },
+      { label: 'Week 3', tshirt: 235, mug: 143, sticker: 289, tarpaulin: 84, idLace: 120 },
+      { label: 'Week 4', tshirt: 248, mug: 151, sticker: 302, tarpaulin: 88, idLace: 126 },
+    ],
+  };
+
+  const yearlyProductTrendData: ProductTrendTimelineData = {
+    2022: [
+      { label: 'Q1', tshirt: 2120, mug: 1310, sticker: 2810, tarpaulin: 790, idLace: 1120 },
+      { label: 'Q2', tshirt: 2260, mug: 1380, sticker: 2940, tarpaulin: 850, idLace: 1180 },
+      { label: 'Q3', tshirt: 2430, mug: 1490, sticker: 3120, tarpaulin: 890, idLace: 1260 },
+      { label: 'Q4', tshirt: 2550, mug: 1550, sticker: 3270, tarpaulin: 940, idLace: 1320 },
+    ],
+    2023: [
+      { label: 'Q1', tshirt: 2330, mug: 1420, sticker: 3040, tarpaulin: 860, idLace: 1210 },
+      { label: 'Q2', tshirt: 2480, mug: 1530, sticker: 3220, tarpaulin: 920, idLace: 1290 },
+      { label: 'Q3', tshirt: 2620, mug: 1600, sticker: 3370, tarpaulin: 970, idLace: 1360 },
+      { label: 'Q4', tshirt: 2790, mug: 1690, sticker: 3540, tarpaulin: 1030, idLace: 1450 },
+    ],
+    2024: [
+      { label: 'Q1', tshirt: 2480, mug: 1510, sticker: 3260, tarpaulin: 920, idLace: 1310 },
+      { label: 'Q2', tshirt: 2680, mug: 1620, sticker: 3460, tarpaulin: 990, idLace: 1400 },
+      { label: 'Q3', tshirt: 2870, mug: 1730, sticker: 3640, tarpaulin: 1060, idLace: 1490 },
+      { label: 'Q4', tshirt: 3040, mug: 1830, sticker: 3820, tarpaulin: 1130, idLace: 1570 },
+    ],
+    2025: [
+      { label: 'Q1', tshirt: 2760, mug: 1670, sticker: 3540, tarpaulin: 1000, idLace: 1440 },
+      { label: 'Q2', tshirt: 2940, mug: 1770, sticker: 3740, tarpaulin: 1090, idLace: 1530 },
+      { label: 'Q3', tshirt: 3090, mug: 1860, sticker: 3920, tarpaulin: 1160, idLace: 1620 },
+      { label: 'Q4', tshirt: 3280, mug: 1980, sticker: 4140, tarpaulin: 1240, idLace: 1720 },
+    ],
+  };
+
+  const trendPeriodMap: Record<Period, ProductTrendTimelineData> = {
+    weekly: weeklyProductTrendData,
+    monthly: monthlyProductTrendData,
+    yearly: yearlyProductTrendData,
+  };
+
+  const safeTrendSelection = trendOptions.includes(trendSelection)
+    ? trendSelection
+    : trendOptions[0];
+
+  const productTrendData = useMemo(() => {
+    const source = trendPeriodMap[trendPeriod][safeTrendSelection] ?? [];
+    return source.map((item) => {
+      const totalUnits = item.tshirt + item.mug + item.sticker + item.tarpaulin + item.idLace;
+      return {
+        ...item,
+        totalUnits,
+      };
+    });
+  }, [trendPeriod, safeTrendSelection]);
+
+  const productTrendSummary = useMemo(() => {
+    const totals = productTrendData.reduce(
+      (acc, item) => {
+        acc.tshirt += item.tshirt;
+        acc.mug += item.mug;
+        acc.sticker += item.sticker;
+        acc.tarpaulin += item.tarpaulin;
+        acc.idLace += item.idLace;
+        acc.total += item.totalUnits;
+        return acc;
+      },
+      { tshirt: 0, mug: 0, sticker: 0, tarpaulin: 0, idLace: 0, total: 0 },
+    );
+
+    const products = [
+      { name: 'T-Shirt', units: totals.tshirt },
+      { name: 'Mug', units: totals.mug },
+      { name: 'Sticker', units: totals.sticker },
+      { name: 'Tarpaulin', units: totals.tarpaulin },
+      { name: 'ID Lace', units: totals.idLace },
+    ];
+
+    const ranked = [...products].sort((a, b) => b.units - a.units);
+    const leadingProduct = ranked[0];
+    const lowestProduct = ranked[ranked.length - 1];
+
+    return { totals, ranked, leadingProduct, lowestProduct };
+  }, [productTrendData]);
+
+  const applyGlobalPeriod = (nextPeriod: Period) => {
+    setGlobalPeriod(nextPeriod);
+    setSalesPeriod(nextPeriod);
+    setProfitPeriod(nextPeriod);
+    setTrendPeriod(nextPeriod);
+
+    const nextSalesOptions = Object.keys(periodMap[nextPeriod]);
+    setSelectionA(nextSalesOptions[0] ?? '');
+    setSelectionB(nextSalesOptions[Math.min(1, nextSalesOptions.length - 1)] ?? '');
+
+    const nextProfitOptions = Object.keys(profitPeriodMap[nextPeriod]);
+    setProfitSelection(nextProfitOptions[0] ?? '');
+
+    const nextTrendOptions = Object.keys(trendPeriodMap[nextPeriod]);
+    setTrendSelection(nextTrendOptions[0] ?? '');
+  };
+
+  const handleSalesPeriodChange = (nextPeriod: Period) => {
+    setSalesPeriod(nextPeriod);
     const nextOptions = Object.keys(periodMap[nextPeriod]);
     setSelectionA(nextOptions[0] ?? '');
     setSelectionB(nextOptions[Math.min(1, nextOptions.length - 1)] ?? '');
+  };
+
+  const handleProfitPeriodChange = (nextPeriod: Period) => {
+    setProfitPeriod(nextPeriod);
+    const nextOptions = Object.keys(profitPeriodMap[nextPeriod]);
     setProfitSelection(nextOptions[0] ?? '');
+  };
+
+  const handleTrendPeriodChange = (nextPeriod: Period) => {
+    setTrendPeriod(nextPeriod);
+    const nextOptions = Object.keys(trendPeriodMap[nextPeriod]);
+    setTrendSelection(nextOptions[0] ?? '');
   };
 
   return (
     <div className="space-y-4 pb-8">
+      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-500 dark:text-zinc-400">
+              Global Sort
+            </p>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-zinc-100">
+              Analytics Period Controller
+            </h2>
+            <p className="text-xs text-gray-500 dark:text-zinc-400">
+              Applies the selected period to all analytics sections.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
+              <button
+                key={`global-${item}`}
+                type="button"
+                onClick={() => applyGlobalPeriod(item)}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                  globalPeriod === item
+                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                    : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                }`}
+              >
+                {periodLabel[item]}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -354,7 +588,7 @@ export default function AnalyticsPage() {
               Comparative Sales Performance
             </h2>
             <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
-              Compare two timelines by {periodLabel[period].toLowerCase()} sales using static business data.
+              Compare two timelines by {periodLabel[salesPeriod].toLowerCase()} sales using static business data.
             </p>
           </div>
           <div className="flex gap-2">
@@ -362,9 +596,9 @@ export default function AnalyticsPage() {
               <button
                 key={item}
                 type="button"
-                onClick={() => handlePeriodChange(item)}
+                onClick={() => handleSalesPeriodChange(item)}
                 className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
-                  period === item
+                  salesPeriod === item
                     ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
                     : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
                 }`}
@@ -385,7 +619,7 @@ export default function AnalyticsPage() {
               onChange={(event) => setSelectionA(event.target.value)}
               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
             >
-              {options.map((option) => (
+              {salesOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -402,7 +636,7 @@ export default function AnalyticsPage() {
               onChange={(event) => setSelectionB(event.target.value)}
               className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
             >
-              {options.map((option) => (
+              {salesOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
@@ -493,25 +727,43 @@ export default function AnalyticsPage() {
               Profit Margin Analysis
             </h3>
             <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
-              Revenue vs expenses with margin trend for the selected {periodLabel[period].toLowerCase()} timeline.
+              Revenue vs expenses with margin trend for the selected {periodLabel[profitPeriod].toLowerCase()} timeline.
             </p>
           </div>
-          <label className="block w-full md:w-52">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
-              Analysis Range
-            </span>
-            <select
-              value={safeProfitSelection}
-              onChange={(event) => setProfitSelection(event.target.value)}
-              className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
-            >
-              {options.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
+          <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
+            <div className="flex gap-2">
+              {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
+                <button
+                  key={`profit-${item}`}
+                  type="button"
+                  onClick={() => handleProfitPeriodChange(item)}
+                  className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                    profitPeriod === item
+                      ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                      : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                  }`}
+                >
+                  {periodLabel[item]}
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+            <label className="block w-full md:w-52">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
+                Analysis Range
+              </span>
+              <select
+                value={safeProfitSelection}
+                onChange={(event) => setProfitSelection(event.target.value)}
+                className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+              >
+                {profitOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
@@ -612,6 +864,175 @@ export default function AnalyticsPage() {
             <span className="font-semibold text-gray-900 dark:text-zinc-100">Lowest margin:</span>{' '}
             {profitMarginStats.lowestPoint.label} ({profitMarginStats.lowestPoint.margin.toFixed(1)}%)
           </p>
+        </div>
+
+        <div className="mt-4 border border-gray-200 rounded overflow-hidden dark:border-zinc-700">
+          <div className="p-3 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between">
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">Margin Ranking Table</p>
+            <button
+              type="button"
+              onClick={() => setMarginSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+              className="px-3 py-1 text-[10px] uppercase tracking-wide border border-gray-200 rounded font-semibold text-gray-700 dark:text-zinc-200 dark:border-zinc-600"
+            >
+              Sort: {marginSortOrder === 'desc' ? 'Highest to Lowest' : 'Lowest to Highest'}
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-zinc-800/50">
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">Segment</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide text-right">Revenue</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide text-right">Expenses</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide text-right">Profit</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide text-right">Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedMarginRows.map((row) => (
+                  <tr key={row.label} className="border-t border-gray-100 dark:border-zinc-800">
+                    <td className="px-3 py-2 font-medium text-gray-800 dark:text-zinc-200">{row.label}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-zinc-300">{money.format(row.revenue)}</td>
+                    <td className="px-3 py-2 text-right text-gray-700 dark:text-zinc-300">{money.format(row.expenses)}</td>
+                    <td className="px-3 py-2 text-right text-green-600">{money.format(row.profit)}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-gray-900 dark:text-zinc-100">{row.margin.toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Product Trend Identification</h3>
+            <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
+              Multi-product demand trend by {periodLabel[trendPeriod].toLowerCase()} segment with total volume tracking.
+            </p>
+          </div>
+          <div className="flex flex-col md:items-end gap-2 w-full md:w-auto">
+            <div className="flex gap-2">
+              {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
+                <button
+                  key={`trend-${item}`}
+                  type="button"
+                  onClick={() => handleTrendPeriodChange(item)}
+                  className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                    trendPeriod === item
+                      ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                      : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                  }`}
+                >
+                  {periodLabel[item]}
+                </button>
+              ))}
+            </div>
+            <label className="block w-full md:w-52">
+              <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
+                Trend Range
+              </span>
+              <select
+                value={safeTrendSelection}
+                onChange={(event) => setTrendSelection(event.target.value)}
+                className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+              >
+                {trendOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total Units</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">{productTrendSummary.totals.total.toLocaleString()}</p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Leading Product</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">
+              {productTrendSummary.leadingProduct?.name} ({productTrendSummary.leadingProduct?.units.toLocaleString()})
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Lowest Product</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">
+              {productTrendSummary.lowestProduct?.name} ({productTrendSummary.lowestProduct?.units.toLocaleString()})
+            </p>
+          </div>
+          <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Unique Segments</p>
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">{productTrendData.length}</p>
+          </div>
+        </div>
+
+        <div className="h-[380px] w-full min-w-0">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={productTrendData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+              <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 4" vertical={false} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} />
+              <YAxis yAxisId="units" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#6B7280' }} />
+              <YAxis
+                yAxisId="total"
+                orientation="right"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 11, fill: '#6B7280' }}
+              />
+              <Tooltip
+                formatter={(value: number) => [value.toLocaleString(), 'Units']}
+                labelStyle={{ color: '#111827', fontSize: 12 }}
+                contentStyle={{ border: '1px solid #E5E7EB', borderRadius: '6px', boxShadow: 'none', fontSize: '12px' }}
+              />
+              <Legend />
+              <Bar yAxisId="units" dataKey="tshirt" name="T-Shirt" stackId="product" fill="#111827" isAnimationActive={false} />
+              <Bar yAxisId="units" dataKey="mug" name="Mug" stackId="product" fill="#374151" isAnimationActive={false} />
+              <Bar yAxisId="units" dataKey="sticker" name="Sticker" stackId="product" fill="#6B7280" isAnimationActive={false} />
+              <Bar yAxisId="units" dataKey="tarpaulin" name="Tarpaulin" stackId="product" fill="#9CA3AF" isAnimationActive={false} />
+              <Bar yAxisId="units" dataKey="idLace" name="ID Lace" stackId="product" fill="#D1D5DB" isAnimationActive={false} />
+              <Line
+                yAxisId="total"
+                type="monotone"
+                dataKey="totalUnits"
+                name="Total Units"
+                stroke="#16A34A"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                isAnimationActive={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="mt-4 border border-gray-200 rounded overflow-hidden dark:border-zinc-700">
+          <div className="p-3 border-b border-gray-200 dark:border-zinc-700">
+            <p className="text-xs font-semibold text-gray-900 dark:text-zinc-100">Product Ranking (Current Selection)</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-zinc-800/50">
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">Rank</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide">Product</th>
+                  <th className="px-3 py-2 font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wide text-right">Units</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productTrendSummary.ranked.map((item, index) => (
+                  <tr key={item.name} className="border-t border-gray-100 dark:border-zinc-800">
+                    <td className="px-3 py-2 text-gray-700 dark:text-zinc-300">{index + 1}</td>
+                    <td className="px-3 py-2 font-medium text-gray-800 dark:text-zinc-200">{item.name}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-gray-900 dark:text-zinc-100">{item.units.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>
