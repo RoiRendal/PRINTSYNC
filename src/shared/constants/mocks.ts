@@ -6,11 +6,51 @@ export const MOCK_ORDERS = [
 ];
 
 export const MOCK_INVENTORY = [
-  { id: 'INV-001', name: 'Premium Cotton T-shirt (Black)', category: 'Apparel', stock: 150, reorderLevel: 50, price: 5.50 },
-  { id: 'INV-002', name: 'Premium Cotton T-shirt (White)', category: 'Apparel', stock: 200, reorderLevel: 50, price: 5.20 },
-  { id: 'INV-003', name: 'Pique Polo (Navy)', category: 'Apparel', stock: 85, reorderLevel: 30, price: 8.50 },
-  { id: 'INV-004', name: 'Sport Mesh Jersey', category: 'Apparel', stock: 45, reorderLevel: 40, price: 12.00 },
-  { id: 'INV-005', name: 'Heavyweight Hoodie', category: 'Outerwear', stock: 120, reorderLevel: 25, price: 15.00 },
+  {
+    id: 'INV-001',
+    name: 'Premium Cotton T-shirt (Black)',
+    category: 'Apparel',
+    stock: 150,
+    reorderLevel: 50,
+    price: 5.50,
+    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'INV-002',
+    name: 'Premium Cotton T-shirt (White)',
+    category: 'Apparel',
+    stock: 200,
+    reorderLevel: 50,
+    price: 5.20,
+    imageUrl: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'INV-003',
+    name: 'Pique Polo (Navy)',
+    category: 'Apparel',
+    stock: 85,
+    reorderLevel: 30,
+    price: 8.50,
+    imageUrl: 'https://images.unsplash.com/photo-1618354691438-25bc04584c23?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'INV-004',
+    name: 'Sport Mesh Jersey',
+    category: 'Apparel',
+    stock: 45,
+    reorderLevel: 40,
+    price: 12.00,
+    imageUrl: 'https://images.unsplash.com/photo-1592878904946-b3cd77d8d7c9?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'INV-005',
+    name: 'Heavyweight Hoodie',
+    category: 'Outerwear',
+    stock: 120,
+    reorderLevel: 25,
+    price: 15.00,
+    imageUrl: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop',
+  },
 ];
 
 export const MOCK_FINANCIAL_RECORDS = [

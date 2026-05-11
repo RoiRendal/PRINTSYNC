@@ -392,10 +392,14 @@ export default function POS() {
                   className={`bg-white border border-gray-200 rounded p-2 text-left hover:border-zinc-500 transition-all group flex flex-col shadow-sm dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500 ${product.stock <= 0 ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                 >
                   <div className="h-28 xl:h-32 bg-gray-50 rounded-sm flex items-center justify-center border border-gray-100 relative overflow-hidden mb-2 dark:bg-zinc-800 dark:border-zinc-700">
-                     <div className="flex flex-col items-center text-gray-300 group-hover:text-zinc-600 transition-colors dark:text-zinc-700 dark:group-hover:text-zinc-200">
-                        <ShoppingBag className="w-8 h-8 xl:w-10 xl:h-10 stroke-1" />
-                        <span className="text-[8px] mt-1 font-mono uppercase tracking-widest">IMG_PENDING</span>
-                     </div>
+                     {product.imageUrl ? (
+                       <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                     ) : (
+                       <div className="flex flex-col items-center text-gray-300 group-hover:text-zinc-600 transition-colors dark:text-zinc-700 dark:group-hover:text-zinc-200">
+                          <ShoppingBag className="w-8 h-8 xl:w-10 xl:h-10 stroke-1" />
+                          <span className="text-[8px] mt-1 font-mono uppercase tracking-widest">NO_IMAGE</span>
+                       </div>
+                     )}
                      <div className="absolute top-1 right-1">
                         <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-mono uppercase ${product.stock <= product.reorderLevel ? 'bg-red-600 text-white' : 'bg-zinc-900 text-white'}`}>
                           {product.stock} IN STOCK
@@ -471,7 +475,11 @@ export default function POS() {
                     <div key={`${item.id}-${idx}`} className={`flex flex-col gap-2 p-2 rounded-sm border transition-all ${posMode === 'custom' ? 'bg-white border-indigo-100 hover:border-indigo-300 dark:bg-zinc-800/40 dark:border-indigo-900/30' : 'bg-gray-50 border-gray-100 hover:bg-gray-100 dark:bg-zinc-800/40 dark:border-zinc-800'}`}>
                        <div className="flex gap-3">
                           <div className="w-10 h-10 bg-gray-200 flex-shrink-0 rounded-sm dark:bg-zinc-800 overflow-hidden">
-                             {item.designId && <img src={designs.find(d => d.id === item.designId)?.imageUrl} className="w-full h-full object-cover" />}
+                             {item.designId ? (
+                               <img src={designs.find(d => d.id === item.designId)?.imageUrl} alt="" className="w-full h-full object-cover" />
+                             ) : item.imageUrl ? (
+                               <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                             ) : null}
                           </div>
                           <div className="flex-1 flex flex-col min-w-0">
                              <div className="flex justify-between items-start gap-2">

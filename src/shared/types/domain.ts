@@ -6,6 +6,7 @@ export interface InventoryItem {
   stock: number;
   reorderLevel: number;
   price: number;
+  imageUrl?: string;
 }
 
 export interface Order {

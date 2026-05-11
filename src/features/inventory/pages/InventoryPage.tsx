@@ -23,6 +23,7 @@ export default function Inventory() {
     stock: 0,
     reorderLevel: 10,
     price: 0,
+    imageUrl: '',
   });
 
   const filteredItems = useMemo(() => {
@@ -43,6 +44,7 @@ export default function Inventory() {
         stock: item.stock,
         reorderLevel: item.reorderLevel,
         price: item.price,
+        imageUrl: item.imageUrl || '',
       });
     } else {
       setEditingItem(null);
@@ -52,6 +54,7 @@ export default function Inventory() {
         stock: 0,
         reorderLevel: 10,
         price: 0,
+        imageUrl: '',
       });
     }
     setIsModalOpen(true);
@@ -75,6 +78,17 @@ export default function Inventory() {
   const handleDeleteInitiate = (item: InventoryItem) => {
     setItemToDelete(item);
     setIsDeleteModalOpen(true);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({ ...prev, imageUrl: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const confirmDelete = () => {
@@ -313,6 +327,34 @@ export default function Inventory() {
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+              Item Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:border-0 file:bg-zinc-900 file:text-white file:text-[10px] file:font-bold file:uppercase file:tracking-wider hover:file:bg-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-700 dark:hover:file:bg-zinc-600"
+              onChange={handleImageUpload}
+            />
+            {formData.imageUrl && (
+              <div className="flex items-center gap-3 p-2 border border-gray-200 dark:border-zinc-800 rounded bg-gray-50 dark:bg-zinc-900">
+                <img
+                  src={formData.imageUrl}
+                  alt="Item preview"
+                  className="w-16 h-16 rounded object-cover border border-gray-200 dark:border-zinc-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, imageUrl: '' })}
+                  className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600"
+                >
+                  Remove Image
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="pt-4 flex gap-3">

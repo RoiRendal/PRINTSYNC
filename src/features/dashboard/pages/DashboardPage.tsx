@@ -50,7 +50,7 @@ export default function Dashboard() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
         <StatCard title="Today's Revenue" value={`₱${stats.todayRevenue.toLocaleString()}`} icon={DollarSign} colorClass="text-green-500" />
-        <StatCard title="Active Jobs" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-zinc-700" />
+        <StatCard title="Active Orders" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-zinc-700" />
         <StatCard title="Inventory Alerts" value={stats.inventoryAlerts} icon={AlertTriangle} colorClass={stats.inventoryAlerts > 0 ? "text-red-500" : "text-gray-400"} />
         <StatCard title="Completed Today" value={stats.completedToday} icon={CheckCircle2} colorClass="text-emerald-500" />
       </div>
@@ -132,9 +132,6 @@ export default function Dashboard() {
              <div className="flex flex-wrap gap-2">
                 <Link to="/inventory" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-zinc-900 hover:bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-white">
                   Restock Now
-                </Link>
-                <Link to="/analytics" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-gray-200 hover:bg-gray-300 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-gray-800 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300">
-                  Insights
                 </Link>
              </div>
           </div>
