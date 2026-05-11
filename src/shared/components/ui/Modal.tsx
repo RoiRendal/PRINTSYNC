@@ -29,7 +29,7 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-3 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-zinc-100 italic serif">
+          <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-zinc-100">
             {title}
           </h3>
           <button

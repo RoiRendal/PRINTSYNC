@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './layout/AppLayout';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { BusinessBrandingProvider } from './providers/BusinessBrandingProvider';
@@ -15,6 +15,7 @@ import UserManagement from '../features/users/pages/UserManagementPage';
 import Orders from '../features/orders/pages/OrdersPage';
 import Settings from '../features/settings/pages/SettingsPage';
 import LoginPage from '../features/auth/pages/LoginPage';
+import { NAV_ITEMS } from '../shared/constants/navigation';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser } = useUserContext();
@@ -34,6 +35,24 @@ function ProtectedLayout() {
   );
 }
 
+function NavigateToFirstAllowedPage() {
+  const { currentUser } = useUserContext();
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  const firstAllowed = NAV_ITEMS.find((item) => currentUser.access.includes(item.key));
+  return <Navigate to={firstAllowed?.path ?? '/login'} replace />;
+}
+
+function RequirePageAccess({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const { canAccess } = useUserContext();
+  if (!canAccess(location.pathname)) {
+    return <NavigateToFirstAllowedPage />;
+  }
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -45,16 +64,16 @@ export default function App() {
                 <Routes>
                   <Route path="/login" element={<LoginPage />} />
                   <Route element={<ProtectedLayout />}>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/orders" element={<Orders />} />
-                    <Route path="/inventory" element={<Inventory />} />
-                    <Route path="/pos" element={<POS />} />
-                    <Route path="/finance" element={<Finance />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/users" element={<UserManagement />} />
-                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
+                    <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
+                    <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
+                    <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
+                    <Route path="/finance" element={<RequirePageAccess><Finance /></RequirePageAccess>} />
+                    <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
+                    <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
+                    <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
                   </Route>
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<NavigateToFirstAllowedPage />} />
                 </Routes>
               </BrowserRouter>
             </UserProvider>

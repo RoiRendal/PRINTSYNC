@@ -3,12 +3,18 @@ import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useUserContext } from '../../features/users/state/UserContext';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
+  const { currentUser } = useUserContext();
+  const visibleItems = currentUser
+    ? NAV_ITEMS.filter((item) => currentUser.access.includes(item.key))
+    : [];
+
   return (
     <aside 
       className={cn(
@@ -18,7 +24,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
       )}
     >
       <nav className="flex-1 px-1.5 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
-        {NAV_ITEMS.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { ADMIN_PAGE_ACCESS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 
 export type RbacRole = 'admin' | 'staff';
 
@@ -11,6 +12,7 @@ export interface UserRecord {
   position: string;
   createdAt: string;
   password: string;
+  access: PageAccessKey[];
 }
 
 interface CreateUserInput {
@@ -21,6 +23,7 @@ interface CreateUserInput {
   position: string;
   createdAt?: string;
   password: string;
+  access: PageAccessKey[];
 }
 
 interface UpdateUserInput {
@@ -31,6 +34,7 @@ interface UpdateUserInput {
   position: string;
   createdAt: string;
   password: string;
+  access: PageAccessKey[];
 }
 
 interface UserContextValue {
@@ -40,11 +44,22 @@ interface UserContextValue {
   logout: () => void;
   createUser: (payload: CreateUserInput) => void;
   updateUser: (id: string, payload: UpdateUserInput) => void;
-  deleteUser: (id: string) => void;
+  deleteUser: (id: string) => boolean;
+  canAccess: (path: string) => boolean;
+  getDefaultAccess: (role: RbacRole) => PageAccessKey[];
+  firstAdminId: string;
 }
 
 const USERS_STORAGE_KEY = 'printsync-users';
 const AUTH_USER_STORAGE_KEY = 'printsync-auth-user';
+const FIRST_ADMIN_ID = 'u-admin-1';
+
+const normalizeAccess = (role: RbacRole, access?: PageAccessKey[]) => {
+  const allowed = role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
+  const candidate = access && access.length ? access : allowed;
+  const unique = Array.from(new Set(candidate));
+  return unique.filter((entry): entry is PageAccessKey => allowed.includes(entry));
+};
 
 const INITIAL_USERS: UserRecord[] = [
   {
@@ -56,6 +71,7 @@ const INITIAL_USERS: UserRecord[] = [
     position: 'System Administrator',
     createdAt: '2026-01-05',
     password: 'admin123',
+    access: ADMIN_PAGE_ACCESS,
   },
   {
     id: 'u-staff-1',
@@ -66,6 +82,7 @@ const INITIAL_USERS: UserRecord[] = [
     position: 'Print Technician',
     createdAt: '2026-02-14',
     password: 'staff123',
+    access: STAFF_PAGE_ACCESS,
   },
   {
     id: 'u-staff-2',
@@ -76,6 +93,7 @@ const INITIAL_USERS: UserRecord[] = [
     position: 'Production Assistant',
     createdAt: '2026-03-03',
     password: 'staff456',
+    access: STAFF_PAGE_ACCESS,
   },
 ];
 
@@ -89,7 +107,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
     try {
       const parsed = JSON.parse(stored) as UserRecord[];
-      return parsed.length ? parsed : INITIAL_USERS;
+      if (!parsed.length) {
+        return INITIAL_USERS;
+      }
+      return parsed.map((user) => ({
+        ...user,
+        access: normalizeAccess(user.role, user.access),
+      }));
     } catch {
       return INITIAL_USERS;
     }
@@ -115,6 +139,30 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     () => users.find((user) => user.id === currentUserId) ?? null,
     [users, currentUserId]
   );
+
+  const getDefaultAccess = (role: RbacRole) => normalizeAccess(role);
+
+  const canAccess = (path: string) => {
+    if (!currentUser) {
+      return false;
+    }
+    const navPath = path === '' ? '/' : path;
+    const map: Record<string, PageAccessKey> = {
+      '/': 'dashboard',
+      '/orders': 'orders',
+      '/inventory': 'inventory',
+      '/pos': 'pos',
+      '/finance': 'finance',
+      '/analytics': 'analytics',
+      '/users': 'users',
+      '/settings': 'settings',
+    };
+    const key = map[navPath];
+    if (!key) {
+      return true;
+    }
+    return currentUser.access.includes(key);
+  };
 
   const login = (email: string, password: string) => {
     const match = users.find(
@@ -144,6 +192,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       position: payload.position.trim(),
       createdAt,
       password: payload.password,
+      access: normalizeAccess(payload.role, payload.access),
     };
     setUsers((prev) => [newUser, ...prev]);
   };
@@ -159,6 +208,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
               name: payload.name.trim(),
               phone: payload.phone.trim(),
               position: payload.position.trim(),
+              access: normalizeAccess(payload.role, payload.access),
             }
           : user
       )
@@ -166,8 +216,12 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const deleteUser = (id: string) => {
+    if (id === FIRST_ADMIN_ID) {
+      return false;
+    }
     setUsers((prev) => prev.filter((user) => user.id !== id));
     setCurrentUserId((prev) => (prev === id ? null : prev));
+    return true;
   };
 
   return (
@@ -180,6 +234,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         createUser,
         updateUser,
         deleteUser,
+        canAccess,
+        getDefaultAccess,
+        firstAdminId: FIRST_ADMIN_ID,
       }}
     >
       {children}

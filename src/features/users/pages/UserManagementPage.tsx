@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { RbacRole, UserRecord, useUserContext } from '../state/UserContext';
+import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 
 interface FormState {
   name: string;
@@ -11,6 +12,7 @@ interface FormState {
   position: string;
   createdAt: string;
   password: string;
+  access: PageAccessKey[];
 }
 
 const EMPTY_FORM: FormState = {
@@ -21,10 +23,11 @@ const EMPTY_FORM: FormState = {
   position: '',
   createdAt: '',
   password: '',
+  access: STAFF_PAGE_ACCESS,
 };
 
 export default function UserManagement() {
-  const { users, createUser, updateUser, deleteUser } = useUserContext();
+  const { users, createUser, updateUser, deleteUser, getDefaultAccess, firstAdminId } = useUserContext();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -64,6 +67,7 @@ export default function UserManagement() {
       position: user.position,
       createdAt: user.createdAt,
       password: user.password,
+      access: user.access,
     });
     setIsModalOpen(true);
   };
@@ -85,6 +89,17 @@ export default function UserManagement() {
       createUser(form);
     }
     closeModal();
+  };
+
+  const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
+
+  const toggleAccess = (key: PageAccessKey) => {
+    setForm((prev) => {
+      const exists = prev.access.includes(key);
+      const next = exists ? prev.access.filter((entry) => entry !== key) : [...prev.access, key];
+      const allowed = prev.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
+      return { ...prev, access: next.filter((entry) => allowed.includes(entry)) };
+    });
   };
 
   return (
@@ -187,7 +202,9 @@ export default function UserManagement() {
                         </button>
                         <button
                           onClick={() => deleteUser(user.id)}
-                          className="p-1.5 rounded border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
+                          disabled={user.id === firstAdminId}
+                          title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'}
+                          className="p-1.5 rounded border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-red-900/40 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -227,7 +244,10 @@ export default function UserManagement() {
           />
           <select
             value={form.role}
-            onChange={(e) => setForm((prev) => ({ ...prev, role: e.target.value as RbacRole }))}
+            onChange={(e) => {
+              const role = e.target.value as RbacRole;
+              setForm((prev) => ({ ...prev, role, access: getDefaultAccess(role) }));
+            }}
             className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
           >
             <option value="admin">admin</option>
@@ -254,6 +274,30 @@ export default function UserManagement() {
             placeholder="Password"
             className="md:col-span-2 border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
           />
+          <div className="md:col-span-2 border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900 space-y-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500 dark:text-zinc-400">
+              {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {roleAccessOptions.map((key) => {
+                const item = NAV_ITEMS.find((nav) => nav.key === key);
+                if (!item) {
+                  return null;
+                }
+                return (
+                  <label key={key} className="inline-flex items-center gap-2 text-[11px] text-gray-700 dark:text-zinc-300">
+                    <input
+                      type="checkbox"
+                      checked={form.access.includes(key)}
+                      onChange={() => toggleAccess(key)}
+                      className="h-3.5 w-3.5 rounded border border-gray-300 dark:border-zinc-700"
+                    />
+                    {item.label}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <div className="md:col-span-2 flex justify-end gap-2 pt-2">
             <button type="button" onClick={closeModal} className="px-3 py-2 text-xs rounded border border-gray-200 dark:border-zinc-700">
               Cancel

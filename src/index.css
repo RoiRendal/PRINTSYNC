@@ -11,6 +11,6 @@
 /* ERP-first visual behavior: keep typography and motion minimal. */
 *, *::before, *::after {
   animation: none !important;
-  transition-duration: 120ms;
+  transition-duration: 0ms;
   transition-timing-function: linear;
 }
