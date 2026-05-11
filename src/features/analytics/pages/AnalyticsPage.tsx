@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -137,6 +137,22 @@ type ForecastPoint = {
   retailShare: number;
 };
 type ForecastTimelineData = Record<string, ForecastPoint[]>;
+type InsightFeature = 'sales' | 'profit' | 'trend' | 'forecast';
+
+type InsightReport = {
+  overview: string;
+  keyFindings: [string, string, string];
+  riskWatchout: string;
+  recommendedAction: string;
+  confidence: number;
+};
+
+type InsightState = {
+  autoGenerate: boolean;
+  isLoading: boolean;
+  report: InsightReport | null;
+  lastGeneratedAt: string | null;
+};
 
 const weeklyProfitData: ProfitTimelineData = {
   'Week 1': [
@@ -366,7 +382,188 @@ const money = new Intl.NumberFormat('en-PH', {
   maximumFractionDigits: 0,
 });
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const formatInsightTime = (timestamp: string | null) => {
+  if (!timestamp) return 'Not generated yet';
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+};
+
+async function generateInsight(
+  feature: InsightFeature,
+  context: Record<string, number | string>,
+): Promise<InsightReport> {
+  await sleep(240);
+
+  if (feature === 'sales') {
+    const growth = Number(context.growth ?? 0);
+    const totalA = Number(context.totalA ?? 0);
+    const totalB = Number(context.totalB ?? 0);
+    const selectionA = String(context.selectionA ?? 'Timeline A');
+    const selectionB = String(context.selectionB ?? 'Timeline B');
+    const trendWord = growth >= 0 ? 'higher' : 'lower';
+    return {
+      overview: `${selectionA} is ${Math.abs(growth).toFixed(1)}% ${trendWord} than ${selectionB} in the selected range.`,
+      keyFindings: [
+        `${selectionA} total sales: ${money.format(totalA)}.`,
+        `${selectionB} total sales: ${money.format(totalB)}.`,
+        `Absolute gap between both timelines: ${money.format(totalA - totalB)}.`,
+      ],
+      riskWatchout:
+        growth < 0
+          ? `Demand weakness in ${selectionA} may continue if campaign timing and product mix remain unchanged.`
+          : `Performance may flatten if the same growth drivers are not sustained in the next period.`,
+      recommendedAction:
+        growth < 0
+          ? `Prioritize underperforming segments in ${selectionA} and run targeted promotions for quick recovery.`
+          : `Replicate the strongest drivers from ${selectionA} into weaker segments to preserve momentum.`,
+      confidence: Math.max(72, Math.min(96, 88 + Math.min(8, Math.abs(growth) / 4))),
+    };
+  }
+
+  if (feature === 'profit') {
+    const avgMargin = Number(context.avgMargin ?? 0);
+    const totalProfit = Number(context.totalProfit ?? 0);
+    const bestLabel = String(context.bestLabel ?? '-');
+    const lowestLabel = String(context.lowestLabel ?? '-');
+    return {
+      overview: `Average margin is ${avgMargin.toFixed(1)}% with a net profit of ${money.format(totalProfit)}.`,
+      keyFindings: [
+        `Best margin point: ${bestLabel}.`,
+        `Lowest margin point: ${lowestLabel}.`,
+        `Total net profit for this selection: ${money.format(totalProfit)}.`,
+      ],
+      riskWatchout:
+        avgMargin < 30
+          ? 'Margin compression risk is elevated due to expense pressure relative to revenue.'
+          : 'Margins are healthy, but rising expenses can quickly reduce profitability if not monitored.',
+      recommendedAction:
+        avgMargin < 30
+          ? 'Audit top expense categories and protect margin with pricing and procurement adjustments.'
+          : 'Lock in high-margin product bundles and keep expense growth below revenue growth.',
+      confidence: Math.max(74, Math.min(97, 85 + avgMargin / 6)),
+    };
+  }
+
+  if (feature === 'trend') {
+    const totalUnits = Number(context.totalUnits ?? 0);
+    const leadingProduct = String(context.leadingProduct ?? '-');
+    const leadingUnits = Number(context.leadingUnits ?? 0);
+    const lowestProduct = String(context.lowestProduct ?? '-');
+    return {
+      overview: `${leadingProduct} leads demand with ${leadingUnits.toLocaleString()} units out of ${totalUnits.toLocaleString()} total units.`,
+      keyFindings: [
+        `Top product: ${leadingProduct} (${leadingUnits.toLocaleString()} units).`,
+        `Lowest-ranked product: ${lowestProduct}.`,
+        `Total demand volume in this selection: ${totalUnits.toLocaleString()} units.`,
+      ],
+      riskWatchout:
+        'Demand concentration on a small set of products can increase stockout risk and forecast volatility.',
+      recommendedAction:
+        `Increase buffer stock for ${leadingProduct} while testing demand lifts for lower-ranked products.`,
+      confidence: Math.max(73, Math.min(95, 84 + (leadingUnits / Math.max(totalUnits, 1)) * 10)),
+    };
+  }
+
+  const expectedGrowth = Number(context.expectedGrowth ?? 0);
+  const forecastConfidence = Number(context.forecastConfidence ?? 0);
+  const metric = String(context.metric ?? 'Income');
+  return {
+    overview: `${metric} is projected to move by ${expectedGrowth.toFixed(1)}% with a model confidence of ${forecastConfidence.toFixed(1)}%.`,
+    keyFindings: [
+      `Actual ${metric.toLowerCase()}: ${money.format(Number(context.actual ?? 0))}.`,
+      `Forecast ${metric.toLowerCase()}: ${money.format(Number(context.forecast ?? 0))}.`,
+      `Expected delta: ${money.format(Number(context.forecast ?? 0) - Number(context.actual ?? 0))}.`,
+    ],
+    riskWatchout:
+      expectedGrowth < 0
+        ? 'Downside trajectory can worsen if current demand softness persists.'
+        : 'Forecast upside may be overstated if recent demand spikes normalize quickly.',
+    recommendedAction:
+      expectedGrowth < 0
+        ? 'Prepare a conservative operating plan with tighter cost controls for near-term periods.'
+        : 'Align capacity and staffing with the projected increase while tracking variance weekly.',
+    confidence: Math.max(70, Math.min(98, forecastConfidence)),
+  };
+}
+
+function InsightPanel({
+  state,
+  onToggleAutoGenerate,
+  onGenerate,
+}: {
+  state: InsightState;
+  onToggleAutoGenerate: () => void;
+  onGenerate: () => Promise<void>;
+}) {
+  return (
+    <div className="mt-4 rounded border border-gray-200 p-3 dark:border-zinc-700">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <label className="inline-flex items-center gap-2 text-xs text-gray-600 dark:text-zinc-300">
+          <input
+            type="checkbox"
+            checked={state.autoGenerate}
+            onChange={onToggleAutoGenerate}
+            className="h-4 w-4 rounded border-gray-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600"
+          />
+          Auto-generate insights
+        </label>
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={state.isLoading}
+          className="px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold bg-zinc-900 text-white border-zinc-900 disabled:opacity-60 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100"
+        >
+          {state.isLoading ? 'Generating...' : 'Generate Insights'}
+        </button>
+      </div>
+      <p className="mt-2 text-[10px] uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        Last generated: {formatInsightTime(state.lastGeneratedAt)}
+      </p>
+
+      {state.report ? (
+        <div className="mt-3 space-y-2 text-xs text-gray-700 dark:text-zinc-300">
+          <p>
+            <span className="font-semibold text-gray-900 dark:text-zinc-100">Overview:</span> {state.report.overview}
+          </p>
+          <div>
+            <p className="font-semibold text-gray-900 dark:text-zinc-100">Key Findings:</p>
+            <ul className="list-disc pl-5 mt-1 space-y-1">
+              {state.report.keyFindings.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+          <p>
+            <span className="font-semibold text-gray-900 dark:text-zinc-100">Risk / Watchout:</span>{' '}
+            {state.report.riskWatchout}
+          </p>
+          <p>
+            <span className="font-semibold text-gray-900 dark:text-zinc-100">Recommended Action:</span>{' '}
+            {state.report.recommendedAction}
+          </p>
+          <p>
+            <span className="font-semibold text-gray-900 dark:text-zinc-100">Confidence:</span>{' '}
+            {Math.max(0, Math.min(100, state.report.confidence)).toFixed(1)}%
+          </p>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-gray-500 dark:text-zinc-400">
+          Generate insights to view a fixed mini-report with consistent AI-style output.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
+  const emptyInsightState: InsightState = {
+    autoGenerate: false,
+    isLoading: false,
+    report: null,
+    lastGeneratedAt: null,
+  };
+
   const [globalPeriod, setGlobalPeriod] = useState<Period>('monthly');
   const [salesPeriod, setSalesPeriod] = useState<Period>('monthly');
   const [profitPeriod, setProfitPeriod] = useState<Period>('monthly');
@@ -379,6 +576,10 @@ export default function AnalyticsPage() {
   const [trendSelection, setTrendSelection] = useState('April');
   const [forecastSelection, setForecastSelection] = useState('April');
   const [forecastMetric, setForecastMetric] = useState<'income' | 'expenses'>('income');
+  const [salesInsight, setSalesInsight] = useState<InsightState>(emptyInsightState);
+  const [profitInsight, setProfitInsight] = useState<InsightState>(emptyInsightState);
+  const [trendInsight, setTrendInsight] = useState<InsightState>(emptyInsightState);
+  const [forecastInsight, setForecastInsight] = useState<InsightState>(emptyInsightState);
 
   const salesOptions = useMemo(() => Object.keys(periodMap[salesPeriod]), [salesPeriod]);
   const profitOptions = useMemo(() => Object.keys(periodMap[profitPeriod]), [profitPeriod]);
@@ -710,6 +911,109 @@ export default function AnalyticsPage() {
     };
   }, [financialForecastData, forecastMetric]);
 
+  const generateSalesInsight = useCallback(async () => {
+    setSalesInsight((prev) => ({ ...prev, isLoading: true }));
+    const report = await generateInsight('sales', {
+      growth: totals.growth,
+      totalA: totals.totalA,
+      totalB: totals.totalB,
+      selectionA: safeSelectionA,
+      selectionB: safeSelectionB,
+    });
+    setSalesInsight((prev) => ({
+      ...prev,
+      isLoading: false,
+      report,
+      lastGeneratedAt: new Date().toISOString(),
+    }));
+  }, [totals.growth, totals.totalA, totals.totalB, safeSelectionA, safeSelectionB]);
+
+  const generateProfitInsight = useCallback(async () => {
+    setProfitInsight((prev) => ({ ...prev, isLoading: true }));
+    const report = await generateInsight('profit', {
+      avgMargin: profitMarginStats.averageMargin,
+      totalProfit: profitMarginStats.totalProfit,
+      bestLabel: profitMarginStats.bestPoint.label,
+      lowestLabel: profitMarginStats.lowestPoint.label,
+    });
+    setProfitInsight((prev) => ({
+      ...prev,
+      isLoading: false,
+      report,
+      lastGeneratedAt: new Date().toISOString(),
+    }));
+  }, [
+    profitMarginStats.averageMargin,
+    profitMarginStats.totalProfit,
+    profitMarginStats.bestPoint.label,
+    profitMarginStats.lowestPoint.label,
+  ]);
+
+  const generateTrendInsight = useCallback(async () => {
+    setTrendInsight((prev) => ({ ...prev, isLoading: true }));
+    const report = await generateInsight('trend', {
+      totalUnits: productTrendSummary.totals.total,
+      leadingProduct: productTrendSummary.leadingProduct?.name ?? '-',
+      leadingUnits: productTrendSummary.leadingProduct?.units ?? 0,
+      lowestProduct: productTrendSummary.lowestProduct?.name ?? '-',
+    });
+    setTrendInsight((prev) => ({
+      ...prev,
+      isLoading: false,
+      report,
+      lastGeneratedAt: new Date().toISOString(),
+    }));
+  }, [
+    productTrendSummary.totals.total,
+    productTrendSummary.leadingProduct?.name,
+    productTrendSummary.leadingProduct?.units,
+    productTrendSummary.lowestProduct?.name,
+  ]);
+
+  const generateForecastInsight = useCallback(async () => {
+    setForecastInsight((prev) => ({ ...prev, isLoading: true }));
+    const confidence = Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy));
+    const report = await generateInsight('forecast', {
+      metric: forecastMetric === 'income' ? 'Income' : 'Expenses',
+      expectedGrowth: financialForecastStats.expectedGrowth,
+      forecastConfidence: confidence,
+      actual: financialForecastStats.actual,
+      forecast: financialForecastStats.forecast,
+    });
+    setForecastInsight((prev) => ({
+      ...prev,
+      isLoading: false,
+      report,
+      lastGeneratedAt: new Date().toISOString(),
+    }));
+  }, [
+    forecastMetric,
+    financialForecastStats.expectedGrowth,
+    financialForecastStats.forecastAccuracyProxy,
+    financialForecastStats.actual,
+    financialForecastStats.forecast,
+  ]);
+
+  useEffect(() => {
+    if (!salesInsight.autoGenerate) return;
+    void generateSalesInsight();
+  }, [salesInsight.autoGenerate, generateSalesInsight]);
+
+  useEffect(() => {
+    if (!profitInsight.autoGenerate) return;
+    void generateProfitInsight();
+  }, [profitInsight.autoGenerate, generateProfitInsight]);
+
+  useEffect(() => {
+    if (!trendInsight.autoGenerate) return;
+    void generateTrendInsight();
+  }, [trendInsight.autoGenerate, generateTrendInsight]);
+
+  useEffect(() => {
+    if (!forecastInsight.autoGenerate) return;
+    void generateForecastInsight();
+  }, [forecastInsight.autoGenerate, generateForecastInsight]);
+
   const applyGlobalPeriod = (nextPeriod: Period) => {
     setGlobalPeriod(nextPeriod);
     setSalesPeriod(nextPeriod);
@@ -857,6 +1161,14 @@ export default function AnalyticsPage() {
                 </select>
               </label>
             </div>
+
+            <InsightPanel
+              state={salesInsight}
+              onToggleAutoGenerate={() =>
+                setSalesInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))
+              }
+              onGenerate={generateSalesInsight}
+            />
           </section>
 
           <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
@@ -979,6 +1291,14 @@ export default function AnalyticsPage() {
             </label>
           </div>
         </div>
+
+        <InsightPanel
+          state={profitInsight}
+          onToggleAutoGenerate={() =>
+            setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))
+          }
+          onGenerate={generateProfitInsight}
+        />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
@@ -1166,6 +1486,14 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
+        <InsightPanel
+          state={trendInsight}
+          onToggleAutoGenerate={() =>
+            setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))
+          }
+          onGenerate={generateTrendInsight}
+        />
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
             <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total Units</p>
@@ -1321,6 +1649,14 @@ export default function AnalyticsPage() {
             </label>
           </div>
         </div>
+
+        <InsightPanel
+          state={forecastInsight}
+          onToggleAutoGenerate={() =>
+            setForecastInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))
+          }
+          onGenerate={generateForecastInsight}
+        />
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           <div className="rounded border border-gray-200 p-3 dark:border-zinc-700">
