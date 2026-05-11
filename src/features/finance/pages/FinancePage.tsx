@@ -1,65 +1,23 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
-  DollarSign, 
-  ArrowUpRight, 
-  ArrowDownRight, 
   Printer, 
-  Scissors, 
-  Droplets,
   Trash2,
   Edit2,
   Plus,
   Search,
-  Filter,
-  PieChart as PieChartIcon,
   TrendingUp,
   Receipt
 } from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-import { TableActions } from '../../../shared/components/table/TableActions';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip as MyTooltip } from '../../../shared/components/ui/Tooltip';
 import { FinancialReport } from '../components/FinancialReport';
-import { FinancialRecord, FinancialStats } from '../../../shared/types/domain';
+import { FinancialRecord } from '../../../shared/types/domain';
 import { useFinance } from '../../finance/state/FinanceContext';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
-
-const FinanceSummary = ({ label, amount, trend, icon: Icon }: any) => (
-  <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-    <div className="flex justify-between items-start">
-      <div className="p-1.5 bg-gray-50 rounded dark:bg-zinc-800 transition-colors">
-        <Icon className="w-4 h-4 text-zinc-600 dark:text-zinc-400" />
-      </div>
-      <div className={`flex items-center gap-0.5 text-[10px] font-bold ${trend > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-        {trend > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-        {Math.abs(trend)}%
-      </div>
-    </div>
-    <div className="mt-3">
-      <p className="text-[10px] uppercase font-bold tracking-[0.1em] text-gray-500 dark:text-zinc-500">{label}</p>
-      <div className="flex items-baseline gap-1.5 mt-1">
-        <h3 className="text-2xl font-mono font-bold tracking-tight text-gray-900 dark:text-zinc-100">₱{amount.toLocaleString()}</h3>
-        <span className="text-[9px] text-gray-400 font-mono tracking-widest uppercase dark:text-zinc-500">PHP</span>
-      </div>
-    </div>
-  </div>
-);
 
 export default function Finance() {
   const { businessDisplayName } = useBusinessBranding();
   const { records, stats, addRecord, updateRecord, deleteRecord } = useFinance();
-  const [isMounted, setIsMounted] = React.useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -67,10 +25,6 @@ export default function Finance() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<FinancialRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -152,24 +106,6 @@ export default function Finance() {
     }
   };
 
-  // Chart Data
-  const chartData = [
-    { name: 'Mon', income: 12000, expenses: 8000 },
-    { name: 'Tue', income: 18500, expenses: 12000 },
-    { name: 'Wed', income: 15000, expenses: 9000 },
-    { name: 'Thu', income: 22000, expenses: 15000 },
-    { name: 'Fri', income: 28000, expenses: 18000 },
-    { name: 'Sat', income: 35000, expenses: 22000 },
-    { name: 'Sun', income: 25000, expenses: 14000 },
-  ];
-
-  const pieData = [
-    { name: 'Material', value: 45, color: '#141414' },
-    { name: 'Rent', value: 25, color: '#4B5563' },
-    { name: 'Labor', value: 20, color: '#9CA3AF' },
-    { name: 'Utils', value: 10, color: '#E5E7EB' },
-  ];
-
   const filteredRecords = records.filter(r => 
     r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -201,106 +137,6 @@ export default function Finance() {
             <Printer className="w-3.5 h-3.5" />
             Generate Statement
           </button>
-        </div>
-      </div>      {/* Summary Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
-        <FinanceSummary label="Gross Revenue" amount={stats.totalRevenue} trend={12.5} icon={TrendingUp} />
-        <FinanceSummary label="Operational Cost" amount={stats.totalExpenses} trend={-3.2} icon={Scissors} />
-        <FinanceSummary label="Company Net" amount={stats.netProfit} trend={18.7} icon={DollarSign} />
-        <FinanceSummary label="Profit Margin" amount={stats.profitMargin.toFixed(1) + '%'} trend={5.4} icon={PieChartIcon} />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
-        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xs uppercase font-bold tracking-[0.2em] text-gray-800 border-l-2 border-zinc-900 pl-3 dark:text-zinc-200">Revenue Velocity</h3>
-            <div className="flex gap-4">
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
-                <div className="w-2 h-2 rounded-full bg-zinc-900" /> Income
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-gray-500 whitespace-nowrap">
-                <div className="w-2 h-2 rounded-full bg-gray-300" /> Expense
-              </div>
-            </div>
-          </div>
-          <div className="h-[240px] xl:h-[300px] w-full min-w-0 relative">
-            {isMounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ left: -20 }}>
-                  <defs>
-                    <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 10, fontWeight: 600, fill: '#6B7280' }} 
-                  />
-                  <YAxis 
-                    hide={true}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#141414', 
-                      border: 'none', 
-                      borderRadius: '4px',
-                      fontSize: '10px',
-                      color: '#fff'
-                    }}
-                    itemStyle={{ color: '#fff' }}
-                  />
-                  <Area type="monotone" dataKey="income" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorIncome)" />
-                  <Area type="monotone" dataKey="expenses" stroke="#D1D5DB" strokeWidth={2} fill="transparent" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 p-4 xl:p-5 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors">
-          <h3 className="text-xs uppercase font-bold tracking-[0.2em] mb-5 text-gray-800 border-l-2 border-zinc-500 pl-3 dark:text-zinc-200">Cost Breakdown</h3>
-          <div className="h-[200px] xl:h-[260px] w-full relative min-w-0">
-            {isMounted && (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="60%"
-                    outerRadius="85%"
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] uppercase font-bold text-gray-400">Total</span>
-              <span className="text-lg xl:text-xl font-bold font-mono">100%</span>
-            </div>
-          </div>
-          <div className="mt-5 space-y-2.5">
-            {pieData.map((item) => (
-              <div key={item.name} className="flex justify-between items-center text-[10px] xl:text-[11px] font-bold uppercase tracking-tight">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-gray-500">{item.name}</span>
-                </div>
-                <span className="font-mono">{item.value}%</span>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 

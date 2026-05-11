@@ -549,7 +549,7 @@ function InsightPanel({
         </div>
       ) : (
         <p className="mt-3 text-xs text-gray-500 dark:text-zinc-400">
-          Generate insights to view a fixed mini-report with consistent AI-style output.
+          Generate insights to view a fixed mini-report.
         </p>
       )}
     </div>
