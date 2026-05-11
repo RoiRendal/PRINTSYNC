@@ -789,149 +789,152 @@ export default function AnalyticsPage() {
         </div>
       </section>
 
-      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-500 dark:text-zinc-400">
-              Analytics
-            </p>
-            <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-zinc-100">
-              Comparative Sales Performance
-            </h2>
-            <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
-              Compare two timelines by {periodLabel[salesPeriod].toLowerCase()} sales using static business data.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => handleSalesPeriodChange(item)}
-                className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
-                  salesPeriod === item
-                    ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
-                    : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
-                }`}
-              >
-                {periodLabel[item]}
-              </button>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="space-y-4">
+          <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-500 dark:text-zinc-400">
+                  Analytics
+                </p>
+                <h2 className="text-base md:text-lg font-semibold text-gray-900 dark:text-zinc-100">
+                  Comparative Sales Performance
+                </h2>
+                <p className="text-xs text-gray-500 mt-1 dark:text-zinc-400">
+                  Compare two timelines by {periodLabel[salesPeriod].toLowerCase()} sales using static business data.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                {(['weekly', 'monthly', 'yearly'] as Period[]).map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => handleSalesPeriodChange(item)}
+                    className={`px-3 py-1.5 text-[10px] uppercase tracking-wide border rounded font-semibold ${
+                      salesPeriod === item
+                        ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                        : 'bg-white text-gray-600 border-gray-200 dark:bg-zinc-900 dark:text-zinc-300 dark:border-zinc-700'
+                    }`}
+                  >
+                    {periodLabel[item]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+              <label className="block">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
+                  Timeline A
+                </span>
+                <select
+                  value={safeSelectionA}
+                  onChange={(event) => setSelectionA(event.target.value)}
+                  className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+                >
+                  {salesOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
+                  Timeline B
+                </span>
+                <select
+                  value={safeSelectionB}
+                  onChange={(event) => setSelectionB(event.target.value)}
+                  className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
+                >
+                  {salesOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+            <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-zinc-300 mb-4">
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total A</p>
+                <p className="font-semibold">{money.format(totals.totalA)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total B</p>
+                <p className="font-semibold">{money.format(totals.totalB)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Difference</p>
+                <p className={`font-semibold ${totals.absoluteDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {money.format(totals.absoluteDiff)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Growth</p>
+                <p className={`font-semibold ${totals.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {totals.growth.toFixed(1)}%
+                </p>
+              </div>
+            </div>
+
+            <div className="h-[340px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={comparisonData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 4" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#6B7280' }}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: '#6B7280' }}
+                  />
+                  <Tooltip
+                    formatter={(value: number, name: string) => [money.format(value), name]}
+                    labelStyle={{ color: '#111827', fontSize: 12 }}
+                    contentStyle={{
+                      border: '1px solid #E5E7EB',
+                      borderRadius: '6px',
+                      boxShadow: 'none',
+                      fontSize: '12px',
+                    }}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="timelineA"
+                    name={safeSelectionA}
+                    stroke="#111827"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    isAnimationActive={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="timelineB"
+                    name={safeSelectionB}
+                    stroke="#9CA3AF"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    isAnimationActive={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-          <label className="block">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
-              Timeline A
-            </span>
-            <select
-              value={safeSelectionA}
-              onChange={(event) => setSelectionA(event.target.value)}
-              className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
-            >
-              {salesOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 dark:text-zinc-400">
-              Timeline B
-            </span>
-            <select
-              value={safeSelectionB}
-              onChange={(event) => setSelectionB(event.target.value)}
-              className="mt-1 w-full bg-white border border-gray-200 rounded px-3 py-2 text-xs text-gray-800 dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-200"
-            >
-              {salesOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </section>
-
-      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
-        <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-zinc-300 mb-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total A</p>
-            <p className="font-semibold">{money.format(totals.totalA)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Total B</p>
-            <p className="font-semibold">{money.format(totals.totalB)}</p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Difference</p>
-            <p className={`font-semibold ${totals.absoluteDiff >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {money.format(totals.absoluteDiff)}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">Growth</p>
-            <p className={`font-semibold ${totals.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {totals.growth.toFixed(1)}%
-            </p>
-          </div>
-        </div>
-
-        <div className="h-[340px] w-full min-w-0">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={comparisonData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-              <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 4" vertical={false} />
-              <XAxis
-                dataKey="label"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: '#6B7280' }}
-              />
-              <YAxis
-                tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`}
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: '#6B7280' }}
-              />
-              <Tooltip
-                formatter={(value: number, name: string) => [money.format(value), name]}
-                labelStyle={{ color: '#111827', fontSize: 12 }}
-                contentStyle={{
-                  border: '1px solid #E5E7EB',
-                  borderRadius: '6px',
-                  boxShadow: 'none',
-                  fontSize: '12px',
-                }}
-              />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="timelineA"
-                name={safeSelectionA}
-                stroke="#111827"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                isAnimationActive={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="timelineB"
-                name={safeSelectionB}
-                stroke="#9CA3AF"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
@@ -1117,9 +1120,9 @@ export default function AnalyticsPage() {
             </table>
           </div>
         </div>
-      </section>
+        </section>
 
-      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Product Trend Identification</h3>
@@ -1249,9 +1252,9 @@ export default function AnalyticsPage() {
             </table>
           </div>
         </div>
-      </section>
+        </section>
 
-      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between mb-4">
           <div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Financial Forecasting</h3>
@@ -1391,7 +1394,8 @@ export default function AnalyticsPage() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }
