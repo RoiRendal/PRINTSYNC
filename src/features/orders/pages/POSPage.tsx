@@ -319,7 +319,6 @@ export default function POS() {
           </button>
         </div>
         <div className="flex items-center gap-2">
-            <span className="text-[9px] font-bold uppercase text-gray-400 mr-2">Mode:</span>
             <button 
               onClick={() => {
                 setPosMode('retail');
