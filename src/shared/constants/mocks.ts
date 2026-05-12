@@ -24,7 +24,7 @@ export const MOCK_ORDERS: Order[] = [
     customer: 'Northwind Café Collective',
     item: 'Pique Polo (Navy), Lint-Free Microfiber Shop Towels (50-pack)',
     lineItems: [
-      { itemId: 'INV-003', name: 'Pique Polo (Navy)', quantity: 18, designId: 'DSG-002' },
+      { itemId: 'INV-003', name: 'Pique Polo (Navy)', quantity: 18 },
       { itemId: 'INV-008', name: 'Lint-Free Microfiber Shop Towels (50-pack)', quantity: 4 },
     ],
     quantity: 22,
@@ -32,7 +32,6 @@ export const MOCK_ORDERS: Order[] = [
     date: '2026-05-02',
     amount: 3425.5,
     isCustom: true,
-    designId: 'DSG-002',
     notes: 'Polos: left-chest embroidery tone-on-tone. Towels are shop merch—no imprint.',
   },
   {
@@ -53,14 +52,13 @@ export const MOCK_ORDERS: Order[] = [
     item: 'Heavyweight Hoodie, Rechargeable LED Magnetic Work Light',
     lineItems: [
       { itemId: 'INV-005', name: 'Heavyweight Hoodie', quantity: 20, designId: 'DSG-004' },
-      { itemId: 'INV-010', name: 'Rechargeable LED Magnetic Work Light', quantity: 8, designId: 'DSG-001' },
+      { itemId: 'INV-010', name: 'Rechargeable LED Magnetic Work Light', quantity: 8 },
     ],
     quantity: 28,
     status: 'Designing',
     date: '2026-05-08',
     amount: 8920.0,
     isCustom: true,
-    designId: 'DSG-004',
     notes: 'Hoodies: oversized back print + sleeve hit. Lights get small one-color wrap label.',
   },
 ];
