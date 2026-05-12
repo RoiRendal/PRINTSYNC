@@ -1,16 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { Shield, Database, Download, Check, History, Bell, Cloud, Palette, Building2 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Shield, Database, Download, Check, History, Bell, Cloud, Palette, Building2, ImagePlus } from 'lucide-react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
-import { APP_NAME, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
+import { APP_NAME, BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 
 export default function Settings() {
   const [isExporting, setIsExporting] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { businessDisplayName, setBusinessDisplayName } = useBusinessBranding();
+  const {
+    businessDisplayName,
+    setBusinessDisplayName,
+    effectiveBusinessLogoUrl,
+    customBusinessLogoDataUrl,
+    setCustomBusinessLogoDataUrl,
+    maxCustomLogoBytes,
+  } = useBusinessBranding();
   const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
+  const [logoUploadError, setLogoUploadError] = useState('');
+  const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCompanyDraft(businessDisplayName);
@@ -50,6 +59,30 @@ export default function Settings() {
 
   const handleSaveCompanyName = () => {
     setBusinessDisplayName(companyDraft);
+  };
+
+  const handleBusinessLogoFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setLogoUploadError('');
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setLogoUploadError('Choose an image file (PNG, JPG, or WebP).');
+      return;
+    }
+    if (file.size > maxCustomLogoBytes) {
+      setLogoUploadError(`Keep the file under about ${Math.round(maxCustomLogoBytes / 1000)} KB so it fits in browser storage.`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => setLogoUploadError('Could not read that file. Try another image.');
+    reader.onloadend = () => {
+      const result = reader.result;
+      if (typeof result === 'string') {
+        setCustomBusinessLogoDataUrl(result);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -99,6 +132,62 @@ export default function Settings() {
               >
                 Reset default
               </button>
+            </div>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-100 dark:border-zinc-800">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-zinc-100 text-zinc-900 rounded dark:bg-zinc-800/40 dark:text-zinc-200">
+                <ImagePlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-[11px] font-bold uppercase tracking-tight text-gray-900 dark:text-zinc-100">Business logo</h3>
+                <p className="text-xs text-gray-500 dark:text-zinc-500">
+                  Shown in the app header and login screen. Uses <span className="font-mono text-[10px]">{BRAND_LOGO_URL}</span> until you upload a replacement (saved in this browser).
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded border border-gray-200 bg-gray-50 dark:border-zinc-700 dark:bg-zinc-800/50">
+                <img
+                  src={effectiveBusinessLogoUrl}
+                  alt=""
+                  className="max-h-14 max-w-[7rem] object-contain"
+                />
+              </div>
+              <div className="flex flex-col gap-2 min-w-0 flex-1">
+                <input
+                  ref={logoFileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="sr-only"
+                  onChange={handleBusinessLogoFile}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => logoFileInputRef.current?.click()}
+                    className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+                  >
+                    Upload image
+                  </button>
+                  {customBusinessLogoDataUrl != null && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLogoUploadError('');
+                        setCustomBusinessLogoDataUrl(null);
+                      }}
+                      className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    >
+                      Use file logo instead
+                    </button>
+                  )}
+                </div>
+                {logoUploadError && (
+                  <p className="text-[11px] text-red-600 dark:text-red-400">{logoUploadError}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

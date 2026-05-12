@@ -195,19 +195,21 @@ export default function Inventory() {
                       </td>
                       <td className="py-2.5 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
                       <td className="py-2.5 px-4 md:px-6 text-right">
-                        <div className="flex justify-end gap-1 md:opacity-0 md:group-hover:opacity-100">
+                        <div className="flex justify-end gap-1">
                           <Tooltip content="Edit Item">
                             <button 
+                              type="button"
                               onClick={() => handleOpenModal(item)}
-                              className="p-1 px-2 hover:bg-zinc-100 text-zinc-900 hover:text-zinc-800 rounded dark:hover:bg-zinc-800/40"
+                              className="p-1 px-2 hover:bg-zinc-100 text-zinc-900 hover:text-zinc-800 rounded dark:hover:bg-zinc-800/40 dark:text-zinc-200 dark:hover:text-white"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                           </Tooltip>
                           <Tooltip content="Delete Item">
                             <button 
+                              type="button"
                               onClick={() => handleDeleteInitiate(item)}
-                              className="p-1 px-2 hover:bg-red-50 text-red-400 hover:text-red-600 rounded dark:hover:bg-red-900/20"
+                              className="p-1 px-2 hover:bg-red-50 text-red-500 hover:text-red-600 rounded dark:hover:bg-red-900/20 dark:text-red-400"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>

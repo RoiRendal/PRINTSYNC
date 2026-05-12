@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
-import { BRAND_LOGO_URL } from '../../../shared/constants/branding';
+import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useUserContext } from '../../users/state/UserContext';
 
 export default function LoginPage() {
   const { login, currentUser } = useUserContext();
+  const { effectiveBusinessLogoUrl } = useBusinessBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -28,7 +29,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-5">
-          <img src={BRAND_LOGO_URL} alt="PRINTSYNC logo" className="h-10 w-auto object-contain mb-3" />
+          <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="h-10 w-auto max-w-[12rem] object-contain mb-3" />
           <p className="text-sm font-semibold text-gray-800">Login to PRINTSYNC</p>
         </div>
 

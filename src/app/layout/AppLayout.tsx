@@ -11,7 +11,7 @@ function cn(...inputs: ClassValue[]) {
 }
 
 import { NAV_ITEMS } from '../../shared/constants/navigation';
-import { APP_NAME, BRAND_LOGO_URL } from '../../shared/constants/branding';
+import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
 import { useUserContext } from '../../features/users/state/UserContext';
 
@@ -20,7 +20,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentPath = location.pathname;
   const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
-  const { businessDisplayName } = useBusinessBranding();
+  const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
   const { currentUser, logout } = useUserContext();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
@@ -28,6 +28,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const handleLogoError = useCallback(() => {
     setLogoFailed(true);
   }, []);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [effectiveBusinessLogoUrl]);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
@@ -96,11 +100,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </div>
             ) : (
               <img
-                src={BRAND_LOGO_URL}
+                src={effectiveBusinessLogoUrl}
                 alt=""
                 width={20}
                 height={20}
-                className="h-5 w-auto max-w-[7rem] object-contain object-left shrink-0 dark:brightness-0 dark:invert"
+                className="h-5 w-auto max-w-[7rem] object-contain object-left shrink-0"
                 onError={handleLogoError}
               />
             )}

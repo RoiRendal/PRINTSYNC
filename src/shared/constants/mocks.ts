@@ -1,3 +1,5 @@
+import { inventoryProductImagePublicUrl } from './productImages';
+
 export const MOCK_ORDERS = [
   { id: 'ORD-001', customer: 'John Doe', item: 'Custom T-Shirt', quantity: 50, status: 'In Production', date: '2024-03-20', amount: 450.00 },
   { id: 'ORD-002', customer: 'Sarah Smith', item: 'Polo Shirts', quantity: 25, status: 'Pending', date: '2024-03-21', amount: 625.00 },
@@ -13,7 +15,7 @@ export const MOCK_INVENTORY = [
     stock: 150,
     reorderLevel: 50,
     price: 5.50,
-    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop',
+    imageUrl: inventoryProductImagePublicUrl('INV-001'),
   },
   {
     id: 'INV-002',
@@ -22,7 +24,7 @@ export const MOCK_INVENTORY = [
     stock: 200,
     reorderLevel: 50,
     price: 5.20,
-    imageUrl: 'https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop',
+    imageUrl: inventoryProductImagePublicUrl('INV-002'),
   },
   {
     id: 'INV-003',
@@ -31,7 +33,7 @@ export const MOCK_INVENTORY = [
     stock: 85,
     reorderLevel: 30,
     price: 8.50,
-    imageUrl: 'https://images.unsplash.com/photo-1618354691438-25bc04584c23?q=80&w=800&auto=format&fit=crop',
+    imageUrl: inventoryProductImagePublicUrl('INV-003'),
   },
   {
     id: 'INV-004',
@@ -40,7 +42,7 @@ export const MOCK_INVENTORY = [
     stock: 45,
     reorderLevel: 40,
     price: 12.00,
-    imageUrl: 'https://images.unsplash.com/photo-1592878904946-b3cd77d8d7c9?q=80&w=800&auto=format&fit=crop',
+    imageUrl: inventoryProductImagePublicUrl('INV-004'),
   },
   {
     id: 'INV-005',
@@ -49,7 +51,52 @@ export const MOCK_INVENTORY = [
     stock: 120,
     reorderLevel: 25,
     price: 15.00,
-    imageUrl: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop',
+    imageUrl: inventoryProductImagePublicUrl('INV-005'),
+  },
+  {
+    id: 'INV-006',
+    name: 'Plastisol Ink Starter Kit (CMYK)',
+    category: 'Supplies',
+    stock: 24,
+    reorderLevel: 8,
+    price: 48.0,
+    imageUrl: inventoryProductImagePublicUrl('INV-006'),
+  },
+  {
+    id: 'INV-007',
+    name: 'Aluminum Screen Frame 20" × 24"',
+    category: 'Equipment',
+    stock: 18,
+    reorderLevel: 6,
+    price: 22.5,
+    imageUrl: inventoryProductImagePublicUrl('INV-007'),
+  },
+  {
+    id: 'INV-008',
+    name: 'Lint-Free Microfiber Shop Towels (50-pack)',
+    category: 'Supplies',
+    stock: 40,
+    reorderLevel: 12,
+    price: 14.25,
+    imageUrl: inventoryProductImagePublicUrl('INV-008'),
+  },
+  {
+    id: 'INV-009',
+    name: 'Kraft Poly Mailers 10" × 13" (100-pack)',
+    category: 'Packaging',
+    stock: 65,
+    reorderLevel: 20,
+    price: 19.99,
+    imageUrl: inventoryProductImagePublicUrl('INV-009'),
+  },
+  {
+    id: 'INV-010',
+    name: 'Rechargeable LED Magnetic Work Light',
+    category: 'Equipment',
+    stock: 12,
+    reorderLevel: 4,
+    price: 32.0,
+    imageUrl: inventoryProductImagePublicUrl('INV-010'),
   },
 ];
 
