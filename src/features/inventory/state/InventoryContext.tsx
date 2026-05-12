@@ -12,7 +12,7 @@ interface InventoryContextType {
   addDesign: (design: Omit<Design, 'id' | 'createdAt'>) => void;
   updateDesign: (id: string, design: Partial<Design>) => void;
   deleteDesign: (id: string) => void;
-  addOrder: (order: Omit<Order, 'id' | 'date'>) => void;
+  addOrder: (order: Omit<Order, 'id' | 'date'>) => string;
   updateOrder: (id: string, order: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
 }
@@ -58,13 +58,15 @@ export const InventoryProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const addOrder = (newOrder: Omit<Order, 'id' | 'date'>) => {
+    const id = `ORD-${Date.now()}`;
     const order: Order = {
       ...newOrder,
-      id: `ORD-${Date.now()}`,
+      id,
       date: new Date().toISOString().split('T')[0],
       status: newOrder.status || 'Pending'
     };
     setOrders(prev => [order, ...prev]);
+    return id;
   };
 
   const updateOrder = (id: string, updatedOrder: Partial<Order>) => {

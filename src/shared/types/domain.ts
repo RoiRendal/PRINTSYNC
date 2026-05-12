@@ -42,6 +42,8 @@ export interface FinancialRecord {
   category: string;
   description: string;
   amount: number;
+  /** When income is recorded from a POS custom/production order. */
+  linkedOrderId?: string;
 }
 
 export interface FinancialStats {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { InventoryItem, CartItem, Transaction, Order } from '../../../shared/types/domain';
@@ -8,7 +8,7 @@ import { useInventory } from '../../inventory/state/InventoryContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function POS() {
-  const { addRecord } = useFinance();
+  const { addRecord, updateRecord, records } = useFinance();
   const { items: inventory, updateItem, designs, addOrder, orders, updateOrder } = useInventory();
   const location = useLocation();
   const navigate = useNavigate();
@@ -44,12 +44,101 @@ export default function POS() {
     });
   }, [inventory, searchTerm, activeCategory]);
 
-  const filteredTransactions = useMemo(() => {
-    return transactions.filter(trx => 
-      trx.id.toLowerCase().includes(historySearchTerm.toLowerCase()) ||
-      trx.items.some(item => item.name.toLowerCase().includes(historySearchTerm.toLowerCase()))
-    );
-  }, [transactions, historySearchTerm]);
+  type HistoryRow = { source: 'trx'; trx: Transaction } | { source: 'order'; order: Order };
+
+  const orderToHistoryTransaction = useCallback(
+    (order: Order): Transaction => {
+      const items: CartItem[] =
+        order.lineItems && order.lineItems.length > 0
+          ? order.lineItems.map((li) => {
+              const inv =
+                (li.itemId ? inventory.find((i) => i.id === li.itemId) : undefined) ??
+                inventory.find((i) => i.name === li.name);
+              const base: InventoryItem =
+                inv ??
+                ({
+                  id: li.itemId ?? 'unknown',
+                  name: li.name,
+                  category: '—',
+                  stock: 0,
+                  reorderLevel: 0,
+                  price: order.amount / Math.max(1, order.quantity),
+                } as InventoryItem);
+              return {
+                ...base,
+                qty: li.quantity,
+                designId: li.designId,
+                isCustom: true,
+                notes: order.notes,
+              };
+            })
+          : order.item
+              .split(',')
+              .map((name) => name.trim())
+              .filter(Boolean)
+              .map((name) => {
+                const inv = inventory.find((i) => i.name === name);
+                const base: InventoryItem =
+                  inv ??
+                  ({
+                    id: 'unknown',
+                    name,
+                    category: '—',
+                    stock: 0,
+                    reorderLevel: 0,
+                    price: order.amount / Math.max(1, order.quantity),
+                  } as InventoryItem);
+                const n = Math.max(1, order.item.split(',').map((s) => s.trim()).filter(Boolean).length);
+                return { ...base, qty: Math.max(1, Math.floor(order.quantity / n)), isCustom: order.isCustom };
+              });
+
+      return {
+        id: order.id,
+        date: order.date,
+        items,
+        subtotal: order.amount,
+        discount: undefined,
+        vatRatePercent: 0,
+        tax: 0,
+        total: order.amount,
+        paymentMethod: 'Custom Order',
+      };
+    },
+    [inventory],
+  );
+
+  const combinedHistoryRows = useMemo((): HistoryRow[] => {
+    const rows: HistoryRow[] = [
+      ...transactions.map((trx) => ({ source: 'trx' as const, trx })),
+      ...orders.map((order) => ({ source: 'order' as const, order })),
+    ];
+    rows.sort((a, b) => {
+      const da = a.source === 'trx' ? a.trx.date : a.order.date;
+      const db = b.source === 'trx' ? b.trx.date : b.order.date;
+      return db.localeCompare(da);
+    });
+    return rows;
+  }, [transactions, orders]);
+
+  const filteredHistoryRows = useMemo(() => {
+    const q = historySearchTerm.toLowerCase().trim();
+    if (!q) return combinedHistoryRows;
+    return combinedHistoryRows.filter((row) => {
+      if (row.source === 'trx') {
+        const t = row.trx;
+        return (
+          t.id.toLowerCase().includes(q) ||
+          t.items.some((i) => i.name.toLowerCase().includes(q))
+        );
+      }
+      const o = row.order;
+      return (
+        o.id.toLowerCase().includes(q) ||
+        o.customer.toLowerCase().includes(q) ||
+        o.item.toLowerCase().includes(q)
+      );
+    });
+  }, [combinedHistoryRows, historySearchTerm]);
 
   useEffect(() => {
     const state = location.state as { editOrderId?: string } | null;
@@ -199,7 +288,7 @@ export default function POS() {
     if (posMode === 'retail') {
       const newTransaction: Transaction = {
         id: `TRX-${Date.now()}`,
-        date: new Date().toLocaleString(),
+        date: new Date().toISOString().split('T')[0],
         items: [...cart],
         subtotal: trxSubtotal,
         discount: trxDiscount > 0 ? trxDiscount : undefined,
@@ -275,8 +364,27 @@ export default function POS() {
           ...preparedOrder,
           status: existingOrder?.status ?? 'Pending',
         });
+
+        const fin = records.find((r) => r.linkedOrderId === editingOrderId);
+        const desc = `Order ${editingOrderId} — ${customerName} (custom)`;
+        if (fin) {
+          updateRecord(fin.id, {
+            amount: trxTotal,
+            date: new Date().toISOString().split('T')[0],
+            description: desc,
+          });
+        } else {
+          addRecord({
+            date: new Date().toISOString().split('T')[0],
+            type: 'Income',
+            category: 'Custom Order',
+            description: desc,
+            amount: trxTotal,
+            linkedOrderId: editingOrderId,
+          });
+        }
       } else {
-        addOrder(preparedOrder);
+        const orderId = addOrder(preparedOrder);
 
         // Reduce stock of blanks
         cart.forEach(cartItem => {
@@ -285,15 +393,16 @@ export default function POS() {
             updateItem(product.id, { stock: product.stock - cartItem.qty });
           }
         });
-      }
 
-      addRecord({
-        date: new Date().toISOString().split('T')[0],
-        type: 'Income',
-        category: 'Custom Order',
-        description: `Downpayment / Order: ${customerName}`,
-        amount: trxTotal
-      });
+        addRecord({
+          date: new Date().toISOString().split('T')[0],
+          type: 'Income',
+          category: 'Custom Order',
+          description: `Order ${orderId} — ${customerName} (custom)`,
+          amount: trxTotal,
+          linkedOrderId: orderId,
+        });
+      }
     }
 
     setCheckoutSuccess(true);
@@ -309,6 +418,7 @@ export default function POS() {
   };
 
   const voidTransaction = (id: string) => {
+    if (!id.startsWith('TRX-')) return;
     if (window.confirm('Void this transaction? (Stock will not be automatically restored in this demo)')) {
       setTransactions(transactions.filter(t => t.id !== id));
     }
@@ -617,7 +727,7 @@ export default function POS() {
         <div className="flex-1 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50 dark:bg-zinc-900/50">
             <div className="flex items-center gap-4 flex-1 w-full md:w-auto">
-              <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap">Transaction History</h2>
+              <h2 className="text-[10px] font-bold uppercase tracking-widest text-gray-500 whitespace-nowrap">POS & order history</h2>
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
                 <input 
@@ -644,23 +754,35 @@ export default function POS() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {filteredTransactions.map((trx) => (
+                {filteredHistoryRows.map((row) => {
+                  const trx = row.source === 'trx' ? row.trx : orderToHistoryTransaction(row.order);
+                  const key = row.source === 'trx' ? row.trx.id : row.order.id;
+                  const refDisplay =
+                    row.source === 'trx'
+                      ? `#${row.trx.id.replace('TRX-', '').slice(-8)}`
+                      : row.order.id;
+                  return (
                     <tr
-                      key={trx.id}
+                      key={key}
                       className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer group"
                       onClick={() => setSelectedTransaction(trx)}
                     >
-                      <td className="py-3 px-6 font-mono text-gray-400 dark:text-zinc-500">#{trx.id.replace('TRX-', '').slice(-8)}</td>
+                      <td className="py-3 px-6 font-mono text-gray-400 dark:text-zinc-500">{refDisplay}</td>
                       <td className="py-3 px-6 font-mono text-gray-600 dark:text-zinc-400">{trx.date}</td>
                       <td className="py-3 px-6">
-                        <span className="text-gray-800 dark:text-zinc-200">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
+                        <span className="text-gray-800 dark:text-zinc-200">
+                          {trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units
+                        </span>
                         <div className="text-[9px] text-gray-400 dark:text-zinc-500 truncate max-w-[200px]">
-                          {trx.items.map(i => i.name).join(', ')}
+                          {row.source === 'order' ? (
+                            <span className="text-gray-600 dark:text-zinc-400">{row.order.customer} — </span>
+                          ) : null}
+                          {trx.items.map((i) => i.name).join(', ')}
                         </div>
                       </td>
                       <td className="py-3 px-6">
                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded font-bold text-[9px] uppercase tracking-wider">
-                          {trx.paymentMethod}
+                          {row.source === 'trx' ? row.trx.paymentMethod : 'Order'}
                         </span>
                       </td>
                       <td className="py-3 px-6 font-mono font-bold text-right text-zinc-900 dark:text-zinc-200">
@@ -668,27 +790,33 @@ export default function POS() {
                       </td>
                       <td className="py-3 px-6 text-right">
                         <div className="flex justify-end gap-2">
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              voidTransaction(trx.id);
-                            }}
-                            className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
-                            title="Void"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {row.source === 'trx' ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                voidTransaction(row.trx.id);
+                              }}
+                              className="p-1.5 text-gray-300 hover:text-red-500 transition-colors"
+                              title="Void"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <span className="text-[8px] font-bold uppercase text-zinc-400 px-1">—</span>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ))}
-                {filteredTransactions.length === 0 && (
+                  );
+                })}
+                {filteredHistoryRows.length === 0 && (
                   <tr>
                     <td colSpan={6} className="py-20 text-center">
                       <div className="flex flex-col items-center gap-2 text-gray-400 opacity-30">
                         <History className="w-8 h-8" />
                         <p className="text-[10px] uppercase tracking-widest font-bold">
-                          {historySearchTerm ? 'No transactions match filters' : 'No history recorded'}
+                          {historySearchTerm ? 'No entries match filters' : 'No POS or order history yet'}
                         </p>
                       </div>
                     </td>

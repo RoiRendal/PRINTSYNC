@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } from 'lucide-react';
 import { useInventory } from '../../inventory/state/InventoryContext';
-import { Design } from '../../../shared/types/domain';
+import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
 
 export function DesignRepository() {
@@ -35,8 +35,7 @@ export function DesignRepository() {
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDesign.imageUrl) {
-      // Use a default placeholder if none provided
-      newDesign.imageUrl = 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop';
+      newDesign.imageUrl = DEFAULT_NEW_DESIGN_IMAGE_URL;
     }
     addDesign(newDesign);
     setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });

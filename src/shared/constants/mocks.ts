@@ -1,10 +1,68 @@
 import { inventoryProductImagePublicUrl } from './productImages';
+import { designImagePublicUrl } from './designImages';
+import type { Order } from '../types/domain';
 
-export const MOCK_ORDERS = [
-  { id: 'ORD-001', customer: 'John Doe', item: 'Custom T-Shirt', quantity: 50, status: 'In Production', date: '2024-03-20', amount: 450.00 },
-  { id: 'ORD-002', customer: 'Sarah Smith', item: 'Polo Shirts', quantity: 25, status: 'Pending', date: '2024-03-21', amount: 625.00 },
-  { id: 'ORD-003', customer: 'Tech Corp', item: 'Jackets', quantity: 15, status: 'Ready for Pickup', date: '2024-03-19', amount: 1200.00 },
-  { id: 'ORD-004', customer: 'Local Team', item: 'Jersey Uniforms', quantity: 30, status: 'Designing', date: '2024-03-22', amount: 1500.00 },
+export const MOCK_ORDERS: Order[] = [
+  {
+    id: 'ORD-001',
+    customer: 'Metro Athletics Club',
+    item: 'Premium Cotton T-shirt (Black), Sport Mesh Jersey',
+    lineItems: [
+      { itemId: 'INV-001', name: 'Premium Cotton T-shirt (Black)', quantity: 36, designId: 'DSG-001' },
+      { itemId: 'INV-004', name: 'Sport Mesh Jersey', quantity: 24, designId: 'DSG-003' },
+    ],
+    quantity: 60,
+    status: 'In Production',
+    date: '2026-04-28',
+    amount: 6850.0,
+    isCustom: true,
+    designId: 'DSG-001',
+    notes: 'Front-left chest print; roster PDF on file. Rush before city meet May 18.',
+  },
+  {
+    id: 'ORD-002',
+    customer: 'Northwind Café Collective',
+    item: 'Pique Polo (Navy), Lint-Free Microfiber Shop Towels (50-pack)',
+    lineItems: [
+      { itemId: 'INV-003', name: 'Pique Polo (Navy)', quantity: 18, designId: 'DSG-002' },
+      { itemId: 'INV-008', name: 'Lint-Free Microfiber Shop Towels (50-pack)', quantity: 4 },
+    ],
+    quantity: 22,
+    status: 'Pending',
+    date: '2026-05-02',
+    amount: 3425.5,
+    isCustom: true,
+    designId: 'DSG-002',
+    notes: 'Polos: left-chest embroidery tone-on-tone. Towels are shop merch—no imprint.',
+  },
+  {
+    id: 'ORD-003',
+    customer: 'Parcel & Post Mini Hub',
+    item: 'Kraft Poly Mailers 10" × 13" (100-pack)',
+    lineItems: [{ itemId: 'INV-009', name: 'Kraft Poly Mailers 10" × 13" (100-pack)', quantity: 10 }],
+    quantity: 10,
+    status: 'Ready for Pickup',
+    date: '2026-05-05',
+    amount: 1999.0,
+    isCustom: false,
+    notes: 'Retail counter pickup; VAT receipt required.',
+  },
+  {
+    id: 'ORD-004',
+    customer: 'Neon Nights Events Co.',
+    item: 'Heavyweight Hoodie, Rechargeable LED Magnetic Work Light',
+    lineItems: [
+      { itemId: 'INV-005', name: 'Heavyweight Hoodie', quantity: 20, designId: 'DSG-004' },
+      { itemId: 'INV-010', name: 'Rechargeable LED Magnetic Work Light', quantity: 8, designId: 'DSG-001' },
+    ],
+    quantity: 28,
+    status: 'Designing',
+    date: '2026-05-08',
+    amount: 8920.0,
+    isCustom: true,
+    designId: 'DSG-004',
+    notes: 'Hoodies: oversized back print + sleeve hit. Lights get small one-color wrap label.',
+  },
 ];
 
 export const MOCK_INVENTORY = [
@@ -101,48 +159,80 @@ export const MOCK_INVENTORY = [
 ];
 
 export const MOCK_FINANCIAL_RECORDS = [
-  { id: 'FIN-001', date: '2024-03-24', type: 'Income', category: 'Screen Printing', description: 'Order #ORD-001 - Custom T-Shirts', amount: 45000 },
-  { id: 'FIN-002', date: '2024-03-23', type: 'Expense', category: 'Material', description: 'Pigment Ink Bulk Purchase', amount: 2450 },
-  { id: 'FIN-003', date: '2024-03-22', type: 'Expense', category: 'Rent', description: 'Monthly Station Rent', amount: 5000 },
-  { id: 'FIN-004', date: '2024-03-21', type: 'Income', category: 'DTF Printing', description: 'Order #ORD-002 - Polo Shirts', amount: 25000 },
-  { id: 'FIN-005', date: '2024-03-20', type: 'Expense', category: 'Inventory', description: 'Blank Apparel Restock', amount: 12200 },
-  { id: 'FIN-006', date: '2024-03-19', type: 'Income', category: 'Embroidery', description: 'Order #ORD-003 - Jackets', amount: 18000 },
-  { id: 'FIN-007', date: '2024-03-18', type: 'Expense', category: 'Utilities', description: 'Electricity and Water Bill', amount: 1200 },
-  { id: 'FIN-008', date: '2024-03-17', type: 'Income', category: 'Sublimation', description: 'Order #ORD-004 - Jersey Uniforms', amount: 32000 },
+  {
+    id: 'FIN-001',
+    date: '2026-04-28',
+    type: 'Income',
+    category: 'Screen Printing',
+    description: 'Order ORD-001 — Metro Athletics Club (custom)',
+    amount: 6850.0,
+    linkedOrderId: 'ORD-001',
+  },
+  { id: 'FIN-002', date: '2026-05-01', type: 'Expense', category: 'Material', description: 'Plastisol & discharge ink restock', amount: 4200 },
+  { id: 'FIN-003', date: '2026-05-01', type: 'Expense', category: 'Rent', description: 'Production bay rent — May', amount: 18500 },
+  {
+    id: 'FIN-004',
+    date: '2026-05-02',
+    type: 'Income',
+    category: 'Embroidery & Garment',
+    description: 'Order ORD-002 — Northwind Café Collective (custom)',
+    amount: 3425.5,
+    linkedOrderId: 'ORD-002',
+  },
+  { id: 'FIN-005', date: '2026-05-03', type: 'Expense', category: 'Inventory', description: 'Blank apparel & supplies PO', amount: 22800 },
+  {
+    id: 'FIN-006',
+    date: '2026-05-05',
+    type: 'Income',
+    category: 'Retail POS',
+    description: 'Order ORD-003 — Parcel & Post Mini Hub (walk-in)',
+    amount: 1999.0,
+    linkedOrderId: 'ORD-003',
+  },
+  { id: 'FIN-007', date: '2026-05-06', type: 'Expense', category: 'Utilities', description: 'Power & water — production floor', amount: 6400 },
+  {
+    id: 'FIN-008',
+    date: '2026-05-08',
+    type: 'Income',
+    category: 'DTF / Specialty',
+    description: 'Order ORD-004 — Neon Nights Events Co. (custom)',
+    amount: 8920.0,
+    linkedOrderId: 'ORD-004',
+  },
 ];
 
 export const MOCK_DESIGNS = [
   {
     id: 'DSG-001',
-    name: 'Vintage Skyline',
+    name: 'Logo',
     category: 'Retro',
-    imageUrl: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=800&auto=format&fit=crop',
-    createdAt: '2024-03-01',
-    tags: ['City', 'Vintage', 'Art']
+    imageUrl: designImagePublicUrl('DSG-001'),
+    createdAt: '2026-01-12',
+    tags: ['City', 'Vintage', 'Art'],
   },
   {
     id: 'DSG-002',
     name: 'Geometric Minimal',
     category: 'Abstract',
-    imageUrl: 'https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=800&auto=format&fit=crop',
-    createdAt: '2024-03-05',
-    tags: ['Simple', 'Modern']
+    imageUrl: designImagePublicUrl('DSG-002'),
+    createdAt: '2026-02-03',
+    tags: ['Simple', 'Modern'],
   },
   {
     id: 'DSG-003',
     name: 'Tropical Punch',
     category: 'Summer',
-    imageUrl: 'https://images.unsplash.com/photo-1579546128583-a44a76178a0c?q=80&w=800&auto=format&fit=crop',
-    createdAt: '2024-03-10',
-    tags: ['Bright', 'Floral']
+    imageUrl: designImagePublicUrl('DSG-003'),
+    createdAt: '2026-02-20',
+    tags: ['Bright', 'Floral'],
   },
   {
     id: 'DSG-004',
     name: 'Cyberpunk Neon',
     category: 'Tech',
-    imageUrl: 'https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=800&auto=format&fit=crop',
-    createdAt: '2024-03-15',
-    tags: ['Futuristic', 'Neon']
+    imageUrl: designImagePublicUrl('DSG-004'),
+    createdAt: '2026-03-08',
+    tags: ['Futuristic', 'Neon'],
   },
 ];
 

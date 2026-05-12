@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useFinance } from '../../finance/state/FinanceContext';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Order } from '../../../shared/types/domain';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +28,7 @@ const workPhases: Order['status'][] = [
 
 export default function Orders() {
   const { orders, designs, items: inventoryItems, updateOrder, deleteOrder } = useInventory();
+  const { records, deleteRecord } = useFinance();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -94,6 +96,9 @@ export default function Orders() {
   const handleDeleteOrder = (order: Order) => {
     if (!window.confirm(`Delete order ${order.id} for ${order.customer}?`)) return;
     deleteOrder(order.id);
+    records
+      .filter((r) => r.linkedOrderId === order.id)
+      .forEach((r) => deleteRecord(r.id));
     if (selectedOrder?.id === order.id) {
       setSelectedOrder(null);
     }
