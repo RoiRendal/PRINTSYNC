@@ -4,6 +4,7 @@ import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useFinance } from '../../finance/state/FinanceContext';
 import { Link } from 'react-router-dom';
+import { isCustomOrder } from '../../orders/utils/orderType';
 
 const StatCard = ({ title, value, icon: Icon, trend, colorClass = "text-gray-400" }: any) => (
   <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
@@ -71,6 +72,7 @@ export default function Dashboard() {
                 <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
                   <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Ref ID</th>
                   <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Client</th>
+                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Type</th>
                   <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Work Phase</th>
                   <th className="py-2.5 px-4 md:px-6 font-medium text-center uppercase text-[10px] tracking-wider">Qty</th>
                   <th className="py-2.5 px-4 md:px-6 font-medium text-right uppercase text-[10px] tracking-wider">Value</th>
@@ -81,6 +83,17 @@ export default function Dashboard() {
                   <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors">
                     <td className="py-2.5 px-4 md:px-6 font-mono text-zinc-900 font-medium dark:text-zinc-200">#{order.id.slice(-6)}</td>
                     <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
+                    <td className="py-2.5 px-4 md:px-6">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border ${
+                          isCustomOrder(order)
+                            ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-900/50'
+                            : 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700'
+                        }`}
+                      >
+                        {isCustomOrder(order) ? 'Custom' : 'Retail'}
+                      </span>
+                    </td>
                     <td className="py-2.5 px-4 md:px-6">
                       <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
                         order.status === 'In Production' ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-300' :
@@ -96,7 +109,7 @@ export default function Dashboard() {
                   </tr>
                 ))}
                 {productionQueue.length === 0 && (
-                  <tr><td colSpan={5} className="py-10 text-center text-gray-400 italic">No active production jobs.</td></tr>
+                  <tr><td colSpan={6} className="py-10 text-center text-gray-400 italic">No active production jobs.</td></tr>
                 )}
               </tbody>
             </table>

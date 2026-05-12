@@ -126,17 +126,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             
             <div 
               id="user-profile-trigger"
-              className="relative flex items-center gap-3 px-2 py-1 dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              className="relative flex items-center gap-2 px-2 py-1 dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              <div className="flex flex-col text-right hidden sm:block">
-                <p className="text-[10px] font-bold text-gray-800 dark:text-zinc-200 leading-none">
-                  {currentUser?.name ?? 'Admin'}
-                </p>
-                <p className="text-[9px] text-gray-400 dark:text-zinc-500 mt-1 uppercase tracking-tighter">
-                  {(currentUser?.role ?? 'admin').toUpperCase()}
-                </p>
-              </div>
               <div className="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
                 {initials}
               </div>
@@ -144,12 +136,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               {/* Dropdown Menu */}
               {isProfileOpen && (
                 <div 
-                  className="absolute top-full right-0 mt-1.5 w-48 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-md shadow-xl py-1 z-[100]"
+                  className="absolute top-full right-0 mt-1.5 w-56 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-md shadow-xl py-1 z-[100]"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  <div className="px-4 py-2 border-b border-gray-100 dark:border-zinc-800">
+                    <p className="text-xs font-bold text-gray-900 dark:text-zinc-100 leading-tight">
+                      {currentUser?.name ?? 'Admin'}
+                    </p>
+                    <p className="text-[10px] text-gray-500 dark:text-zinc-500 mt-1 uppercase tracking-tighter">
+                      {(currentUser?.role ?? 'admin').replace(/_/g, ' ').toUpperCase()}
+                    </p>
+                  </div>
                   <button
                     onClick={logout}
-                    className="w-full text-left px-4 py-1 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                   >
                     Logout
                   </button>

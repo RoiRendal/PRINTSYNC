@@ -5,6 +5,7 @@ import { useInventory } from '../../inventory/state/InventoryContext';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Order } from '../../../shared/types/domain';
 import { useNavigate } from 'react-router-dom';
+import { isCustomOrder } from '../utils/orderType';
 
 const statusColors: any = {
   'In Production': 'text-zinc-800 bg-zinc-100 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700',
@@ -25,7 +26,7 @@ const workPhases: Order['status'][] = [
 ];
 
 export default function Orders() {
-  const { orders, designs, updateOrder, deleteOrder } = useInventory();
+  const { orders, designs, items: inventoryItems, updateOrder, deleteOrder } = useInventory();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -58,6 +59,12 @@ export default function Orders() {
 
   const activeLineItem = selectedOrderLineItems[selectedLineItemIndex];
   const activeLineItemDesign = getDesign(activeLineItem?.designId || selectedOrder?.designId);
+  const activeLineInventoryItem = activeLineItem
+    ? (activeLineItem.itemId
+        ? inventoryItems.find((i) => i.id === activeLineItem.itemId)
+        : inventoryItems.find((i) => i.name.toLowerCase() === activeLineItem.name.toLowerCase()))
+    : undefined;
+  const selectedOrderIsCustom = selectedOrder ? isCustomOrder(selectedOrder) : false;
 
   useEffect(() => {
     if (!selectedOrder) {
@@ -142,6 +149,7 @@ export default function Orders() {
                  <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
                     <th className="py-2.5 px-5 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Order ID</th>
                     <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Project / Client</th>
+                    <th className="py-2.5 px-5 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Type</th>
                     <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Work Phase</th>
                     <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em] text-right">Value</th>
                     <th className="py-2.5 px-6"></th>
@@ -152,17 +160,21 @@ export default function Orders() {
                    <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
                       <td className="py-2.5 px-5 md:px-6 font-mono text-zinc-900 dark:text-zinc-200">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
                       <td className="py-2.5 px-5 md:px-6">
-                         <div className="flex items-center gap-3">
-                            {order.designId && (
-                               <div className="w-8 h-8 rounded bg-gray-100 overflow-hidden shrink-0 border border-gray-200 dark:bg-zinc-800 dark:border-zinc-700">
-                                  <img src={getDesign(order.designId)?.imageUrl} alt="" className="w-full h-full object-cover" />
-                               </div>
-                            )}
-                            <div>
-                               <h3 className="font-bold text-gray-800 dark:text-zinc-200 md:text-sm">{order.customer}</h3>
-                               <p className="text-[10px] md:text-[11px] text-gray-400 mt-0.5 dark:text-zinc-500">{order.item} × {order.quantity} units</p>
-                            </div>
+                         <div>
+                            <h3 className="font-bold text-gray-800 dark:text-zinc-200 md:text-sm">{order.customer}</h3>
+                            <p className="text-[10px] md:text-[11px] text-gray-400 mt-0.5 dark:text-zinc-500">{order.item} × {order.quantity} units</p>
                          </div>
+                      </td>
+                      <td className="py-2.5 px-5 md:px-6">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border ${
+                            isCustomOrder(order)
+                              ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-900/50'
+                              : 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700'
+                          }`}
+                        >
+                          {isCustomOrder(order) ? 'Custom' : 'Retail'}
+                        </span>
                       </td>
                       <td className="py-2.5 px-5 md:px-6">
                          <div className="flex items-center gap-2 max-w-[270px]">
@@ -243,7 +255,7 @@ export default function Orders() {
                  ))}
                  {filteredOrders.length === 0 && (
                    <tr>
-                     <td colSpan={5} className="py-12 text-center text-gray-400 italic">No matching orders found.</td>
+                     <td colSpan={6} className="py-12 text-center text-gray-400 italic">No matching orders found.</td>
                    </tr>
                  )}
               </tbody>
@@ -335,21 +347,63 @@ export default function Orders() {
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
                     <ImageIcon className="w-3 h-3" /> Visual Assets
                   </h4>
-                  {activeLineItemDesign ? (
-                    <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
-                      <img 
-                        src={activeLineItemDesign?.imageUrl} 
-                        alt="Custom Design" 
-                        className="w-full h-full object-contain"
-                      />
-                      <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[8px] font-bold text-white uppercase tracking-widest">
-                        Ref: {activeLineItem?.designId || selectedOrder.designId}
+                  {selectedOrderIsCustom ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Product</p>
+                        {activeLineInventoryItem?.imageUrl ? (
+                          <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
+                            <img
+                              src={activeLineInventoryItem.imageUrl}
+                              alt={activeLineInventoryItem.name}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="aspect-square bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <ImageIcon className="w-8 h-8 opacity-20" />
+                            <p className="text-[10px] uppercase font-bold tracking-widest text-center px-2">No product image</p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Custom design</p>
+                        {activeLineItemDesign ? (
+                          <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
+                            <img
+                              src={activeLineItemDesign.imageUrl}
+                              alt="Custom design"
+                              className="w-full h-full object-contain"
+                            />
+                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[8px] font-bold text-white uppercase tracking-widest">
+                              Ref: {activeLineItem?.designId || selectedOrder.designId}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="aspect-square bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
+                            <ImageIcon className="w-8 h-8 opacity-20" />
+                            <p className="text-[10px] uppercase font-bold tracking-widest">No design attached</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ) : (
-                    <div className="aspect-square bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
-                      <ImageIcon className="w-8 h-8 opacity-20" />
-                      <p className="text-[10px] uppercase font-bold tracking-widest">No design attached</p>
+                    <div className="space-y-1.5">
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Product</p>
+                      {activeLineInventoryItem?.imageUrl ? (
+                        <div className="relative max-w-md aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
+                          <img
+                            src={activeLineInventoryItem.imageUrl}
+                            alt={activeLineInventoryItem.name}
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square max-w-md bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
+                          <ImageIcon className="w-8 h-8 opacity-20" />
+                          <p className="text-[10px] uppercase font-bold tracking-widest">No product image</p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

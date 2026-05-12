@@ -28,7 +28,6 @@ export default function POS() {
   const [currentItemToDesign, setCurrentItemToDesign] = useState<string | null>(null);
   
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [cartDiscount, setCartDiscount] = useState(0);
@@ -207,7 +206,7 @@ export default function POS() {
         vatRatePercent: trxVatRate,
         tax: trxTax,
         total: trxTotal,
-        paymentMethod
+        paymentMethod: 'Cash'
       };
 
       // Reduce stock
@@ -833,23 +832,6 @@ export default function POS() {
                   <div className="flex justify-between"><span>VAT ({cartTotals.vatRatePercent}%)</span><span>₱{tax.toFixed(2)}</span></div>
                 </div>
                 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500">Payment Method</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button 
-                      onClick={() => setPaymentMethod('Cash')}
-                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Cash' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
-                    >
-                      Cash
-                    </button>
-                    <button 
-                      onClick={() => setPaymentMethod('Card')}
-                      className={`py-3 rounded border font-bold text-xs uppercase tracking-widest transition-all ${paymentMethod === 'Card' ? 'bg-zinc-900 text-white border-zinc-900 dark:bg-white dark:text-zinc-900' : 'bg-gray-50 text-gray-400 border-gray-200 dark:bg-zinc-800 dark:border-zinc-700'}`}
-                    >
-                      Card
-                    </button>
-                  </div>
-                </div>
               </div>
 
               <div className="space-y-2 max-h-40 overflow-y-auto pr-2 border-t border-gray-100 pt-4 dark:border-zinc-800">
