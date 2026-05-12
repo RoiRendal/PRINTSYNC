@@ -250,114 +250,137 @@ export default function Inventory() {
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         title={editingItem ? 'Edit Stock Item' : 'Add New Stock'}
+        maxWidth="max-w-3xl"
         disableAnimation
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Material Name
-            </label>
-            <input
-              required
-              type="text"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              placeholder="e.g. Premium Cotton T-shirt (Black)"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Category
-            </label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            >
-              <option value="">Select Category</option>
-              <option value="Apparel">Apparel</option>
-              <option value="Outerwear">Outerwear</option>
-              <option value="Accessories">Accessories</option>
-              <option value="Consumables">Consumables</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-6 md:gap-8 items-start">
+            <div className="space-y-3 md:sticky md:top-0">
               <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Current Stock
+                Item Image
               </label>
+              <div className="relative w-full max-w-md mx-auto md:mx-0 aspect-square max-h-[min(42vh,380px)] rounded border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 overflow-hidden flex items-center justify-center">
+                {formData.imageUrl ? (
+                  <img
+                    src={formData.imageUrl}
+                    alt={formData.name || 'Item preview'}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-gray-300 dark:text-zinc-600 p-6 text-center">
+                    <ImageIcon className="w-14 h-14 opacity-40" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
+                  </div>
+                )}
+              </div>
               <input
-                required
-                type="number"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                type="file"
+                accept="image/*"
+                className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:border-0 file:bg-zinc-900 file:text-white file:text-[10px] file:font-bold file:uppercase file:tracking-wider hover:file:bg-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-700 dark:hover:file:bg-zinc-600"
+                onChange={handleImageUpload}
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Reorder Level
-              </label>
-              <input
-                required
-                type="number"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                value={formData.reorderLevel}
-                onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Unit Price (₱)
-            </label>
-            <input
-              required
-              type="number"
-              step="0.01"
-              min="0"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Item Image
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:border-0 file:bg-zinc-900 file:text-white file:text-[10px] file:font-bold file:uppercase file:tracking-wider hover:file:bg-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-700 dark:hover:file:bg-zinc-600"
-              onChange={handleImageUpload}
-            />
-            {formData.imageUrl && (
-              <div className="flex items-center gap-3 p-2 border border-gray-200 dark:border-zinc-800 rounded bg-gray-50 dark:bg-zinc-900">
-                <img
-                  src={formData.imageUrl}
-                  alt="Item preview"
-                  className="w-16 h-16 rounded object-cover border border-gray-200 dark:border-zinc-700"
-                />
+              {formData.imageUrl && (
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, imageUrl: '' })}
-                  className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600"
+                  className="w-full px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/40 rounded"
                 >
                   Remove Image
                 </button>
+              )}
+              {editingItem && (
+                <div className="pt-1 space-y-1 text-[10px] text-gray-500 dark:text-zinc-500">
+                  <p>
+                    <span className="font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-400">SKU</span>{' '}
+                    <span className="font-mono text-gray-800 dark:text-zinc-300">#{editingItem.id.replace('INV-', '')}</span>
+                  </p>
+                  <p className="text-[9px] leading-relaxed">
+                    Use this dialog to review full item details or update fields. Changes apply when you save.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 min-w-0">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                  Material Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
+                  placeholder="e.g. Premium Cotton T-shirt (Black)"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
-            )}
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                  Category
+                </label>
+                <select
+                  required
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                >
+                  <option value="">Select Category</option>
+                  <option value="Apparel">Apparel</option>
+                  <option value="Outerwear">Outerwear</option>
+                  <option value="Accessories">Accessories</option>
+                  <option value="Consumables">Consumables</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                    Current Stock
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
+                    value={formData.stock}
+                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                    Reorder Level
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
+                    value={formData.reorderLevel}
+                    onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+                  Unit Price (₱)
+                </label>
+                <input
+                  required
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="pt-4 flex gap-3">
+          <div className="flex gap-3 pt-2 border-t border-gray-100 dark:border-zinc-800">
             <button
               type="button"
               onClick={handleCloseModal}

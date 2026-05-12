@@ -31,6 +31,8 @@ export default function POS() {
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [cartDiscount, setCartDiscount] = useState(0);
+  const [vatRatePercent, setVatRatePercent] = useState(12);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
 
@@ -96,6 +98,23 @@ export default function POS() {
     setEditingOrderId(orderToEdit.id);
     navigate('/pos', { replace: true });
   }, [inventory, location.state, navigate, orders]);
+
+  const cartTotals = useMemo(() => {
+    const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+    const discount = Math.min(Math.max(0, cartDiscount), subtotal);
+    const afterDiscount = Math.max(0, subtotal - discount);
+    const rate = Math.max(0, vatRatePercent);
+    const tax = afterDiscount * (rate / 100);
+    const total = afterDiscount + tax;
+    return { subtotal, discount, afterDiscount, tax, total, vatRatePercent: rate };
+  }, [cart, cartDiscount, vatRatePercent]);
+
+  const { subtotal, discount: appliedDiscount, tax, total } = cartTotals;
+
+  useEffect(() => {
+    const s = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
+    setCartDiscount((d) => Math.min(Math.max(0, d), s));
+  }, [cart]);
 
   const addToCart = (product: InventoryItem) => {
     if (product.stock <= 0) return;
@@ -164,10 +183,6 @@ export default function POS() {
     }
   };
 
-  const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-  const tax = subtotal * 0.12;
-  const total = subtotal + tax;
-
   const handleCheckout = () => {
     if (cart.length === 0) return;
     setIsCheckoutModalOpen(true);
@@ -180,18 +195,18 @@ export default function POS() {
       return;
     }
 
-    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    const tax = subtotal * 0.12;
-    const total = subtotal + tax;
+    const { subtotal: trxSubtotal, discount: trxDiscount, tax: trxTax, total: trxTotal, vatRatePercent: trxVatRate } = cartTotals;
 
     if (posMode === 'retail') {
       const newTransaction: Transaction = {
         id: `TRX-${Date.now()}`,
         date: new Date().toLocaleString(),
         items: [...cart],
-        subtotal,
-        tax,
-        total,
+        subtotal: trxSubtotal,
+        discount: trxDiscount > 0 ? trxDiscount : undefined,
+        vatRatePercent: trxVatRate,
+        tax: trxTax,
+        total: trxTotal,
         paymentMethod
       };
 
@@ -211,7 +226,7 @@ export default function POS() {
         type: 'Income',
         category: 'POS Retail',
         description: `Retail Sales: TRX ${newTransaction.id}`,
-        amount: total
+        amount: trxTotal
       });
     } else {
       const preparedOrder: Omit<Order, 'id' | 'date'> = {
@@ -224,7 +239,7 @@ export default function POS() {
           designId: i.designId
         })),
         quantity: cart.reduce((acc, i) => acc + i.qty, 0),
-        amount: total,
+        amount: trxTotal,
         status: 'Pending',
         isCustom: true,
         notes: orderNotes,
@@ -278,7 +293,7 @@ export default function POS() {
         type: 'Income',
         category: 'Custom Order',
         description: `Downpayment / Order: ${customerName}`,
-        amount: total
+        amount: trxTotal
       });
     }
 
@@ -324,6 +339,8 @@ export default function POS() {
                 setPosMode('retail');
                 setCart([]);
                 setEditingOrderId(null);
+                setCartDiscount(0);
+                setVatRatePercent(12);
               }}
               className={`px-3 py-1 rounded-l border-y border-l transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'retail' ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
             >
@@ -334,6 +351,8 @@ export default function POS() {
                 setPosMode('custom');
                 setCart([]);
                 setEditingOrderId(null);
+                setCartDiscount(0);
+                setVatRatePercent(12);
               }}
               className={`px-3 py-1 rounded-r border transition-all text-[9px] font-bold uppercase tracking-widest ${posMode === 'custom' ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-gray-200 text-gray-400 dark:bg-zinc-800 dark:border-zinc-700'}`}
             >
@@ -524,8 +543,42 @@ export default function POS() {
                       <span className="font-bold">SUBTOTAL</span>
                       <span className="text-gray-900 dark:text-zinc-300">₱{subtotal.toFixed(2)}</span>
                    </div>
+                   <div className="flex justify-between items-center gap-2 text-[10px] font-mono text-gray-500 dark:text-zinc-500">
+                      <span className="font-bold shrink-0">DISCOUNT (₱)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="w-24 max-w-[40%] text-right px-2 py-1 border border-gray-200 rounded bg-white text-gray-900 text-[10px] font-mono focus:outline-none focus:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
+                        value={cartDiscount}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setCartDiscount(Number.isFinite(v) ? Math.max(0, v) : 0);
+                        }}
+                      />
+                   </div>
+                   {appliedDiscount > 0 && (
+                     <div className="flex justify-between text-[10px] font-mono text-gray-500 dark:text-zinc-500">
+                        <span className="font-bold">AFTER DISCOUNT</span>
+                        <span className="text-gray-900 dark:text-zinc-300">₱{cartTotals.afterDiscount.toFixed(2)}</span>
+                     </div>
+                   )}
+                   <div className="flex justify-between items-center gap-2 text-[10px] font-mono text-gray-500 dark:text-zinc-500">
+                      <span className="font-bold shrink-0">VAT RATE (%)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="w-20 text-right px-2 py-1 border border-gray-200 rounded bg-white text-gray-900 text-[10px] font-mono focus:outline-none focus:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
+                        value={vatRatePercent}
+                        onChange={(e) => {
+                          const v = parseFloat(e.target.value);
+                          setVatRatePercent(Number.isFinite(v) ? Math.max(0, v) : 0);
+                        }}
+                      />
+                   </div>
                    <div className="flex justify-between text-[10px] font-mono text-gray-500 dark:text-zinc-500">
-                      <span className="font-bold">VAT (12%)</span>
+                      <span className="font-bold">VAT ({cartTotals.vatRatePercent}%)</span>
                       <span className="text-gray-900 dark:text-zinc-300">₱{tax.toFixed(2)}</span>
                    </div>
                    <div className="flex justify-between text-xl font-bold tracking-tight text-gray-900 border-t border-gray-200 pt-2 mt-1 dark:border-zinc-800 dark:text-zinc-100">
@@ -542,7 +595,7 @@ export default function POS() {
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                   <button onClick={() => setCart([])} className="py-2.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold uppercase tracking-widest rounded transition-all text-gray-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300">
+                   <button onClick={() => { setCart([]); setCartDiscount(0); setVatRatePercent(12); }} className="py-2.5 bg-gray-200 hover:bg-gray-300 text-[10px] font-bold uppercase tracking-widest rounded transition-all text-gray-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300">
                       Reset
                    </button>
                    <button 
@@ -688,8 +741,14 @@ export default function POS() {
                 <span>Subtotal</span>
                 <span className="font-mono">₱{selectedTransaction.subtotal.toFixed(2)}</span>
               </div>
+              {(selectedTransaction.discount ?? 0) > 0 && (
+                <div className="flex justify-between text-[9px] text-gray-500">
+                  <span>Discount</span>
+                  <span className="font-mono">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[9px] text-gray-500">
-                <span>VAT (12%)</span>
+                <span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span>
                 <span className="font-mono">₱{selectedTransaction.tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-gray-50 dark:border-zinc-800 mt-1">
@@ -765,6 +824,13 @@ export default function POS() {
                 <div className="flex justify-between items-center text-gray-500 dark:text-zinc-400">
                   <span className="text-[10px] font-bold uppercase tracking-wider">Amount to Pay</span>
                   <span className="text-xl font-bold font-mono text-gray-900 dark:text-zinc-100">₱{total.toFixed(2)}</span>
+                </div>
+                <div className="space-y-1 text-[9px] font-mono text-gray-500 dark:text-zinc-500 border-b border-gray-100 dark:border-zinc-800 pb-3">
+                  <div className="flex justify-between"><span>Subtotal</span><span>₱{subtotal.toFixed(2)}</span></div>
+                  {appliedDiscount > 0 && (
+                    <div className="flex justify-between"><span>Discount</span><span>−₱{appliedDiscount.toFixed(2)}</span></div>
+                  )}
+                  <div className="flex justify-between"><span>VAT ({cartTotals.vatRatePercent}%)</span><span>₱{tax.toFixed(2)}</span></div>
                 </div>
                 
                 <div className="space-y-2">

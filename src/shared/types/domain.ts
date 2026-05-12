@@ -56,6 +56,8 @@ export interface Transaction {
   date: string;
   items: CartItem[];
   subtotal: number;
+  discount?: number;
+  vatRatePercent?: number;
   tax: number;
   total: number;
   paymentMethod: 'Cash' | 'Card';
