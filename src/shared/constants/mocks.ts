@@ -204,7 +204,7 @@ export const MOCK_FINANCIAL_RECORDS = [
 export const MOCK_DESIGNS = [
   {
     id: 'DSG-001',
-    name: 'Logo',
+    name: 'Logo/Design 1',
     category: 'Retro',
     imageUrl: designImagePublicUrl('DSG-001'),
     createdAt: '2026-01-12',
@@ -212,7 +212,7 @@ export const MOCK_DESIGNS = [
   },
   {
     id: 'DSG-002',
-    name: 'Geometric Minimal',
+    name: 'Logo/Design 2',
     category: 'Abstract',
     imageUrl: designImagePublicUrl('DSG-002'),
     createdAt: '2026-02-03',
@@ -220,7 +220,7 @@ export const MOCK_DESIGNS = [
   },
   {
     id: 'DSG-003',
-    name: 'Tropical Punch',
+    name: 'Logo/Design 3',
     category: 'Summer',
     imageUrl: designImagePublicUrl('DSG-003'),
     createdAt: '2026-02-20',
@@ -228,7 +228,7 @@ export const MOCK_DESIGNS = [
   },
   {
     id: 'DSG-004',
-    name: 'Cyberpunk Neon',
+    name: 'Logo/Design 4',
     category: 'Tech',
     imageUrl: designImagePublicUrl('DSG-004'),
     createdAt: '2026-03-08',
