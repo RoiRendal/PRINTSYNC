@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import {TrendingUp, Package, Users, DollarSign, Clock, CheckCircle2, ShoppingBag, AlertTriangle} from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
-import { useFinance } from '../../finance/state/FinanceContext';
 import { Link } from 'react-router-dom';
 import { isCustomOrder } from '../../orders/utils/orderType';
 
@@ -25,13 +24,12 @@ const StatCard = ({ title, value, icon: Icon, trend, colorClass = "text-gray-400
 
 export default function Dashboard() {
   const { orders, items: inventory } = useInventory();
-  const { records } = useFinance();
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    const todayRevenue = records
-      .filter(r => r.date === today && r.type === 'Income')
-      .reduce((acc, r) => acc + r.amount, 0);
+    const todayRevenue = orders
+      .filter(o => o.date === today)
+      .reduce((acc, o) => acc + o.amount, 0);
 
     const pendingJobs = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').length;
     const inventoryAlerts = inventory.filter(item => item.stock <= item.reorderLevel).length;
@@ -43,7 +41,7 @@ export default function Dashboard() {
       inventoryAlerts,
       completedToday
     };
-  }, [orders, records, inventory]);
+  }, [orders, inventory]);
 
   const productionQueue = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').slice(0, 8);
 

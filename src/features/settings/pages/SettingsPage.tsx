@@ -37,7 +37,6 @@ export default function Settings() {
         inventory: "All stock records",
         orders: "Complete transaction history",
         users: "User profiles and permissions",
-        finance: "Ledger and tax records",
         analytics: "Performance metrics"
       }
     };

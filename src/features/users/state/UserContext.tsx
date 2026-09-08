@@ -152,7 +152,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       '/orders': 'orders',
       '/inventory': 'inventory',
       '/pos': 'pos',
-      '/finance': 'finance',
       '/analytics': 'analytics',
       '/users': 'users',
       '/settings': 'settings',

@@ -156,49 +156,6 @@ export const MOCK_INVENTORY = [
   },
 ];
 
-export const MOCK_FINANCIAL_RECORDS = [
-  {
-    id: 'FIN-001',
-    date: '2026-04-28',
-    type: 'Income',
-    category: 'Screen Printing',
-    description: 'Order ORD-001 — Metro Athletics Club (custom)',
-    amount: 6850.0,
-    linkedOrderId: 'ORD-001',
-  },
-  { id: 'FIN-002', date: '2026-05-01', type: 'Expense', category: 'Material', description: 'Plastisol & discharge ink restock', amount: 4200 },
-  { id: 'FIN-003', date: '2026-05-01', type: 'Expense', category: 'Rent', description: 'Production bay rent — May', amount: 18500 },
-  {
-    id: 'FIN-004',
-    date: '2026-05-02',
-    type: 'Income',
-    category: 'Embroidery & Garment',
-    description: 'Order ORD-002 — Northwind Café Collective (custom)',
-    amount: 3425.5,
-    linkedOrderId: 'ORD-002',
-  },
-  { id: 'FIN-005', date: '2026-05-03', type: 'Expense', category: 'Inventory', description: 'Blank apparel & supplies PO', amount: 22800 },
-  {
-    id: 'FIN-006',
-    date: '2026-05-05',
-    type: 'Income',
-    category: 'Retail POS',
-    description: 'Order ORD-003 — Parcel & Post Mini Hub (walk-in)',
-    amount: 1999.0,
-    linkedOrderId: 'ORD-003',
-  },
-  { id: 'FIN-007', date: '2026-05-06', type: 'Expense', category: 'Utilities', description: 'Power & water — production floor', amount: 6400 },
-  {
-    id: 'FIN-008',
-    date: '2026-05-08',
-    type: 'Income',
-    category: 'DTF / Specialty',
-    description: 'Order ORD-004 — Neon Nights Events Co. (custom)',
-    amount: 8920.0,
-    linkedOrderId: 'ORD-004',
-  },
-];
-
 export const MOCK_DESIGNS = [
   {
     id: 'DSG-001',

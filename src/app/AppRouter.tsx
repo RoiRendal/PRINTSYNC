@@ -3,13 +3,11 @@ import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'rea
 import { Layout } from './layout/AppLayout';
 import { ThemeProvider } from './providers/ThemeProvider';
 import { BusinessBrandingProvider } from './providers/BusinessBrandingProvider';
-import { FinanceProvider } from '../features/finance/state/FinanceContext';
 import { InventoryProvider } from '../features/inventory/state/InventoryContext';
 import { UserProvider, useUserContext } from '../features/users/state/UserContext';
 import Dashboard from '../features/dashboard/pages/DashboardPage';
 import Inventory from '../features/inventory/pages/InventoryPage';
 import POS from '../features/orders/pages/POSPage';
-import Finance from '../features/finance/pages/FinancePage';
 import Analytics from '../features/analytics/pages/AnalyticsPage';
 import UserManagement from '../features/users/pages/UserManagementPage';
 import Orders from '../features/orders/pages/OrdersPage';
@@ -57,30 +55,26 @@ export default function App() {
   return (
     <ThemeProvider>
       <BusinessBrandingProvider>
-        <FinanceProvider>
-          <InventoryProvider>
-            <UserProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route element={<ProtectedLayout />}>
-                    <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
-                    <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
-                    <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
-                    <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
-                    <Route path="/finance" element={<RequirePageAccess><Finance /></RequirePageAccess>} />
-                    <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
-                    <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
-                    <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
-                  </Route>
-                  <Route path="*" element={<NavigateToFirstAllowedPage />} />
-                </Routes>
-              </BrowserRouter>
-            </UserProvider>
-          </InventoryProvider>
-        </FinanceProvider>
+        <InventoryProvider>
+          <UserProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route element={<ProtectedLayout />}>
+                  <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
+                  <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
+                  <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
+                  <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
+                  <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
+                  <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
+                  <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
+                </Route>
+                <Route path="*" element={<NavigateToFirstAllowedPage />} />
+              </Routes>
+            </BrowserRouter>
+          </UserProvider>
+        </InventoryProvider>
       </BusinessBrandingProvider>
     </ThemeProvider>
   );
 }
-

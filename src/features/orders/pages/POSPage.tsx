@@ -3,12 +3,10 @@ import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package,
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { InventoryItem, CartItem, Transaction, Order } from '../../../shared/types/domain';
 import { Modal } from '../../../shared/components/ui/Modal';
-import { useFinance } from '../../finance/state/FinanceContext';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function POS() {
-  const { addRecord, updateRecord, records } = useFinance();
   const { items: inventory, updateItem, designs, addOrder, orders, updateOrder } = useInventory();
   const location = useLocation();
   const navigate = useNavigate();
@@ -307,15 +305,6 @@ export default function POS() {
       });
 
       setTransactions([newTransaction, ...transactions]);
-
-      // Add to Financial Ledger
-      addRecord({
-        date: new Date().toISOString().split('T')[0],
-        type: 'Income',
-        category: 'POS Retail',
-        description: `Retail Sales: TRX ${newTransaction.id}`,
-        amount: trxTotal
-      });
     } else {
       const preparedOrder: Omit<Order, 'id' | 'date'> = {
         customer: customerName,
@@ -364,27 +353,8 @@ export default function POS() {
           ...preparedOrder,
           status: existingOrder?.status ?? 'Pending',
         });
-
-        const fin = records.find((r) => r.linkedOrderId === editingOrderId);
-        const desc = `Order ${editingOrderId} — ${customerName} (custom)`;
-        if (fin) {
-          updateRecord(fin.id, {
-            amount: trxTotal,
-            date: new Date().toISOString().split('T')[0],
-            description: desc,
-          });
-        } else {
-          addRecord({
-            date: new Date().toISOString().split('T')[0],
-            type: 'Income',
-            category: 'Custom Order',
-            description: desc,
-            amount: trxTotal,
-            linkedOrderId: editingOrderId,
-          });
-        }
       } else {
-        const orderId = addOrder(preparedOrder);
+        addOrder(preparedOrder);
 
         // Reduce stock of blanks
         cart.forEach(cartItem => {
@@ -392,15 +362,6 @@ export default function POS() {
           if (product) {
             updateItem(product.id, { stock: product.stock - cartItem.qty });
           }
-        });
-
-        addRecord({
-          date: new Date().toISOString().split('T')[0],
-          type: 'Income',
-          category: 'Custom Order',
-          description: `Order ${orderId} — ${customerName} (custom)`,
-          amount: trxTotal,
-          linkedOrderId: orderId,
         });
       }
     }

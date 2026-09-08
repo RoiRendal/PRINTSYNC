@@ -35,24 +35,6 @@ export interface CartItem extends InventoryItem {
   notes?: string;
 }
 
-export interface FinancialRecord {
-  id: string;
-  date: string;
-  type: 'Income' | 'Expense';
-  category: string;
-  description: string;
-  amount: number;
-  /** When income is recorded from a POS custom/production order. */
-  linkedOrderId?: string;
-}
-
-export interface FinancialStats {
-  totalRevenue: number;
-  totalExpenses: number;
-  netProfit: number;
-  profitMargin: number;
-}
-
 export interface Transaction {
   id: string;
   date: string;
@@ -62,7 +44,7 @@ export interface Transaction {
   vatRatePercent?: number;
   tax: number;
   total: number;
-  paymentMethod: 'Cash' | 'Card';
+  paymentMethod: 'Cash' | 'Card' | 'Custom Order';
 }
 
 export interface Design {
