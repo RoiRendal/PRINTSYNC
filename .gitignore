@@ -1,1 +1,13 @@
 to-do_phases.txt
+
+# Dependencies and generated output
+**/node_modules/
+**/dist/
+**/build/
+**/coverage/
+
+# Local environment and runtime files
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
