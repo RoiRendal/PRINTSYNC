@@ -4,7 +4,7 @@ import { TableActions } from '../../../shared/components/table/TableActions';
 import type { InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
-import { useInventory } from '../../inventory/state/InventoryContext';
+import { useInventory } from '../state/InventoryContext';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 
 export default function Inventory() {

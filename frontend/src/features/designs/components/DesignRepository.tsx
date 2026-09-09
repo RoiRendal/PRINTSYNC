@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } from 'lucide-react';
-import { useInventory } from '../../inventory/state/InventoryContext';
+import { useDesigns } from '../state/DesignContext';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
 import type { Design } from '../types';
 
 export function DesignRepository() {
-  const { designs, addDesign, deleteDesign, updateDesign } = useInventory();
+  const { designs, addDesign, deleteDesign, updateDesign } = useDesigns();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

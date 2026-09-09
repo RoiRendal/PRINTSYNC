@@ -5,10 +5,14 @@ import type { InventoryItem } from '../../inventory/types';
 import type { CartItem, Order, Transaction } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useDesigns } from '../../designs/state/DesignContext';
+import { useOrders } from '../state/OrderContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function POS() {
-  const { items: inventory, updateItem, designs, addOrder, orders, updateOrder } = useInventory();
+  const { items: inventory, updateItem } = useInventory();
+  const { designs } = useDesigns();
+  const { addOrder, orders, updateOrder } = useOrders();
   const location = useLocation();
   const navigate = useNavigate();
   const [cart, setCart] = useState<CartItem[]>([]);

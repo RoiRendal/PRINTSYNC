@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import {TrendingUp, Package, Users, DollarSign, Clock, CheckCircle2, ShoppingBag, AlertTriangle} from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useOrders } from '../../orders/state/OrderContext';
 import { Link } from 'react-router-dom';
 import { isCustomOrder } from '../../orders/utils/orderType';
 
@@ -23,7 +24,8 @@ const StatCard = ({ title, value, icon: Icon, trend, colorClass = "text-gray-400
 );
 
 export default function Dashboard() {
-  const { orders, items: inventory } = useInventory();
+  const { items: inventory } = useInventory();
+  const { orders } = useOrders();
 
   const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];

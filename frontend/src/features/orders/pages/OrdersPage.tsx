@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useDesigns } from '../../designs/state/DesignContext';
+import { useOrders } from '../state/OrderContext';
 import { Modal } from '../../../shared/components/ui/Modal';
 import type { Order } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +28,9 @@ const workPhases: Order['status'][] = [
 ];
 
 export default function Orders() {
-  const { orders, designs, items: inventoryItems, updateOrder, deleteOrder } = useInventory();
+  const { items: inventoryItems } = useInventory();
+  const { designs } = useDesigns();
+  const { orders, updateOrder, deleteOrder } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
