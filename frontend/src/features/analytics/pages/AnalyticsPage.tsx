@@ -1212,7 +1212,7 @@ export default function AnalyticsPage() {
                     tick={{ fontSize: 11, fill: '#6B7280' }}
                   />
                   <Tooltip
-                    formatter={(value: number, name: string) => [money.format(value), name]}
+                    formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]}
                     labelStyle={{ color: '#111827', fontSize: 12 }}
                     contentStyle={{
                       border: '1px solid #E5E7EB',
@@ -1346,9 +1346,11 @@ export default function AnalyticsPage() {
                 tick={{ fontSize: 11, fill: '#6B7280' }}
               />
               <Tooltip
-                formatter={(value: number, name: string) => {
-                  if (name === 'Margin %') return [`${value.toFixed(1)}%`, name];
-                  return [money.format(value), name];
+                formatter={(value, name) => {
+                  const numericValue = Number(value ?? 0);
+                  const label = String(name);
+                  if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label];
+                  return [money.format(numericValue), label];
                 }}
                 labelStyle={{ color: '#111827', fontSize: 12 }}
                 contentStyle={{
@@ -1531,7 +1533,7 @@ export default function AnalyticsPage() {
                 tick={{ fontSize: 11, fill: '#6B7280' }}
               />
               <Tooltip
-                formatter={(value: number) => [value.toLocaleString(), 'Units']}
+                formatter={(value) => [Number(value ?? 0).toLocaleString(), 'Units']}
                 labelStyle={{ color: '#111827', fontSize: 12 }}
                 contentStyle={{ border: '1px solid #E5E7EB', borderRadius: '6px', boxShadow: 'none', fontSize: '12px' }}
               />
@@ -1698,8 +1700,8 @@ export default function AnalyticsPage() {
                 tick={{ fontSize: 11, fill: '#6B7280' }}
               />
               <Tooltip
-                formatter={(value: number, name: string) => {
-                  return [money.format(value), name];
+                formatter={(value, name) => {
+                  return [money.format(Number(value ?? 0)), String(name)];
                 }}
                 labelStyle={{ color: '#111827', fontSize: 12 }}
                 contentStyle={{ border: '1px solid #E5E7EB', borderRadius: '6px', boxShadow: 'none', fontSize: '12px' }}

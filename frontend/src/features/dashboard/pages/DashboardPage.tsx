@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import {TrendingUp, Package, Users, DollarSign, Clock, CheckCircle2, ShoppingBag, AlertTriangle} from 'lucide-react';
+import { useMemo } from 'react';
+import { DollarSign, CheckCircle2, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useOrders } from '../../orders/state/OrderContext';

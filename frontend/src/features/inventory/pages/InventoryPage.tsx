@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Image as ImageIcon } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Box, Image as ImageIcon } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';

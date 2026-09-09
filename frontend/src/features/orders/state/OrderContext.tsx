@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { MOCK_ORDERS } from '../data/mockOrders';
 import type { CreateOrder, Order, UpdateOrder } from '../types';
 
@@ -19,7 +19,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     const order: Order = {
       ...newOrder,
       id,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0] ?? '',
       status: newOrder.status || 'Pending',
     };
     setOrders((previousOrders) => [order, ...previousOrders]);

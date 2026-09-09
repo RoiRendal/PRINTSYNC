@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ClipboardList, Search, ArrowRight, Printer, CheckCircle2, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useDesigns } from '../../designs/state/DesignContext';
 import { useOrders } from '../state/OrderContext';
 import { Modal } from '../../../shared/components/ui/Modal';
-import type { Order } from '../types';
+import type { Order, OrderLineItem } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { isCustomOrder } from '../utils/orderType';
 
@@ -43,7 +43,7 @@ export default function Orders() {
   );
 
   const getDesign = (id?: string) => designs.find(d => d.id === id);
-  const getOrderLineItems = (order: Order) => {
+  const getOrderLineItems = (order: Order): OrderLineItem[] => {
     if (order.lineItems && order.lineItems.length > 0) return order.lineItems;
     return order.item
       .split(',')
@@ -89,6 +89,7 @@ export default function Orders() {
     const nextIndex = Math.max(0, Math.min(workPhases.length - 1, currentIndex + direction));
     if (nextIndex === currentIndex) return;
     const nextStatus = workPhases[nextIndex];
+    if (!nextStatus) return;
     updateOrder(order.id, { status: nextStatus });
     if (selectedOrder?.id === order.id) {
       setSelectedOrder({ ...order, status: nextStatus });

@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import type { InventoryItem } from '../../inventory/types';
-import type { CartItem, CreateOrder, Order, Transaction } from '../types';
+import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useDesigns } from '../../designs/state/DesignContext';
@@ -151,7 +151,7 @@ export default function POS() {
     const orderToEdit = orders.find((order) => order.id === editOrderId);
     if (!orderToEdit) return;
 
-    const sourceLineItems =
+    const sourceLineItems: OrderLineItem[] =
       orderToEdit.lineItems && orderToEdit.lineItems.length > 0
         ? orderToEdit.lineItems
         : orderToEdit.item
@@ -165,7 +165,7 @@ export default function POS() {
             }));
 
     const hydratedCart: CartItem[] = sourceLineItems
-      .map((lineItem) => {
+      .map((lineItem): CartItem | null => {
         const inventoryItem =
           (lineItem.itemId ? inventory.find((item) => item.id === lineItem.itemId) : undefined) ??
           inventory.find((item) => item.name.toLowerCase() === lineItem.name.toLowerCase());
@@ -291,7 +291,7 @@ export default function POS() {
     if (posMode === 'retail') {
       const newTransaction: Transaction = {
         id: `TRX-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0] ?? '',
         items: [...cart],
         subtotal: trxSubtotal,
         discount: trxDiscount > 0 ? trxDiscount : undefined,

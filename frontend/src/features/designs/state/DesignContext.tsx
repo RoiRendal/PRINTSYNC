@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { MOCK_DESIGNS } from '../data/mockDesigns';
 import type { CreateDesign, Design, UpdateDesign } from '../types';
 
@@ -18,7 +18,7 @@ export function DesignProvider({ children }: { children: ReactNode }) {
     const design: Design = {
       ...newDesign,
       id: `DSG-${String(designs.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString().split('T')[0] ?? '',
     };
     setDesigns((previousDesigns) => [...previousDesigns, design]);
   };

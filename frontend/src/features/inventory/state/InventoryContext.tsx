@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { MOCK_INVENTORY } from '../data/mockInventory';
 import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../types';
 
