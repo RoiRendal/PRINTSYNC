@@ -5,6 +5,7 @@ import { useInventory } from '../../inventory/state/InventoryContext';
 import { useOrders } from '../../orders/state/OrderContext';
 import { Link } from 'react-router-dom';
 import { isCustomOrder } from '../../orders/utils/orderType';
+import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 
 const StatCard = ({ title, value, icon: Icon, trend, colorClass = "text-gray-400" }: any) => (
   <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
@@ -109,7 +110,11 @@ export default function Dashboard() {
                   </tr>
                 ))}
                 {productionQueue.length === 0 && (
-                  <tr><td colSpan={6} className="py-10 text-center text-gray-400 italic">No active production jobs.</td></tr>
+                  <tr>
+                    <td colSpan={6} className="py-10">
+                      <EmptyState title="No active production jobs" />
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>

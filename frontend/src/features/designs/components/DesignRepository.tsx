@@ -3,6 +3,7 @@ import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } 
 import { useDesigns } from '../state/DesignContext';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import type { CreateDesign, Design } from '../types';
 
 export function DesignRepository() {
@@ -210,13 +211,12 @@ export function DesignRepository() {
 
       {filteredDesigns.length === 0 && (
         <div className="py-24 text-center border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded">
-          <div className="flex flex-col items-center gap-3 text-gray-400">
-            <ImageIcon className="w-12 h-12 opacity-15" />
-            <div className="space-y-1">
-              <p className="text-sm font-bold uppercase tracking-widest">No designs found</p>
-              <p className="text-xs">Try adjusting your search or upload a new design.</p>
-            </div>
-          </div>
+          <EmptyState
+            title="No designs found"
+            message="Try adjusting your search or upload a new design."
+            icon={<ImageIcon className="h-12 w-12 opacity-15" aria-hidden="true" />}
+            className="gap-3"
+          />
         </div>
       )}
 

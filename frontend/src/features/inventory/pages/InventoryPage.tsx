@@ -4,6 +4,7 @@ import { TableActions } from '../../../shared/components/table/TableActions';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
+import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { useInventory } from '../state/InventoryContext';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 
@@ -222,10 +223,7 @@ export default function Inventory() {
               {filteredItems.length === 0 && (
                 <tr>
                    <td colSpan={6} className="py-20 text-center">
-                    <div className="flex flex-col items-center gap-2 text-gray-400">
-                      <Package className="w-8 h-8 opacity-20" />
-                      <p className="text-[10px] uppercase tracking-widest font-bold">No stock items found</p>
-                    </div>
+                    <EmptyState title="No stock items found" icon={<Package className="w-8 h-8 opacity-20" aria-hidden="true" />} />
                   </td>
                 </tr>
               )}
