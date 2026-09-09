@@ -21,6 +21,6 @@ View your app in AI Studio: https://ai.studio/apps/cc651e1e-47b5-474b-afd7-eb412
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. Optionally set `VITE_API_BASE_URL` in [.env.local](.env.local) when running against a backend. Keep provider API keys in the backend environment; they must not be exposed through Vite.
 3. Run the app:
    `npm run dev`
