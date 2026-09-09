@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, Package, X, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
-import { InventoryItem, CartItem, Transaction, Order } from '../../../shared/types/domain';
+import type { InventoryItem } from '../../inventory/types';
+import type { CartItem, Order, Transaction } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useLocation, useNavigate } from 'react-router-dom';

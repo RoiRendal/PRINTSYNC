@@ -1,58 +1,15 @@
 
-export interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  stock: number;
-  reorderLevel: number;
-  price: number;
-  imageUrl?: string;
-}
-
-export interface Order {
-  id: string;
-  customer: string;
-  item: string;
-  lineItems?: Array<{
-    itemId?: string;
-    name: string;
-    quantity: number;
-    designId?: string;
-  }>;
-  quantity: number;
-  status: 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Delivered';
-  date: string;
-  amount: number;
-  designId?: string;
-  notes?: string;
-  isCustom?: boolean;
-}
-
-export interface CartItem extends InventoryItem {
-  qty: number;
-  isCustom?: boolean;
-  designId?: string;
-  notes?: string;
-}
-
-export interface Transaction {
-  id: string;
-  date: string;
-  items: CartItem[];
-  subtotal: number;
-  discount?: number;
-  vatRatePercent?: number;
-  tax: number;
-  total: number;
-  paymentMethod: 'Cash' | 'Card' | 'Custom Order';
-}
-
-export interface Design {
-  id: string;
-  name: string;
-  category: string;
-  imageUrl: string;
-  createdAt: string;
-  tags: string[];
-}
+/**
+ * Compatibility exports for older imports.
+ * New feature code should import types from its owning feature folder.
+ */
+export type { InventoryItem } from '../../features/inventory/types';
+export type { Design } from '../../features/designs/types';
+export type {
+  CartItem,
+  Order,
+  OrderLineItem,
+  OrderStatus,
+  Transaction,
+} from '../../features/orders/types';
 

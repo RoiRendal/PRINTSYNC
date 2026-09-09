@@ -3,7 +3,7 @@ import { ClipboardList, Search, Filter, ArrowRight, Printer, CheckCircle2, Clock
 import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { Modal } from '../../../shared/components/ui/Modal';
-import { Order } from '../../../shared/types/domain';
+import type { Order } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { isCustomOrder } from '../utils/orderType';
 

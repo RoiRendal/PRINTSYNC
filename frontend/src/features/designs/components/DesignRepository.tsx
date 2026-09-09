@@ -3,7 +3,7 @@ import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } 
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
-import type { Design } from '../../../shared/types/domain';
+import type { Design } from '../types';
 
 export function DesignRepository() {
   const { designs, addDesign, deleteDesign, updateDesign } = useInventory();

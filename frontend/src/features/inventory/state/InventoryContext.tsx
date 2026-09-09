@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { InventoryItem, Design, Order } from '../../../shared/types/domain';
-import { MOCK_INVENTORY, MOCK_DESIGNS, MOCK_ORDERS } from '../../../shared/constants/mocks';
+import type { InventoryItem } from '../types';
+import type { Design } from '../../designs/types';
+import type { Order } from '../../orders/types';
+import { MOCK_INVENTORY } from '../data/mockInventory';
+import { MOCK_DESIGNS } from '../../designs/data/mockDesigns';
+import { MOCK_ORDERS } from '../../orders/data/mockOrders';
 
 interface InventoryContextType {
   items: InventoryItem[];

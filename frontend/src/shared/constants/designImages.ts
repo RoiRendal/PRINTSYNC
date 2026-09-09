@@ -1,4 +1,4 @@
-import type { Design } from '../types/domain';
+import type { Design } from '../../features/designs/types';
 
 /**
  * Offline design previews live under Vite `public/`.

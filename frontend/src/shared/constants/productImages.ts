@@ -1,4 +1,4 @@
-import type { InventoryItem } from '../types/domain';
+import type { InventoryItem } from '../../features/inventory/types';
 
 /**
  * Offline product thumbnails live under the Vite `public/` folder.

@@ -1,4 +1,4 @@
-import type { Order } from '../../../shared/types/domain';
+import type { Order } from '../types';
 
 export function isCustomOrder(order: Order): boolean {
   if (order.isCustom) return true;

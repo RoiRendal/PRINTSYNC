@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Image as ImageIcon } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
-import { InventoryItem } from '../../../shared/types/domain';
+import type { InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 import { useInventory } from '../../inventory/state/InventoryContext';
