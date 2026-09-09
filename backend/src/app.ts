@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { healthRouter } from './routes/health.routes.js';
+import { readyRouter } from './routes/ready.routes.js';
 
 export function createApp() {
   const app = express();
@@ -15,6 +16,7 @@ export function createApp() {
   app.use(express.json({ limit: '1mb' }));
 
   app.use('/api/v1/health', healthRouter);
+  app.use('/api/v1/ready', readyRouter);
   app.use(notFound);
   app.use(errorHandler);
 
