@@ -21,12 +21,16 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 bg-black/50 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-[1000] flex items-center justify-center p-6 sm:p-8 lg:p-10 bg-black/50 backdrop-blur-sm overflow-y-auto"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className={`w-full ${maxWidth} max-h-[90vh] my-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded shadow-xl overflow-hidden flex flex-col`}
+        className={`w-full ${maxWidth} max-h-[calc(100vh-3rem)] sm:max-h-[calc(100vh-4rem)] lg:max-h-[calc(100vh-5rem)] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded shadow-xl overflow-hidden flex flex-col`}
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
       >
         <div className="flex items-center justify-between p-3 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900/50">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-900 dark:text-zinc-100">
