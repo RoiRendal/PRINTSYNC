@@ -46,3 +46,8 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'users', label: 'Users', path: '/users', icon: Users },
   { key: 'settings', label: 'Settings', path: '/settings', icon: SettingsIcon },
 ];
+
+export function getPageAccessKey(path: string): PageAccessKey | undefined {
+  const normalizedPath = path === '' ? '/' : path;
+  return NAV_ITEMS.find((item) => item.path === normalizedPath)?.key;
+}

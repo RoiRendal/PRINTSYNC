@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { ADMIN_PAGE_ACCESS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
+import { ADMIN_PAGE_ACCESS, getPageAccessKey, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 
 export type RbacRole = 'admin' | 'staff';
 
@@ -146,17 +146,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     if (!currentUser) {
       return false;
     }
-    const navPath = path === '' ? '/' : path;
-    const map: Record<string, PageAccessKey> = {
-      '/': 'dashboard',
-      '/orders': 'orders',
-      '/inventory': 'inventory',
-      '/pos': 'pos',
-      '/analytics': 'analytics',
-      '/users': 'users',
-      '/settings': 'settings',
-    };
-    const key = map[navPath];
+    const key = getPageAccessKey(path);
     if (!key) {
       return true;
     }

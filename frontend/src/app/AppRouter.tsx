@@ -1,10 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './layout/AppLayout';
-import { ThemeProvider } from './providers/ThemeProvider';
-import { BusinessBrandingProvider } from './providers/BusinessBrandingProvider';
-import { InventoryProvider } from '../features/inventory/state/InventoryContext';
-import { UserProvider, useUserContext } from '../features/users/state/UserContext';
+import { AppProviders } from './providers/AppProviders';
+import { useUserContext } from '../features/users/state/UserContext';
 import Dashboard from '../features/dashboard/pages/DashboardPage';
 import Inventory from '../features/inventory/pages/InventoryPage';
 import POS from '../features/orders/pages/POSPage';
@@ -53,28 +51,22 @@ function RequirePageAccess({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <BusinessBrandingProvider>
-        <InventoryProvider>
-          <UserProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route element={<ProtectedLayout />}>
-                  <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
-                  <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
-                  <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
-                  <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
-                  <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
-                  <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
-                  <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
-                </Route>
-                <Route path="*" element={<NavigateToFirstAllowedPage />} />
-              </Routes>
-            </BrowserRouter>
-          </UserProvider>
-        </InventoryProvider>
-      </BusinessBrandingProvider>
-    </ThemeProvider>
+    <AppProviders>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
+            <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
+            <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
+            <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
+            <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
+            <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
+            <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
+          </Route>
+          <Route path="*" element={<NavigateToFirstAllowedPage />} />
+        </Routes>
+      </BrowserRouter>
+    </AppProviders>
   );
 }
