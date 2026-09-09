@@ -1,8 +1,5 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
-import type { Order } from '../types';
-
-export type CreateOrder = Omit<Order, 'id' | 'date'>;
-export type UpdateOrder = Partial<CreateOrder>;
+import type { CreateOrder, Order, UpdateOrder } from '../types';
 
 export function createOrdersApi(client: ApiClient = apiClient) {
   return {

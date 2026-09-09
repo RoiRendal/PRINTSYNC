@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { MOCK_ORDERS } from '../data/mockOrders';
-import type { Order } from '../types';
+import type { CreateOrder, Order, UpdateOrder } from '../types';
 
 interface OrderContextValue {
   orders: Order[];
-  addOrder: (order: Omit<Order, 'id' | 'date'>) => string;
-  updateOrder: (id: string, order: Partial<Order>) => void;
+  addOrder: (order: CreateOrder) => string;
+  updateOrder: (id: string, order: UpdateOrder) => void;
   deleteOrder: (id: string) => void;
 }
 
@@ -14,7 +14,7 @@ const OrderContext = createContext<OrderContextValue | undefined>(undefined);
 export function OrderProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
 
-  const addOrder = (newOrder: Omit<Order, 'id' | 'date'>) => {
+  const addOrder = (newOrder: CreateOrder) => {
     const id = `ORD-${Date.now()}`;
     const order: Order = {
       ...newOrder,
@@ -26,7 +26,7 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     return id;
   };
 
-  const updateOrder = (id: string, updatedOrder: Partial<Order>) => {
+  const updateOrder = (id: string, updatedOrder: UpdateOrder) => {
     setOrders((previousOrders) => previousOrders.map((order) => (
       order.id === id ? { ...order, ...updatedOrder } : order
     )));

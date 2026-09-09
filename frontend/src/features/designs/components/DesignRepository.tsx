@@ -3,7 +3,7 @@ import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } 
 import { useDesigns } from '../state/DesignContext';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
-import type { Design } from '../types';
+import type { CreateDesign, Design } from '../types';
 
 export function DesignRepository() {
   const { designs, addDesign, deleteDesign, updateDesign } = useDesigns();
@@ -15,7 +15,7 @@ export function DesignRepository() {
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
   
-  const [newDesign, setNewDesign] = useState<Omit<Design, 'id' | 'createdAt'>>({
+  const [newDesign, setNewDesign] = useState<CreateDesign>({
     name: '',
     category: '',
     imageUrl: '',

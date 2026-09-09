@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Check, X, Box, Image as ImageIcon } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
-import type { InventoryItem } from '../types';
+import type { CreateInventoryItem, InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 import { useInventory } from '../state/InventoryContext';
@@ -17,7 +17,7 @@ export default function Inventory() {
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
 
   // Form State
-  const [formData, setFormData] = useState<Omit<InventoryItem, 'id'>>({
+  const [formData, setFormData] = useState<CreateInventoryItem>({
     name: '',
     category: '',
     stock: 0,

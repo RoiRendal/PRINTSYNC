@@ -6,3 +6,6 @@ export interface Design {
   createdAt: string;
   tags: string[];
 }
+
+export type CreateDesign = Omit<Design, 'id' | 'createdAt'>;
+export type UpdateDesign = Partial<CreateDesign>;

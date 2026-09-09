@@ -1,8 +1,5 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
-import type { Design } from '../types';
-
-export type CreateDesign = Omit<Design, 'id' | 'createdAt'>;
-export type UpdateDesign = Partial<CreateDesign>;
+import type { CreateDesign, Design, UpdateDesign } from '../types';
 
 export function createDesignsApi(client: ApiClient = apiClient) {
   return {

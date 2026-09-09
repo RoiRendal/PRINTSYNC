@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, type ReactNode } from 'react';
 import { MOCK_INVENTORY } from '../data/mockInventory';
-import type { InventoryItem } from '../types';
+import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../types';
 
 interface InventoryContextValue {
   items: InventoryItem[];
-  addItem: (item: Omit<InventoryItem, 'id'>) => void;
-  updateItem: (id: string, item: Partial<InventoryItem>) => void;
+  addItem: (item: CreateInventoryItem) => void;
+  updateItem: (id: string, item: UpdateInventoryItem) => void;
   deleteItem: (id: string) => void;
 }
 
@@ -14,7 +14,7 @@ const InventoryContext = createContext<InventoryContextValue | undefined>(undefi
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<InventoryItem[]>(MOCK_INVENTORY);
 
-  const addItem = (newItem: Omit<InventoryItem, 'id'>) => {
+  const addItem = (newItem: CreateInventoryItem) => {
     const item: InventoryItem = {
       ...newItem,
       id: `INV-${String(items.length + 1).padStart(3, '0')}`,
@@ -22,7 +22,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setItems((previousItems) => [...previousItems, item]);
   };
 
-  const updateItem = (id: string, updatedItem: Partial<InventoryItem>) => {
+  const updateItem = (id: string, updatedItem: UpdateInventoryItem) => {
     setItems((previousItems) => previousItems.map((item) => (
       item.id === id ? { ...item, ...updatedItem } : item
     )));

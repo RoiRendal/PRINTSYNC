@@ -1,0 +1,36 @@
+Phase 1: Frontend preparation
+Split InventoryContext into inventory, order, and design ownership.
+Move mock data beside its feature.
+Separate domain types from form and API types.
+Add API client and feature service boundaries.
+Add shared loading/error/empty states.
+Enable stricter TypeScript settings.
+Remove client-side secret exposure.
+
+Phase 2: Backend foundation
+Add backend application structure.
+Add environment configuration.
+Add database and migrations.
+Add validation and centralized error handling.
+Implement authentication.
+Implement users, roles, and permissions.
+Add audit logging.
+
+Phase 3: Core business modules
+Inventory and inventory movements
+Designs and asset metadata
+Orders and order items
+Payments and transactions
+Settings and business branding
+Analytics queries and reporting
+
+Phase 4: Frontend migration
+Replace one feature at a time:
+
+Authentication
+Users
+Inventory
+Designs
+Orders/POS
+Analytics
+Settings and exports

@@ -29,6 +29,9 @@ export interface Order {
   isCustom?: boolean;
 }
 
+export type CreateOrder = Omit<Order, 'id' | 'date'>;
+export type UpdateOrder = Partial<CreateOrder>;
+
 export interface CartItem extends InventoryItem {
   qty: number;
   isCustom?: boolean;

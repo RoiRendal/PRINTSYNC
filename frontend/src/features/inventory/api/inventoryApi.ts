@@ -1,8 +1,5 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
-import type { InventoryItem } from '../types';
-
-export type CreateInventoryItem = Omit<InventoryItem, 'id'>;
-export type UpdateInventoryItem = Partial<CreateInventoryItem>;
+import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../types';
 
 export function createInventoryApi(client: ApiClient = apiClient) {
   return {
