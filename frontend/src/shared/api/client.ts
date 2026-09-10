@@ -10,6 +10,16 @@ export interface ApiClient {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
+interface ApiSuccessEnvelope<T> {
+  data: T;
+}
+
+interface ApiErrorEnvelope {
+  error?: {
+    message?: string;
+  };
+}
+
 async function parseResponse(response: Response): Promise<unknown> {
   if (response.status === 204) return undefined;
 
@@ -33,10 +43,15 @@ async function request<TResponse>(path: string, options: RequestInit = {}): Prom
   const payload = await parseResponse(response);
 
   if (!response.ok) {
-    const message = typeof payload === 'object' && payload !== null && 'message' in payload
-      ? String(payload.message)
+    const errorPayload = payload as ApiErrorEnvelope | null;
+    const message = errorPayload?.error?.message
+      ? errorPayload.error.message
       : `Request failed with status ${response.status}`;
     throw new ApiError(message, response.status, payload);
+  }
+
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as ApiSuccessEnvelope<TResponse>).data;
   }
 
   return payload as TResponse;

@@ -1,5 +1,4 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { AppError } from '../shared/errors.js';
 
 interface AuditLogInput {
   actorId?: string | null | undefined;
@@ -11,7 +10,7 @@ interface AuditLogInput {
   userAgent?: string | null | undefined;
 }
 
-export async function writeAuditLog(supabase: SupabaseClient, input: AuditLogInput): Promise<void> {
+export async function writeAuditLog(supabase: SupabaseClient, input: AuditLogInput): Promise<boolean> {
   const { error } = await supabase.from('audit_logs').insert({
     actor_id: input.actorId ?? null,
     action: input.action,
@@ -23,6 +22,13 @@ export async function writeAuditLog(supabase: SupabaseClient, input: AuditLogInp
   });
 
   if (error) {
-    throw new AppError(503, 'AUDIT_LOG_WRITE_FAILED', 'The audit event could not be recorded.');
+    console.error('Audit log write failed', {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+    });
+    return false;
   }
+
+  return true;
 }
