@@ -66,7 +66,7 @@ export default function UserManagement() {
       role: user.role,
       position: user.position,
       createdAt: user.createdAt,
-      password: user.password,
+      password: '',
       access: user.access,
     });
     setIsModalOpen(true);

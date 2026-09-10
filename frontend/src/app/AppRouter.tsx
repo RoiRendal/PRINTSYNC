@@ -12,9 +12,13 @@ import Orders from '../features/orders/pages/OrdersPage';
 import Settings from '../features/settings/pages/SettingsPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import { NAV_ITEMS } from '../shared/constants/navigation';
+import { LoadingState } from '../shared/components/feedback/LoadingState';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { currentUser } = useUserContext();
+  const { currentUser, isLoading } = useUserContext();
+  if (isLoading) {
+    return <LoadingState label="Restoring session" className="min-h-screen" />;
+  }
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }

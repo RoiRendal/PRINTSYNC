@@ -5,7 +5,7 @@ import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProv
 import { useUserContext } from '../../users/state/UserContext';
 
 export default function LoginPage() {
-  const { login, currentUser } = useUserContext();
+  const { login, currentUser, isLoading, authError } = useUserContext();
   const { effectiveBusinessLogoUrl } = useBusinessBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,9 +15,9 @@ export default function LoginPage() {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const ok = login(email, password);
+    const ok = await login(email, password);
     if (!ok) {
       setError('Invalid email or password.');
       return;
@@ -59,11 +59,12 @@ export default function LoginPage() {
               />
             </div>
 
-            {error && <p className="text-[11px] text-red-600">{error}</p>}
+            {(error || authError) && <p className="text-[11px] text-red-600">{error || authError}</p>}
 
             <button
               type="submit"
-              className="w-full h-9 bg-zinc-900 text-white text-xs font-semibold rounded hover:bg-zinc-800"
+              disabled={isLoading}
+              className="w-full h-9 bg-zinc-900 text-white text-xs font-semibold rounded hover:bg-zinc-800 disabled:opacity-60"
             >
               Login
             </button>

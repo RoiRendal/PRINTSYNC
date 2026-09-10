@@ -33,4 +33,7 @@ export interface LoginInput {
   password: string;
 }
 
-export interface SessionUser extends UserSummary {}
+export interface SessionUser extends UserSummary {
+  roleId: string;
+  permissions: string[];
+}

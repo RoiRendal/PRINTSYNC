@@ -8,7 +8,7 @@ export interface ApiClient {
   delete<TResponse = void>(path: string): Promise<TResponse>;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 async function parseResponse(response: Response): Promise<unknown> {
   if (response.status === 204) return undefined;

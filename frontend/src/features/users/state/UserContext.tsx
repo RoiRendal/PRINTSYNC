@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { usersApi } from '../api/usersApi';
+import { ApiError } from '../../../shared/api/errors';
 import { ADMIN_PAGE_ACCESS, getPageAccessKey, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 
 export type RbacRole = 'admin' | 'staff';
@@ -11,7 +13,6 @@ export interface UserRecord {
   role: RbacRole;
   position: string;
   createdAt: string;
-  password: string;
   access: PageAccessKey[];
 }
 
@@ -40,8 +41,10 @@ interface UpdateUserInput {
 interface UserContextValue {
   users: UserRecord[];
   currentUser: UserRecord | null;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+  isLoading: boolean;
+  authError: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   createUser: (payload: CreateUserInput) => void;
   updateUser: (id: string, payload: UpdateUserInput) => void;
   deleteUser: (id: string) => boolean;
@@ -50,8 +53,6 @@ interface UserContextValue {
   firstAdminId: string;
 }
 
-const USERS_STORAGE_KEY = 'printsync-users';
-const AUTH_USER_STORAGE_KEY = 'printsync-auth-user';
 const FIRST_ADMIN_ID = 'u-admin-1';
 
 const normalizeAccess = (role: RbacRole, access?: PageAccessKey[]) => {
@@ -70,7 +71,6 @@ const INITIAL_USERS: UserRecord[] = [
     role: 'admin',
     position: 'System Administrator',
     createdAt: '2026-01-05',
-    password: 'admin123',
     access: ADMIN_PAGE_ACCESS,
   },
   {
@@ -81,7 +81,6 @@ const INITIAL_USERS: UserRecord[] = [
     role: 'staff',
     position: 'Print Technician',
     createdAt: '2026-02-14',
-    password: 'staff123',
     access: STAFF_PAGE_ACCESS,
   },
   {
@@ -92,7 +91,6 @@ const INITIAL_USERS: UserRecord[] = [
     role: 'staff',
     position: 'Production Assistant',
     createdAt: '2026-03-03',
-    password: 'staff456',
     access: STAFF_PAGE_ACCESS,
   },
 ];
@@ -100,45 +98,45 @@ const INITIAL_USERS: UserRecord[] = [
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [users, setUsers] = useState<UserRecord[]>(() => {
-    const stored = localStorage.getItem(USERS_STORAGE_KEY);
-    if (!stored) {
-      return INITIAL_USERS;
-    }
-    try {
-      const parsed = JSON.parse(stored) as UserRecord[];
-      if (!parsed.length) {
-        return INITIAL_USERS;
-      }
-      return parsed.map((user) => ({
-        ...user,
-        access: normalizeAccess(user.role, user.access),
-      }));
-    } catch {
-      return INITIAL_USERS;
-    }
-  });
+  const [users, setUsers] = useState<UserRecord[]>(INITIAL_USERS);
+  const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
-    return localStorage.getItem(AUTH_USER_STORAGE_KEY);
-  });
-
-  useEffect(() => {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
+  const toUserRecord = (user: Awaited<ReturnType<typeof usersApi.session>>): UserRecord | null => {
+    if (!user) return null;
+    const role: RbacRole = user.permissions.includes('users.manage') ? 'admin' : 'staff';
+    const access = user.permissions
+      .map((permission) => permission.split('.')[0])
+      .filter((permission): permission is PageAccessKey => ADMIN_PAGE_ACCESS.includes(permission as PageAccessKey));
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role,
+      position: user.position,
+      createdAt: '',
+      access: normalizeAccess(role, access),
+    };
+  };
 
   useEffect(() => {
-    if (currentUserId) {
-      localStorage.setItem(AUTH_USER_STORAGE_KEY, currentUserId);
-      return;
-    }
-    localStorage.removeItem(AUTH_USER_STORAGE_KEY);
-  }, [currentUserId]);
-
-  const currentUser = useMemo(
-    () => users.find((user) => user.id === currentUserId) ?? null,
-    [users, currentUserId]
-  );
+    let isMounted = true;
+    void usersApi.session()
+      .then((session) => {
+        if (isMounted) setCurrentUser(toUserRecord(session));
+      })
+      .catch((error: unknown) => {
+        if (isMounted && (!(error instanceof ApiError) || error.status !== 401)) {
+          setAuthError('Unable to restore your session.');
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   const getDefaultAccess = (role: RbacRole) => normalizeAccess(role);
 
@@ -153,21 +151,21 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     return currentUser.access.includes(key);
   };
 
-  const login = (email: string, password: string) => {
-    const match = users.find(
-      (user) => user.email.toLowerCase() === email.toLowerCase().trim() && user.password === password
-    );
-
-    if (!match) {
+  const login = async (email: string, password: string) => {
+    setAuthError(null);
+    try {
+      const sessionUser = await usersApi.login({ email, password });
+      setCurrentUser(toUserRecord(sessionUser));
+      return true;
+    } catch (error: unknown) {
+      setAuthError(error instanceof ApiError && error.status === 401 ? 'Invalid email or password.' : 'Unable to sign in right now.');
       return false;
     }
-
-    setCurrentUserId(match.id);
-    return true;
   };
 
-  const logout = () => {
-    setCurrentUserId(null);
+  const logout = async () => {
+    await usersApi.logout();
+    setCurrentUser(null);
   };
 
   const createUser = (payload: CreateUserInput) => {
@@ -180,19 +178,19 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       role: payload.role,
       position: payload.position.trim(),
       createdAt,
-      password: payload.password,
       access: normalizeAccess(payload.role, payload.access),
     };
     setUsers((prev) => [newUser, ...prev]);
   };
 
   const updateUser = (id: string, payload: UpdateUserInput) => {
+    const { password: _password, ...safePayload } = payload;
     setUsers((prev) =>
       prev.map((user) =>
         user.id === id
           ? {
               ...user,
-              ...payload,
+              ...safePayload,
               email: payload.email.trim().toLowerCase(),
               name: payload.name.trim(),
               phone: payload.phone.trim(),
@@ -209,7 +207,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       return false;
     }
     setUsers((prev) => prev.filter((user) => user.id !== id));
-    setCurrentUserId((prev) => (prev === id ? null : prev));
+    setCurrentUser((prev) => (prev?.id === id ? null : prev));
     return true;
   };
 
@@ -218,6 +216,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         users,
         currentUser,
+        isLoading,
+        authError,
         login,
         logout,
         createUser,
