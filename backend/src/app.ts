@@ -10,6 +10,7 @@ import { healthRouter } from './routes/health.routes.js';
 import { inventoryRouter } from './routes/inventory.routes.js';
 import { designsRouter } from './routes/designs.routes.js';
 import { ordersRouter } from './routes/orders.routes.js';
+import { paymentsRouter } from './routes/payments.routes.js';
 import { readyRouter } from './routes/ready.routes.js';
 import { usersRouter } from './routes/users.routes.js';
 
@@ -28,6 +29,7 @@ export function createApp() {
   app.use('/api/v1/inventory', inventoryRouter);
   app.use('/api/v1/designs', designsRouter);
   app.use('/api/v1/orders', ordersRouter);
+  app.use('/api/v1/payments', paymentsRouter);
   app.use('/api/v1/users', usersRouter);
   app.use(notFound);
   app.use(errorHandler);
