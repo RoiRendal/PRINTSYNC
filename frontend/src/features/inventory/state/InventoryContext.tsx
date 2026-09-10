@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { MOCK_INVENTORY } from '../data/mockInventory';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { inventoryApi } from '../api/inventoryApi';
 import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../types';
 
 interface InventoryContextValue {
@@ -12,24 +12,41 @@ interface InventoryContextValue {
 const InventoryContext = createContext<InventoryContextValue | undefined>(undefined);
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<InventoryItem[]>(MOCK_INVENTORY);
+  const [items, setItems] = useState<InventoryItem[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    void inventoryApi.list().then((inventory) => {
+      if (mounted) setItems(inventory);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const addItem = (newItem: CreateInventoryItem) => {
-    const item: InventoryItem = {
-      ...newItem,
-      id: `INV-${String(items.length + 1).padStart(3, '0')}`,
-    };
-    setItems((previousItems) => [...previousItems, item]);
+    void inventoryApi.create(newItem).then((item) => {
+      setItems((previousItems) => [...previousItems, item]);
+    });
   };
 
   const updateItem = (id: string, updatedItem: UpdateInventoryItem) => {
-    setItems((previousItems) => previousItems.map((item) => (
-      item.id === id ? { ...item, ...updatedItem } : item
-    )));
+    const existingItem = items.find((item) => item.id === id);
+    const nextStock = updatedItem.stock ?? existingItem?.stock;
+    const { stock: _stock, ...details } = updatedItem;
+    void inventoryApi.update(id, details).then((item) => {
+      if (nextStock === undefined || nextStock === item.stock) {
+        setItems((previousItems) => previousItems.map((current) => current.id === id ? item : current));
+        return;
+      }
+      void inventoryApi.adjust(id, { quantity: nextStock - item.stock, reason: 'Inventory count correction' }).then((adjustedItem) => {
+        setItems((previousItems) => previousItems.map((current) => current.id === id ? adjustedItem : current));
+      });
+    });
   };
 
   const deleteItem = (id: string) => {
-    setItems((previousItems) => previousItems.filter((item) => item.id !== id));
+    void inventoryApi.remove(id).then(() => {
+      setItems((previousItems) => previousItems.filter((item) => item.id !== id));
+    });
   };
 
   return (

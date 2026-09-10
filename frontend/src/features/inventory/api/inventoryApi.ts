@@ -6,6 +6,8 @@ export function createInventoryApi(client: ApiClient = apiClient) {
     list: () => client.get<InventoryItem[]>('/inventory'),
     create: (payload: CreateInventoryItem) => client.post<InventoryItem, CreateInventoryItem>('/inventory', payload),
     update: (id: string, payload: UpdateInventoryItem) => client.patch<InventoryItem, UpdateInventoryItem>(`/inventory/${id}`, payload),
+    adjust: (id: string, payload: { quantity: number; reason: string }) =>
+      client.post<InventoryItem, { quantity: number; reason: string }>(`/inventory/${id}/movements`, payload),
     remove: (id: string) => client.delete<void>(`/inventory/${id}`),
   };
 }
