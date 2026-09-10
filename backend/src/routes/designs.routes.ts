@@ -7,6 +7,7 @@ import { createDesign, deleteDesign, listDesigns, updateDesign } from '../module
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { uploadDesignAsset } from '../services/designAssetService.js';
 
 export const designsRouter = Router();
 
@@ -57,4 +58,19 @@ designsRouter.delete('/:id', authenticate, requirePermission('designs.manage'), 
   await deleteDesign(getSupabase(), designId);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.deleted', entityType: 'design', entityId: designId });
   response.status(204).send();
+});
+
+const assetSchema = z.object({
+  dataUrl: z.string().min(1),
+  fileName: z.string().trim().min(1),
+  contentType: z.string().trim().min(1),
+  sizeBytes: z.number().int().positive(),
+});
+
+designsRouter.post('/assets', authenticate, requirePermission('designs.manage'), async (request, response) => {
+  const parsed = assetSchema.safeParse(request.body);
+  if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_ASSET', 'The design image is invalid.');
+  const asset = await uploadDesignAsset(getSupabase(), parsed.data, request.auth.user.id);
+  await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'design.asset_uploaded', entityType: 'design_asset', metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes } });
+  sendSuccess(response, asset, 201);
 });

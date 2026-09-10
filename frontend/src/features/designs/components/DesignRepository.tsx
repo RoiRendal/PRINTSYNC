@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } from 'lucide-react';
 import { useDesigns } from '../state/DesignContext';
+import { designsApi } from '../api/designsApi';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import type { CreateDesign, Design } from '../types';
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('The selected image could not be read.'));
+    reader.readAsDataURL(file);
+  });
+}
 
 export function DesignRepository() {
   const { designs, addDesign, deleteDesign, updateDesign } = useDesigns();
@@ -27,6 +37,9 @@ export function DesignRepository() {
   
   const [tagInput, setTagInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
+  const [selectedAsset, setSelectedAsset] = useState<File | null>(null);
+  const [assetError, setAssetError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const filteredDesigns = designs.filter(design => 
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -34,14 +47,52 @@ export function DesignRepository() {
     design.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDesign.imageUrl) {
-      newDesign.imageUrl = DEFAULT_NEW_DESIGN_IMAGE_URL;
+    setAssetError('');
+    setIsUploading(true);
+    let imageUrl = newDesign.imageUrl || DEFAULT_NEW_DESIGN_IMAGE_URL;
+    let assetType: string | null = null;
+    let assetSizeBytes: number | null = null;
+
+    try {
+      if (selectedAsset) {
+        const dataUrl = await readFileAsDataUrl(selectedAsset);
+        const uploaded = await designsApi.uploadAsset({
+          dataUrl,
+          fileName: selectedAsset.name,
+          contentType: selectedAsset.type,
+          sizeBytes: selectedAsset.size,
+        });
+        imageUrl = uploaded.imageUrl;
+        assetType = uploaded.assetType;
+        assetSizeBytes = uploaded.assetSizeBytes;
+      }
+      addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
+      setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });
+      setSelectedAsset(null);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      setAssetError(error instanceof Error ? error.message : 'The image could not be uploaded.');
+    } finally {
+      setIsUploading(false);
     }
-    addDesign(newDesign);
-    setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });
-    setIsAddModalOpen(false);
+  };
+
+  const handleAssetSelected = (file: File | undefined) => {
+    setAssetError('');
+    if (!file) return;
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+    if (!allowedTypes.includes(file.type)) {
+      setAssetError('Use a PNG, JPG, WebP, or SVG image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAssetError('Keep the image under 5 MB.');
+      return;
+    }
+    setSelectedAsset(file);
+    setNewDesign((previous) => ({ ...previous, imageUrl: '' }));
   };
 
   const handleAddTag = () => {
@@ -263,6 +314,19 @@ export function DesignRepository() {
 
           <div className="space-y-1">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
+              Upload Image (Optional)
+            </label>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-xs text-gray-700 dark:text-zinc-200"
+              onChange={(event) => handleAssetSelected(event.target.files?.[0])}
+            />
+            {selectedAsset && <p className="text-[10px] text-gray-500 dark:text-zinc-400">Selected: {selectedAsset.name}</p>}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
               Image URL (Optional)
             </label>
             <input
@@ -273,6 +337,8 @@ export function DesignRepository() {
               onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })}
             />
           </div>
+
+          {assetError && <p className="text-[11px] text-red-600 dark:text-red-400">{assetError}</p>}
 
           <div className="space-y-2">
             <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 block">
@@ -317,9 +383,10 @@ export function DesignRepository() {
             </button>
             <button
               type="submit"
+              disabled={isUploading}
               className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors"
             >
-              Upload Design
+              {isUploading ? 'Uploading...' : 'Upload Design'}
             </button>
           </div>
         </form>
