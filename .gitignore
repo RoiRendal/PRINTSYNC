@@ -1,5 +1,4 @@
-to-do_phases.txt
-**/postgre-supabase-data/
+**/never-push-this-dump-folder/
 
 # Dependencies and generated output
 **/node_modules/
