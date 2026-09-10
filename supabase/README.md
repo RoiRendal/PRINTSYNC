@@ -24,6 +24,8 @@ This migration does not create application users. Users should be created throug
 
 The next migration adds the `pos.read` permission and an append-only `audit_logs` table. Audit records capture authentication and user-management events, while passwords, access tokens, and refresh tokens are never stored. Audit logs are readable only by admins through database row-level security; the backend writes them with its service role.
 
+The grants migration explicitly gives the backend service role access to the application tables. This is required for provisioning and user management when database role grants have been restricted on the project.
+
 ## Provision an application user
 
 After applying both migrations, create the first admin or repair a user's profile through the backend provisioning command. The command requires the service-role key and reads credentials only from local environment variables; it does not use the frontend mock users or commit passwords.

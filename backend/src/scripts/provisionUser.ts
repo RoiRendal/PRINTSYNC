@@ -40,7 +40,13 @@ async function main() {
     .select('id')
     .eq('name', input.role)
     .single();
-  if (roleError || !role) throw new Error(`The ${input.role} role is not configured. Apply the migrations first.`);
+  if (roleError || !role) {
+    const { data: configuredRoles } = await supabase.from('roles').select('name').order('name');
+    const roleNames = configuredRoles?.map((configuredRole) => configuredRole.name).join(', ') || 'none';
+    throw new Error(
+      `The ${input.role} role is not configured. Database error: ${roleError?.message ?? 'role not found'}. Configured roles: ${roleNames}.`,
+    );
+  }
 
   const { data: authUsers, error: listError } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (listError) throw new Error(`Could not inspect Auth users: ${listError.message}`);
