@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
+import { getSupabaseAdminClient, getSupabaseAuthClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { clearAuthCookies, getCookieValue, ACCESS_TOKEN_COOKIE, setAuthCookies } from '../shared/authCookies.js';
 import { AppError } from '../shared/errors.js';
@@ -17,7 +17,8 @@ const loginSchema = z.object({
 
 authRouter.post('/login', async (request, response) => {
   const supabase = getSupabaseAdminClient();
-  if (!supabase) {
+  const authClient = getSupabaseAuthClient();
+  if (!supabase || !authClient) {
     throw new AppError(503, 'SUPABASE_NOT_CONFIGURED', 'Supabase has not been configured for this environment.');
   }
 
@@ -26,7 +27,7 @@ authRouter.post('/login', async (request, response) => {
     throw new AppError(400, 'INVALID_LOGIN_REQUEST', 'A valid email and password are required.');
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword(parsedBody.data);
+  const { data, error } = await authClient.auth.signInWithPassword(parsedBody.data);
   if (error || !data.session || !data.user) {
     await writeAuditLog(supabase, {
       action: 'auth.login_failed',

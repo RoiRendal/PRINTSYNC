@@ -26,6 +26,8 @@ The next migration adds the `pos.read` permission and an append-only `audit_logs
 
 The grants migration explicitly gives the backend service role access to the application tables. This is required for provisioning and user management when database role grants have been restricted on the project.
 
+Audit writes use a narrowly scoped `SECURITY DEFINER` function so the backend does not need direct table-write privileges for `audit_logs`. Only the service role can execute that function.
+
 ## Provision an application user
 
 After applying both migrations, create the first admin or repair a user's profile through the backend provisioning command. The command requires the service-role key and reads credentials only from local environment variables; it does not use the frontend mock users or commit passwords.

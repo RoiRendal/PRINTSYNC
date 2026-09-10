@@ -11,14 +11,14 @@ interface AuditLogInput {
 }
 
 export async function writeAuditLog(supabase: SupabaseClient, input: AuditLogInput): Promise<boolean> {
-  const { error } = await supabase.from('audit_logs').insert({
-    actor_id: input.actorId ?? null,
-    action: input.action,
-    entity_type: input.entityType,
-    entity_id: input.entityId ?? null,
-    metadata: input.metadata ?? {},
-    ip_address: input.ipAddress ?? null,
-    user_agent: input.userAgent ?? null,
+  const { error } = await supabase.rpc('write_audit_log', {
+    p_actor_id: input.actorId ?? null,
+    p_action: input.action,
+    p_entity_type: input.entityType,
+    p_entity_id: input.entityId ?? null,
+    p_metadata: input.metadata ?? {},
+    p_ip_address: input.ipAddress ?? null,
+    p_user_agent: input.userAgent ?? null,
   });
 
   if (error) {
