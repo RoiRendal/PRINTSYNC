@@ -37,3 +37,7 @@ export interface SessionUser extends UserSummary {
   roleId: string;
   permissions: string[];
 }
+
+export interface AuthResponse {
+  user: SessionUser;
+}

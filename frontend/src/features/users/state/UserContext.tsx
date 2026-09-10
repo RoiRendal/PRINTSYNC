@@ -158,7 +158,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       setCurrentUser(toUserRecord(sessionUser));
       return true;
     } catch (error: unknown) {
-      setAuthError(error instanceof ApiError && error.status === 401 ? 'Invalid email or password.' : 'Unable to sign in right now.');
+      if (error instanceof ApiError) {
+        setAuthError(error.status === 401 ? 'Invalid email or password.' : `Sign-in failed (${error.status}): ${error.message}`);
+      } else if (error instanceof TypeError) {
+        setAuthError('The backend could not be reached. Start the backend with "npm run dev" in the backend folder.');
+      } else {
+        setAuthError('Unable to sign in right now.');
+      }
       return false;
     }
   };
