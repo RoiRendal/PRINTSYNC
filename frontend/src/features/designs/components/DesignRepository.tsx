@@ -5,6 +5,8 @@ import { designsApi } from '../api/designsApi';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
+import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import type { CreateDesign, Design } from '../types';
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -17,7 +19,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 export function DesignRepository() {
-  const { designs, addDesign, deleteDesign, updateDesign } = useDesigns();
+  const { designs, isLoading, error, refresh, addDesign, deleteDesign, updateDesign } = useDesigns();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -168,8 +170,11 @@ export function DesignRepository() {
     }
   };
 
+  if (isLoading) return <LoadingState label="Loading designs" className="min-h-64" />;
+
   return (
     <div className="space-y-6">
+      {error && <ErrorState message={error} onRetry={refresh} />}
       <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
         <div className="w-full md:max-w-md relative">
           <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

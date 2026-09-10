@@ -5,11 +5,13 @@ import type { CreateInventoryItem, InventoryItem } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
+import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { useInventory } from '../state/InventoryContext';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 
 export default function Inventory() {
-  const { items, addItem, updateItem, deleteItem } = useInventory();
+  const { items, isLoading, error, refresh, addItem, updateItem, deleteItem } = useInventory();
   const [viewMode, setViewMode] = useState<'inventory' | 'designs'>('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -99,6 +101,9 @@ export default function Inventory() {
       setItemToDelete(null);
     }
   };
+
+  if (isLoading) return <LoadingState label="Loading inventory" className="min-h-64" />;
+  if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
     <div className="space-y-4">
