@@ -23,11 +23,11 @@ function AuthenticatedDataProviders({ children }: { children: React.ReactNode })
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <BusinessBrandingProvider>
-        <UserProvider>
+      <UserProvider>
+        <BusinessBrandingProvider>
           <AuthenticatedDataProviders>{children}</AuthenticatedDataProviders>
-        </UserProvider>
-      </BusinessBrandingProvider>
+        </BusinessBrandingProvider>
+      </UserProvider>
     </ThemeProvider>
   );
 }

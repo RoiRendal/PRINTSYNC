@@ -1,69 +1,60 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../shared/constants/branding';
-
-const STORAGE_KEY = 'printsync-business-display-name';
-const LOGO_STORAGE_KEY = 'printsync-business-logo-data-url';
+import { settingsApi } from '../../features/settings/api/settingsApi';
+import { ApiError } from '../../shared/api/errors';
+import { useUserContext } from '../../features/users/state/UserContext';
 
 const MAX_CUSTOM_LOGO_BYTES = 900_000;
 
 type BusinessBrandingContextValue = {
   businessDisplayName: string;
-  setBusinessDisplayName: (name: string) => void;
+  setBusinessDisplayName: (name: string) => Promise<void>;
   /** File from `public/brand-logo.png` or a data URL saved from Settings. */
   effectiveBusinessLogoUrl: string;
   customBusinessLogoDataUrl: string | null;
-  setCustomBusinessLogoDataUrl: (dataUrl: string | null) => void;
+  setCustomBusinessLogoDataUrl: (dataUrl: string | null) => Promise<void>;
   maxCustomLogoBytes: number;
+  brandingError: string | null;
 };
 
 const BusinessBrandingContext = createContext<BusinessBrandingContextValue | null>(null);
 
-function readStoredName(): string {
-  if (typeof window === 'undefined') {
-    return DEFAULT_BUSINESS_DISPLAY_NAME;
-  }
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw == null || raw.trim() === '') {
-    return DEFAULT_BUSINESS_DISPLAY_NAME;
-  }
-  return raw.trim();
-}
-
-function readStoredLogoDataUrl(): string | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  const raw = localStorage.getItem(LOGO_STORAGE_KEY);
-  if (raw == null || raw.trim() === '') {
-    return null;
-  }
-  const trimmed = raw.trim();
-  if (!trimmed.startsWith('data:image/')) {
-    return null;
-  }
-  return trimmed;
-}
-
 export function BusinessBrandingProvider({ children }: { children: React.ReactNode }) {
-  const [businessDisplayName, setBusinessDisplayNameState] = useState(readStoredName);
-  const [customBusinessLogoDataUrl, setCustomBusinessLogoDataUrlState] = useState<string | null>(readStoredLogoDataUrl);
+  const [businessDisplayName, setBusinessDisplayNameState] = useState(DEFAULT_BUSINESS_DISPLAY_NAME);
+  const [customBusinessLogoDataUrl, setCustomBusinessLogoDataUrlState] = useState<string | null>(null);
+  const [brandingError, setBrandingError] = useState<string | null>(null);
+  const { currentUser } = useUserContext();
 
-  const setBusinessDisplayName = useCallback((name: string) => {
+  useEffect(() => {
+    if (!currentUser) return;
+    let mounted = true;
+    void settingsApi.getBusiness()
+      .then((settings) => {
+        if (!mounted) return;
+        setBusinessDisplayNameState(settings.businessName);
+        setCustomBusinessLogoDataUrlState(settings.logoUrl);
+        setBrandingError(null);
+      })
+      .catch((error: unknown) => {
+        if (mounted) setBrandingError(error instanceof ApiError ? error.message : 'Business branding could not be loaded.');
+      });
+    return () => { mounted = false; };
+  }, [currentUser]);
+
+  const setBusinessDisplayName = useCallback(async (name: string) => {
     const trimmed = name.trim();
     const next = trimmed === '' ? DEFAULT_BUSINESS_DISPLAY_NAME : trimmed;
+    const settings = await settingsApi.updateBusiness({ businessName: next, logoUrl: customBusinessLogoDataUrl });
     setBusinessDisplayNameState(next);
-    localStorage.setItem(STORAGE_KEY, next);
-  }, []);
+    setCustomBusinessLogoDataUrlState(settings.logoUrl);
+    setBrandingError(null);
+  }, [customBusinessLogoDataUrl]);
 
-  const setCustomBusinessLogoDataUrl = useCallback((dataUrl: string | null) => {
-    if (dataUrl == null || dataUrl === '') {
-      localStorage.removeItem(LOGO_STORAGE_KEY);
-      setCustomBusinessLogoDataUrlState(null);
-      return;
-    }
-    localStorage.setItem(LOGO_STORAGE_KEY, dataUrl);
-    setCustomBusinessLogoDataUrlState(dataUrl);
-  }, []);
+  const setCustomBusinessLogoDataUrl = useCallback(async (dataUrl: string | null) => {
+    const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, logoUrl: dataUrl });
+    setCustomBusinessLogoDataUrlState(settings.logoUrl);
+    setBrandingError(null);
+  }, [businessDisplayName]);
 
   const effectiveBusinessLogoUrl = customBusinessLogoDataUrl ?? BRAND_LOGO_URL;
 
@@ -75,8 +66,9 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
       customBusinessLogoDataUrl,
       setCustomBusinessLogoDataUrl,
       maxCustomLogoBytes: MAX_CUSTOM_LOGO_BYTES,
+      brandingError,
     }),
-    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl],
+    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl, brandingError],
   );
 
   return (

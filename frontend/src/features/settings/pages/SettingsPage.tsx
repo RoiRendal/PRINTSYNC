@@ -16,6 +16,7 @@ export default function Settings() {
     customBusinessLogoDataUrl,
     setCustomBusinessLogoDataUrl,
     maxCustomLogoBytes,
+    brandingError,
   } = useBusinessBranding();
   const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
   const [logoUploadError, setLogoUploadError] = useState('');
@@ -56,8 +57,12 @@ export default function Settings() {
     }, 2000);
   };
 
-  const handleSaveCompanyName = () => {
-    setBusinessDisplayName(companyDraft);
+  const handleSaveCompanyName = async () => {
+    try {
+      await setBusinessDisplayName(companyDraft);
+    } catch (error) {
+      setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be saved.');
+    }
   };
 
   const handleBusinessLogoFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +83,9 @@ export default function Settings() {
     reader.onloadend = () => {
       const result = reader.result;
       if (typeof result === 'string') {
-        setCustomBusinessLogoDataUrl(result);
+        void setCustomBusinessLogoDataUrl(result).catch((error: unknown) => {
+          setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be saved.');
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -125,7 +132,9 @@ export default function Settings() {
                 type="button"
                 onClick={() => {
                   setCompanyDraft(DEFAULT_BUSINESS_DISPLAY_NAME);
-                  setBusinessDisplayName(DEFAULT_BUSINESS_DISPLAY_NAME);
+                  void setBusinessDisplayName(DEFAULT_BUSINESS_DISPLAY_NAME).catch((error: unknown) => {
+                    setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be reset.');
+                  });
                 }}
                 className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
@@ -175,7 +184,9 @@ export default function Settings() {
                       type="button"
                       onClick={() => {
                         setLogoUploadError('');
-                        setCustomBusinessLogoDataUrl(null);
+                        void setCustomBusinessLogoDataUrl(null).catch((error: unknown) => {
+                          setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be removed.');
+                        });
                       }}
                       className="px-4 py-2.5 rounded text-xs font-bold uppercase bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                     >
@@ -183,8 +194,8 @@ export default function Settings() {
                     </button>
                   )}
                 </div>
-                {logoUploadError && (
-                  <p className="text-[11px] text-red-600 dark:text-red-400">{logoUploadError}</p>
+                {(logoUploadError || brandingError) && (
+                  <p className="text-[11px] text-red-600 dark:text-red-400">{logoUploadError || brandingError}</p>
                 )}
               </div>
             </div>
