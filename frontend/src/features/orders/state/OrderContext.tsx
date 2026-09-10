@@ -1,43 +1,73 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { MOCK_ORDERS } from '../data/mockOrders';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { ordersApi } from '../api/ordersApi';
+import { ApiError } from '../../../shared/api/errors';
 import type { CreateOrder, Order, UpdateOrder } from '../types';
 
 interface OrderContextValue {
   orders: Order[];
-  addOrder: (order: CreateOrder) => string;
-  updateOrder: (id: string, order: UpdateOrder) => void;
-  deleteOrder: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => void;
+  addOrder: (order: CreateOrder) => Promise<Order>;
+  updateOrder: (id: string, order: UpdateOrder) => Promise<Order>;
+  deleteOrder: (id: string) => Promise<void>;
 }
 
 const OrderContext = createContext<OrderContextValue | undefined>(undefined);
 
 export function OrderProvider({ children }: { children: ReactNode }) {
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const addOrder = (newOrder: CreateOrder) => {
-    const id = `ORD-${Date.now()}`;
-    const order: Order = {
-      ...newOrder,
-      id,
-      date: new Date().toISOString().split('T')[0] ?? '',
-      status: newOrder.status || 'Pending',
-    };
-    setOrders((previousOrders) => [order, ...previousOrders]);
-    return id;
+  useEffect(() => {
+    let mounted = true;
+    setIsLoading(true);
+    void ordersApi.list()
+      .then((loadedOrders) => {
+        if (mounted) {
+          setOrders(loadedOrders);
+          setError(null);
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (!mounted) return;
+        setError(requestError instanceof ApiError ? requestError.message : 'Orders could not be loaded.');
+      })
+      .finally(() => {
+        if (mounted) setIsLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [refreshKey]);
+
+  const addOrder = async (newOrder: CreateOrder) => {
+    const lineItems = newOrder.lineItems?.length
+      ? newOrder.lineItems.map((item) => ({ ...item, unitPrice: item.unitPrice ?? 0 }))
+      : [{ name: newOrder.item, quantity: newOrder.quantity, designId: newOrder.designId, unitPrice: 0 }];
+    const createdOrder = await ordersApi.create({ ...newOrder, lineItems });
+    setOrders((previousOrders) => [createdOrder, ...previousOrders]);
+    setError(null);
+    return createdOrder;
   };
 
-  const updateOrder = (id: string, updatedOrder: UpdateOrder) => {
+  const updateOrder = async (id: string, updatedOrder: UpdateOrder) => {
+    const updated = await ordersApi.update(id, updatedOrder);
     setOrders((previousOrders) => previousOrders.map((order) => (
-      order.id === id ? { ...order, ...updatedOrder } : order
+      order.id === id ? updated : order
     )));
+    setError(null);
+    return updated;
   };
 
-  const deleteOrder = (id: string) => {
+  const deleteOrder = async (id: string) => {
+    await ordersApi.remove(id);
     setOrders((previousOrders) => previousOrders.filter((order) => order.id !== id));
+    setError(null);
   };
 
   return (
-    <OrderContext.Provider value={{ orders, addOrder, updateOrder, deleteOrder }}>
+    <OrderContext.Provider value={{ orders, isLoading, error, refresh: () => setRefreshKey((value) => value + 1), addOrder, updateOrder, deleteOrder }}>
       {children}
     </OrderContext.Provider>
   );

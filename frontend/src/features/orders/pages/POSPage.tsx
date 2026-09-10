@@ -279,7 +279,7 @@ export default function POS() {
     setIsCheckoutModalOpen(true);
   };
 
-  const finalizeTransaction = () => {
+  const finalizeTransaction = async () => {
     if (cart.length === 0) return;
     if (posMode === 'custom' && !customerName) {
       alert('Please enter customer name for custom orders.');
@@ -354,12 +354,12 @@ export default function POS() {
           -1,
         );
 
-        updateOrder(editingOrderId, {
+        await updateOrder(editingOrderId, {
           ...preparedOrder,
           status: existingOrder?.status ?? 'Pending',
         });
       } else {
-        addOrder(preparedOrder);
+        await addOrder(preparedOrder);
 
         // Reduce stock of blanks
         cart.forEach(cartItem => {

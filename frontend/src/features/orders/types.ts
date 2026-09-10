@@ -5,6 +5,7 @@ export interface OrderLineItem {
   name: string;
   quantity: number;
   designId?: string;
+  unitPrice?: number;
 }
 
 export type OrderStatus =

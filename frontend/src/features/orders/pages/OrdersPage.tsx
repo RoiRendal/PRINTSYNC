@@ -5,6 +5,8 @@ import { useInventory } from '../../inventory/state/InventoryContext';
 import { useDesigns } from '../../designs/state/DesignContext';
 import { useOrders } from '../state/OrderContext';
 import { Modal } from '../../../shared/components/ui/Modal';
+import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import type { Order, OrderLineItem } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { isCustomOrder } from '../utils/orderType';
@@ -30,7 +32,7 @@ const workPhases: Order['status'][] = [
 export default function Orders() {
   const { items: inventoryItems } = useInventory();
   const { designs } = useDesigns();
-  const { orders, updateOrder, deleteOrder } = useOrders();
+  const { orders, isLoading, error, refresh, updateOrder, deleteOrder } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -83,24 +85,28 @@ export default function Orders() {
     setSelectedLineItemIndex(0);
   }, [selectedLineItemIndex, selectedOrderLineItems.length]);
 
-  const updateOrderStatusByStep = (order: Order, direction: -1 | 1) => {
+  const updateOrderStatusByStep = async (order: Order, direction: -1 | 1) => {
     const currentIndex = workPhases.indexOf(order.status);
     if (currentIndex < 0) return;
     const nextIndex = Math.max(0, Math.min(workPhases.length - 1, currentIndex + direction));
     if (nextIndex === currentIndex) return;
     const nextStatus = workPhases[nextIndex];
     if (!nextStatus) return;
-    updateOrder(order.id, { status: nextStatus });
-    if (selectedOrder?.id === order.id) {
-      setSelectedOrder({ ...order, status: nextStatus });
+    try {
+      const updated = await updateOrder(order.id, { status: nextStatus });
+      if (selectedOrder?.id === order.id) setSelectedOrder(updated);
+    } catch {
+      return;
     }
   };
 
-  const handleDeleteOrder = (order: Order) => {
+  const handleDeleteOrder = async (order: Order) => {
     if (!window.confirm(`Delete order ${order.id} for ${order.customer}?`)) return;
-    deleteOrder(order.id);
-    if (selectedOrder?.id === order.id) {
-      setSelectedOrder(null);
+    try {
+      await deleteOrder(order.id);
+      if (selectedOrder?.id === order.id) setSelectedOrder(null);
+    } catch {
+      return;
     }
   };
 
@@ -111,6 +117,9 @@ export default function Orders() {
       },
     });
   };
+
+  if (isLoading) return <LoadingState label="Loading orders" className="min-h-64" />;
+  if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
     <div className="space-y-4">
