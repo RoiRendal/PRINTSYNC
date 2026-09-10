@@ -116,7 +116,23 @@ export async function createOrder(supabase: SupabaseClient, input: OrderInput, a
   return getOrder(supabase, String((data as Record<string, unknown>).id));
 }
 
-export async function updateOrder(supabase: SupabaseClient, id: string, input: OrderUpdateInput): Promise<OrderRecord> {
+export async function updateOrder(supabase: SupabaseClient, id: string, input: OrderUpdateInput, actorId: string): Promise<OrderRecord> {
+  if (input.lineItems !== undefined) {
+    const existing = await getOrder(supabase, id);
+    const { data, error } = await supabase.rpc('replace_order_with_items', {
+      p_order_id: id,
+      p_customer: input.customer ?? existing.customer,
+      p_status: input.status ?? existing.status,
+      p_amount: input.amount ?? existing.amount,
+      p_notes: input.notes ?? existing.notes,
+      p_is_custom: input.isCustom ?? existing.isCustom,
+      p_items: input.lineItems,
+      p_actor_id: actorId,
+    });
+    if (error || !data) throw new AppError(400, 'ORDER_UPDATE_FAILED', error?.message ?? 'The order could not be updated.');
+    return getOrder(supabase, id);
+  }
+
   const updates: Record<string, unknown> = {};
   if (input.customer !== undefined) updates.customer = input.customer;
   if (input.status !== undefined) updates.status = input.status;
@@ -128,7 +144,7 @@ export async function updateOrder(supabase: SupabaseClient, id: string, input: O
   return getOrder(supabase, String(data.id));
 }
 
-export async function deleteOrder(supabase: SupabaseClient, id: string): Promise<void> {
-  const { error } = await supabase.from('orders').delete().eq('id', id);
-  if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', 'The order could not be deleted.');
+export async function deleteOrder(supabase: SupabaseClient, id: string, actorId: string): Promise<void> {
+  const { error } = await supabase.rpc('delete_order_with_items', { p_order_id: id, p_actor_id: actorId });
+  if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', error.message || 'The order could not be deleted.');
 }

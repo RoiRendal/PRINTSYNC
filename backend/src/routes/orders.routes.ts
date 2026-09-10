@@ -58,16 +58,17 @@ ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (
 
 ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), async (request, response) => {
   const parsed = updateSchema.safeParse(request.body);
-  if (!parsed.success) throw new AppError(400, 'INVALID_ORDER_REQUEST', 'The order details are invalid.');
+  if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_ORDER_REQUEST', 'The order details are invalid.');
   const orderId = getOrderId(request);
-  const order = await updateOrder(getSupabase(), orderId, parsed.data);
+  const order = await updateOrder(getSupabase(), orderId, parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.updated', entityType: 'order', entityId: order.id, metadata: { status: order.status } });
   sendSuccess(response, order);
 });
 
 ordersRouter.delete('/:id', authenticate, requirePermission('orders.delete'), async (request, response) => {
+  if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const orderId = getOrderId(request);
-  await deleteOrder(getSupabase(), orderId);
+  await deleteOrder(getSupabase(), orderId, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.deleted', entityType: 'order', entityId: orderId });
   response.status(204).send();
 });
