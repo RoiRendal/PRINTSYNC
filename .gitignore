@@ -11,3 +11,6 @@ to-do_phases.txt
 **/.env.*
 !**/.env.example
 **/*.log
+
+# Supabase CLI local metadata
+supabase/.temp/
