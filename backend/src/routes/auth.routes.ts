@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
-import { clearAuthCookies, setAuthCookies } from '../shared/authCookies.js';
+import { clearAuthCookies, getCookieValue, ACCESS_TOKEN_COOKIE, setAuthCookies } from '../shared/authCookies.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { loadAuthContext } from '../services/authService.js';
@@ -67,7 +67,25 @@ authRouter.post('/login', async (request, response) => {
   });
 });
 
-authRouter.post('/logout', (_request, response) => {
+authRouter.post('/logout', async (request, response) => {
+  const supabase = getSupabaseAdminClient();
+  const token = getCookieValue(request.header('cookie'), ACCESS_TOKEN_COOKIE);
+
+  if (supabase && token) {
+    const { data } = await supabase.auth.getUser(token);
+    if (data.user) {
+      await writeAuditLog(supabase, {
+        actorId: data.user.id,
+        action: 'auth.logout',
+        entityType: 'user',
+        entityId: data.user.id,
+        ipAddress: request.ip,
+        userAgent: request.get('user-agent'),
+      });
+      await supabase.auth.admin.signOut(token, 'global');
+    }
+  }
+
   clearAuthCookies(response);
   response.status(204).send();
 });
