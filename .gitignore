@@ -1,4 +1,5 @@
 to-do_phases.txt
+**/postgre-supabase-details/
 
 # Dependencies and generated output
 **/node_modules/

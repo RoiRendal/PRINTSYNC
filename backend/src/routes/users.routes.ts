@@ -5,6 +5,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { AppError } from '../shared/errors.js';
 import { createUser, deleteUser, listUsers, updateUser } from '../modules/users/users.service.js';
+import { writeAuditLog } from '../services/auditLogService.js';
 
 export const usersRouter = Router();
 
@@ -35,13 +36,33 @@ usersRouter.get('/', async (_request, response) => {
 usersRouter.post('/', async (request, response) => {
   const parsed = userSchema.safeParse(request.body);
   if (!parsed.success) throw new AppError(400, 'INVALID_USER_REQUEST', 'The user details are invalid.');
-  response.status(201).json({ data: await createUser(getSupabase(), parsed.data) });
+  const createdUser = await createUser(getSupabase(), parsed.data);
+  await writeAuditLog(getSupabase(), {
+    actorId: request.auth?.user.id,
+    action: 'user.created',
+    entityType: 'user',
+    entityId: createdUser.id,
+    metadata: { role: createdUser.role },
+    ipAddress: request.ip,
+    userAgent: request.get('user-agent'),
+  });
+  response.status(201).json({ data: createdUser });
 });
 
 usersRouter.patch('/:id', async (request, response) => {
   const parsed = userSchema.safeParse(request.body);
   if (!parsed.success) throw new AppError(400, 'INVALID_USER_REQUEST', 'The user details are invalid.');
-  response.json({ data: await updateUser(getSupabase(), request.params.id, parsed.data) });
+  const updatedUser = await updateUser(getSupabase(), request.params.id, parsed.data);
+  await writeAuditLog(getSupabase(), {
+    actorId: request.auth?.user.id,
+    action: 'user.updated',
+    entityType: 'user',
+    entityId: updatedUser.id,
+    metadata: { role: updatedUser.role },
+    ipAddress: request.ip,
+    userAgent: request.get('user-agent'),
+  });
+  response.json({ data: updatedUser });
 });
 
 usersRouter.delete('/:id', async (request, response) => {
@@ -49,5 +70,13 @@ usersRouter.delete('/:id', async (request, response) => {
     throw new AppError(400, 'SELF_DELETE_NOT_ALLOWED', 'You cannot delete your own user account.');
   }
   await deleteUser(getSupabase(), request.params.id);
+  await writeAuditLog(getSupabase(), {
+    actorId: request.auth?.user.id,
+    action: 'user.deleted',
+    entityType: 'user',
+    entityId: request.params.id,
+    ipAddress: request.ip,
+    userAgent: request.get('user-agent'),
+  });
   response.status(204).send();
 });

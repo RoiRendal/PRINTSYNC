@@ -6,6 +6,7 @@ import { clearAuthCookies, setAuthCookies } from '../shared/authCookies.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { loadAuthContext } from '../services/authService.js';
+import { writeAuditLog } from '../services/auditLogService.js';
 
 export const authRouter = Router();
 
@@ -27,6 +28,13 @@ authRouter.post('/login', async (request, response) => {
 
   const { data, error } = await supabase.auth.signInWithPassword(parsedBody.data);
   if (error || !data.session || !data.user) {
+    await writeAuditLog(supabase, {
+      action: 'auth.login_failed',
+      entityType: 'auth',
+      metadata: { email: parsedBody.data.email.toLowerCase() },
+      ipAddress: request.ip,
+      userAgent: request.get('user-agent'),
+    });
     response.status(401).json({
       error: {
         code: 'INVALID_CREDENTIALS',
@@ -37,6 +45,14 @@ authRouter.post('/login', async (request, response) => {
   }
 
   const auth = await loadAuthContext(supabase, data.user);
+  await writeAuditLog(supabase, {
+    actorId: data.user.id,
+    action: 'auth.login_succeeded',
+    entityType: 'user',
+    entityId: data.user.id,
+    ipAddress: request.ip,
+    userAgent: request.get('user-agent'),
+  });
   setAuthCookies(response, data.session.access_token, data.session.refresh_token);
   sendSuccess(response, {
     user: {
