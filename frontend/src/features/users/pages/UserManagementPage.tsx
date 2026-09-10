@@ -3,6 +3,8 @@ import { Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { RbacRole, UserRecord, useUserContext } from '../state/UserContext';
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
+import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 
 interface FormState {
   name: string;
@@ -27,7 +29,7 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function UserManagement() {
-  const { users, createUser, updateUser, deleteUser, getDefaultAccess, firstAdminId } = useUserContext();
+  const { users, isLoading, userError, refreshUsers, createUser, updateUser, deleteUser, getDefaultAccess, firstAdminId } = useUserContext();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -78,29 +80,27 @@ export default function UserManagement() {
     setForm(EMPTY_FORM);
   };
 
-  const submitForm = (event: React.FormEvent<HTMLFormElement>) => {
+  const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (editingUserId) {
-      updateUser(editingUserId, {
-        ...form,
-        createdAt: form.createdAt || new Date().toISOString().slice(0, 10),
-      });
-    } else {
-      createUser(form);
+    try {
+      if (editingUserId) {
+        await updateUser(editingUserId, {
+          ...form,
+          createdAt: form.createdAt || new Date().toISOString().slice(0, 10),
+        });
+      } else {
+        await createUser(form);
+      }
+      closeModal();
+    } catch {
+      return;
     }
-    closeModal();
   };
 
   const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
 
-  const toggleAccess = (key: PageAccessKey) => {
-    setForm((prev) => {
-      const exists = prev.access.includes(key);
-      const next = exists ? prev.access.filter((entry) => entry !== key) : [...prev.access, key];
-      const allowed = prev.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
-      return { ...prev, access: next.filter((entry) => allowed.includes(entry)) };
-    });
-  };
+  if (isLoading) return <LoadingState label="Loading users" className="min-h-64" />;
+  if (userError) return <ErrorState message={userError} onRetry={refreshUsers} className="min-h-64" />;
 
   return (
     <div className="space-y-4">
@@ -267,7 +267,7 @@ export default function UserManagement() {
             className="border border-gray-200 dark:border-zinc-700 rounded px-3 py-2 text-xs bg-white dark:bg-zinc-900"
           />
           <input
-            required
+            required={!editingUserId}
             type="password"
             value={form.password}
             onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
@@ -289,7 +289,7 @@ export default function UserManagement() {
                     <input
                       type="checkbox"
                       checked={form.access.includes(key)}
-                      onChange={() => toggleAccess(key)}
+                      disabled
                       className="h-3.5 w-3.5 rounded border border-gray-300 dark:border-zinc-700"
                     />
                     {item.label}

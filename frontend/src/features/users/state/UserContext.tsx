@@ -43,17 +43,17 @@ interface UserContextValue {
   currentUser: UserRecord | null;
   isLoading: boolean;
   authError: string | null;
+  userError: string | null;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  createUser: (payload: CreateUserInput) => void;
-  updateUser: (id: string, payload: UpdateUserInput) => void;
-  deleteUser: (id: string) => boolean;
+  refreshUsers: () => void;
+  createUser: (payload: CreateUserInput) => Promise<UserRecord>;
+  updateUser: (id: string, payload: UpdateUserInput) => Promise<UserRecord>;
+  deleteUser: (id: string) => Promise<void>;
   canAccess: (path: string) => boolean;
   getDefaultAccess: (role: RbacRole) => PageAccessKey[];
   firstAdminId: string;
 }
-
-const FIRST_ADMIN_ID = 'u-admin-1';
 
 const normalizeAccess = (role: RbacRole, access?: PageAccessKey[]) => {
   const allowed = role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
@@ -62,46 +62,15 @@ const normalizeAccess = (role: RbacRole, access?: PageAccessKey[]) => {
   return unique.filter((entry): entry is PageAccessKey => allowed.includes(entry));
 };
 
-const INITIAL_USERS: UserRecord[] = [
-  {
-    id: 'u-admin-1',
-    name: 'Irene Saquian',
-    email: 'admin@printsync.com',
-    phone: '09171234567',
-    role: 'admin',
-    position: 'System Administrator',
-    createdAt: '2026-01-05',
-    access: ADMIN_PAGE_ACCESS,
-  },
-  {
-    id: 'u-staff-1',
-    name: 'Noah Ramirez',
-    email: 'noah@printsync.com',
-    phone: '09181234567',
-    role: 'staff',
-    position: 'Print Technician',
-    createdAt: '2026-02-14',
-    access: STAFF_PAGE_ACCESS,
-  },
-  {
-    id: 'u-staff-2',
-    name: 'Mika Dela Cruz',
-    email: 'mika@printsync.com',
-    phone: '09191234567',
-    role: 'staff',
-    position: 'Production Assistant',
-    createdAt: '2026-03-03',
-    access: STAFF_PAGE_ACCESS,
-  },
-];
-
 const UserContext = createContext<UserContextValue | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [users, setUsers] = useState<UserRecord[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<UserRecord[]>([]);
   const [currentUser, setCurrentUser] = useState<UserRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [userError, setUserError] = useState<string | null>(null);
+  const [usersRefreshKey, setUsersRefreshKey] = useState(0);
 
   const toUserRecord = (user: Awaited<ReturnType<typeof usersApi.session>>): UserRecord | null => {
     if (!user) return null;
@@ -137,6 +106,33 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       });
     return () => { isMounted = false; };
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!currentUser.access.includes('users')) {
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoading(true);
+    void usersApi.list()
+      .then((loadedUsers) => {
+        if (!isMounted) return;
+        setUsers(loadedUsers.map((user) => ({
+          ...user,
+          access: normalizeAccess(user.role, user.access),
+        })));
+        setUserError(null);
+      })
+      .catch((error: unknown) => {
+        if (isMounted) setUserError(error instanceof ApiError ? error.message : 'Users could not be loaded.');
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+    return () => { isMounted = false; };
+  }, [currentUser, usersRefreshKey]);
 
   const getDefaultAccess = (role: RbacRole) => normalizeAccess(role);
 
@@ -174,47 +170,40 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setCurrentUser(null);
   };
 
-  const createUser = (payload: CreateUserInput) => {
-    const createdAt = payload.createdAt && payload.createdAt.trim() ? payload.createdAt : new Date().toISOString().slice(0, 10);
-    const newUser: UserRecord = {
-      id: `u-${Date.now()}`,
+  const createUser = async (payload: CreateUserInput) => {
+    const createdUser = await usersApi.create({
+      ...payload,
       name: payload.name.trim(),
       email: payload.email.trim().toLowerCase(),
       phone: payload.phone.trim(),
-      role: payload.role,
       position: payload.position.trim(),
-      createdAt,
-      access: normalizeAccess(payload.role, payload.access),
-    };
-    setUsers((prev) => [newUser, ...prev]);
+      createdAt: payload.createdAt?.trim() || undefined,
+    });
+    const normalizedUser = { ...createdUser, access: normalizeAccess(createdUser.role, createdUser.access) };
+    setUsers((previousUsers) => [normalizedUser, ...previousUsers]);
+    setUserError(null);
+    return normalizedUser;
   };
 
-  const updateUser = (id: string, payload: UpdateUserInput) => {
-    const { password: _password, ...safePayload } = payload;
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === id
-          ? {
-              ...user,
-              ...safePayload,
-              email: payload.email.trim().toLowerCase(),
-              name: payload.name.trim(),
-              phone: payload.phone.trim(),
-              position: payload.position.trim(),
-              access: normalizeAccess(payload.role, payload.access),
-            }
-          : user
-      )
-    );
+  const updateUser = async (id: string, payload: UpdateUserInput) => {
+    const updatedUser = await usersApi.update(id, {
+      ...payload,
+      name: payload.name.trim(),
+      email: payload.email.trim().toLowerCase(),
+      phone: payload.phone.trim(),
+      position: payload.position.trim(),
+      password: payload.password?.trim() || undefined,
+    });
+    const normalizedUser = { ...updatedUser, access: normalizeAccess(updatedUser.role, updatedUser.access) };
+    setUsers((previousUsers) => previousUsers.map((user) => user.id === id ? normalizedUser : user));
+    setUserError(null);
+    return normalizedUser;
   };
 
-  const deleteUser = (id: string) => {
-    if (id === FIRST_ADMIN_ID) {
-      return false;
-    }
-    setUsers((prev) => prev.filter((user) => user.id !== id));
-    setCurrentUser((prev) => (prev?.id === id ? null : prev));
-    return true;
+  const deleteUser = async (id: string) => {
+    await usersApi.remove(id);
+    setUsers((previousUsers) => previousUsers.filter((user) => user.id !== id));
+    setUserError(null);
   };
 
   return (
@@ -224,14 +213,16 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         currentUser,
         isLoading,
         authError,
+        userError,
         login,
         logout,
+        refreshUsers: () => setUsersRefreshKey((value) => value + 1),
         createUser,
         updateUser,
         deleteUser,
         canAccess,
         getDefaultAccess,
-        firstAdminId: FIRST_ADMIN_ID,
+        firstAdminId: currentUser?.id ?? '',
       }}
     >
       {children}
