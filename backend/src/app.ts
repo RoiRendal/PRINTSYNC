@@ -12,6 +12,7 @@ import { designsRouter } from './routes/designs.routes.js';
 import { ordersRouter } from './routes/orders.routes.js';
 import { paymentsRouter } from './routes/payments.routes.js';
 import { settingsRouter } from './routes/settings.routes.js';
+import { analyticsRouter } from './routes/analytics.routes.js';
 import { readyRouter } from './routes/ready.routes.js';
 import { usersRouter } from './routes/users.routes.js';
 
@@ -32,6 +33,7 @@ export function createApp() {
   app.use('/api/v1/orders', ordersRouter);
   app.use('/api/v1/payments', paymentsRouter);
   app.use('/api/v1/settings', settingsRouter);
+  app.use('/api/v1/analytics', analyticsRouter);
   app.use('/api/v1/users', usersRouter);
   app.use(notFound);
   app.use(errorHandler);
