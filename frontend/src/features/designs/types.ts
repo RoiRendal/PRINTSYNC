@@ -4,7 +4,10 @@ export interface Design {
   category: string;
   imageUrl: string;
   createdAt: string;
+  updatedAt?: string;
   tags: string[];
+  assetType?: string | null;
+  assetSizeBytes?: number | null;
 }
 
 export type CreateDesign = Omit<Design, 'id' | 'createdAt'>;

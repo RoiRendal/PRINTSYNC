@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { MOCK_DESIGNS } from '../data/mockDesigns';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { designsApi } from '../api/designsApi';
 import type { CreateDesign, Design, UpdateDesign } from '../types';
 
 interface DesignContextValue {
@@ -12,25 +12,41 @@ interface DesignContextValue {
 const DesignContext = createContext<DesignContextValue | undefined>(undefined);
 
 export function DesignProvider({ children }: { children: ReactNode }) {
-  const [designs, setDesigns] = useState<Design[]>(MOCK_DESIGNS);
+  const [designs, setDesigns] = useState<Design[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    void designsApi.list().then((loadedDesigns) => {
+      if (mounted) setDesigns(loadedDesigns);
+    });
+    return () => { mounted = false; };
+  }, []);
 
   const addDesign = (newDesign: CreateDesign) => {
-    const design: Design = {
-      ...newDesign,
-      id: `DSG-${String(designs.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString().split('T')[0] ?? '',
-    };
-    setDesigns((previousDesigns) => [...previousDesigns, design]);
+    void designsApi.create(newDesign).then((design) => {
+      setDesigns((previousDesigns) => [design, ...previousDesigns]);
+    });
   };
 
   const updateDesign = (id: string, updatedDesign: UpdateDesign) => {
-    setDesigns((previousDesigns) => previousDesigns.map((design) => (
-      design.id === id ? { ...design, ...updatedDesign } : design
-    )));
+    const existingDesign = designs.find((design) => design.id === id);
+    if (!existingDesign) return;
+    void designsApi.update(id, {
+      name: updatedDesign.name ?? existingDesign.name,
+      category: updatedDesign.category ?? existingDesign.category,
+      imageUrl: updatedDesign.imageUrl ?? existingDesign.imageUrl,
+      tags: updatedDesign.tags ?? existingDesign.tags,
+      assetType: updatedDesign.assetType ?? existingDesign.assetType,
+      assetSizeBytes: updatedDesign.assetSizeBytes ?? existingDesign.assetSizeBytes,
+    }).then((design) => {
+      setDesigns((previousDesigns) => previousDesigns.map((current) => current.id === id ? design : current));
+    });
   };
 
   const deleteDesign = (id: string) => {
-    setDesigns((previousDesigns) => previousDesigns.filter((design) => design.id !== id));
+    void designsApi.remove(id).then(() => {
+      setDesigns((previousDesigns) => previousDesigns.filter((design) => design.id !== id));
+    });
   };
 
   return (

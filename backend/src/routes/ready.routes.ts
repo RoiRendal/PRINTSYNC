@@ -15,15 +15,16 @@ readyRouter.get('/', async (_request, response) => {
     );
   }
 
-  const [{ error: authError }, roles, permissions, profiles, auditLogs] = await Promise.all([
+  const [{ error: authError }, roles, permissions, profiles, auditLogs, designs] = await Promise.all([
     supabase.auth.admin.listUsers({ page: 1, perPage: 1 }),
     supabase.from('roles').select('id').limit(1),
     supabase.from('permissions').select('id').limit(1),
     supabase.from('profiles').select('id').limit(1),
     supabase.from('audit_logs').select('id').limit(1),
+    supabase.from('designs').select('id').limit(1),
   ]);
 
-  if (authError || roles.error || permissions.error || profiles.error || auditLogs.error) {
+  if (authError || roles.error || permissions.error || profiles.error || auditLogs.error || designs.error) {
     throw new AppError(503, 'SUPABASE_UNAVAILABLE', 'Supabase is not ready.');
   }
 
@@ -36,6 +37,7 @@ readyRouter.get('/', async (_request, response) => {
       permissions: 'ready',
       profiles: 'ready',
       auditLogs: 'ready',
+      designs: 'ready',
     },
     timestamp: new Date().toISOString(),
   });
