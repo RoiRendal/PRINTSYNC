@@ -114,6 +114,20 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(typeof dataOf(analytics).revenue, 'number');
   });
 
+  it('refreshes an authenticated session', async (context) => {
+    if (!cookieHeader) {
+      context.skip('Set PRINTSYNC_TEST_EMAIL and PRINTSYNC_TEST_PASSWORD for authenticated integration checks.');
+      return;
+    }
+
+    const response = await request<{ user: { id: string } }>('/auth/refresh', {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(typeof dataOf(response).user.id, 'string');
+  });
+
   it('rejects inconsistent transaction totals before writing', async (context) => {
     if (!cookieHeader) {
       context.skip('Set PRINTSYNC_TEST_EMAIL and PRINTSYNC_TEST_PASSWORD for authenticated integration checks.');

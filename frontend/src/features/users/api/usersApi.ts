@@ -5,6 +5,7 @@ export function createUsersApi(client: ApiClient = apiClient) {
   return {
     session: async () => (await client.get<AuthResponse>('/auth/session')).user,
     login: async (payload: LoginInput) => (await client.post<AuthResponse, LoginInput>('/auth/login', payload)).user,
+    refresh: async () => (await client.post<AuthResponse, Record<string, never>>('/auth/refresh', {})).user,
     logout: () => client.post<void, Record<string, never>>('/auth/logout', {}),
     list: () => client.get<UserSummary[]>('/users'),
     create: (payload: CreateUserInput) => client.post<UserSummary, CreateUserInput>('/users', payload),

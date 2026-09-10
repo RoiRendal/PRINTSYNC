@@ -30,7 +30,7 @@ async function parseResponse(response: Response): Promise<unknown> {
   return response.text();
 }
 
-async function request<TResponse>(path: string, options: RequestInit = {}): Promise<TResponse> {
+async function request<TResponse>(path: string, options: RequestInit = {}, allowRefresh = true): Promise<TResponse> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -41,6 +41,17 @@ async function request<TResponse>(path: string, options: RequestInit = {}): Prom
     credentials: 'include',
   });
   const payload = await parseResponse(response);
+
+  if (allowRefresh && response.status === 401 && !path.startsWith('/auth/login') && !path.startsWith('/auth/refresh')) {
+    const refreshed = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    });
+    if (refreshed.ok) {
+      return request<TResponse>(path, options, false);
+    }
+  }
 
   if (!response.ok) {
     const errorPayload = payload as ApiErrorEnvelope | null;

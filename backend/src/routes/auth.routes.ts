@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getSupabaseAdminClient, getSupabaseAuthClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
-import { clearAuthCookies, getCookieValue, ACCESS_TOKEN_COOKIE, setAuthCookies } from '../shared/authCookies.js';
+import { clearAuthCookies, getCookieValue, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, setAuthCookies } from '../shared/authCookies.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { loadAuthContext } from '../services/authService.js';
@@ -54,6 +54,41 @@ authRouter.post('/login', async (request, response) => {
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
+  setAuthCookies(response, data.session.access_token, data.session.refresh_token);
+  sendSuccess(response, {
+    user: {
+      id: auth.user.id,
+      email: auth.user.email,
+      name: auth.profile.name,
+      phone: auth.profile.phone,
+      position: auth.profile.position,
+      roleId: auth.profile.roleId,
+      permissions: auth.permissions,
+    },
+  });
+});
+
+authRouter.post('/refresh', async (request, response) => {
+  const supabase = getSupabaseAdminClient();
+  const authClient = getSupabaseAuthClient();
+  const refreshToken = getCookieValue(request.header('cookie'), REFRESH_TOKEN_COOKIE);
+  if (!supabase || !authClient) {
+    throw new AppError(503, 'SUPABASE_NOT_CONFIGURED', 'Supabase has not been configured for this environment.');
+  }
+  if (!refreshToken) {
+    clearAuthCookies(response);
+    response.status(401).json({ error: { code: 'REFRESH_TOKEN_REQUIRED', message: 'A refresh token is required.' } });
+    return;
+  }
+
+  const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
+  if (error || !data.session || !data.user) {
+    clearAuthCookies(response);
+    response.status(401).json({ error: { code: 'INVALID_REFRESH_TOKEN', message: 'The refresh token is invalid or expired.' } });
+    return;
+  }
+
+  const auth = await loadAuthContext(supabase, data.user);
   setAuthCookies(response, data.session.access_token, data.session.refresh_token);
   sendSuccess(response, {
     user: {
