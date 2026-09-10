@@ -9,7 +9,6 @@ export default function LoginPage() {
   const { effectiveBusinessLogoUrl } = useBusinessBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   if (currentUser) {
     return <Navigate to="/" replace />;
@@ -19,10 +18,8 @@ export default function LoginPage() {
     event.preventDefault();
     const ok = await login(email, password);
     if (!ok) {
-      setError('Invalid email or password.');
       return;
     }
-    setError('');
   };
 
   return (
@@ -59,7 +56,7 @@ export default function LoginPage() {
               />
             </div>
 
-            {(error || authError) && <p className="text-[11px] text-red-600">{error || authError}</p>}
+            {authError && <p className="text-[11px] text-red-600">{authError}</p>}
 
             <button
               type="submit"
