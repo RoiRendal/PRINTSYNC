@@ -11,6 +11,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { analyticsApi, type AnalyticsSummary } from '../api/analyticsApi';
+import { ApiError } from '../../../shared/api/errors';
+import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 
 type Period = 'weekly' | 'monthly' | 'yearly';
 
@@ -580,6 +584,30 @@ export default function AnalyticsPage() {
   const [profitInsight, setProfitInsight] = useState<InsightState>(emptyInsightState);
   const [trendInsight, setTrendInsight] = useState<InsightState>(emptyInsightState);
   const [forecastInsight, setForecastInsight] = useState<InsightState>(emptyInsightState);
+  const [liveSummary, setLiveSummary] = useState<AnalyticsSummary | null>(null);
+  const [liveSummaryError, setLiveSummaryError] = useState<string | null>(null);
+  const [isLiveSummaryLoading, setIsLiveSummaryLoading] = useState(true);
+
+  useEffect(() => {
+    const now = new Date();
+    const from = new Date(Date.UTC(now.getUTCFullYear(), 0, 1)).toISOString().slice(0, 10);
+    const to = now.toISOString().slice(0, 10);
+    let mounted = true;
+    void analyticsApi.summary(from, to)
+      .then((summary) => {
+        if (mounted) {
+          setLiveSummary(summary);
+          setLiveSummaryError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (mounted) setLiveSummaryError(error instanceof ApiError ? error.message : 'Analytics could not be loaded.');
+      })
+      .finally(() => {
+        if (mounted) setIsLiveSummaryLoading(false);
+      });
+    return () => { mounted = false; };
+  }, []);
 
   const salesOptions = useMemo(() => Object.keys(periodMap[salesPeriod]), [salesPeriod]);
   const profitOptions = useMemo(() => Object.keys(periodMap[profitPeriod]), [profitPeriod]);
@@ -1061,6 +1089,45 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-4 pb-8">
+      <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-semibold text-gray-500 dark:text-zinc-400">Live reporting</p>
+            <h2 className="text-base font-semibold text-gray-900 dark:text-zinc-100">Operational summary</h2>
+          </div>
+          {liveSummary && <span className="text-[10px] font-mono text-gray-400">{liveSummary.range.from} to {liveSummary.range.to}</span>}
+        </div>
+        {isLiveSummaryLoading ? <LoadingState label="Loading report" /> : liveSummaryError ? <ErrorState message={liveSummaryError} /> : liveSummary ? (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+              {[
+                ['Revenue', money.format(liveSummary.revenue)],
+                ['Transactions', liveSummary.transactionCount.toLocaleString()],
+                ['Orders', liveSummary.orderCount.toLocaleString()],
+                ['Avg ticket', money.format(liveSummary.averageTransactionValue)],
+                ['Inventory alerts', liveSummary.inventoryAlerts.toLocaleString()],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded border border-gray-200 p-3 dark:border-zinc-700">
+                  <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400">{label}</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">{value}</p>
+                </div>
+              ))}
+            </div>
+            {liveSummary.topItems.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-3 dark:border-zinc-800">
+                <p className="text-[10px] uppercase tracking-widest text-gray-500 dark:text-zinc-400 mb-2">Top items by revenue</p>
+                <div className="flex flex-wrap gap-2">
+                  {liveSummary.topItems.slice(0, 5).map((item) => (
+                    <span key={item.name} className="rounded border border-gray-200 px-2 py-1 text-[10px] text-gray-700 dark:border-zinc-700 dark:text-zinc-300">
+                      {item.name} · {money.format(item.revenue)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : null}
+      </section>
       <section className="bg-white border border-gray-200 rounded p-4 md:p-5 dark:bg-zinc-900 dark:border-zinc-800">
         <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div>
