@@ -7,10 +7,12 @@ import { Modal } from '../../../shared/components/ui/Modal';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useDesigns } from '../../designs/state/DesignContext';
 import { useOrders } from '../state/OrderContext';
+import { paymentsApi, type PaymentTransaction } from '../api/paymentsApi';
+import { ApiError } from '../../../shared/api/errors';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function POS() {
-  const { items: inventory, updateItem } = useInventory();
+  const { items: inventory } = useInventory();
   const { designs } = useDesigns();
   const { addOrder, orders, updateOrder } = useOrders();
   const location = useLocation();
@@ -23,6 +25,7 @@ export default function POS() {
   const [posMode, setPosMode] = useState<'retail' | 'custom'>('retail');
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
   
   // Custom Order State
   const [customerName, setCustomerName] = useState('');
@@ -37,6 +40,50 @@ export default function POS() {
   const [vatRatePercent, setVatRatePercent] = useState(12);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
+
+  const mapPaymentTransaction = useCallback((transaction: PaymentTransaction): Transaction => ({
+    id: transaction.id,
+    date: transaction.date,
+    items: transaction.items.map((item) => {
+      const inventoryItem = inventory.find((candidate) => candidate.id === item.itemId);
+      return inventoryItem
+        ? { ...inventoryItem, qty: item.quantity }
+        : ({
+            id: item.itemId ?? `transaction-${item.name}`,
+            name: item.name,
+            category: '',
+            stock: 0,
+            reorderLevel: 0,
+            price: item.unitPrice,
+            imageUrl: undefined,
+            createdAt: transaction.date,
+            updatedAt: transaction.date,
+            qty: item.quantity,
+          } as CartItem);
+    }),
+    subtotal: transaction.subtotal,
+    discount: transaction.discount > 0 ? transaction.discount : undefined,
+    vatRatePercent: transaction.subtotal > transaction.discount ? (transaction.tax / (transaction.subtotal - transaction.discount)) * 100 : 0,
+    tax: transaction.tax,
+    total: transaction.total,
+    paymentMethod: transaction.paymentMethod,
+    status: transaction.status,
+  }), [inventory]);
+
+  useEffect(() => {
+    let mounted = true;
+    void paymentsApi.list()
+      .then((loadedTransactions) => {
+        if (mounted) {
+          setTransactions(loadedTransactions.map(mapPaymentTransaction));
+          setTransactionError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (mounted) setTransactionError(error instanceof ApiError ? error.message : 'Transactions could not be loaded.');
+      });
+    return () => { mounted = false; };
+  }, [mapPaymentTransaction]);
 
   const filteredProducts = useMemo(() => {
     return inventory.filter(product => {
@@ -244,22 +291,6 @@ export default function POS() {
     }));
   };
 
-  const applyStockDeltaForOrder = (
-    lineItems: Array<{ itemId?: string; name: string; quantity: number }>,
-    delta: 1 | -1,
-  ) => {
-    lineItems.forEach((lineItem) => {
-      const matchedInventoryItem =
-        (lineItem.itemId ? inventory.find((item) => item.id === lineItem.itemId) : undefined) ??
-        inventory.find((item) => item.name.toLowerCase() === lineItem.name.toLowerCase());
-      if (!matchedInventoryItem) return;
-
-      updateItem(matchedInventoryItem.id, {
-        stock: Math.max(0, matchedInventoryItem.stock + lineItem.quantity * delta),
-      });
-    });
-  };
-
   const openDesignSelector = (cartIndex: number) => {
     setCurrentItemToDesign(cartIndex.toString());
     setIsDesignModalOpen(true);
@@ -286,30 +317,25 @@ export default function POS() {
       return;
     }
 
-    const { subtotal: trxSubtotal, discount: trxDiscount, tax: trxTax, total: trxTotal, vatRatePercent: trxVatRate } = cartTotals;
+    const { subtotal: trxSubtotal, discount: trxDiscount, tax: trxTax, total: trxTotal } = cartTotals;
 
     if (posMode === 'retail') {
-      const newTransaction: Transaction = {
-        id: `TRX-${Date.now()}`,
-        date: new Date().toISOString().split('T')[0] ?? '',
-        items: [...cart],
-        subtotal: trxSubtotal,
-        discount: trxDiscount > 0 ? trxDiscount : undefined,
-        vatRatePercent: trxVatRate,
-        tax: trxTax,
-        total: trxTotal,
-        paymentMethod: 'Cash'
-      };
-
-      // Reduce stock
-      cart.forEach(cartItem => {
-        const product = inventory.find(i => i.id === cartItem.id);
-        if (product) {
-          updateItem(product.id, { stock: product.stock - cartItem.qty });
-        }
-      });
-
-      setTransactions([newTransaction, ...transactions]);
+      try {
+        const createdTransaction = await paymentsApi.create({
+          items: cart.map((item) => ({ itemId: item.id, name: item.name, quantity: item.qty, unitPrice: item.price })),
+          subtotal: trxSubtotal,
+          discount: trxDiscount,
+          tax: trxTax,
+          total: trxTotal,
+          paymentMethod: 'Cash',
+          paymentAmount: trxTotal,
+        });
+        setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
+        setTransactionError(null);
+      } catch (error) {
+        setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be completed.');
+        return;
+      }
     } else {
       const preparedOrder: CreateOrder = {
         customer: customerName,
@@ -330,30 +356,6 @@ export default function POS() {
 
       if (editingOrderId) {
         const existingOrder = orders.find((order) => order.id === editingOrderId);
-        const previousLineItems =
-          existingOrder?.lineItems && existingOrder.lineItems.length > 0
-            ? existingOrder.lineItems
-            : existingOrder
-              ? existingOrder.item
-                  .split(',')
-                  .map((name) => name.trim())
-                  .filter(Boolean)
-                  .map((name) => ({
-                    name,
-                    quantity: existingOrder.quantity,
-                  }))
-              : [];
-
-        applyStockDeltaForOrder(previousLineItems, 1);
-        applyStockDeltaForOrder(
-          preparedOrder.lineItems?.map((item) => ({
-            itemId: item.itemId,
-            name: item.name,
-            quantity: item.quantity,
-          })) || [],
-          -1,
-        );
-
         await updateOrder(editingOrderId, {
           ...preparedOrder,
           status: existingOrder?.status ?? 'Pending',
@@ -361,13 +363,6 @@ export default function POS() {
       } else {
         await addOrder(preparedOrder);
 
-        // Reduce stock of blanks
-        cart.forEach(cartItem => {
-          const product = inventory.find(i => i.id === cartItem.id);
-          if (product) {
-            updateItem(product.id, { stock: product.stock - cartItem.qty });
-          }
-        });
       }
     }
 
@@ -383,15 +378,25 @@ export default function POS() {
     }, 2000);
   };
 
-  const voidTransaction = (id: string) => {
-    if (!id.startsWith('TRX-')) return;
-    if (window.confirm('Void this transaction? (Stock will not be automatically restored in this demo)')) {
-      setTransactions(transactions.filter(t => t.id !== id));
+  const voidTransaction = async (id: string) => {
+    if (window.confirm('Void this transaction? Inventory will be restored.')) {
+      try {
+        const voided = await paymentsApi.void(id);
+        setTransactions((previous) => previous.map((transaction) => transaction.id === id ? mapPaymentTransaction(voided) : transaction));
+        setTransactionError(null);
+      } catch (error) {
+        setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be voided.');
+      }
     }
   };
 
   return (
     <div className="flex flex-col gap-4">
+      {transactionError && (
+        <div className="border border-red-200 bg-red-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+          {transactionError}
+        </div>
+      )}
       {/* Header / Tabs */}
       <div className="flex justify-between items-center bg-white dark:bg-zinc-900 p-2 rounded border border-gray-200 dark:border-zinc-800">
         <div className="flex gap-2">

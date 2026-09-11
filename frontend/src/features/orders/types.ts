@@ -50,4 +50,7 @@ export interface Transaction {
   tax: number;
   total: number;
   paymentMethod: 'Cash' | 'Card' | 'Custom Order';
+  status?: 'completed' | 'voided';
 }
+
+export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
