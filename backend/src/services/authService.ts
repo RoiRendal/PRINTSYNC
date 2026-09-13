@@ -1,11 +1,29 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { AppError } from '../shared/errors.js';
+import { logger } from '../shared/logger.js';
 import type { AuthenticatedRequestContext } from '../types/auth.js';
+
+interface CachedAuthContext {
+  context: AuthenticatedRequestContext;
+  expiresAt: number;
+}
+
+const CACHE_TTL_MS = 30_000; // 30 seconds
+const authCache = new Map<string, CachedAuthContext>();
+
+export function invalidateAuthCache(userId: string): void {
+  authCache.delete(userId);
+}
 
 export async function loadAuthContext(
   supabase: SupabaseClient,
   user: User,
 ): Promise<AuthenticatedRequestContext> {
+  const cached = authCache.get(user.id);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.context;
+  }
+
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('id, name, phone, position, role_id')
@@ -30,30 +48,21 @@ export async function loadAuthContext(
   }
 
   const permissionIds = rolePermissions.map((entry) => entry.permission_id);
-  if (permissionIds.length === 0) {
-    return {
-      user,
-      profile: {
-        id: profile.id,
-        name: profile.name,
-        phone: profile.phone,
-        position: profile.position,
-        roleId: profile.role_id,
-      },
-      permissions: [],
-    };
+
+  let permissions: { key: string }[] = [];
+  if (permissionIds.length > 0) {
+    const { data: permData, error: permissionsError } = await supabase
+      .from('permissions')
+      .select('key')
+      .in('id', permissionIds);
+
+    if (permissionsError) {
+      throw new AppError(503, 'PERMISSIONS_LOOKUP_FAILED', 'The authenticated permissions could not be loaded.');
+    }
+    permissions = permData;
   }
 
-  const { data: permissions, error: permissionsError } = await supabase
-    .from('permissions')
-    .select('key')
-    .in('id', permissionIds);
-
-  if (permissionsError) {
-    throw new AppError(503, 'PERMISSIONS_LOOKUP_FAILED', 'The authenticated permissions could not be loaded.');
-  }
-
-  return {
+  const context: AuthenticatedRequestContext = {
     user,
     profile: {
       id: profile.id,
@@ -64,4 +73,13 @@ export async function loadAuthContext(
     },
     permissions: permissions.map((permission) => permission.key),
   };
+
+  authCache.set(user.id, {
+    context,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
+
+  logger.debug({ userId: user.id, permissionCount: context.permissions.length }, 'Auth context loaded and cached');
+
+  return context;
 }

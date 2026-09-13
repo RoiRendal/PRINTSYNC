@@ -1,24 +1,40 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getSupabaseAdminClient, getSupabaseAuthClient } from '../integrations/supabase/adminClient.js';
+import rateLimit from 'express-rate-limit';
+import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { clearAuthCookies, getCookieValue, ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, setAuthCookies } from '../shared/authCookies.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
-import { loadAuthContext } from '../services/authService.js';
+import { loadAuthContext, invalidateAuthCache } from '../services/authService.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 
 export const authRouter = Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per window per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { code: 'RATE_LIMITED', message: 'Too many login attempts. Please try again later.' } },
+});
+
+const refreshLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { code: 'RATE_LIMITED', message: 'Too many refresh attempts. Please try again later.' } },
+});
 
 const loginSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
 });
 
-authRouter.post('/login', async (request, response) => {
+authRouter.post('/login', loginLimiter, async (request, response) => {
   const supabase = getSupabaseAdminClient();
-  const authClient = getSupabaseAuthClient();
-  if (!supabase || !authClient) {
+  if (!supabase) {
     throw new AppError(503, 'SUPABASE_NOT_CONFIGURED', 'Supabase has not been configured for this environment.');
   }
 
@@ -27,7 +43,7 @@ authRouter.post('/login', async (request, response) => {
     throw new AppError(400, 'INVALID_LOGIN_REQUEST', 'A valid email and password are required.');
   }
 
-  const { data, error } = await authClient.auth.signInWithPassword(parsedBody.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsedBody.data);
   if (error || !data.session || !data.user) {
     await writeAuditLog(supabase, {
       action: 'auth.login_failed',
@@ -45,6 +61,7 @@ authRouter.post('/login', async (request, response) => {
     return;
   }
 
+  invalidateAuthCache(data.user.id);
   const auth = await loadAuthContext(supabase, data.user);
   await writeAuditLog(supabase, {
     actorId: data.user.id,
@@ -68,11 +85,10 @@ authRouter.post('/login', async (request, response) => {
   });
 });
 
-authRouter.post('/refresh', async (request, response) => {
+authRouter.post('/refresh', refreshLimiter, async (request, response) => {
   const supabase = getSupabaseAdminClient();
-  const authClient = getSupabaseAuthClient();
   const refreshToken = getCookieValue(request.header('cookie'), REFRESH_TOKEN_COOKIE);
-  if (!supabase || !authClient) {
+  if (!supabase) {
     throw new AppError(503, 'SUPABASE_NOT_CONFIGURED', 'Supabase has not been configured for this environment.');
   }
   if (!refreshToken) {
@@ -81,13 +97,14 @@ authRouter.post('/refresh', async (request, response) => {
     return;
   }
 
-  const { data, error } = await authClient.auth.refreshSession({ refresh_token: refreshToken });
+  const { data, error } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
   if (error || !data.session || !data.user) {
     clearAuthCookies(response);
     response.status(401).json({ error: { code: 'INVALID_REFRESH_TOKEN', message: 'The refresh token is invalid or expired.' } });
     return;
   }
 
+  invalidateAuthCache(data.user.id);
   const auth = await loadAuthContext(supabase, data.user);
   setAuthCookies(response, data.session.access_token, data.session.refresh_token);
   sendSuccess(response, {
@@ -110,6 +127,7 @@ authRouter.post('/logout', async (request, response) => {
   if (supabase && token) {
     const { data } = await supabase.auth.getUser(token);
     if (data.user) {
+      invalidateAuthCache(data.user.id);
       await writeAuditLog(supabase, {
         actorId: data.user.id,
         action: 'auth.logout',

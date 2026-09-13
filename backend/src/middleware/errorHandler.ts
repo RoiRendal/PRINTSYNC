@@ -1,7 +1,8 @@
 import type { ErrorRequestHandler } from 'express';
 import { AppError } from '../shared/errors.js';
+import { logger } from '../shared/logger.js';
 
-export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
   if (error?.type === 'entity.parse.failed') {
     response.status(400).json({
       error: {
@@ -13,6 +14,14 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
   }
 
   if (error instanceof AppError) {
+    if (error.statusCode >= 500) {
+      logger.error('AppError thrown', {
+        code: error.code,
+        statusCode: error.statusCode,
+        method: request.method,
+        path: request.originalUrl,
+      });
+    }
     response.status(error.statusCode).json({
       error: {
         code: error.code,
@@ -22,7 +31,13 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
     return;
   }
 
-  console.error(error);
+  logger.error('Unhandled error', {
+    name: error?.name,
+    message: error?.message,
+    stack: error?.stack,
+    method: request.method,
+    path: request.originalUrl,
+  });
   response.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',

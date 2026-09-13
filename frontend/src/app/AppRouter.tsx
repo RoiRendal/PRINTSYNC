@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './layout/AppLayout';
 import { AppProviders } from './providers/AppProviders';
 import { useUserContext } from '../features/users/state/UserContext';
-import Dashboard from '../features/dashboard/pages/DashboardPage';
-import Inventory from '../features/inventory/pages/InventoryPage';
-import POS from '../features/orders/pages/POSPage';
-import Analytics from '../features/analytics/pages/AnalyticsPage';
-import UserManagement from '../features/users/pages/UserManagementPage';
-import Orders from '../features/orders/pages/OrdersPage';
-import Settings from '../features/settings/pages/SettingsPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import { NAV_ITEMS } from '../shared/constants/navigation';
+import { ErrorBoundary } from '../shared/components/feedback/ErrorBoundary';
 import { LoadingState } from '../shared/components/feedback/LoadingState';
+
+const Dashboard = lazy(() => import('../features/dashboard/pages/DashboardPage'));
+const Inventory = lazy(() => import('../features/inventory/pages/InventoryPage'));
+const POS = lazy(() => import('../features/orders/pages/POSPage'));
+const Analytics = lazy(() => import('../features/analytics/pages/AnalyticsPage'));
+const UserManagement = lazy(() => import('../features/users/pages/UserManagementPage'));
+const Orders = lazy(() => import('../features/orders/pages/OrdersPage'));
+const Settings = lazy(() => import('../features/settings/pages/SettingsPage'));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser, isLoading } = useUserContext();
@@ -29,7 +31,9 @@ function ProtectedLayout() {
   return (
     <RequireAuth>
       <Layout>
-        <Outlet />
+        <Suspense fallback={<LoadingState label="Loading page" className="min-h-[60vh]" />}>
+          <Outlet />
+        </Suspense>
       </Layout>
     </RequireAuth>
   );
@@ -55,22 +59,24 @@ function RequirePageAccess({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AppProviders>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route element={<ProtectedLayout />}>
-            <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
-            <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
-            <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
-            <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
-            <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
-            <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
-            <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
-          </Route>
-          <Route path="*" element={<NavigateToFirstAllowedPage />} />
-        </Routes>
-      </BrowserRouter>
-    </AppProviders>
+    <ErrorBoundary>
+      <AppProviders>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<ProtectedLayout />}>
+              <Route path="/" element={<RequirePageAccess><Dashboard /></RequirePageAccess>} />
+              <Route path="/orders" element={<RequirePageAccess><Orders /></RequirePageAccess>} />
+              <Route path="/inventory" element={<RequirePageAccess><Inventory /></RequirePageAccess>} />
+              <Route path="/pos" element={<RequirePageAccess><POS /></RequirePageAccess>} />
+              <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
+              <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
+              <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
+            </Route>
+            <Route path="*" element={<NavigateToFirstAllowedPage />} />
+          </Routes>
+        </BrowserRouter>
+      </AppProviders>
+    </ErrorBoundary>
   );
 }

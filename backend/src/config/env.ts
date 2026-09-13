@@ -9,6 +9,7 @@ const envSchema = z.object({
   FRONTEND_ORIGIN: z.string().url().default('http://localhost:3000'),
   SUPABASE_URL: z.string().url().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

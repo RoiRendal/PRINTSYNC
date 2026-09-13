@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '../shared/logger.js';
 
 interface AuditLogInput {
   actorId?: string | null | undefined;
@@ -22,10 +23,11 @@ export async function writeAuditLog(supabase: SupabaseClient, input: AuditLogInp
   });
 
   if (error) {
-    console.error('Audit log write failed', {
+    logger.warn('Audit log write failed', {
       code: error.code,
       message: error.message,
-      details: error.details,
+      action: input.action,
+      entityType: input.entityType,
     });
     return false;
   }
