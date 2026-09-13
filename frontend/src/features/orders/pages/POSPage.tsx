@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, History, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, Banknote, History, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
 import { TableActions } from '../../../shared/components/table/TableActions';
 import type { InventoryItem } from '../../inventory/types';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
@@ -38,6 +38,7 @@ export default function POS() {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [cartDiscount, setCartDiscount] = useState(0);
   const [vatRatePercent, setVatRatePercent] = useState(12);
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
 
@@ -327,7 +328,7 @@ export default function POS() {
           discount: trxDiscount,
           tax: trxTax,
           total: trxTotal,
-          paymentMethod: 'Cash',
+          paymentMethod: paymentMethod,
           paymentAmount: trxTotal,
         });
         setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
@@ -371,6 +372,7 @@ export default function POS() {
     setCustomerName('');
     setOrderNotes('');
     setEditingOrderId(null);
+    setPaymentMethod('Cash');
     
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
@@ -932,6 +934,36 @@ export default function POS() {
                 </div>
                 
               </div>
+
+              {posMode === 'retail' && (
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">Payment Method</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('Cash')}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded border text-[10px] font-bold uppercase tracking-wider transition-all ${
+                        paymentMethod === 'Cash'
+                          ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                          : 'bg-white border-gray-200 text-gray-400 hover:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
+                      }`}
+                    >
+                      <Banknote className="w-3.5 h-3.5" /> Cash
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('Card')}
+                      className={`flex items-center justify-center gap-2 py-2.5 rounded border text-[10px] font-bold uppercase tracking-wider transition-all ${
+                        paymentMethod === 'Card'
+                          ? 'bg-zinc-900 border-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                          : 'bg-white border-gray-200 text-gray-400 hover:border-zinc-400 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-400'
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" /> Card
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-2 max-h-40 overflow-y-auto pr-2 border-t border-gray-100 pt-4 dark:border-zinc-800">
                 {cart.map(item => (

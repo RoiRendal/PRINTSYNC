@@ -8,6 +8,7 @@ const requireAuthenticatedTests = process.env.PRINTSYNC_REQUIRE_AUTH_TESTS === '
 
 let cookieHeader = '';
 let temporaryOrderId: string | null = null;
+let temporaryTransactionId: string | null = null;
 
 type ApiResponse<T> = {
   status: number;
@@ -73,6 +74,9 @@ describe('PRINTSYNC API integration', () => {
   after(async () => {
     if (temporaryOrderId && cookieHeader) {
       await request(`/orders/${temporaryOrderId}`, { method: 'DELETE' });
+    }
+    if (temporaryTransactionId && cookieHeader) {
+      await request(`/payments/transactions/${temporaryTransactionId}/void`, { method: 'POST', body: JSON.stringify({}) });
     }
   });
 
@@ -148,6 +152,39 @@ describe('PRINTSYNC API integration', () => {
     });
 
     assert.equal(response.status, 400);
+  });
+
+  it('creates and voids a payment transaction through the API', async (context) => {
+    if (!cookieHeader) {
+      context.skip('Set PRINTSYNC_TEST_EMAIL and PRINTSYNC_TEST_PASSWORD for authenticated integration checks.');
+      return;
+    }
+
+    const created = await request<{ id: string; status: string; paymentMethod: string }>('/payments/transactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: [{ name: 'Non-stock test item', quantity: 1, unitPrice: 10 }],
+        subtotal: 10,
+        discount: 0,
+        tax: 0,
+        total: 10,
+        paymentMethod: 'Card',
+        paymentAmount: 10,
+      }),
+    });
+    const createdTransaction = dataOf(created);
+    temporaryTransactionId = createdTransaction.id;
+    assert.equal(created.status, 201);
+    assert.equal(createdTransaction.status, 'completed');
+    assert.equal(createdTransaction.paymentMethod, 'Card');
+
+    const voided = await request<{ id: string; status: string }>(`/payments/transactions/${temporaryTransactionId}/void`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    assert.equal(voided.status, 200);
+    assert.equal(dataOf(voided).status, 'voided');
+    temporaryTransactionId = null;
   });
 
   it('creates, updates, and deletes an order through the API', async (context) => {

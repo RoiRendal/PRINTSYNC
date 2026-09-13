@@ -1,4 +1,5 @@
 **/0_never-push-this-dump-folder/
+**/.codebuddy/
 
 # Dependencies and generated output
 **/node_modules/
