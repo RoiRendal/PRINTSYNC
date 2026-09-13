@@ -33,6 +33,7 @@ export default function Inventory() {
     return items.filter(
       (item) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -186,7 +187,7 @@ export default function Inventory() {
                       key={item.id}
                       className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group"
                     >
-                      <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">#{item.id.replace('INV-', '')}</td>
+                      <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">{item.sku}</td>
                       <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
                       <td className="py-2.5 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-[10px]">
@@ -297,7 +298,7 @@ export default function Inventory() {
                 <div className="pt-1 space-y-1 text-[10px] text-gray-500 dark:text-zinc-500">
                   <p>
                     <span className="font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-400">SKU</span>{' '}
-                    <span className="font-mono text-gray-800 dark:text-zinc-300">#{editingItem.id.replace('INV-', '')}</span>
+                    <span className="font-mono text-gray-800 dark:text-zinc-300">{editingItem.sku}</span>
                   </p>
                   <p className="text-[9px] leading-relaxed">
                     Use this dialog to review full item details or update fields. Changes apply when you save.
@@ -332,10 +333,21 @@ export default function Inventory() {
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
                   <option value="">Select Category</option>
-                  <option value="Apparel">Apparel</option>
-                  <option value="Outerwear">Outerwear</option>
-                  <option value="Accessories">Accessories</option>
-                  <option value="Consumables">Consumables</option>
+                  {[...new Set([
+                    'Apparel',
+                    'Outerwear',
+                    'Accessories',
+                    'Consumables',
+                    'Supplies',
+                    'Equipment',
+                    'Packaging',
+                    ...items.map((item) => item.category),
+                  ])]
+                    .filter(Boolean)
+                    .sort()
+                    .map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
                 </select>
               </div>
 

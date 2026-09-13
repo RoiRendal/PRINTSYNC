@@ -9,6 +9,7 @@ const requireAuthenticatedTests = process.env.PRINTSYNC_REQUIRE_AUTH_TESTS === '
 let cookieHeader = '';
 let temporaryOrderId: string | null = null;
 let temporaryTransactionId: string | null = null;
+let temporaryInventoryId: string | null = null;
 
 type ApiResponse<T> = {
   status: number;
@@ -77,6 +78,9 @@ describe('PRINTSYNC API integration', () => {
     }
     if (temporaryTransactionId && cookieHeader) {
       await request(`/payments/transactions/${temporaryTransactionId}/void`, { method: 'POST', body: JSON.stringify({}) });
+    }
+    if (temporaryInventoryId && cookieHeader) {
+      await request(`/inventory/${temporaryInventoryId}`, { method: 'DELETE' });
     }
   });
 
@@ -219,5 +223,53 @@ describe('PRINTSYNC API integration', () => {
     const deleted = await request(`/orders/${temporaryOrderId}`, { method: 'DELETE' });
     assert.equal(deleted.status, 204);
     temporaryOrderId = null;
+  });
+
+  it('creates, adjusts, updates, and deletes an inventory item through the API', async (context) => {
+    if (!cookieHeader) {
+      context.skip('Set PRINTSYNC_TEST_EMAIL and PRINTSYNC_TEST_PASSWORD for authenticated integration checks.');
+      return;
+    }
+
+    const created = await request<{ id: string; sku: string; name: string; stock: number; price: number }>('/inventory', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Integration Test Item',
+        category: 'Supplies',
+        stock: 10,
+        reorderLevel: 5,
+        price: 2.50,
+      }),
+    });
+    const createdItem = dataOf(created);
+    temporaryInventoryId = createdItem.id;
+    assert.equal(created.status, 201);
+    assert.equal(createdItem.name, 'Integration Test Item');
+    assert.equal(createdItem.stock, 10);
+    assert.equal(typeof createdItem.sku, 'string');
+
+    const adjusted = await request<{ id: string; stock: number }>(`/inventory/${temporaryInventoryId}/movements`, {
+      method: 'POST',
+      body: JSON.stringify({ quantity: -3, reason: 'Integration test adjustment' }),
+    });
+    assert.equal(adjusted.status, 200);
+    assert.equal(dataOf(adjusted).stock, 7);
+
+    const updated = await request<{ id: string; name: string; price: number }>(`/inventory/${temporaryInventoryId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        name: 'Integration Test Item (Updated)',
+        category: 'Supplies',
+        reorderLevel: 5,
+        price: 3.00,
+      }),
+    });
+    assert.equal(updated.status, 200);
+    assert.equal(dataOf(updated).name, 'Integration Test Item (Updated)');
+    assert.equal(dataOf(updated).price, 3.00);
+
+    const deletedItem = await request(`/inventory/${temporaryInventoryId}`, { method: 'DELETE' });
+    assert.equal(deletedItem.status, 204);
+    temporaryInventoryId = null;
   });
 });

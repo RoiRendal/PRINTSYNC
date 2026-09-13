@@ -51,6 +51,7 @@ export default function POS() {
         ? { ...inventoryItem, qty: item.quantity }
         : ({
             id: item.itemId ?? `transaction-${item.name}`,
+            sku: item.itemId ?? `transaction-${item.name}`,
             name: item.name,
             category: '',
             stock: 0,
@@ -109,11 +110,14 @@ export default function POS() {
                 inv ??
                 ({
                   id: li.itemId ?? 'unknown',
+                  sku: 'unknown',
                   name: li.name,
                   category: '—',
                   stock: 0,
                   reorderLevel: 0,
                   price: order.amount / Math.max(1, order.quantity),
+                  createdAt: order.date,
+                  updatedAt: order.date,
                 } as InventoryItem);
               return {
                 ...base,
@@ -133,11 +137,14 @@ export default function POS() {
                   inv ??
                   ({
                     id: 'unknown',
+                    sku: 'unknown',
                     name,
                     category: '—',
                     stock: 0,
                     reorderLevel: 0,
                     price: order.amount / Math.max(1, order.quantity),
+                    createdAt: order.date,
+                    updatedAt: order.date,
                   } as InventoryItem);
                 const n = Math.max(1, order.item.split(',').map((s) => s.trim()).filter(Boolean).length);
                 return { ...base, qty: Math.max(1, Math.floor(order.quantity / n)), isCustom: order.isCustom };
