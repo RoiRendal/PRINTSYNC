@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { DollarSign, CheckCircle2, ShoppingBag, AlertTriangle } from 'lucide-react';
-import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useOrders } from '../../orders/state/OrderContext';
 import { Link } from 'react-router-dom';
@@ -63,7 +62,6 @@ export default function Dashboard() {
           <div className="p-3 md:p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Production Pipeline</h3>
             <div className="flex flex-wrap items-center gap-2">
-              <TableActions />
               <Link to="/orders" className="text-[10px] whitespace-nowrap shrink-0 bg-gray-100 px-3 py-1.5 rounded border border-gray-300 font-bold uppercase hover:bg-gray-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">View All Pipeline</Link>
             </div>
           </div>
@@ -125,7 +123,6 @@ export default function Dashboard() {
         <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-4 xl:p-5 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
           <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-100 pb-3 mb-4 dark:border-zinc-800">
             <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap text-gray-900 dark:text-zinc-200">Stock Vitality</h3>
-            <TableActions />
           </div>
           
           <div className="space-y-5 flex-1">

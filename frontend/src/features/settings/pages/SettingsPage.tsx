@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Shield, Database, Download, Check, History, Bell, Cloud, Palette, Building2, ImagePlus } from 'lucide-react';
+import { Shield, Database, History, Bell, Cloud, Palette, Building2, ImagePlus } from 'lucide-react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
-import { APP_NAME, BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
+import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 
-import { Tooltip } from '../../../shared/components/ui/Tooltip';
 
 export default function Settings() {
-  const [isExporting, setIsExporting] = useState(false);
   const { theme, setTheme } = useTheme();
   const {
     businessDisplayName,
@@ -25,37 +23,6 @@ export default function Settings() {
   useEffect(() => {
     setCompanyDraft(businessDisplayName);
   }, [businessDisplayName]);
-
-  const handleExportArchive = () => {
-    setIsExporting(true);
-    
-    // Simulate system-wide data archiving
-    const archiveData = {
-      timestamp: new Date().toISOString(),
-      version: "2.4.0",
-      system: `${APP_NAME} ERP`,
-      data: {
-        inventory: "All stock records",
-        orders: "Complete transaction history",
-        users: "User profiles and permissions",
-        analytics: "Performance metrics"
-      }
-    };
-
-    const blob = new Blob([JSON.stringify(archiveData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `printsync-data-archive-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    setTimeout(() => {
-      setIsExporting(false);
-    }, 2000);
-  };
 
   const handleSaveCompanyName = async () => {
     try {
@@ -214,20 +181,6 @@ export default function Settings() {
               <p className="text-xs text-gray-500 dark:text-zinc-500">Manage system database and archival exports</p>
             </div>
           </div>
-          <Tooltip content="Export Data">
-            <button 
-              onClick={handleExportArchive}
-              disabled={isExporting}
-              className={`flex items-center justify-center p-2.5 rounded transition-all ${
-                isExporting 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-900 dark:hover:bg-zinc-800'
-              }`}
-              aria-label="Export Data"
-            >
-              {isExporting ? <Check className="w-5 h-5" /> : <Download className="w-5 h-5" />}
-            </button>
-          </Tooltip>
         </div>
         
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50/30 dark:bg-zinc-900/50">

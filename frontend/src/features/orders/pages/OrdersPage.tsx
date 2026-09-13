@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ClipboardList, Search, ArrowRight, Printer, CheckCircle2, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
-import { TableActions } from '../../../shared/components/table/TableActions';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useDesigns } from '../../designs/state/DesignContext';
 import { useOrders } from '../state/OrderContext';
@@ -154,7 +153,7 @@ export default function Orders() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                />
             </div>
-            <TableActions />
+
          </div>
 
          <div className="overflow-x-auto">

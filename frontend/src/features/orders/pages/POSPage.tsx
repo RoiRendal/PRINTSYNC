@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ShoppingBag, Search, Plus, Minus, Trash2, CreditCard, Banknote, History, CheckCircle2, Edit, FileText, Image as ImageIcon, User, AlertCircle } from 'lucide-react';
-import { TableActions } from '../../../shared/components/table/TableActions';
 import type { InventoryItem } from '../../inventory/types';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
 import { Modal } from '../../../shared/components/ui/Modal';
@@ -719,7 +718,7 @@ export default function POS() {
                 />
               </div>
             </div>
-            <TableActions />
+
           </div>
           <div className="flex-1 overflow-y-auto">
             <table className="w-full text-left text-xs">
