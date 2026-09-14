@@ -89,12 +89,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Global Top Header */}
       <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-7 items-center gap-2 rounded-full border border-white/40 bg-white/40 px-2.5 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/8">
-            <span className="h-3 w-3 rounded-full bg-[#ff5f57] shadow-inner" />
-            <span className="h-3 w-3 rounded-full bg-[#ffbd2e] shadow-inner" />
-            <span className="h-3 w-3 rounded-full bg-[#28c840] shadow-inner" />
-          </div>
-
           <div
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
             title={APP_NAME}

@@ -65,17 +65,6 @@ export const Modal: React.FC<ModalProps> = ({
           >
             <div className="glass-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-white/35 px-4 py-3 dark:border-white/10">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="h-3.5 w-3.5 cursor-pointer rounded-full bg-[#ff5f57] shadow-inner ring-1 ring-black/10 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-red/40"
-                    id="close-modal-btn"
-                    aria-label="Close modal"
-                  />
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#ffbd2e] shadow-inner ring-1 ring-black/10" aria-hidden="true" />
-                  <span className="h-3.5 w-3.5 rounded-full bg-[#28c840] shadow-inner ring-1 ring-black/10" aria-hidden="true" />
-                </div>
                 <h3 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">
                   {title}
                 </h3>
