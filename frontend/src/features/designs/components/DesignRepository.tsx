@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Sparkles, Tag, Trash2, UploadCloud } from 'lucide-react';
+import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Tag, Trash2, UploadCloud } from 'lucide-react';
 import { motion } from 'motion/react';
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../state/DesignContext';
@@ -187,9 +187,7 @@ export function DesignRepository() {
       <Card variant="elevated" padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-macos-purple/20 bg-macos-purple/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-purple dark:border-macos-purple/25 dark:bg-macos-purple/16 dark:text-purple-300">
-              <Sparkles className="h-3 w-3" aria-hidden="true" /> Artwork Vault
-            </div>
+
             <CardTitle>Design Repository</CardTitle>
             <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
           </div>

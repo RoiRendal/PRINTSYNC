@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarRange, Sparkles } from 'lucide-react';
+import { CalendarRange } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/ui';
 import { AnalyticsSummary } from '../components/AnalyticsSummary';
 import { ForecastSection } from '../components/ForecastSection';
@@ -49,9 +49,7 @@ export default function AnalyticsPage() {
     <div className="space-y-5 pb-8">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
-            <Sparkles className="h-3 w-3" aria-hidden="true" /> Intelligence Studio
-          </div>
+
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Analytics</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Live performance, margin telemetry, demand ranking, and forecasting in one glass dashboard.</p>
         </div>

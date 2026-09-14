@@ -212,9 +212,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           </Button>
           <div className="min-w-0">
             <span className="block truncate text-base font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
-            <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500 sm:block">
-              Liquid Glass Control Center
-            </span>
+
           </div>
         </div>
       </div>

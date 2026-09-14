@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import { Lock, Mail, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, GlassCard, Input } from '../../../shared/components/ui';
@@ -39,10 +39,7 @@ export default function LoginPage() {
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-white/55 bg-white/70 shadow-[var(--shadow-glass)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/10">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
-            <Sparkles className="h-3 w-3" aria-hidden="true" />
-            Liquid Glass Console
-          </div>
+
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-macos-text dark:text-zinc-100">Welcome back</h1>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-macos-text-muted dark:text-zinc-400">
             Sign in to manage print jobs, inventory, point-of-sale activity, and production analytics.

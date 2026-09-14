@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, Building2, Cloud, Database, History, ImagePlus, Palette, Shield, Sparkles } from 'lucide-react';
+import { Bell, Building2, Cloud, Database, History, ImagePlus, Palette, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
@@ -92,9 +92,7 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
-        <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
-          <Sparkles className="h-3 w-3" aria-hidden="true" /> System Console
-        </div>
+
         <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Settings</h1>
         <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Tune identity, sync posture, appearance, and operational safeguards.</p>
       </div>
