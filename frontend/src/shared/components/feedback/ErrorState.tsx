@@ -1,4 +1,6 @@
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '../ui';
+import { cn } from '../../lib/cn';
 
 interface ErrorStateProps {
   title?: string;
@@ -14,19 +16,18 @@ export function ErrorState({
   className = '',
 }: ErrorStateProps) {
   return (
-    <div className={`flex min-h-24 flex-col items-center justify-center gap-2 text-red-500 dark:text-red-400 ${className}`}>
-      <AlertCircle className="h-5 w-5" aria-hidden="true" />
-      <p className="text-[10px] font-bold uppercase tracking-widest">{title}</p>
-      <p className="text-xs text-gray-500 dark:text-zinc-400">{message}</p>
+    <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-center', className)}>
+      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-macos-red/20 bg-macos-red/12 text-macos-red shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300">
+        <AlertCircle className="h-6 w-6" aria-hidden="true" />
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-macos-text dark:text-zinc-100">{title}</p>
+        <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{message}</p>
+      </div>
       {onRetry && (
-        <button
-          type="button"
-          onClick={onRetry}
-          className="mt-1 inline-flex items-center gap-1.5 rounded border border-gray-200 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          <RefreshCw className="h-3 w-3" aria-hidden="true" />
+        <Button type="button" variant="secondary" size="sm" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}>
           Retry
-        </button>
+        </Button>
       )}
     </div>
   );
