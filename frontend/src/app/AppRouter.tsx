@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './layout/AppLayout';
 import { AppProviders } from './providers/AppProviders';
-import { useUserContext } from '../features/users/state/UserContext';
+import { useAuth } from '../features/users/state/AuthContext';
 import LoginPage from '../features/auth/pages/LoginPage';
 import { NAV_ITEMS } from '../shared/constants/navigation';
 import { ErrorBoundary } from '../shared/components/feedback/ErrorBoundary';
@@ -17,8 +17,8 @@ const Orders = lazy(() => import('../features/orders/pages/OrdersPage'));
 const Settings = lazy(() => import('../features/settings/pages/SettingsPage'));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { currentUser, isLoading } = useUserContext();
-  if (isLoading) {
+  const { currentUser, isSessionLoading } = useAuth();
+  if (isSessionLoading) {
     return <LoadingState label="Restoring session" className="min-h-screen" />;
   }
   if (!currentUser) {
@@ -40,7 +40,7 @@ function ProtectedLayout() {
 }
 
 function NavigateToFirstAllowedPage() {
-  const { currentUser } = useUserContext();
+  const { currentUser } = useAuth();
   if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
@@ -50,7 +50,7 @@ function NavigateToFirstAllowedPage() {
 
 function RequirePageAccess({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const { canAccess } = useUserContext();
+  const { canAccess } = useAuth();
   if (!canAccess(location.pathname)) {
     return <NavigateToFirstAllowedPage />;
   }

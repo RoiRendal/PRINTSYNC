@@ -2,10 +2,10 @@ import { NavLink } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { cn } from '../../shared/lib/cn';
-import { useUserContext } from '../../features/users/state/UserContext';
+import { useAuth } from '../../features/users/state/AuthContext';
 
 export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
-  const { currentUser } = useUserContext();
+  const { currentUser } = useAuth();
   const visibleItems = currentUser
     ? NAV_ITEMS.filter((item) => currentUser.access.includes(item.key))
     : [];

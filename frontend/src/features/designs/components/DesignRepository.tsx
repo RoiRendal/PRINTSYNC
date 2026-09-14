@@ -5,6 +5,7 @@ import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../state/DesignContext';
 import type { CreateDesign, Design } from '../types';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
+import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -37,6 +38,7 @@ export function DesignRepository() {
   const [selectedAsset, setSelectedAsset] = useState<File | null>(null);
   const [assetError, setAssetError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const filteredDesigns = designs.filter((design) =>
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -47,6 +49,7 @@ export function DesignRepository() {
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAssetError('');
+    setMutationError(null);
     setIsUploading(true);
     let imageUrl = newDesign.imageUrl || DEFAULT_NEW_DESIGN_IMAGE_URL;
     let assetType: string | null = null;
@@ -65,12 +68,18 @@ export function DesignRepository() {
         assetType = uploaded.assetType;
         assetSizeBytes = uploaded.assetSizeBytes;
       }
-      addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
+      await addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
       setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });
       setSelectedAsset(null);
       setIsAddModalOpen(false);
-    } catch (error) {
-      setAssetError(error instanceof Error ? error.message : 'The image could not be uploaded.');
+    } catch (error: unknown) {
+      if (error instanceof ApiError) {
+        setMutationError(error.message);
+      } else if (error instanceof Error) {
+        setAssetError(error.message);
+      } else {
+        setAssetError('The image could not be uploaded.');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -113,10 +122,12 @@ export function DesignRepository() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editDesignData) {
-      updateDesign(editDesignData.id, {
+    if (!editDesignData) return;
+    setMutationError(null);
+    try {
+      await updateDesign(editDesignData.id, {
         name: editDesignData.name,
         category: editDesignData.category,
         imageUrl: editDesignData.imageUrl,
@@ -124,6 +135,8 @@ export function DesignRepository() {
       });
       setIsEditModalOpen(false);
       setEditDesignData(null);
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The design could not be updated.');
     }
   };
 
@@ -145,11 +158,16 @@ export function DesignRepository() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleDelete = () => {
-    if (designToDelete) {
-      deleteDesign(designToDelete.id);
+  const handleDelete = async () => {
+    if (!designToDelete) return;
+    setMutationError(null);
+    try {
+      await deleteDesign(designToDelete.id);
       setIsDeleteConfirmOpen(false);
       setDesignToDelete(null);
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The design could not be deleted.');
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -158,6 +176,13 @@ export function DesignRepository() {
   return (
     <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
+      {mutationError && (
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-3 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+          <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{mutationError}</span>
+          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
+        </div>
+      )}
 
       <Card variant="elevated" padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">

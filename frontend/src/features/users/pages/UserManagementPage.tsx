@@ -25,6 +25,7 @@ import {
   TableRow,
 } from '../../../shared/components/ui';
 import { RbacRole, UserRecord, useUserContext } from '../state/UserContext';
+import { useAuth } from '../state/AuthContext';
 import { cn } from '../../../shared/lib/cn';
 
 interface FormState {
@@ -54,7 +55,9 @@ function initials(name: string) {
 }
 
 export default function UserManagement() {
-  const { users, isLoading, userError, refreshUsers, createUser, updateUser, deleteUser, getDefaultAccess, firstAdminId } = useUserContext();
+  const { users, isUsersLoading, userError, refreshUsers, createUser, updateUser, deleteUser } = useUserContext();
+  const { currentUser, getDefaultAccess } = useAuth();
+  const firstAdminId = currentUser?.id ?? '';
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -122,7 +125,7 @@ export default function UserManagement() {
 
   const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
 
-  if (isLoading) return <LoadingState label="Loading users" className="min-h-64" />;
+  if (isUsersLoading) return <LoadingState label="Loading users" className="min-h-64" />;
   if (userError) return <ErrorState message={userError} onRetry={refreshUsers} className="min-h-64" />;
 
   return (

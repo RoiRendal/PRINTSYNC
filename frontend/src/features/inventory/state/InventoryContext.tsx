@@ -8,8 +8,8 @@ interface InventoryContextValue {
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
-  addItem: (item: CreateInventoryItem) => Promise<void>;
-  updateItem: (id: string, item: UpdateInventoryItem) => Promise<void>;
+  addItem: (item: CreateInventoryItem) => Promise<InventoryItem>;
+  updateItem: (id: string, item: UpdateInventoryItem) => Promise<InventoryItem>;
   deleteItem: (id: string) => Promise<void>;
 }
 
@@ -41,41 +41,28 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   }, [refreshKey]);
 
   const addItem = async (newItem: CreateInventoryItem) => {
-    try {
-      const item = await inventoryApi.create(newItem);
-      setItems((previousItems) => [...previousItems, item]);
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Inventory item could not be created.');
-    }
+    const item = await inventoryApi.create(newItem);
+    setItems((previousItems) => [...previousItems, item]);
+    return item;
   };
 
   const updateItem = async (id: string, updatedItem: UpdateInventoryItem) => {
     const existingItem = items.find((item) => item.id === id);
     const nextStock = updatedItem.stock ?? existingItem?.stock;
     const { stock: _stock, ...details } = updatedItem;
-    try {
-      const item = await inventoryApi.update(id, details);
-      if (nextStock === undefined || nextStock === item.stock) {
-        setItems((previousItems) => previousItems.map((current) => current.id === id ? item : current));
-      } else {
-        const adjustedItem = await inventoryApi.adjust(id, { quantity: nextStock - item.stock, reason: 'Inventory count correction' });
-        setItems((previousItems) => previousItems.map((current) => current.id === id ? adjustedItem : current));
-      }
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Inventory item could not be updated.');
+    const item = await inventoryApi.update(id, details);
+    if (nextStock === undefined || nextStock === item.stock) {
+      setItems((previousItems) => previousItems.map((current) => current.id === id ? item : current));
+    } else {
+      const adjustedItem = await inventoryApi.adjust(id, { quantity: nextStock - item.stock, reason: 'Inventory count correction' });
+      setItems((previousItems) => previousItems.map((current) => current.id === id ? adjustedItem : current));
     }
+    return item;
   };
 
   const deleteItem = async (id: string) => {
-    try {
-      await inventoryApi.remove(id);
-      setItems((previousItems) => previousItems.filter((item) => item.id !== id));
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Inventory item could not be deleted.');
-    }
+    await inventoryApi.remove(id);
+    setItems((previousItems) => previousItems.filter((item) => item.id !== id));
   };
 
   return (

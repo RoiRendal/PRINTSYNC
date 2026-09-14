@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../shared/constants/branding';
 import { settingsApi } from '../../features/settings/api/settingsApi';
 import { ApiError } from '../../shared/api/errors';
-import { useUserContext } from '../../features/users/state/UserContext';
+import { useAuth } from '../../features/users/state/AuthContext';
 
 const MAX_CUSTOM_LOGO_BYTES = 900_000;
 
@@ -23,7 +23,7 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
   const [businessDisplayName, setBusinessDisplayNameState] = useState(DEFAULT_BUSINESS_DISPLAY_NAME);
   const [customBusinessLogoDataUrl, setCustomBusinessLogoDataUrlState] = useState<string | null>(null);
   const [brandingError, setBrandingError] = useState<string | null>(null);
-  const { currentUser } = useUserContext();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
     if (!currentUser) return;

@@ -8,8 +8,8 @@ interface DesignContextValue {
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
-  addDesign: (design: CreateDesign) => Promise<void>;
-  updateDesign: (id: string, design: UpdateDesign) => Promise<void>;
+  addDesign: (design: CreateDesign) => Promise<Design>;
+  updateDesign: (id: string, design: UpdateDesign) => Promise<Design>;
   deleteDesign: (id: string) => Promise<void>;
 }
 
@@ -41,42 +41,29 @@ export function DesignProvider({ children }: { children: ReactNode }) {
   }, [refreshKey]);
 
   const addDesign = async (newDesign: CreateDesign) => {
-    try {
-      const design = await designsApi.create(newDesign);
-      setDesigns((previousDesigns) => [design, ...previousDesigns]);
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Design could not be created.');
-    }
+    const design = await designsApi.create(newDesign);
+    setDesigns((previousDesigns) => [design, ...previousDesigns]);
+    return design;
   };
 
   const updateDesign = async (id: string, updatedDesign: UpdateDesign) => {
     const existingDesign = designs.find((design) => design.id === id);
-    if (!existingDesign) return;
-    try {
-      const design = await designsApi.update(id, {
-        name: updatedDesign.name ?? existingDesign.name,
-        category: updatedDesign.category ?? existingDesign.category,
-        imageUrl: updatedDesign.imageUrl ?? existingDesign.imageUrl,
-        tags: updatedDesign.tags ?? existingDesign.tags,
-        assetType: updatedDesign.assetType ?? existingDesign.assetType,
-        assetSizeBytes: updatedDesign.assetSizeBytes ?? existingDesign.assetSizeBytes,
-      });
-      setDesigns((previousDesigns) => previousDesigns.map((current) => current.id === id ? design : current));
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Design could not be updated.');
-    }
+    if (!existingDesign) throw new Error('Design not found.');
+    const design = await designsApi.update(id, {
+      name: updatedDesign.name ?? existingDesign.name,
+      category: updatedDesign.category ?? existingDesign.category,
+      imageUrl: updatedDesign.imageUrl ?? existingDesign.imageUrl,
+      tags: updatedDesign.tags ?? existingDesign.tags,
+      assetType: updatedDesign.assetType ?? existingDesign.assetType,
+      assetSizeBytes: updatedDesign.assetSizeBytes ?? existingDesign.assetSizeBytes,
+    });
+    setDesigns((previousDesigns) => previousDesigns.map((current) => current.id === id ? design : current));
+    return design;
   };
 
   const deleteDesign = async (id: string) => {
-    try {
-      await designsApi.remove(id);
-      setDesigns((previousDesigns) => previousDesigns.filter((design) => design.id !== id));
-      setError(null);
-    } catch (requestError: unknown) {
-      setError(requestError instanceof ApiError ? requestError.message : 'Design could not be deleted.');
-    }
+    await designsApi.remove(id);
+    setDesigns((previousDesigns) => previousDesigns.filter((design) => design.id !== id));
   };
 
   return (

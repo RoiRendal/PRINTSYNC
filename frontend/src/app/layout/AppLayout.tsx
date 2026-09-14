@@ -8,7 +8,7 @@ import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
-import { useUserContext } from '../../features/users/state/UserContext';
+import { useAuth } from '../../features/users/state/AuthContext';
 import { Button } from '../../shared/components/ui';
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -18,7 +18,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentLabel = currentItem?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
   const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
-  const { currentUser, logout } = useUserContext();
+  const { currentUser, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
 

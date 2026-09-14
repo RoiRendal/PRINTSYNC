@@ -4,10 +4,10 @@ import { Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, GlassCard, Input } from '../../../shared/components/ui';
-import { useUserContext } from '../../users/state/UserContext';
+import { useAuth } from '../../users/state/AuthContext';
 
 export default function LoginPage() {
-  const { login, currentUser, isLoading, authError } = useUserContext();
+  const { login, currentUser, isSessionLoading, authError } = useAuth();
   const { effectiveBusinessLogoUrl } = useBusinessBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,7 +93,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <Button type="submit" size="lg" fullWidth isLoading={isLoading} disabled={isLoading}>
+            <Button type="submit" size="lg" fullWidth isLoading={isSessionLoading} disabled={isSessionLoading}>
               Login
             </Button>
           </form>

@@ -7,6 +7,7 @@ import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { useInventory } from '../state/InventoryContext';
+import { ApiError } from '../../../shared/api/errors';
 import {
   Badge,
   Button,
@@ -38,6 +39,7 @@ export default function Inventory() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<CreateInventoryItem>({
     name: '',
@@ -102,14 +104,19 @@ export default function Inventory() {
     setEditingItem(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingItem) {
-      updateItem(editingItem.id, formData);
-    } else {
-      addItem(formData);
+    setMutationError(null);
+    try {
+      if (editingItem) {
+        await updateItem(editingItem.id, formData);
+      } else {
+        await addItem(formData);
+      }
+      handleCloseModal();
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The inventory item could not be saved.');
     }
-    handleCloseModal();
   };
 
   const handleDeleteInitiate = (item: InventoryItem) => {
@@ -128,11 +135,16 @@ export default function Inventory() {
     reader.readAsDataURL(file);
   };
 
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteItem(itemToDelete.id);
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setMutationError(null);
+    try {
+      await deleteItem(itemToDelete.id);
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The inventory item could not be deleted.');
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -141,6 +153,13 @@ export default function Inventory() {
 
   return (
     <div className="space-y-5">
+      {mutationError && (
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-3 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{mutationError}</span>
+          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
+        </div>
+      )}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
