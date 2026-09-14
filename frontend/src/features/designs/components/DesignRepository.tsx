@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Tag, Trash2, UploadCloud } from 'lucide-react';
-import { motion } from 'motion/react';
+
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../state/DesignContext';
 import type { CreateDesign, Design } from '../types';
@@ -203,10 +203,10 @@ export function DesignRepository() {
           {filteredDesigns.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {filteredDesigns.map((design) => (
-                <motion.div key={design.id} whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+                <div key={design.id}>
                   <GlassCard className="group overflow-hidden p-0">
                     <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-white/5">
-                      <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
                         <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
                           <Eye className="h-4 w-4" aria-hidden="true" />
@@ -234,7 +234,7 @@ export function DesignRepository() {
                       </div>
                     </div>
                   </GlassCard>
-                </motion.div>
+                </div>
               ))}
             </div>
           ) : (

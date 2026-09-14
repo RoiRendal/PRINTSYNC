@@ -45,7 +45,7 @@ const statToneClasses: Record<StatTone, string> = {
 
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
   return (
-    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+    <div>
       <GlassCard className="h-full p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -58,7 +58,7 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
         </div>
         <p className="mt-3 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }
 

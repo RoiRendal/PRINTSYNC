@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { KeyRound, Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
-import { motion } from 'motion/react';
+
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -152,7 +152,7 @@ export default function UserManagement() {
                 { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <motion.div key={label} whileHover={{ x: 3 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -160,7 +160,7 @@ export default function UserManagement() {
                     <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </Card>

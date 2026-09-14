@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { Plus, Search, ShoppingBag } from 'lucide-react';
 import type { InventoryItem } from '../../../inventory/types';
 import { Badge, Card, Input } from '../../../../shared/components/ui';
@@ -62,21 +61,19 @@ export function POSCatalog({
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {filteredProducts.map(product => (
-          <motion.button
+          <button
             key={product.id}
             type="button"
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
-            whileHover={product.stock > 0 ? { y: -3 } : undefined}
-            transition={{ type: 'spring', stiffness: 360, damping: 26 }}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-white/60 bg-white/82 p-2 text-left shadow-[var(--shadow-card)] backdrop-blur-xl transition-all hover:border-macos-blue/35 dark:border-white/10 dark:bg-zinc-900/82 dark:hover:border-macos-blue-dark/35',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-white/60 bg-white/82 p-2 text-left shadow-[var(--shadow-card)] backdrop-blur-xl transition-colors hover:border-macos-blue/35 dark:border-white/10 dark:bg-zinc-900/82 dark:hover:border-macos-blue-dark/35',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
             <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border border-black/5 bg-black/[0.03] dark:border-white/10 dark:bg-white/5 xl:h-32">
               {product.imageUrl ? (
-                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex flex-col items-center text-macos-text-muted transition-colors group-hover:text-macos-blue dark:text-zinc-600 dark:group-hover:text-macos-cyan">
                   <ShoppingBag className="h-9 w-9 stroke-1" aria-hidden="true" />
@@ -90,11 +87,11 @@ export function POSCatalog({
               </div>
             </div>
             <h3 className="line-clamp-2 text-[11px] font-bold uppercase tracking-tight text-macos-text dark:text-zinc-100 xl:text-[12px]">{product.name}</h3>
-            <div className="mt-2 flex items-center justify-between transition-transform group-hover:translate-x-0.5">
+            <div className="mt-2 flex items-center justify-between">
               <p className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100 xl:text-[11px]">₱{product.price.toFixed(2)}</p>
               <Plus className="h-3.5 w-3.5 text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-500 dark:group-hover:text-macos-cyan" aria-hidden="true" />
             </div>
-          </motion.button>
+          </button>
         ))}
         {filteredProducts.length === 0 && (
           <div className="col-span-full py-12">

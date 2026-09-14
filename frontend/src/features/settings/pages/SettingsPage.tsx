@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Bell, Building2, Cloud, Database, History, ImagePlus, Palette, Shield } from 'lucide-react';
-import { motion } from 'motion/react';
+
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
@@ -193,11 +193,9 @@ export default function Settings() {
             <div className="space-y-3">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">System Archives</h3>
               {archives.map((item) => (
-                <motion.button
+                <button
                   key={item.name}
                   type="button"
-                  whileHover={{ y: -2 }}
-                  transition={{ type: 'spring', stiffness: 360, damping: 26 }}
                   className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] hover:border-macos-blue/30 dark:border-white/10 dark:bg-white/6"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -208,7 +206,7 @@ export default function Settings() {
                     </span>
                   </span>
                   <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{item.size}</span>
-                </motion.button>
+                </button>
               ))}
             </div>
 

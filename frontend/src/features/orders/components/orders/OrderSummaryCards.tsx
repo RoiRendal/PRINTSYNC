@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
 import { CheckCircle2, ClipboardList, Eye, Printer } from 'lucide-react';
-import { motion } from 'motion/react';
 import { GlassCard } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import type { Order } from '../../types';
@@ -23,7 +22,7 @@ const summaryToneClasses: Record<SummaryTone, string> = {
 
 function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
   return (
-    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+    <div>
       <GlassCard className="flex items-center justify-between gap-3 p-3 md:p-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br to-white/50 shadow-[var(--shadow-card)] ring-1 dark:to-white/5', summaryToneClasses[tone])}>
@@ -33,7 +32,7 @@ function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
         </div>
         <span className="font-mono text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
       </GlassCard>
-    </motion.div>
+    </div>
   );
 }
 
