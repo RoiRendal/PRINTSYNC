@@ -7,9 +7,9 @@
   --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-  --color-macos-blue: #007aff;
-  --color-macos-blue-dark: #0a84ff;
-  --color-macos-cyan: #5ac8fa;
+  --color-macos-blue: #555558;
+  --color-macos-blue-dark: #8e8e93;
+  --color-macos-cyan: #aeaeb2;
   --color-macos-green: #34c759;
   --color-macos-red: #ff3b30;
   --color-macos-orange: #ff9500;
@@ -48,8 +48,8 @@
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
   --app-hairline: rgb(0 0 0 / 0.12);
-  --app-selection-bg: rgb(0 122 255 / 0.16);
-  --app-selection-text: #004b9b;
+  --app-selection-bg: rgb(110 110 115 / 0.16);
+  --app-selection-text: #3a3a3c;
 }
 
 .dark {
@@ -63,7 +63,7 @@
   --app-text: #f5f5f7;
   --app-text-muted: #98989d;
   --app-hairline: rgb(255 255 255 / 0.1);
-  --app-selection-bg: rgb(10 132 255 / 0.24);
+  --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
 }
 
@@ -78,8 +78,8 @@ html {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at top left, rgb(90 200 250 / 0.10), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(175 82 222 / 0.06), transparent 32rem),
+    radial-gradient(circle at top left, rgb(142 142 147 / 0.10), transparent 34rem),
+    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.06), transparent 32rem),
     var(--app-surface);
   color: var(--app-text);
   font-family: var(--font-sans);
@@ -87,8 +87,8 @@ html {
 
 .dark body {
   background:
-    radial-gradient(circle at top left, rgb(90 200 250 / 0.18), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(175 82 222 / 0.12), transparent 32rem),
+    radial-gradient(circle at top left, rgb(142 142 147 / 0.18), transparent 34rem),
+    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.12), transparent 32rem),
     var(--app-surface);
 }
 

@@ -118,7 +118,7 @@ export function ForecastSection({
                 <YAxis yAxisId="amount" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <RechartsTooltip formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Line yAxisId="amount" type="monotone" dataKey="actualSeries" name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#007AFF" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} animationDuration={700} />
+                <Line yAxisId="amount" type="monotone" dataKey="actualSeries" name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} animationDuration={700} />
                 <Line yAxisId="amount" type="monotone" dataKey="forecastSeries" name={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} animationDuration={700} />
               </ComposedChart>
             </ResponsiveContainer>

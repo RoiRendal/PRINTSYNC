@@ -106,7 +106,7 @@ export function ProductTrendSection({
                 <YAxis yAxisId="total" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <RechartsTooltip formatter={(value) => [Number(value ?? 0).toLocaleString(), 'Units']} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Bar yAxisId="units" dataKey="units" name="Units Sold" fill="#007AFF" radius={[8, 8, 0, 0]} animationDuration={700} />
+                <Bar yAxisId="units" dataKey="units" name="Units Sold" fill="#555558" radius={[8, 8, 0, 0]} animationDuration={700} />
                 <Line yAxisId="total" type="monotone" dataKey="totalUnits" name="Total Units" stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} animationDuration={700} />
               </ComposedChart>
             </ResponsiveContainer>

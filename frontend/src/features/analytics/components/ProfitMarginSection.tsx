@@ -107,7 +107,7 @@ export function ProfitMarginSection({
                 <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <RechartsTooltip formatter={(value, name) => { const numericValue = Number(value ?? 0); const label = String(name); if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label]; return [money.format(numericValue), label]; }} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#007AFF" radius={[8, 8, 0, 0]} animationDuration={700} />
+                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#555558" radius={[8, 8, 0, 0]} animationDuration={700} />
                 <Bar yAxisId="amount" dataKey="expenses" name="COGS" fill="#AF52DE" radius={[8, 8, 0, 0]} animationDuration={700} />
                 <Line yAxisId="margin" type="monotone" dataKey="margin" name="Margin %" stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} animationDuration={700} />
               </ComposedChart>
