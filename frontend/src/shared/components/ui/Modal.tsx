@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/cn';
@@ -37,11 +38,11 @@ export const Modal: React.FC<ModalProps> = ({
     ? { duration: 0 }
     : { type: 'spring' as const, stiffness: 420, damping: 34 };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[1000] flex items-start justify-center overflow-y-auto bg-black/45 p-4 backdrop-blur-md sm:p-6 lg:p-10"
+          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/45 p-4 backdrop-blur-md sm:p-6 lg:p-10"
           onClick={onClose}
           role="presentation"
           initial={disableAnimation ? false : { opacity: 0 }}
@@ -84,6 +85,7 @@ export const Modal: React.FC<ModalProps> = ({
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 };
