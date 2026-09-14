@@ -3,13 +3,7 @@ import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
 import { Bell, Sun, Moon, PanelLeft, ChevronLeft } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';

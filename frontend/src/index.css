@@ -3,14 +3,145 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+
+  --color-macos-blue: #007aff;
+  --color-macos-blue-dark: #0a84ff;
+  --color-macos-cyan: #5ac8fa;
+  --color-macos-green: #34c759;
+  --color-macos-red: #ff3b30;
+  --color-macos-orange: #ff9500;
+  --color-macos-purple: #af52de;
+  --color-macos-gray: #8e8e93;
+  --color-macos-bg: #f5f5f7;
+  --color-macos-bg-dark: #1c1c1e;
+  --color-macos-text: #1d1d1f;
+  --color-macos-text-muted: #86868b;
+
+  --radius-button: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-modal: 1rem;
+  --radius-squircle: 1.25rem;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.04);
+  --shadow-glass: 0 12px 40px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.32);
+  --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
-/* ERP-first visual behavior: keep typography and motion minimal. */
-*, *::before, *::after {
-  animation: none !important;
-  transition-duration: 0ms;
-  transition-timing-function: linear;
+:root {
+  color-scheme: light;
+  --glass-bg: rgb(255 255 255 / 0.72);
+  --glass-bg-strong: rgb(255 255 255 / 0.86);
+  --glass-border: rgb(255 255 255 / 0.48);
+  --glass-highlight: rgb(255 255 255 / 0.68);
+  --glass-blur-sidebar: 24px;
+  --glass-blur-toolbar: 20px;
+  --glass-blur-modal: 40px;
+  --app-surface: #f5f5f7;
+  --app-surface-raised: #ffffff;
+  --app-text: #1d1d1f;
+  --app-text-muted: #86868b;
+  --app-hairline: rgb(0 0 0 / 0.08);
+  --app-selection-bg: rgb(0 122 255 / 0.16);
+  --app-selection-text: #004b9b;
+}
+
+.dark {
+  color-scheme: dark;
+  --glass-bg: rgb(28 28 30 / 0.72);
+  --glass-bg-strong: rgb(44 44 46 / 0.84);
+  --glass-border: rgb(255 255 255 / 0.12);
+  --glass-highlight: rgb(255 255 255 / 0.14);
+  --app-surface: #1c1c1e;
+  --app-surface-raised: #2c2c2e;
+  --app-text: #f5f5f7;
+  --app-text-muted: #98989d;
+  --app-hairline: rgb(255 255 255 / 0.1);
+  --app-selection-bg: rgb(10 132 255 / 0.24);
+  --app-selection-text: #f5f5f7;
+}
+
+html {
+  background: var(--app-surface);
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgb(90 200 250 / 0.18), transparent 34rem),
+    radial-gradient(circle at bottom right, rgb(175 82 222 / 0.12), transparent 32rem),
+    var(--app-surface);
+  color: var(--app-text);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+::selection {
+  background: var(--app-selection-bg);
+  color: var(--app-selection-text);
+}
+
+* {
+  border-color: var(--app-hairline);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-glass);
+    backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
+    will-change: backdrop-filter;
+  }
+
+  .glass-toolbar {
+    background: color-mix(in srgb, var(--glass-bg) 88%, transparent);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 1px 0 var(--glass-highlight), 0 8px 30px rgb(0 0 0 / 0.06);
+    backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
+    will-change: backdrop-filter;
+  }
+
+  .glass-modal {
+    background: var(--glass-bg-strong);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-modal);
+    backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
+    will-change: transform, opacity, backdrop-filter;
+  }
+
+  .macos-squircle {
+    border-radius: var(--radius-squircle);
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }
