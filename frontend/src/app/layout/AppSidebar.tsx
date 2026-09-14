@@ -33,7 +33,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
                   isActive
                     ? 'text-white dark:text-white'
-                    : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
+                    : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
                 )
               }
             >
@@ -54,7 +54,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                       'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
                       isActive
                         ? 'border-white/20 bg-white/20 text-white'
-                        : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/10 dark:bg-white/8 dark:group-hover:bg-white/14 dark:group-hover:text-zinc-100',
+                        : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/20 dark:bg-white/22 dark:text-zinc-200 dark:group-hover:bg-white/30 dark:group-hover:text-zinc-100',
                     )}
                   >
                     <item.icon className="h-4 w-4" />
