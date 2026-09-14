@@ -18,7 +18,8 @@
   --color-macos-bg: #f5f5f7;
   --color-macos-bg-dark: #1c1c1e;
   --color-macos-text: #1d1d1f;
-  --color-macos-text-muted: #86868b;
+  /* Darkened from #86868b to improve light-mode readability while keeping a muted hierarchy. */
+  --color-macos-text-muted: #555558;
 
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
@@ -26,25 +27,27 @@
   --radius-squircle: 1.25rem;
   --radius-pill: 9999px;
 
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.06);
   --shadow-glass: 0 12px 40px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.32);
   --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
 :root {
   color-scheme: light;
-  --glass-bg: rgb(255 255 255 / 0.72);
-  --glass-bg-strong: rgb(255 255 255 / 0.86);
-  --glass-border: rgb(255 255 255 / 0.48);
-  --glass-highlight: rgb(255 255 255 / 0.68);
+  /* Light-mode glass tokens: increased opacity and a subtle dark border so panels
+     remain distinct from the light page background while keeping the glass aesthetic. */
+  --glass-bg: rgb(255 255 255 / 0.82);
+  --glass-bg-strong: rgb(255 255 255 / 0.94);
+  --glass-border: rgb(0 0 0 / 0.10);
+  --glass-highlight: rgb(255 255 255 / 0.60);
   --glass-blur-sidebar: 24px;
   --glass-blur-toolbar: 20px;
   --glass-blur-modal: 40px;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
-  --app-text-muted: #86868b;
-  --app-hairline: rgb(0 0 0 / 0.08);
+  --app-text-muted: #555558;
+  --app-hairline: rgb(0 0 0 / 0.12);
   --app-selection-bg: rgb(0 122 255 / 0.16);
   --app-selection-text: #004b9b;
 }
@@ -71,15 +74,22 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+:root body {
   margin: 0;
   min-width: 320px;
+  background:
+    radial-gradient(circle at top left, rgb(90 200 250 / 0.10), transparent 34rem),
+    radial-gradient(circle at bottom right, rgb(175 82 222 / 0.06), transparent 32rem),
+    var(--app-surface);
+  color: var(--app-text);
+  font-family: var(--font-sans);
+}
+
+.dark body {
   background:
     radial-gradient(circle at top left, rgb(90 200 250 / 0.18), transparent 34rem),
     radial-gradient(circle at bottom right, rgb(175 82 222 / 0.12), transparent 32rem),
     var(--app-surface);
-  color: var(--app-text);
-  font-family: var(--font-sans);
 }
 
 #root {
