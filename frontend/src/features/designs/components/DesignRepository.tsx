@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { Image as ImageIcon, Plus, Trash2, Tag, Calendar, Download, Eye, Edit } from 'lucide-react';
-import { useDesigns } from '../state/DesignContext';
+import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Sparkles, Tag, Trash2, UploadCloud } from 'lucide-react';
+import { motion } from 'motion/react';
 import { designsApi } from '../api/designsApi';
+import { useDesigns } from '../state/DesignContext';
+import type { CreateDesign, Design } from '../types';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
-import { Modal } from '../../../shared/components/ui/Modal';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import type { CreateDesign, Design } from '../types';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Modal, Select } from '../../../shared/components/ui';
+
+const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -27,26 +30,18 @@ export function DesignRepository() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
-  
-  const [newDesign, setNewDesign] = useState<CreateDesign>({
-    name: '',
-    category: '',
-    imageUrl: '',
-    tags: []
-  });
-
+  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [] });
   const [editDesignData, setEditDesignData] = useState<Design | null>(null);
-  
   const [tagInput, setTagInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
   const [selectedAsset, setSelectedAsset] = useState<File | null>(null);
   const [assetError, setAssetError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  const filteredDesigns = designs.filter(design => 
+  const filteredDesigns = designs.filter((design) =>
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     design.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    design.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    design.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   const handleAddSubmit = async (e: React.FormEvent) => {
@@ -99,19 +94,13 @@ export function DesignRepository() {
 
   const handleAddTag = () => {
     if (tagInput.trim()) {
-      setNewDesign(prev => ({
-        ...prev,
-        tags: [...prev.tags, tagInput.trim()]
-      }));
+      setNewDesign((prev) => ({ ...prev, tags: [...prev.tags, tagInput.trim()] }));
       setTagInput('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setNewDesign(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
+    setNewDesign((prev) => ({ ...prev, tags: prev.tags.filter((tag) => tag !== tagToRemove) }));
   };
 
   const openViewModal = (design: Design) => {
@@ -131,7 +120,7 @@ export function DesignRepository() {
         name: editDesignData.name,
         category: editDesignData.category,
         imageUrl: editDesignData.imageUrl,
-        tags: editDesignData.tags
+        tags: editDesignData.tags,
       });
       setIsEditModalOpen(false);
       setEditDesignData(null);
@@ -140,20 +129,14 @@ export function DesignRepository() {
 
   const handleEditAddTag = () => {
     if (editTagInput.trim() && editDesignData) {
-      setEditDesignData(prev => prev ? ({
-        ...prev,
-        tags: [...prev.tags, editTagInput.trim()]
-      }) : null);
+      setEditDesignData((prev) => prev ? ({ ...prev, tags: [...prev.tags, editTagInput.trim()] }) : null);
       setEditTagInput('');
     }
   };
 
   const removeEditTag = (tagToRemove: string) => {
     if (editDesignData) {
-      setEditDesignData(prev => prev ? ({
-        ...prev,
-        tags: prev.tags.filter(tag => tag !== tagToRemove)
-      }) : null);
+      setEditDesignData((prev) => prev ? ({ ...prev, tags: prev.tags.filter((tag) => tag !== tagToRemove) }) : null);
     }
   };
 
@@ -173,427 +156,121 @@ export function DesignRepository() {
   if (isLoading) return <LoadingState label="Loading designs" className="min-h-64" />;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800">
-        <div className="w-full md:max-w-md relative">
-          <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search designs by name, category or tag..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-100 bg-gray-50 text-sm focus:outline-none focus:border-zinc-400 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-zinc-800 shadow-sm whitespace-nowrap"
-        >
-          <Plus className="w-3.5 h-3.5" /> Upload Design
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {filteredDesigns.map((design) => (
-            <div
-              key={design.id}
-              className="group bg-white border border-gray-200 rounded overflow-hidden shadow-sm hover:shadow-md dark:bg-zinc-900 dark:border-zinc-800"
-            >
-              <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 overflow-hidden">
-                <img 
-                  src={design.imageUrl} 
-                  alt={design.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3">
-                  <button 
-                    onClick={() => openViewModal(design)}
-                    className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-colors"
-                    title="View details"
-                  >
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button 
-                    className="p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-colors"
-                    title="Download design"
-                  >
-                    <Download className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/60 backdrop-blur-md text-white text-[9px] font-bold uppercase tracking-widest rounded">
-                  {design.category}
-                </div>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-800 dark:text-zinc-200">{design.name}</h3>
-                    <p className="text-[10px] text-gray-500 dark:text-zinc-500 flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-2.5 h-2.5" /> Added on {design.createdAt}
-                    </p>
-                  </div>
-                  <div className="flex gap-1 items-start">
-                    <button 
-                      onClick={() => openEditModal(design)}
-                      className="p-1.5 text-gray-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800/30 rounded transition-colors"
-                      title="Edit design"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => confirmDelete(design)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded transition-colors"
-                      title="Delete design"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {design.tags.map(tag => (
-                    <span 
-                      key={tag} 
-                      className="px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] rounded-full dark:bg-zinc-800 dark:text-zinc-400 flex items-center gap-1"
-                    >
-                      <Tag className="w-2.5 h-2.5" /> {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
+      <Card variant="elevated" padding="none" className="overflow-hidden">
+        <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-macos-purple/20 bg-macos-purple/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-purple dark:border-macos-purple/25 dark:bg-macos-purple/16 dark:text-purple-300">
+              <Sparkles className="h-3 w-3" aria-hidden="true" /> Artwork Vault
             </div>
-          ))}
-      </div>
-
-      {filteredDesigns.length === 0 && (
-        <div className="py-24 text-center border-2 border-dashed border-gray-200 dark:border-zinc-800 rounded">
-          <EmptyState
-            title="No designs found"
-            message="Try adjusting your search or upload a new design."
-            icon={<ImageIcon className="h-12 w-12 opacity-15" aria-hidden="true" />}
-            className="gap-3"
-          />
-        </div>
-      )}
-
-      {/* Upload Modal */}
-      <Modal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
-        title="Upload New Design"
-        disableAnimation
-      >
-        <form onSubmit={handleAddSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Design Name
-            </label>
-            <input
-              required
-              type="text"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              placeholder="e.g. Modern Minimalist Logo"
-              value={newDesign.name}
-              onChange={(e) => setNewDesign({ ...newDesign, name: e.target.value })}
-            />
+            <CardTitle>Design Repository</CardTitle>
+            <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
           </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Category
-            </label>
-            <select
-              required
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              value={newDesign.category}
-              onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}
-            >
-              <option value="">Select Category</option>
-              <option value="Logo">Logo</option>
-              <option value="Abstract">Abstract</option>
-              <option value="Typography">Typography</option>
-              <option value="Graphic">Graphic</option>
-              <option value="Pattern">Pattern</option>
-            </select>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Upload Image (Optional)
-            </label>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-xs text-gray-700 dark:text-zinc-200"
-              onChange={(event) => handleAssetSelected(event.target.files?.[0])}
-            />
-            {selectedAsset && <p className="text-[10px] text-gray-500 dark:text-zinc-400">Selected: {selectedAsset.name}</p>}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-              Image URL (Optional)
-            </label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-              placeholder="https://images.unsplash.com/..."
-              value={newDesign.imageUrl}
-              onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })}
-            />
-          </div>
-
-          {assetError && <p className="text-[11px] text-red-600 dark:text-red-400">{assetError}</p>}
-
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 block">
-              Tags
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                className="flex-1 px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                placeholder="Add a tag..."
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-              />
-              <button 
-                type="button"
-                onClick={handleAddTag}
-                className="px-4 py-2 bg-gray-800 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-950 transition-colors"
-              >
-                Add
-              </button>
+          <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+              <Input className="pl-9 text-xs" placeholder="Search designs by name, category or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
-            <div className="flex flex-wrap gap-1 mt-2">
-              {newDesign.tags.map(tag => (
-                <span key={tag} className="px-2 py-1 bg-zinc-100 text-zinc-900 text-[10px] font-medium rounded flex items-center gap-1 dark:bg-zinc-800/40 dark:text-zinc-200">
-                  {tag}
-                  <button type="button" onClick={() => removeTag(tag)} className="hover:text-zinc-800">
-                    <Plus className="w-3 h-3 rotate-45" />
-                  </button>
-                </span>
+            <Button onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          {filteredDesigns.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+              {filteredDesigns.map((design) => (
+                <motion.div key={design.id} whileHover={{ y: -4 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+                  <GlassCard className="group overflow-hidden p-0">
+                    <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-white/5">
+                      <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
+                        <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
+                          <Eye className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                        <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
+                          <Download className="h-4 w-4" aria-hidden="true" />
+                        </Button>
+                      </div>
+                      <div className="absolute left-2 top-2"><Badge variant="purple">{design.category}</Badge></div>
+                    </div>
+                    <div className="space-y-3 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-sm font-bold text-macos-text dark:text-zinc-100">{design.name}</h3>
+                          <p className="mt-1 flex items-center gap-1 text-[10px] text-macos-text-muted dark:text-zinc-500"><Calendar className="h-2.5 w-2.5" aria-hidden="true" /> Added {design.createdAt}</p>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-macos-red hover:text-macos-red"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {design.tags.slice(0, 3).map((tag) => <Badge key={tag} variant="gray" className="gap-1"><Tag className="h-2.5 w-2.5" aria-hidden="true" />{tag}</Badge>)}
+                        {design.tags.length > 3 && <Badge variant="neutral">+{design.tags.length - 3}</Badge>}
+                      </div>
+                    </div>
+                  </GlassCard>
+                </motion.div>
               ))}
             </div>
-          </div>
+          ) : (
+            <div className="rounded-[var(--radius-card)] border border-dashed border-black/10 py-20 dark:border-white/10">
+              <EmptyState title="No designs found" message="Try adjusting your search or upload a new design." icon={<ImageIcon className="h-12 w-12 opacity-15" aria-hidden="true" />} className="gap-3" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-          <div className="pt-4 flex gap-3">
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isUploading}
-              className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors"
-            >
-              {isUploading ? 'Uploading...' : 'Upload Design'}
-            </button>
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Upload New Design">
+        <form onSubmit={handleAddSubmit} className="space-y-4">
+          <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" placeholder="Modern Minimalist Logo" value={newDesign.name} onChange={(e) => setNewDesign({ ...newDesign, name: e.target.value })} /></label>
+          <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Category</span><Select required value={newDesign.category} onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
+          <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Upload Image (Optional)</span><Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-white" onChange={(event) => handleAssetSelected(event.target.files?.[0])} />{selectedAsset && <p className="text-[10px] text-macos-text-muted dark:text-zinc-500">Selected: {selectedAsset.name}</p>}</label>
+          <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Image URL (Optional)</span><Input type="text" placeholder="https://images.unsplash.com/..." value={newDesign.imageUrl} onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })} /></label>
+          {assetError && <p className="text-[11px] text-macos-red dark:text-red-300">{assetError}</p>}
+          <div className="space-y-2">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Tags</span>
+            <div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())} /><Button type="button" variant="secondary" onClick={handleAddTag}>Add</Button></div>
+            <div className="flex flex-wrap gap-1.5">{newDesign.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div>
           </div>
+          <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10"><Button type="button" variant="secondary" fullWidth onClick={() => setIsAddModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading} leftIcon={<UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />}>{isUploading ? 'Uploading...' : 'Upload Design'}</Button></div>
         </form>
       </Modal>
 
-      {/* View Detail Modal */}
-      <Modal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        title={selectedDesign?.name || 'Design View'}
-        maxWidth="max-w-2xl"
-        disableAnimation
-      >
+      <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={selectedDesign?.name || 'Design View'} maxWidth="max-w-2xl">
         {selectedDesign && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden">
-              <img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="w-full h-full object-contain" />
-            </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border border-white/45 bg-white/50 dark:border-white/10 dark:bg-white/6"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
-              <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">Design Information</h4>
-                <p className="text-xl font-bold text-gray-800 dark:text-zinc-100">{selectedDesign.name}</p>
-                <div className="inline-block mt-2 px-2 py-1 bg-zinc-100 text-zinc-900 text-[10px] font-bold uppercase tracking-widest rounded dark:bg-zinc-800/40 dark:text-zinc-200">
-                  {selectedDesign.category}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Metadata</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wider text-gray-500 italic">Reference ID</p>
-                    <p className="text-sm font-mono text-gray-800 dark:text-zinc-300 font-bold">#{selectedDesign.id}</p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wider text-gray-500 italic">Created Date</p>
-                    <p className="text-sm text-gray-800 dark:text-zinc-300 font-bold">{selectedDesign.createdAt}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Tags</h4>
-                <div className="flex flex-wrap gap-1">
-                   {selectedDesign.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-600 text-[10px] rounded border border-gray-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex gap-3">
-                <button className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 transition-colors rounded">
-                  <Download className="w-4 h-4" /> Download Assets
-                </button>
-              </div>
+              <div><h4 className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="purple" className="mt-2">{selectedDesign.category}</Badge></div>
+              <GlassCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Reference ID</p><p className="font-mono text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></GlassCard>
+              <div className="space-y-2"><h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Tags</h4><div className="flex flex-wrap gap-1.5">{selectedDesign.tags.map((tag) => <Badge key={tag} variant="gray">{tag}</Badge>)}</div></div>
+              <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')} leftIcon={<Download className="h-4 w-4" aria-hidden="true" />}>Download Assets</Button>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        title="Edit Design"
-        disableAnimation
-      >
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Design">
         {editDesignData && (
           <form onSubmit={handleEditSubmit} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Design Name
-              </label>
-              <input
-                required
-                type="text"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                value={editDesignData.name}
-                onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Category
-              </label>
-              <select
-                required
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                value={editDesignData.category}
-                onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}
-              >
-                <option value="">Select Category</option>
-                <option value="Logo">Logo</option>
-                <option value="Abstract">Abstract</option>
-                <option value="Typography">Typography</option>
-                <option value="Graphic">Graphic</option>
-                <option value="Pattern">Pattern</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Image URL
-              </label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                value={editDesignData.imageUrl}
-                onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400 block">
-                Tags
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="flex-1 px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  placeholder="Add a tag..."
-                  value={editTagInput}
-                  onChange={(e) => setEditTagInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())}
-                />
-                <button 
-                  type="button"
-                  onClick={handleEditAddTag}
-                  className="px-4 py-2 bg-gray-800 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-950 transition-colors"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1 mt-2">
-                {editDesignData.tags.map(tag => (
-                  <span key={tag} className="px-2 py-1 bg-zinc-100 text-zinc-900 text-[10px] font-medium rounded flex items-center gap-1 dark:bg-zinc-800/40 dark:text-zinc-200">
-                    {tag}
-                    <button type="button" onClick={() => removeEditTag(tag)} className="hover:text-zinc-800">
-                      <Plus className="w-3 h-3 rotate-45" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(false)}
-                className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors"
-              >
-                Save Changes
-              </button>
-            </div>
+            <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
+            <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
+            <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Image URL</span><Input type="text" value={editDesignData.imageUrl} onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })} /></label>
+            <div className="space-y-2"><span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Tags</span><div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={editTagInput} onChange={(e) => setEditTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())} /><Button type="button" variant="secondary" onClick={handleEditAddTag}>Add</Button></div><div className="flex flex-wrap gap-1.5">{editDesignData.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeEditTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div></div>
+            <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth>Save Changes</Button></div>
           </form>
         )}
       </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteConfirmOpen}
-        onClose={() => setIsDeleteConfirmOpen(false)}
-        title="Confirm Deletion"
-        disableAnimation
-      >
-        <div className="space-y-4 text-center py-2">
-          <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto">
-            <Trash2 className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-zinc-100 italic">Delete Design?</h3>
-            <p className="text-xs text-gray-500 dark:text-zinc-400">
-              Are you sure you want to delete <span className="font-bold text-gray-800 dark:text-zinc-200">"{designToDelete?.name}"</span>? 
-              This action cannot be undone.
-            </p>
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={() => setIsDeleteConfirmOpen(false)}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleDelete}
-              className="flex-1 px-4 py-2 bg-red-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-red-700 shadow-sm transition-colors"
-            >
-              Confirm Delete
-            </button>
-          </div>
+      <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Deletion">
+        <div className="space-y-4 py-2 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-macos-red/20 bg-macos-red/12 text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
+          <div className="space-y-1"><h3 className="text-sm font-bold uppercase tracking-wider text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted dark:text-zinc-400">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
+          <div className="flex gap-3 pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button type="button" variant="danger" fullWidth onClick={handleDelete}>Confirm Delete</Button></div>
         </div>
       </Modal>
     </div>
   );
 }
-

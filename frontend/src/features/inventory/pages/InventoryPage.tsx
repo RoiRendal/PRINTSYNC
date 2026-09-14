@@ -1,13 +1,34 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Box, Image as ImageIcon } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { AlertTriangle, Box, Edit2, Image as ImageIcon, Package, Plus, Search, Sparkles, Trash2 } from 'lucide-react';
+import { motion } from 'motion/react';
 import type { CreateInventoryItem, InventoryItem } from '../types';
-import { Modal } from '../../../shared/components/ui/Modal';
-import { Tooltip } from '../../../shared/components/ui/Tooltip';
+import { DesignRepository } from '../../designs/components/DesignRepository';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { useInventory } from '../state/InventoryContext';
-import { DesignRepository } from '../../designs/components/DesignRepository';
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  GlassCard,
+  Input,
+  Modal,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tooltip,
+} from '../../../shared/components/ui';
+import { cn } from '../../../shared/lib/cn';
 
 export default function Inventory() {
   const { items, isLoading, error, refresh, addItem, updateItem, deleteItem } = useInventory();
@@ -18,7 +39,6 @@ export default function Inventory() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
 
-  // Form State
   const [formData, setFormData] = useState<CreateInventoryItem>({
     name: '',
     category: '',
@@ -29,14 +49,35 @@ export default function Inventory() {
   });
 
   const filteredItems = useMemo(() => {
+    const query = searchTerm.toLowerCase();
     return items.filter(
       (item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase())
+        item.name.toLowerCase().includes(query) ||
+        item.sku.toLowerCase().includes(query) ||
+        item.id.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query),
     );
   }, [items, searchTerm]);
+
+  const categories = useMemo(() => {
+    return [...new Set([
+      'Apparel',
+      'Outerwear',
+      'Accessories',
+      'Consumables',
+      'Supplies',
+      'Equipment',
+      'Packaging',
+      ...items.map((item) => item.category),
+    ])].filter(Boolean).sort();
+  }, [items]);
+
+  const inventoryStats = useMemo(() => {
+    const lowStock = items.filter((item) => item.stock <= item.reorderLevel).length;
+    const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
+    const totalValue = items.reduce((sum, item) => sum + item.stock * item.price, 0);
+    return { lowStock, totalStock, totalValue };
+  }, [items]);
 
   const handleOpenModal = (item?: InventoryItem) => {
     if (item) {
@@ -51,14 +92,7 @@ export default function Inventory() {
       });
     } else {
       setEditingItem(null);
-      setFormData({
-        name: '',
-        category: '',
-        stock: 0,
-        reorderLevel: 10,
-        price: 0,
-        imageUrl: '',
-      });
+      setFormData({ name: '', category: '', stock: 0, reorderLevel: 10, price: 0, imageUrl: '' });
     }
     setIsModalOpen(true);
   };
@@ -106,345 +140,203 @@ export default function Inventory() {
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
-          <p className="text-xs text-gray-500 dark:text-zinc-500 mt-1 uppercase tracking-wider font-medium">
-            {viewMode === 'inventory' ? 'Manage your raw materials and stock levels' : 'Digital asset library for custom apparel designs'}
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
+            <Sparkles className="h-3 w-3" aria-hidden="true" /> Asset Control
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Inventory Management</h1>
+          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+            {viewMode === 'inventory' ? 'Manage raw materials, reorder thresholds, and stock valuation.' : 'Digital asset library for custom apparel designs.'}
           </p>
         </div>
 
-        <div className="inline-flex p-1 bg-gray-100 dark:bg-zinc-800 rounded-lg self-start">
+        <div className="flex items-center rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8">
           <button
+            type="button"
             onClick={() => setViewMode('inventory')}
-            className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-              viewMode === 'inventory' 
-              ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
-            }`}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'inventory' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
           >
-            <Box className="w-3.5 h-3.5" /> Stock List
+            <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('designs')}
-            className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-              viewMode === 'designs' 
-              ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
-            }`}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'designs' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
           >
-            <ImageIcon className="w-3.5 h-3.5" /> Design Repo
+            <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>
         </div>
       </div>
 
-      <div className="view-container">
-        {viewMode === 'inventory' ? (
-          <div key="inventory-view" className="space-y-4">
-            <div className="flex gap-3 items-center bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
-                <input 
-                  type="text" 
-                  placeholder="Search SKU, material or category..."
-                  className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-zinc-400 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+      {viewMode === 'inventory' ? (
+        <div className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ['Total Stock', inventoryStats.totalStock.toLocaleString(), 'blue'],
+              ['Stock Value', `₱${inventoryStats.totalValue.toFixed(2)}`, 'green'],
+              ['Low Stock', inventoryStats.lowStock.toLocaleString(), inventoryStats.lowStock > 0 ? 'orange' : 'gray'],
+            ].map(([label, value, tone]) => (
+              <motion.div key={label} whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+                <GlassCard className="p-4">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">{label}</p>
+                  <p className={cn('mt-2 font-mono text-xl font-bold', tone === 'blue' && 'text-macos-blue dark:text-macos-cyan', tone === 'green' && 'text-green-700 dark:text-green-300', tone === 'orange' && 'text-orange-700 dark:text-orange-300', tone === 'gray' && 'text-macos-text dark:text-zinc-100')}>{value}</p>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+
+          <Card variant="elevated" padding="none" className="overflow-hidden">
+            <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Stock Catalog</CardTitle>
+                <CardDescription>Search SKUs, update materials, and flag reorder thresholds.</CardDescription>
               </div>
-              <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-zinc-800 shadow-sm ml-0 md:ml-2"
-                  id="add-stock-btn"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Stock
-                </button>
+              <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                  <Input className="pl-9 text-xs" placeholder="Search SKU, material or category..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                </div>
+                <Button type="button" onClick={() => handleOpenModal()} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn">
+                  Add Stock
+                </Button>
               </div>
+            </CardHeader>
+
+            <CardContent>
+              <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead>SKU</TableHead>
+                      <TableHead>Material Description</TableHead>
+                      <TableHead className="text-center">Category</TableHead>
+                      <TableHead className="text-right">Stock</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredItems.map((item) => {
+                      const isLowStock = item.stock <= item.reorderLevel;
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
+                          <TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.name}</TableCell>
+                          <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
+                          <TableCell className="text-right font-mono font-bold">
+                            <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
+                            <span className="ml-1 text-[9px] text-macos-text-muted">PCS</span>
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            <div className="flex justify-end gap-1.5">
+                              <Tooltip content="Edit Item">
+                                <Button type="button" variant="ghost" size="icon" onClick={() => handleOpenModal(item)} className="h-8 w-8">
+                                  <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip content="Delete Item">
+                                <Button type="button" variant="ghost" size="icon" onClick={() => handleDeleteInitiate(item)} className="h-8 w-8 text-macos-red hover:text-macos-red">
+                                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                                </Button>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {filteredItems.length === 0 && (
+                      <TableRow className="hover:bg-transparent">
+                        <TableCell colSpan={6} className="py-14 text-center">
+                          <EmptyState title="No stock items found" icon={<Package className="h-8 w-8 opacity-20" aria-hidden="true" />} />
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+
+            <div className="glass-toolbar flex justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+              <span>Displaying {filteredItems.length} of {items.length} items</span>
+              <span className="hidden opacity-50 sm:inline">PRINTSYNC CLOUD SECURE SYNCED</span>
             </div>
-
-            <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs xl:text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">SKU</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">Material Description</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-center">Category</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Stock</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Price</th>
-                <th className="py-2.5 px-4 md:px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {filteredItems.map((item) => {
-                  const isLowStock = item.stock <= item.reorderLevel;
-                  return (
-                    <tr 
-                      key={item.id}
-                      className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group"
-                    >
-                      <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">{item.sku}</td>
-                      <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
-                      <td className="py-2.5 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
-                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-[10px]">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4 md:px-6 font-mono font-medium dark:text-zinc-300 text-right">
-                        <span className={isLowStock ? 'text-red-500' : ''}>
-                          {item.stock}
-                        </span>
-                        <span className="text-[9px] text-gray-400 ml-1">PCS</span>
-                      </td>
-                      <td className="py-2.5 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
-                      <td className="py-2.5 px-4 md:px-6 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Tooltip content="Edit Item">
-                            <button 
-                              type="button"
-                              onClick={() => handleOpenModal(item)}
-                              className="p-1 px-2 hover:bg-zinc-100 text-zinc-900 hover:text-zinc-800 rounded dark:hover:bg-zinc-800/40 dark:text-zinc-200 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Delete Item">
-                            <button 
-                              type="button"
-                              onClick={() => handleDeleteInitiate(item)}
-                              className="p-1 px-2 hover:bg-red-50 text-red-500 hover:text-red-600 rounded dark:hover:bg-red-900/20 dark:text-red-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              {filteredItems.length === 0 && (
-                <tr>
-                   <td colSpan={6} className="py-20 text-center">
-                    <EmptyState title="No stock items found" icon={<Package className="w-8 h-8 opacity-20" aria-hidden="true" />} />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          </Card>
         </div>
-      </div>
+      ) : (
+        <DesignRepository />
+      )}
 
-      <div className="flex justify-between items-center p-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium dark:text-zinc-500">
-        <span>Displaying {filteredItems.length} of {items.length} items</span>
-        <div className="flex gap-4">
-           <span className="font-bold opacity-30 tracking-normal italic">PRINTSYNC CLOUD SECURE SYNCED</span>
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div key="designs-view">
-      <DesignRepository />
-    </div>
-  )}
-</div>
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        title={editingItem ? 'Edit Stock Item' : 'Add New Stock'}
-        maxWidth="max-w-3xl"
-        disableAnimation
-      >
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingItem ? 'Edit Stock Item' : 'Add New Stock'} maxWidth="max-w-3xl">
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-6 md:gap-8 items-start">
-            <div className="space-y-3 md:sticky md:top-0">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Item Image
-              </label>
-              <div className="relative w-full max-w-md mx-auto md:mx-0 aspect-square max-h-[min(42vh,380px)] rounded border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 overflow-hidden flex items-center justify-center">
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Item Image</label>
+              <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border border-white/45 bg-white/50 dark:border-white/10 dark:bg-white/6">
                 {formData.imageUrl ? (
-                  <img
-                    src={formData.imageUrl}
-                    alt={formData.name || 'Item preview'}
-                    className="w-full h-full object-contain"
-                  />
+                  <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-300 dark:text-zinc-600 p-6 text-center">
-                    <ImageIcon className="w-14 h-14 opacity-40" />
+                  <div className="flex flex-col items-center gap-2 p-6 text-center text-macos-text-muted dark:text-zinc-500">
+                    <ImageIcon className="h-14 w-14 opacity-40" aria-hidden="true" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
                   </div>
                 )}
               </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:border-0 file:bg-zinc-900 file:text-white file:text-[10px] file:font-bold file:uppercase file:tracking-wider hover:file:bg-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-700 dark:hover:file:bg-zinc-600"
-                onChange={handleImageUpload}
-              />
-              {formData.imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, imageUrl: '' })}
-                  className="w-full px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/40 rounded"
-                >
-                  Remove Image
-                </button>
-              )}
-              {editingItem && (
-                <div className="pt-1 space-y-1 text-[10px] text-gray-500 dark:text-zinc-500">
-                  <p>
-                    <span className="font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-400">SKU</span>{' '}
-                    <span className="font-mono text-gray-800 dark:text-zinc-300">{editingItem.sku}</span>
-                  </p>
-                  <p className="text-[9px] leading-relaxed">
-                    Use this dialog to review full item details or update fields. Changes apply when you save.
-                  </p>
-                </div>
-              )}
+              <Input type="file" accept="image/*" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-white" onChange={handleImageUpload} />
+              {formData.imageUrl && <Button type="button" variant="danger" size="sm" fullWidth onClick={() => setFormData({ ...formData, imageUrl: '' })}>Remove Image</Button>}
+              {editingItem && <p className="text-[10px] leading-relaxed text-macos-text-muted dark:text-zinc-500">SKU <span className="font-mono font-bold text-macos-text dark:text-zinc-200">{editingItem.sku}</span> updates are saved when you submit this dialog.</p>}
             </div>
 
-            <div className="space-y-4 min-w-0">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Material Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  placeholder="e.g. Premium Cotton T-shirt (Black)"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Category
-                </label>
-                <select
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
+            <div className="space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Material Name</span>
+                <Input required type="text" placeholder="Premium Cotton T-shirt (Black)" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Category</span>
+                <Select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
                   <option value="">Select Category</option>
-                  {[...new Set([
-                    'Apparel',
-                    'Outerwear',
-                    'Accessories',
-                    'Consumables',
-                    'Supplies',
-                    'Equipment',
-                    'Packaging',
-                    ...items.map((item) => item.category),
-                  ])]
-                    .filter(Boolean)
-                    .sort()
-                    .map((category) => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                </select>
-              </div>
-
+                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </Select>
+              </label>
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                    Current Stock
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                    Reorder Level
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                    value={formData.reorderLevel}
-                    onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Unit Price (₱)
+                <label className="block space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Current Stock</span>
+                  <Input required type="number" min="0" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })} />
                 </label>
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                />
+                <label className="block space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Reorder Level</span>
+                  <Input required type="number" min="0" value={formData.reorderLevel} onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })} />
+                </label>
               </div>
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Unit Price (₱)</span>
+                <Input required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} />
+              </label>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2 border-t border-gray-100 dark:border-zinc-800">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors"
-            >
-              {editingItem ? 'Save Changes' : 'Create Item'}
-            </button>
+          <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10">
+            <Button type="button" variant="secondary" fullWidth onClick={handleCloseModal}>Cancel</Button>
+            <Button type="submit" fullWidth>{editingItem ? 'Save Changes' : 'Create Item'}</Button>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirm Deletion"
-        maxWidth="max-w-sm"
-        disableAnimation
-      >
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)} title="Confirm Deletion" maxWidth="max-w-sm">
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg">
-            <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-            <p className="text-xs font-medium">
-              Are you sure you want to delete <span className="font-bold">{itemToDelete?.name}</span>? This action cannot be undone.
-            </p>
+          <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-4 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+            <AlertTriangle className="h-6 w-6 shrink-0" aria-hidden="true" />
+            <p className="text-xs font-medium">Are you sure you want to delete <span className="font-bold">{itemToDelete?.name}</span>? This action cannot be undone.</p>
           </div>
           <div className="flex gap-3">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmDelete}
-              className="flex-1 px-4 py-2.5 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 rounded shadow-sm transition-colors"
-            >
-              Confirm Delete
-            </button>
+            <Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+            <Button type="button" variant="danger" fullWidth onClick={confirmDelete}>Confirm Delete</Button>
           </div>
         </div>
       </Modal>
     </div>
   );
 }
-
