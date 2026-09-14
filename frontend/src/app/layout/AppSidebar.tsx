@@ -13,7 +13,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
   return (
     <motion.aside
       initial={false}
-      animate={{ width: isCollapsed ? 0 : 244 }}
+      animate={{ width: isCollapsed ? 0 : 196 }}
       transition={{ type: 'spring', stiffness: 420, damping: 38 }}
       className={cn(
         'glass-panel flex shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
@@ -21,8 +21,8 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
         className,
       )}
     >
-      <div className="flex h-full min-w-[244px] flex-col">
-        <div className="border-b border-black/5 px-4 py-4 dark:border-white/10">
+      <div className="flex h-full min-w-[196px] flex-col">
+        <div className="border-b border-black/5 px-4 py-3 dark:border-white/10">
           <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
             Navigation
           </p>
@@ -31,7 +31,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
           </p>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-2.5 py-3 scrollbar-hide">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}
@@ -39,7 +39,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-3 overflow-hidden rounded-2xl px-3 py-2.5 text-[13px] font-semibold transition-colors duration-200',
+                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
                   isActive
                     ? 'text-white dark:text-white'
                     : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
@@ -51,7 +51,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   {isActive && (
                     <motion.span
                       layoutId="sidebar-active-pill"
-                      className="absolute inset-0 rounded-2xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
                       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                     />
                   )}
@@ -60,7 +60,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                     whileTap={{ scale: 0.96 }}
                     transition={{ type: 'spring', stiffness: 500, damping: 32 }}
                     className={cn(
-                      'relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border transition-colors duration-200',
+                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
                       isActive
                         ? 'border-white/20 bg-white/20 text-white'
                         : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/10 dark:bg-white/8 dark:group-hover:bg-white/14 dark:group-hover:text-zinc-100',
@@ -79,17 +79,6 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
             </NavLink>
           ))}
         </nav>
-
-        <div className="border-t border-black/5 px-4 py-3 dark:border-white/10">
-          <div className="rounded-2xl border border-white/45 bg-white/42 p-3 shadow-sm dark:border-white/10 dark:bg-white/8">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-blue dark:text-macos-cyan">
-              Synced
-            </p>
-            <p className="mt-1 text-xs font-medium text-macos-text-muted dark:text-zinc-400">
-              Cloud workspace online
-            </p>
-          </div>
-        </div>
       </div>
     </motion.aside>
   );
