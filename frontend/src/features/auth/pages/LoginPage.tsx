@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Lock, Mail, ShieldCheck } from 'lucide-react';
+import { Lock, Mail } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, GlassCard, Input } from '../../../shared/components/ui';
@@ -94,11 +94,6 @@ export default function LoginPage() {
               Login
             </Button>
           </form>
-
-          <div className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-white/45 bg-white/40 px-3 py-2 text-[11px] font-medium text-macos-text-muted backdrop-blur-xl dark:border-white/10 dark:bg-white/6 dark:text-zinc-500">
-            <ShieldCheck className="h-3.5 w-3.5 text-macos-green" aria-hidden="true" />
-            Secured workspace session for PRINTSYNC operators
-          </div>
         </GlassCard>
       </motion.section>
     </main>
