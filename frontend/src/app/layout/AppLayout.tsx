@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { Bell, ChevronLeft, Moon, PanelLeft, Sun } from 'lucide-react';
+import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
 import { useNotifications } from '../providers/NotificationProvider';
 import { NotificationPanel } from '../components/NotificationPanel';
@@ -11,7 +11,28 @@ import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
 import { useAuth } from '../../features/users/state/AuthContext';
-import { Button } from '../../shared/components/ui';
+import { Button, Tooltip } from '../../shared/components/ui';
+
+const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
+  light: 'Dark',
+  dark: 'System',
+  system: 'Light',
+};
+
+const ThemeIcon: React.FC<{ theme: 'light' | 'dark' | 'system'; isDark: boolean }> = ({ theme, isDark }) => {
+  if (theme === 'light') return <Sun className="h-4 w-4" />;
+  if (theme === 'dark') return <Moon className="h-4 w-4" />;
+  // 'system' — show a neutral monitor icon so the state is unambiguous.
+  // Tone the icon with the actual rendered mode for a subtle visual cue.
+  return (
+    <Monitor
+      className={cn(
+        'h-4 w-4',
+        isDark ? 'text-macos-blue' : 'text-macos-text',
+      )}
+    />
+  );
+};
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
@@ -128,16 +149,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={toggleTheme}
-            title={`Current theme: ${theme}. Click to cycle themes.`}
-            aria-label="Toggle theme"
-            className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          </Button>
+          <Tooltip content={`Theme: ${theme[0].toUpperCase()}${theme.slice(1)} (click for ${NEXT_THEME_LABEL[theme]})`}>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={toggleTheme}
+              title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              <ThemeIcon theme={theme} isDark={isDark} />
+            </Button>
+          </Tooltip>
           <div
             id="notification-trigger"
             className="relative"
