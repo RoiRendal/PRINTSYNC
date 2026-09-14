@@ -1,27 +1,66 @@
 import { useMemo } from 'react';
-import { DollarSign, CheckCircle2, ShoppingBag, AlertTriangle } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, ShoppingBag, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { EmptyState } from '../../../shared/components/feedback/EmptyState';
+import {
+  Badge,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  GlassCard,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  getStatusBadgeVariant,
+} from '../../../shared/components/ui';
+import { cn } from '../../../shared/lib/cn';
 import { useInventory } from '../../inventory/state/InventoryContext';
 import { useOrders } from '../../orders/state/OrderContext';
-import { Link } from 'react-router-dom';
 import { isCustomOrder } from '../../orders/utils/orderType';
-import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 
-const StatCard = ({ title, value, icon: Icon, trend, colorClass = "text-gray-400" }: any) => (
-  <div className="bg-white p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-    <div className="flex justify-between items-start">
-      <p className="text-[11px] font-bold text-gray-500 uppercase tracking-tighter dark:text-zinc-400">{title}</p>
-      <div className="p-1.5 bg-gray-50 rounded dark:bg-zinc-800 transition-colors">
-        <Icon className={`w-3.5 h-3.5 ${colorClass}`} />
-      </div>
-    </div>
-    <p className="text-2xl font-mono font-bold mt-1 text-gray-900 dark:text-zinc-100">{value}</p>
-    {trend !== undefined && (
-      <p className={`text-[10px] font-semibold mt-1 ${trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-        {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}% {trend >= 0 ? 'increase' : 'decrease'}
-      </p>
-    )}
-  </div>
-);
+type StatTone = 'green' | 'blue' | 'red' | 'purple';
+
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: LucideIcon;
+  tone: StatTone;
+  detail: string;
+}
+
+const statToneClasses: Record<StatTone, string> = {
+  green: 'from-macos-green/20 text-green-700 ring-macos-green/20 dark:text-green-300',
+  blue: 'from-macos-blue/20 text-macos-blue ring-macos-blue/20 dark:text-macos-cyan',
+  red: 'from-macos-red/20 text-red-700 ring-macos-red/20 dark:text-red-300',
+  purple: 'from-macos-purple/20 text-purple-700 ring-macos-purple/20 dark:text-purple-300',
+};
+
+function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
+  return (
+    <motion.div whileHover={{ y: -3 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }}>
+      <GlassCard className="h-full p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
+            <p className="mt-2 truncate font-mono text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{value}</p>
+          </div>
+          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br to-white/50 shadow-[var(--shadow-card)] ring-1 backdrop-blur-xl dark:to-white/5', statToneClasses[tone])}>
+            <Icon className="h-5 w-5" aria-hidden="true" />
+          </div>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
+      </GlassCard>
+    </motion.div>
+  );
+}
 
 export default function Dashboard() {
   const { items: inventory } = useInventory();
@@ -30,129 +69,157 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     const todayRevenue = orders
-      .filter(o => o.date === today)
-      .reduce((acc, o) => acc + o.amount, 0);
+      .filter((order) => order.date === today)
+      .reduce((total, order) => total + order.amount, 0);
 
-    const pendingJobs = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').length;
-    const inventoryAlerts = inventory.filter(item => item.stock <= item.reorderLevel).length;
-    const completedToday = orders.filter(o => o.status === 'Completed' && o.date === today).length;
+    const pendingJobs = orders.filter((order) => order.status !== 'Completed' && order.status !== 'Delivered').length;
+    const inventoryAlerts = inventory.filter((item) => item.stock <= item.reorderLevel).length;
+    const completedToday = orders.filter((order) => order.status === 'Completed' && order.date === today).length;
 
     return {
       todayRevenue,
       pendingJobs,
       inventoryAlerts,
-      completedToday
+      completedToday,
     };
   }, [orders, inventory]);
 
-  const productionQueue = orders.filter(o => o.status !== 'Completed' && o.status !== 'Delivered').slice(0, 8);
+  const productionQueue = useMemo(
+    () => orders.filter((order) => order.status !== 'Completed' && order.status !== 'Delivered').slice(0, 8),
+    [orders],
+  );
+
+  const inventorySnapshot = useMemo(() => inventory.slice(0, 6), [inventory]);
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 xl:gap-4">
-        <StatCard title="Today's Revenue" value={`₱${stats.todayRevenue.toLocaleString()}`} icon={DollarSign} colorClass="text-green-500" />
-        <StatCard title="Active Orders" value={stats.pendingJobs} icon={ShoppingBag} colorClass="text-zinc-700" />
-        <StatCard title="Inventory Alerts" value={stats.inventoryAlerts} icon={AlertTriangle} colorClass={stats.inventoryAlerts > 0 ? "text-red-500" : "text-gray-400"} />
-        <StatCard title="Completed Today" value={stats.completedToday} icon={CheckCircle2} colorClass="text-emerald-500" />
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/55 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
+            Live Operations
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Dashboard</h1>
+          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+            Monitor revenue, production flow, and material health from one Liquid Glass command center.
+          </p>
+        </div>
+        <Link
+          to="/orders"
+          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+        >
+          Open Pipeline
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-5">
-        {/* Table Area */}
-        <div className="md:col-span-2 lg:col-span-2 xl:col-span-3 bg-white border border-gray-200 rounded shadow-sm flex flex-col dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="p-3 md:p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 dark:border-zinc-800">
-            <h3 className="text-sm font-bold uppercase tracking-wide dark:text-zinc-200">Production Pipeline</h3>
-            <div className="flex flex-wrap items-center gap-2">
-              <Link to="/orders" className="text-[10px] whitespace-nowrap shrink-0 bg-gray-100 px-3 py-1.5 rounded border border-gray-300 font-bold uppercase hover:bg-gray-200 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-colors">View All Pipeline</Link>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4 xl:gap-4">
+        <StatCard title="Today's Revenue" value={`₱${stats.todayRevenue.toLocaleString()}`} icon={DollarSign} tone="green" detail="Posted sales for the current operating day." />
+        <StatCard title="Active Orders" value={stats.pendingJobs} icon={ShoppingBag} tone="blue" detail="Jobs still moving through production." />
+        <StatCard title="Inventory Alerts" value={stats.inventoryAlerts} icon={AlertTriangle} tone={stats.inventoryAlerts > 0 ? 'red' : 'green'} detail="Materials at or below reorder threshold." />
+        <StatCard title="Completed Today" value={stats.completedToday} icon={CheckCircle2} tone="purple" detail="Orders marked complete today." />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 xl:gap-5">
+        <Card className="xl:col-span-3" padding="none" variant="elevated">
+          <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b border-black/5 p-4 dark:border-white/10">
+            <div>
+              <CardTitle>Production Pipeline</CardTitle>
+              <CardDescription>Current print jobs awaiting completion or delivery.</CardDescription>
+            </div>
+            <Badge variant="blue" size="md">{productionQueue.length} active</Badge>
+          </CardHeader>
+          <CardContent>
+            <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Ref ID</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Work Phase</TableHead>
+                    <TableHead className="text-center">Qty</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {productionQueue.map((order) => {
+                    const customOrder = isCustomOrder(order);
+                    return (
+                      <TableRow key={order.id}>
+                        <TableCell className="font-mono font-semibold text-macos-text dark:text-zinc-100">#{order.id.slice(-6)}</TableCell>
+                        <TableCell className="font-semibold text-macos-text dark:text-zinc-100">{order.customer}</TableCell>
+                        <TableCell>
+                          <Badge variant={customOrder ? 'purple' : 'gray'}>{customOrder ? 'Custom' : 'Retail'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-center font-mono">{order.quantity}</TableCell>
+                        <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">₱{order.amount.toFixed(2)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {productionQueue.length === 0 && (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={6} className="py-12">
+                        <EmptyState title="No active production jobs" message="Completed and delivered orders are clear from the live pipeline." />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+
+        <GlassCard className="flex flex-col p-4 xl:p-5">
+          <div className="mb-4 flex items-start justify-between gap-3 border-b border-white/35 pb-3 dark:border-white/10">
+            <div>
+              <CardTitle>Stock Vitality</CardTitle>
+              <CardDescription>Top materials by current availability.</CardDescription>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-macos-blue/12 text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
+              <PackageSearch className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
-          <div className="flex-1 overflow-x-auto text-xs">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Ref ID</th>
-                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Client</th>
-                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Type</th>
-                  <th className="py-2.5 px-4 md:px-6 font-medium uppercase text-[10px] tracking-wider">Work Phase</th>
-                  <th className="py-2.5 px-4 md:px-6 font-medium text-center uppercase text-[10px] tracking-wider">Qty</th>
-                  <th className="py-2.5 px-4 md:px-6 font-medium text-right uppercase text-[10px] tracking-wider">Value</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {productionQueue.map((order) => (
-                  <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-2.5 px-4 md:px-6 font-mono text-zinc-900 font-medium dark:text-zinc-200">#{order.id.slice(-6)}</td>
-                    <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{order.customer}</td>
-                    <td className="py-2.5 px-4 md:px-6">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border ${
-                          isCustomOrder(order)
-                            ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-900/50'
-                            : 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700'
-                        }`}
-                      >
-                        {isCustomOrder(order) ? 'Custom' : 'Retail'}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 md:px-6">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
-                        order.status === 'In Production' ? 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800/50 dark:text-zinc-300' :
-                        order.status === 'Designing' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
-                        order.status === 'Pending' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' :
-                        'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 md:px-6 text-center font-mono dark:text-zinc-300">{order.quantity}</td>
-                    <td className="py-2.5 px-4 md:px-6 text-right font-mono font-bold dark:text-zinc-100">₱{order.amount.toFixed(2)}</td>
-                  </tr>
-                ))}
-                {productionQueue.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-10">
-                      <EmptyState title="No active production jobs" />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        {/* Inventory Snapshot */}
-        <div className="md:col-span-2 lg:col-span-1 bg-white border border-gray-200 rounded shadow-sm flex flex-col p-4 xl:p-5 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-          <div className="flex flex-wrap justify-between items-center gap-2 border-b border-gray-100 pb-3 mb-4 dark:border-zinc-800">
-            <h3 className="text-sm font-bold uppercase tracking-wide whitespace-nowrap text-gray-900 dark:text-zinc-200">Stock Vitality</h3>
-          </div>
-          
-          <div className="space-y-5 flex-1">
-            {inventory.slice(0, 6).map(item => (
-              <div key={item.id}>
-                <div className="flex justify-between text-[10px] mb-1.5 font-mono uppercase">
-                  <span className="text-gray-500 dark:text-zinc-500 truncate max-w-[150px]">{item.name}</span>
-                  <span className={`${item.stock <= item.reorderLevel ? 'text-red-500 font-bold' : 'text-zinc-900 dark:text-zinc-200'}`}>{item.stock}</span>
+          <div className="flex-1 space-y-4">
+            {inventorySnapshot.map((item) => {
+              const isLow = item.stock <= item.reorderLevel;
+              const capacity = Math.max(item.reorderLevel * 3, item.stock, 1);
+              const stockPercent = Math.min(100, Math.round((item.stock / capacity) * 100));
+
+              return (
+                <div key={item.id} className="space-y-2">
+                  <div className="flex items-center justify-between gap-3 text-[11px] font-semibold">
+                    <span className="truncate text-macos-text dark:text-zinc-200">{item.name}</span>
+                    <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-black/5 shadow-inner dark:bg-white/10">
+                    <motion.div
+                      className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-gradient-to-r from-macos-blue to-macos-cyan')}
+                      initial={{ width: 0 }}
+                      animate={{ width: `${stockPercent}%` }}
+                      transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden dark:bg-zinc-800">
-                  <div
-                    style={{ width: `${Math.min(100, (item.stock / 200) * 100)}%` }}
-                    className={`h-full ${item.stock <= item.reorderLevel ? 'bg-red-500' : 'bg-zinc-900 dark:bg-zinc-300'}`}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
+            {inventorySnapshot.length === 0 && <EmptyState title="No inventory items" message="Add materials to start monitoring stock vitality." className="py-8" />}
           </div>
 
-          <div className="mt-6 p-4 bg-gray-50 rounded border border-gray-100 dark:bg-zinc-800/50 dark:border-zinc-800 transition-colors duration-300">
-             <p className="text-[10px] text-gray-500 font-medium mb-3 uppercase tracking-widest dark:text-zinc-400">Inventory Management</p>
-             <div className="flex flex-wrap gap-2">
-                <Link to="/inventory" className="flex-1 min-w-[100px] text-center whitespace-nowrap py-2 px-3 bg-zinc-900 hover:bg-zinc-800 rounded text-[10px] font-bold uppercase tracking-wider transition-colors text-white">
-                  Restock Now
-                </Link>
-             </div>
+          <div className="mt-6 rounded-[var(--radius-card)] border border-white/45 bg-white/45 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/6">
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
+            <Link
+              to="/inventory"
+              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+            >
+              Restock Now
+            </Link>
           </div>
-        </div>
+        </GlassCard>
       </div>
     </div>
   );
 }
-
