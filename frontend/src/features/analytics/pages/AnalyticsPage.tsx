@@ -24,13 +24,16 @@ export default function AnalyticsPage() {
     salesTimeline,
     salesTimelineError,
     isSalesTimelineLoading,
+    profitTimeline,
+    profitTimelineError,
+    isProfitTimelineLoading,
     productTrends,
     productTrendsError,
     isProductTrendsLoading,
     inventoryForecast,
     inventoryForecastError,
     isInventoryForecastLoading,
-  } = useAnalyticsData(salesPeriod, trendPeriod, forecastPeriod);
+  } = useAnalyticsData(salesPeriod, profitPeriod, trendPeriod, forecastPeriod);
 
   const applyGlobalPeriod = (nextPeriod: Period) => {
     setGlobalPeriod(nextPeriod);
@@ -40,8 +43,8 @@ export default function AnalyticsPage() {
     setForecastPeriod(nextPeriod);
   };
 
-  const handleSalesPeriodChange = (nextPeriod: Period) => { setSalesPeriod(nextPeriod); setProfitPeriod(nextPeriod); };
-  const handleProfitPeriodChange = (nextPeriod: Period) => { setProfitPeriod(nextPeriod); setSalesPeriod(nextPeriod); };
+  const handleSalesPeriodChange = (nextPeriod: Period) => setSalesPeriod(nextPeriod);
+  const handleProfitPeriodChange = (nextPeriod: Period) => setProfitPeriod(nextPeriod);
   const handleTrendPeriodChange = (nextPeriod: Period) => setTrendPeriod(nextPeriod);
   const handleForecastPeriodChange = (nextPeriod: Period) => setForecastPeriod(nextPeriod);
 
@@ -77,9 +80,9 @@ export default function AnalyticsPage() {
         </div>
 
         <ProfitMarginSection
-          salesTimeline={salesTimeline}
-          error={salesTimelineError}
-          isLoading={isSalesTimelineLoading}
+          profitTimeline={profitTimeline}
+          error={profitTimelineError}
+          isLoading={isProfitTimelineLoading}
           profitPeriod={profitPeriod}
           onProfitPeriodChange={handleProfitPeriodChange}
         />

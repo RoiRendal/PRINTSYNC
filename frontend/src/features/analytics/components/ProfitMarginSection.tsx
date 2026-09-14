@@ -40,7 +40,7 @@ import { PeriodSelector } from './PeriodSelector';
 import { SectionCard } from './SectionCard';
 
 interface ProfitMarginSectionProps {
-  salesTimeline: SalesTimeline | null;
+  profitTimeline: SalesTimeline | null;
   error: string | null;
   isLoading: boolean;
   profitPeriod: Period;
@@ -48,7 +48,7 @@ interface ProfitMarginSectionProps {
 }
 
 export function ProfitMarginSection({
-  salesTimeline,
+  profitTimeline,
   error,
   isLoading,
   profitPeriod,
@@ -58,9 +58,9 @@ export function ProfitMarginSection({
   const [profitInsight, setProfitInsight] = useState<InsightState>(createEmptyInsightState());
 
   const profitMarginData = useMemo(() => {
-    if (!salesTimeline) return [];
-    return salesTimeline.buckets.map((bucket) => ({ label: bucket.label, revenue: bucket.revenue, expenses: bucket.cogs, profit: bucket.grossProfit, margin: bucket.margin }));
-  }, [salesTimeline]);
+    if (!profitTimeline) return [];
+    return profitTimeline.buckets.map((bucket) => ({ label: bucket.label, revenue: bucket.revenue, expenses: bucket.cogs, profit: bucket.grossProfit, margin: bucket.margin }));
+  }, [profitTimeline]);
 
   const profitMarginStats = useMemo(() => {
     const totalRevenue = profitMarginData.reduce((acc, item) => acc + item.revenue, 0);

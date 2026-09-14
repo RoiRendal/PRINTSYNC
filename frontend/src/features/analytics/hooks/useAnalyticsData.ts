@@ -17,6 +17,9 @@ export interface AnalyticsDataState {
   salesTimeline: SalesTimeline | null;
   salesTimelineError: string | null;
   isSalesTimelineLoading: boolean;
+  profitTimeline: SalesTimeline | null;
+  profitTimelineError: string | null;
+  isProfitTimelineLoading: boolean;
   productTrends: ProductTrends | null;
   productTrendsError: string | null;
   isProductTrendsLoading: boolean;
@@ -27,6 +30,7 @@ export interface AnalyticsDataState {
 
 export function useAnalyticsData(
   salesPeriod: Period,
+  profitPeriod: Period,
   trendPeriod: Period,
   forecastPeriod: Period,
 ): AnalyticsDataState {
@@ -36,6 +40,9 @@ export function useAnalyticsData(
   const [salesTimeline, setSalesTimeline] = useState<SalesTimeline | null>(null);
   const [salesTimelineError, setSalesTimelineError] = useState<string | null>(null);
   const [isSalesTimelineLoading, setIsSalesTimelineLoading] = useState(true);
+  const [profitTimeline, setProfitTimeline] = useState<SalesTimeline | null>(null);
+  const [profitTimelineError, setProfitTimelineError] = useState<string | null>(null);
+  const [isProfitTimelineLoading, setIsProfitTimelineLoading] = useState(true);
   const [productTrends, setProductTrends] = useState<ProductTrends | null>(null);
   const [productTrendsError, setProductTrendsError] = useState<string | null>(null);
   const [isProductTrendsLoading, setIsProductTrendsLoading] = useState(true);
@@ -89,6 +96,25 @@ export function useAnalyticsData(
 
   useEffect(() => {
     let mounted = true;
+    setIsProfitTimelineLoading(true);
+    void analyticsApi.salesTimeline(dateRange.from, dateRange.to, periodToBucket[profitPeriod])
+      .then((data) => {
+        if (mounted) {
+          setProfitTimeline(data);
+          setProfitTimelineError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (mounted) setProfitTimelineError(error instanceof ApiError ? error.message : 'Profit timeline could not be loaded.');
+      })
+      .finally(() => {
+        if (mounted) setIsProfitTimelineLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [dateRange.from, dateRange.to, profitPeriod]);
+
+  useEffect(() => {
+    let mounted = true;
     setIsProductTrendsLoading(true);
     void analyticsApi.productTrends(dateRange.from, dateRange.to, periodToBucket[trendPeriod])
       .then((data) => {
@@ -133,6 +159,9 @@ export function useAnalyticsData(
     salesTimeline,
     salesTimelineError,
     isSalesTimelineLoading,
+    profitTimeline,
+    profitTimelineError,
+    isProfitTimelineLoading,
     productTrends,
     productTrendsError,
     isProductTrendsLoading,
