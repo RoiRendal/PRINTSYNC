@@ -3,6 +3,7 @@ import { Bell, Building2, Cloud, Database, History, ImagePlus, Palette, Shield }
 import { motion } from 'motion/react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
+import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
@@ -15,11 +16,12 @@ function SettingIcon({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToggleSwitch({ label, enabled }: { label: string; enabled: boolean }) {
+function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle?: () => void }) {
   return (
     <button
       type="button"
       aria-pressed={enabled}
+      onClick={onToggle}
       className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/54 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/25 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
     >
       <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">{label}</span>
@@ -41,6 +43,7 @@ export default function Settings() {
     maxCustomLogoBytes,
     brandingError,
   } = useBusinessBranding();
+  const { settings, toggleStockAlerts, toggleExportAlerts } = useNotifications();
   const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
   const [logoUploadError, setLogoUploadError] = useState('');
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -280,8 +283,8 @@ export default function Settings() {
             </div>
           </CardHeader>
           <div className="space-y-3">
-            <ToggleSwitch label="Export Completion Alerts" enabled />
-            <ToggleSwitch label="Stock Level Critical Warnings" enabled />
+            <ToggleSwitch label="Export Completion Alerts" enabled={settings.exportAlertsEnabled} onToggle={toggleExportAlerts} />
+            <ToggleSwitch label="Stock Level Critical Warnings" enabled={settings.stockAlertsEnabled} onToggle={toggleStockAlerts} />
           </div>
         </Card>
       </div>

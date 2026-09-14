@@ -6,6 +6,13 @@ import { UserProvider } from '../../features/users/state/UserContext';
 import { AuthProvider, useAuth } from '../../features/users/state/AuthContext';
 import { BusinessBrandingProvider } from './BusinessBrandingProvider';
 import { ThemeProvider } from './ThemeProvider';
+import { NotificationProvider } from './NotificationProvider';
+import { useNotificationGenerator } from '../hooks/useNotificationGenerator';
+
+function NotificationGenerator() {
+  useNotificationGenerator();
+  return null;
+}
 
 function AuthenticatedDataProviders({ children }: { children: React.ReactNode }) {
   const { currentUser } = useAuth();
@@ -15,7 +22,10 @@ function AuthenticatedDataProviders({ children }: { children: React.ReactNode })
   return (
     <InventoryProvider>
       <DesignProvider>
-        <OrderProvider>{children}</OrderProvider>
+        <OrderProvider>
+          <NotificationGenerator />
+          {children}
+        </OrderProvider>
       </DesignProvider>
     </InventoryProvider>
   );
@@ -27,7 +37,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <AuthProvider>
         <UserProvider>
           <BusinessBrandingProvider>
-            <AuthenticatedDataProviders>{children}</AuthenticatedDataProviders>
+            <NotificationProvider>
+              <AuthenticatedDataProviders>{children}</AuthenticatedDataProviders>
+            </NotificationProvider>
           </BusinessBrandingProvider>
         </UserProvider>
       </AuthProvider>

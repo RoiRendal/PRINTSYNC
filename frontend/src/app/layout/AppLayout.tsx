@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Bell, ChevronLeft, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
+import { useNotifications } from '../providers/NotificationProvider';
+import { NotificationPanel } from '../components/NotificationPanel';
 import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
@@ -19,7 +21,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const { theme, toggleTheme, isDark } = useTheme();
   const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
   const { currentUser, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
 
   const handleLogoError = useCallback(() => {
@@ -61,12 +65,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       if (!target.closest('#user-profile-trigger')) {
         setIsProfileOpen(false);
       }
+      if (!target.closest('#notification-trigger')) {
+        setIsNotificationsOpen(false);
+      }
     };
-    if (isProfileOpen) {
+    if (isProfileOpen || isNotificationsOpen) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => window.removeEventListener('click', handleClickOutside);
-  }, [isProfileOpen]);
+  }, [isProfileOpen, isNotificationsOpen]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const closeSidebar = () => {
@@ -131,15 +138,29 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           >
             {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            aria-label="Notifications"
-            className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+          <div
+            id="notification-trigger"
+            className="relative"
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
           >
-            <Bell className="h-4 w-4" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full border border-white bg-macos-red dark:border-zinc-950" />
-          </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Notifications"
+              aria-expanded={isNotificationsOpen}
+              className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-macos-red px-1 text-[9px] font-bold text-white dark:border-zinc-950">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+            <AnimatePresence>
+              {isNotificationsOpen && <NotificationPanel onClose={() => setIsNotificationsOpen(false)} />}
+            </AnimatePresence>
+          </div>
 
           <div
             id="user-profile-trigger"
