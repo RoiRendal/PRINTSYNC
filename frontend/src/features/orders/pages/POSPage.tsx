@@ -5,10 +5,10 @@ import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProv
 import { ApiError } from '../../../shared/api/errors';
 import { Button, GlassCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
-import { useDesigns } from '../../designs/state/DesignContext';
+import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { InventoryItem } from '../../inventory/types';
-import { useInventory } from '../../inventory/state/InventoryContext';
-import { useCustomers } from '../../customers/state/CustomerContext';
+import { useInventory } from '../../../app/stores/useInventoryStore';
+import { useCustomers } from '../../../app/stores/useCustomerStore';
 import { paymentsApi, type PaymentTransaction } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
@@ -18,7 +18,7 @@ import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
 import { useCartTotals } from '../hooks/useCartTotals';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
-import { useOrders } from '../state/OrderContext';
+import { useOrders } from '../../../app/stores/useOrderStore';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';

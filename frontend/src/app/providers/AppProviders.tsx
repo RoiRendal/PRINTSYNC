@@ -1,51 +1,55 @@
-import React from 'react';
-import { InventoryProvider } from '../../features/inventory/state/InventoryContext';
-import { DesignProvider } from '../../features/designs/state/DesignContext';
-import { OrderProvider } from '../../features/orders/state/OrderContext';
-import { CustomerProvider } from '../../features/customers/state/CustomerContext';
-import { UserProvider } from '../../features/users/state/UserContext';
-import { AuthProvider, useAuth } from '../../features/users/state/AuthContext';
+import React, { useEffect } from 'react';
+import { loadDataStores, resetDataStores, useAuthStore } from '../stores';
+import { useNotificationGenerator } from '../hooks/useNotificationGenerator';
 import { BusinessBrandingProvider } from './BusinessBrandingProvider';
 import { ThemeProvider } from './ThemeProvider';
 import { NotificationProvider } from './NotificationProvider';
-import { useNotificationGenerator } from '../hooks/useNotificationGenerator';
 
 function NotificationGenerator() {
   useNotificationGenerator();
   return null;
 }
 
-function AuthenticatedDataProviders({ children }: { children: React.ReactNode }) {
-  const { currentUser } = useAuth();
+/**
+ * Bridges the zustand layer into the React tree.
+ *
+ * Replaces the previous tower of `OrderProvider` / `InventoryProvider` /
+ * `CustomerProvider` / `DesignProvider` / `UserProvider` / `AuthProvider`
+ * components: stores are module singletons, so the only thing React still has
+ * to do is kick off the session restore and prime the shared collections once a
+ * user is known. Pages then read state through selector hooks instead of
+ * re-rendering the whole subtree on every change.
+ */
+function StoreBootstrap({ children }: { children: React.ReactNode }) {
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const restoreSession = useAuthStore((state) => state.restoreSession);
 
-  if (!currentUser) return <>{children}</>;
+  useEffect(() => {
+    void restoreSession();
+  }, [restoreSession]);
 
-  return (
-    <CustomerProvider>
-      <InventoryProvider>
-        <DesignProvider>
-          <OrderProvider>
-            <NotificationGenerator />
-            {children}
-          </OrderProvider>
-        </DesignProvider>
-      </InventoryProvider>
-    </CustomerProvider>
-  );
+  useEffect(() => {
+    if (!currentUser) {
+      resetDataStores();
+      return;
+    }
+    loadDataStores(currentUser.access.includes('users'));
+  }, [currentUser]);
+
+  return <>{children}</>;
 }
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <UserProvider>
-          <BusinessBrandingProvider>
-            <NotificationProvider>
-              <AuthenticatedDataProviders>{children}</AuthenticatedDataProviders>
-            </NotificationProvider>
-          </BusinessBrandingProvider>
-        </UserProvider>
-      </AuthProvider>
+      <BusinessBrandingProvider>
+        <NotificationProvider>
+          <StoreBootstrap>
+            <NotificationGenerator />
+            {children}
+          </StoreBootstrap>
+        </NotificationProvider>
+      </BusinessBrandingProvider>
     </ThemeProvider>
   );
 }

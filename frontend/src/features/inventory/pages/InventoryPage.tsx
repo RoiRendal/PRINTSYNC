@@ -8,7 +8,7 @@ import { DeleteConfirmModal, InventoryFormModal } from '../components/InventoryF
 import { InventoryStats } from '../components/InventoryStats';
 import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
-import { useInventory } from '../state/InventoryContext';
+import { useInventory } from '../../../app/stores/useInventoryStore';
 import { Pagination } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';

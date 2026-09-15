@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Tag, Trash2, UploadCloud } from 'lucide-react';
 
 import { designsApi } from '../api/designsApi';
-import { useDesigns } from '../state/DesignContext';
+import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { CreateDesign, Design } from '../types';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
 import { ApiError } from '../../../shared/api/errors';

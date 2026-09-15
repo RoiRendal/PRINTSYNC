@@ -10,8 +10,8 @@ import {
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
-import { useDesigns } from '../../../designs/state/DesignContext';
-import { useInventory } from '../../../inventory/state/InventoryContext';
+import { useDesigns } from '../../../../app/stores/useDesignStore';
+import { useInventory } from '../../../../app/stores/useInventoryStore';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { Design } from '../../../designs/types';
 import type { InventoryItem } from '../../../inventory/types';

@@ -9,7 +9,7 @@ import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
 import { useOrderFilters } from '../hooks/useOrderFilters';
-import { useOrders } from '../state/OrderContext';
+import { useOrders } from '../../../app/stores/useOrderStore';
 import type { Order, OrderStatus } from '../types';
 import { workPhases } from '../components/orders/PhaseProgress';
 

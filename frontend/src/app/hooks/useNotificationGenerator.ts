@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useInventory } from '../../features/inventory/state/InventoryContext';
-import { useOrders } from '../../features/orders/state/OrderContext';
+import { useInventory } from '../stores/useInventoryStore';
+import { useOrders } from '../stores/useOrderStore';
 import { useNotifications } from '../providers/NotificationProvider';
 
 export function useNotificationGenerator() {

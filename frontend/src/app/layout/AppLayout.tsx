@@ -10,7 +10,7 @@ import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
-import { useAuth } from '../../features/users/state/AuthContext';
+import { useAuth } from '../../app/stores/useAuthStore';
 import { Button, Tooltip } from '../../shared/components/ui';
 
 const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
