@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   getBusinessSettings,
+  setBusinessLogo,
   updateBusinessSettings,
 } from '../../src/modules/settings/settings.service.js';
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
@@ -82,28 +83,33 @@ describe('settings.service', () => {
       assert.equal(settings.businessName, 'IC Printing Services');
     });
 
-    it('clears the logo when the caller omits it', async () => {
+    it('clears nothing else: the logo is not part of this write', async () => {
       const db = createFakeSupabase();
-      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
       await updateBusinessSettings(db.client, { businessName: 'Renamed Shop' }, 'actor-1');
 
       const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
-      assert.equal(payload.logo_url, null);
+      // The logo has its own writer, so a generic save must not touch `logo_url`
+      // — otherwise editing the VAT rate would silently wipe the logo.
+      assert.equal('logo_url' in payload, false);
     });
 
-    it('persists an explicit logo URL', async () => {
+    it('persists the name and defaults together', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
       await updateBusinessSettings(
         db.client,
-        { businessName: 'IC Printing Services', logoUrl: '/uploads/logo.png' },
+        { businessName: 'IC Printing Services', vatRate: 0, currencySymbol: '$' },
         'actor-1',
       );
 
       const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
-      assert.equal(payload.logo_url, '/uploads/logo.png');
+      assert.equal(payload.business_name, 'IC Printing Services');
+      // 0 and '' are legitimate values and must not be dropped as falsy.
+      assert.equal(payload.vat_rate, 0);
+      assert.equal(payload.currency_symbol, '$');
     });
 
     it('always targets the singleton row', async () => {
@@ -121,6 +127,53 @@ describe('settings.service', () => {
 
       await assertAppError(
         () => updateBusinessSettings(db.client, { businessName: 'Renamed Shop' }, 'actor-1'),
+        400,
+        'SETTINGS_UPDATE_FAILED',
+      );
+    });
+  });
+
+  describe('setBusinessLogo', () => {
+    it('writes only the logo column and the actor', async () => {
+      const db = createFakeSupabase();
+      const logoUrl = 'https://example.supabase.co/storage/v1/object/public/business-assets/actor-1/logo.png';
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: logoUrl }, error: null });
+
+      const settings = await setBusinessLogo(db.client, logoUrl, 'actor-1');
+
+      const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
+      assert.deepEqual(Object.keys(payload).sort(), ['logo_url', 'updated_by']);
+      assert.equal(payload.logo_url, logoUrl);
+      assert.equal(payload.updated_by, 'actor-1');
+      assert.equal(settings.logoUrl, logoUrl);
+    });
+
+    it('clears the logo so the bundled asset takes over', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
+
+      const settings = await setBusinessLogo(db.client, null, 'actor-1');
+
+      const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
+      assert.equal(payload.logo_url, null);
+      assert.equal(settings.logoUrl, null);
+    });
+
+    it('always targets the singleton row', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      await setBusinessLogo(db.client, 'https://example.com/logo.png', 'actor-1');
+
+      assert.deepEqual(FakeSupabase.filterOf(db.lastCall('business_settings', 'update'), 'eq'), ['id', 1]);
+    });
+
+    it('maps a write failure to a 400 SETTINGS_UPDATE_FAILED', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: null, error: { message: 'permission denied' } });
+
+      await assertAppError(
+        () => setBusinessLogo(db.client, 'https://example.com/logo.png', 'actor-1'),
         400,
         'SETTINGS_UPDATE_FAILED',
       );

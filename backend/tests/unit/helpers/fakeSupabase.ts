@@ -13,7 +13,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  *      the service produced (table, filters, range, RPC arguments) rather than
  *      only its return value.
  *
- * Responses are explicit by design: querying a table or RPC that has no
+ * Storage is covered the same way: `storage.from(bucket).upload()` is recorded
+ * (bucket, path, bytes, content type) instead of writing anywhere, and
+ * `getPublicUrl()` returns a predictable URL.
+ *
+ * Responses are explicit by design: querying a table, RPC or bucket that has no
  * configured response throws, so a forgotten mock fails loudly instead of
  * silently returning empty data.
  */
@@ -38,6 +42,22 @@ export interface FakeCall {
   payload?: unknown;
   filters: FakeFilter[];
   modes: string[];
+}
+
+/** A recorded `storage.from(bucket).upload(...)` call. */
+export interface FakeStorageUpload {
+  bucket: string;
+  path: string;
+  /** The bytes written, copied so a later mutation cannot rewrite history. */
+  bytes: Uint8Array;
+  options: { contentType?: string; upsert?: boolean } | undefined;
+}
+
+export interface FakeBucketOptions {
+  /** When set, `upload()` resolves with this as its `error` instead of succeeding. */
+  error?: unknown;
+  /** Prefix used to build public URLs. Defaults to a realistic Supabase shape. */
+  publicUrlBase?: string;
 }
 
 const cloneCall = (call: FakeCall): FakeCall => ({
@@ -135,18 +155,52 @@ class FakeTable {
   }
 }
 
+/** Stand-in for `storage.from(bucket)`; records uploads instead of writing them. */
+class FakeStorageBucket {
+  constructor(
+    private readonly db: FakeSupabase,
+    private readonly bucket: string,
+  ) {}
+
+  upload(
+    path: string,
+    data: unknown,
+    options?: { contentType?: string; upsert?: boolean },
+  ): Promise<{ data: { path: string } | null; error: unknown }> {
+    return this.db.recordStorageUpload(this.bucket, path, data, options);
+  }
+
+  getPublicUrl(path: string): { data: { publicUrl: string } } {
+    return { data: { publicUrl: this.db.publicUrlFor(this.bucket, path) } };
+  }
+}
+
+/** Stand-in for the `storage` property on a Supabase client. */
+class FakeStorageClient {
+  constructor(private readonly db: FakeSupabase) {}
+
+  from(bucket: string): FakeStorageBucket {
+    return new FakeStorageBucket(this.db, bucket);
+  }
+}
+
 export class FakeSupabase {
   /** The value to hand to a service. Typed as a real client, backed by fakes. */
   readonly client: SupabaseClient;
+  /** Storage entry point, mirroring `client.storage`. */
+  readonly storage: FakeStorageClient;
 
   private readonly tableQueue = new Map<string, FakeResult[]>();
   private readonly tableDefaults = new Map<string, FakeResult>();
   private readonly rpcQueue = new Map<string, FakeResult[]>();
   private readonly rpcDefaults = new Map<string, FakeResult>();
+  private readonly bucketOptions = new Map<string, FakeBucketOptions>();
   private readonly recorded: FakeCall[] = [];
+  private readonly recordedUploads: FakeStorageUpload[] = [];
 
   constructor() {
     this.client = this as unknown as SupabaseClient;
+    this.storage = new FakeStorageClient(this);
   }
 
   // ─── Query entry points (mirrors the Supabase client surface) ─────
@@ -186,6 +240,15 @@ export class FakeSupabase {
     return this;
   }
 
+  /**
+   * Allow uploads to `bucket`. Like `resolveTable`, an unconfigured bucket throws
+   * so a test cannot silently pass against the wrong bucket name.
+   */
+  onBucket(bucket: string, options: FakeBucketOptions = {}): this {
+    this.bucketOptions.set(bucket, options);
+    return this;
+  }
+
   // ─── Introspection ───────────────────────────────────────────────
 
   get calls(): FakeCall[] {
@@ -215,12 +278,23 @@ export class FakeSupabase {
     return call?.filters.find((filter) => filter.method === method)?.args;
   }
 
+  /** Every upload recorded so far, oldest first. */
+  get storageUploads(): FakeStorageUpload[] {
+    return this.recordedUploads.map((upload) => ({ ...upload, bytes: new Uint8Array(upload.bytes) }));
+  }
+
+  storageUploadsFor(bucket: string): FakeStorageUpload[] {
+    return this.storageUploads.filter((upload) => upload.bucket === bucket);
+  }
+
   reset(): this {
     this.tableQueue.clear();
     this.tableDefaults.clear();
     this.rpcQueue.clear();
     this.rpcDefaults.clear();
+    this.bucketOptions.clear();
     this.recorded.length = 0;
+    this.recordedUploads.length = 0;
     return this;
   }
 
@@ -253,6 +327,47 @@ export class FakeSupabase {
       `FakeSupabase: no response configured for rpc "${name}". ` +
         'Use queueRpc() for a one-shot response or onRpc() for a default.',
     );
+  }
+
+  /**
+   * Called by FakeStorageBucket. Records the upload and resolves with the
+   * configured error, if any. Public because the storage helpers are separate
+   * classes rather than inner closures.
+   */
+  recordStorageUpload(
+    bucket: string,
+    path: string,
+    data: unknown,
+    options?: { contentType?: string; upsert?: boolean },
+  ): Promise<{ data: { path: string } | null; error: unknown }> {
+    const config = this.bucketOptions.get(bucket);
+    if (!config) {
+      throw new Error(
+        `FakeSupabase: no bucket configured with id "${bucket}". ` +
+          'Use onBucket() to allow uploads to it.',
+      );
+    }
+    this.recordedUploads.push({
+      bucket,
+      path,
+      bytes: data instanceof Uint8Array ? new Uint8Array(data) : new Uint8Array(),
+      options,
+    });
+    if (config.error) return Promise.resolve({ data: null, error: config.error });
+    return Promise.resolve({ data: { path }, error: null });
+  }
+
+  /** Called by FakeStorageBucket.getPublicUrl. */
+  publicUrlFor(bucket: string, path: string): string {
+    const config = this.bucketOptions.get(bucket);
+    if (!config) {
+      throw new Error(
+        `FakeSupabase: no bucket configured with id "${bucket}". ` +
+          'Use onBucket() to allow uploads to it.',
+      );
+    }
+    const base = config.publicUrlBase ?? `https://fake.supabase.co/storage/v1/object/public/${bucket}`;
+    return `${base}/${path}`;
   }
 }
 

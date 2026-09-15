@@ -616,6 +616,74 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(errorCode(response), 'INVALID_SETTINGS_REQUEST');
   });
 
+  it('uploads a business logo to Storage and clears it again', async (context) => {
+    if (skipIfUnauthenticated(context, 'business logo upload')) return;
+
+    const before = await request<{ logoUrl: string | null }>('/settings');
+    assert.equal(before.status, 200);
+
+    // Minimal 1x1 PNG as a base64 data URL.
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    const uploaded = await request<{ logoUrl: string | null }>('/settings/logo', {
+      method: 'POST',
+      body: JSON.stringify({ dataUrl, fileName: 'integration-logo.png', contentType: 'image/png', sizeBytes: 70 }),
+    });
+    assert.equal(uploaded.status, 200);
+
+    // The stored value must be a hosted Storage URL, never an inline data URL.
+    const logoUrl = dataOf(uploaded).logoUrl;
+    assert.equal(typeof logoUrl, 'string');
+    assert.match(logoUrl ?? '', /^https?:\/\//);
+    assert.match(logoUrl ?? '', /business-assets/);
+    assert.equal((logoUrl ?? '').startsWith('data:'), false);
+
+    // ...and it must be readable back through the settings endpoint.
+    const reread = await request<{ logoUrl: string | null }>('/settings');
+    assert.equal(dataOf(reread).logoUrl, logoUrl);
+
+    // The uploaded object must actually be served by the public bucket.
+    const assetResponse = await fetch(logoUrl ?? '');
+    assert.equal(assetResponse.status, 200);
+
+    const cleared = await request<{ logoUrl: string | null }>('/settings/logo', { method: 'DELETE' });
+    assert.equal(cleared.status, 200);
+    assert.equal(dataOf(cleared).logoUrl, null);
+
+    // The suite starts from a null logo, so assert we left it that way.
+    assert.equal(dataOf(before).logoUrl, null);
+  });
+
+  it('rejects a business logo above the 2 MB ceiling', async (context) => {
+    if (skipIfUnauthenticated(context, 'business logo size limit')) return;
+
+    // Just over 2 MB of payload, which base64-encodes to roughly 2.8 MB. This also
+    // proves the upload route accepts bodies larger than the 1 MB default limit.
+    const sizeBytes = 2 * 1024 * 1024 + 1;
+    const oversized = Buffer.alloc(sizeBytes, 0x41).toString('base64');
+    const response = await request('/settings/logo', {
+      method: 'POST',
+      body: JSON.stringify({ dataUrl: `data:image/png;base64,${oversized}`, fileName: 'too-big.png', contentType: 'image/png', sizeBytes }),
+    });
+    assert.equal(response.status, 400);
+    assert.equal(errorCode(response), 'INVALID_BUSINESS_LOGO');
+  });
+
+  it('ignores a logoUrl sent to the generic settings endpoint', async (context) => {
+    if (skipIfUnauthenticated(context, 'settings logo isolation')) return;
+
+    const before = await request<{ businessName: string; logoUrl: string | null }>('/settings');
+    const response = await request<{ logoUrl: string | null }>('/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        businessName: dataOf(before).businessName,
+        // The base64 fallback was removed; only /settings/logo may write this.
+        logoUrl: 'data:image/png;base64,iVBORw0KGgo=',
+      }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(dataOf(response).logoUrl, dataOf(before).logoUrl);
+  });
+
   // ─── Users ───────────────────────────────────────────────────────
 
   it('lists users', async (context) => {

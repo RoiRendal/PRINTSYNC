@@ -4,7 +4,7 @@ import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from 'lucide
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
-import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
+import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Select } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
@@ -39,13 +39,14 @@ export default function Settings() {
     businessDisplayName,
     setBusinessDisplayName,
     effectiveBusinessLogoUrl,
-    customBusinessLogoDataUrl,
-    setCustomBusinessLogoDataUrl,
+    businessLogoUrl,
+    uploadBusinessLogo,
+    clearBusinessLogo,
     vatRate,
     setVatRate,
     currencySymbol,
     setCurrencySymbol,
-    maxCustomLogoBytes,
+    maxBusinessLogoBytes,
     brandingError,
   } = useBusinessBranding();
   const { settings, toggleStockAlerts, toggleExportAlerts } = useNotifications();
@@ -53,6 +54,7 @@ export default function Settings() {
   const [vatDraft, setVatDraft] = useState(String(vatRate));
   const [currencyDraft, setCurrencyDraft] = useState(currencySymbol);
   const [logoUploadError, setLogoUploadError] = useState('');
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [defaultsError, setDefaultsError] = useState('');
   const [exportError, setExportError] = useState('');
   const logoFileInputRef = useRef<HTMLInputElement>(null);
@@ -96,30 +98,39 @@ export default function Settings() {
     }
   };
 
-  const handleBusinessLogoFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBusinessLogoFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setLogoUploadError('');
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setLogoUploadError('Choose an image file (PNG, JPG, or WebP).');
+    if (!BUSINESS_LOGO_CONTENT_TYPES.includes(file.type as (typeof BUSINESS_LOGO_CONTENT_TYPES)[number])) {
+      setLogoUploadError('Choose a PNG, JPG, WebP, or SVG image.');
       return;
     }
-    if (file.size > maxCustomLogoBytes) {
-      setLogoUploadError(`Keep the file under about ${Math.round(maxCustomLogoBytes / 1000)} KB so it fits in browser storage.`);
+    if (file.size > maxBusinessLogoBytes) {
+      setLogoUploadError(`Keep the logo under ${Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB.`);
       return;
     }
-    const reader = new FileReader();
-    reader.onerror = () => setLogoUploadError('Could not read that file. Try another image.');
-    reader.onloadend = () => {
-      const result = reader.result;
-      if (typeof result === 'string') {
-        void setCustomBusinessLogoDataUrl(result).catch((error: unknown) => {
-          setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be saved.');
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+    setIsUploadingLogo(true);
+    try {
+      await uploadBusinessLogo(file);
+    } catch (error) {
+      setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be uploaded.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleClearBusinessLogo = async () => {
+    setLogoUploadError('');
+    setIsUploadingLogo(true);
+    try {
+      await clearBusinessLogo();
+    } catch (error) {
+      setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be removed.');
+    } finally {
+      setIsUploadingLogo(false);
+    }
   };
 
   const handleExportOrders = async () => {
@@ -206,24 +217,18 @@ export default function Settings() {
                   <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Business logo</p>
                 </div>
                 <p className="text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
-                  Uses <span className="font-mono text-[10px]">{BRAND_LOGO_URL}</span> until you upload a browser-saved replacement.
+                  Stored in Supabase Storage, up to{' '}
+                  <span className="font-mono text-[10px]">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
+                  <span className="font-mono text-[10px]">{BRAND_LOGO_URL}</span> when unset.
                 </p>
-                <input ref={logoFileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" onChange={handleBusinessLogoFile} />
+                <input ref={logoFileInputRef} type="file" accept={BUSINESS_LOGO_CONTENT_TYPES.join(',')} className="sr-only" onChange={handleBusinessLogoFile} />
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" size="sm" onClick={() => logoFileInputRef.current?.click()}>Upload image</Button>
-                  {customBusinessLogoDataUrl != null && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setLogoUploadError('');
-                        void setCustomBusinessLogoDataUrl(null).catch((error: unknown) => {
-                          setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be removed.');
-                        });
-                      }}
-                    >
-                      Use file logo
+                  <Button type="button" size="sm" disabled={isUploadingLogo} onClick={() => logoFileInputRef.current?.click()}>
+                    {isUploadingLogo ? 'Uploading…' : 'Upload image'}
+                  </Button>
+                  {businessLogoUrl != null && (
+                    <Button type="button" variant="secondary" size="sm" disabled={isUploadingLogo} onClick={handleClearBusinessLogo}>
+                      Use default logo
                     </Button>
                   )}
                 </div>

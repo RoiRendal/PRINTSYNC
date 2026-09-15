@@ -13,6 +13,18 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
     return;
   }
 
+  // Raised by express.json() when the body exceeds the route's limit. Without this
+  // branch an oversized upload would surface as a 500.
+  if (error?.type === 'entity.too.large') {
+    response.status(413).json({
+      error: {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'The request body is larger than this endpoint accepts.',
+      },
+    });
+    return;
+  }
+
   if (error instanceof AppError) {
     if (error.statusCode >= 500) {
       logger.error('AppError thrown', {
