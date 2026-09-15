@@ -58,3 +58,12 @@ export interface Transaction {
 }
 
 export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
+
+export interface OrderPaymentRecord {
+  id: string;
+  orderId: string;
+  amount: number;
+  method: 'Cash' | 'Card' | 'Other';
+  notes: string;
+  createdAt: string;
+}

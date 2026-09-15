@@ -13,7 +13,7 @@ import type { Order } from '../types';
 import { workPhases } from '../components/orders/PhaseProgress';
 
 export default function Orders() {
-  const { orders, isLoading, error, refresh, updateOrder, deleteOrder } = useOrders();
+  const { orders, isLoading, error, refresh, updateOrder, deleteOrder, refreshOrder } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -28,8 +28,9 @@ export default function Orders() {
     const nextStatus = workPhases[nextIndex];
     if (!nextStatus) return;
     try {
-      const updated = await updateOrder(order.id, { status: nextStatus });
-      if (selectedOrder?.id === order.id) setSelectedOrder(updated);
+      await updateOrder(order.id, { status: nextStatus });
+      const refreshed = await refreshOrder(order.id);
+      if (selectedOrder?.id === order.id) setSelectedOrder(refreshed);
     } catch (updateError) {
       console.error('Unable to update order status:', updateError);
     }
@@ -83,6 +84,7 @@ export default function Orders() {
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
         onAdvancePhase={updateOrderStatusByStep}
+        onRefreshOrder={refreshOrder}
       />
     </div>
   );

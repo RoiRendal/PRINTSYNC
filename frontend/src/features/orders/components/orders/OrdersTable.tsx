@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2 } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2, AlertCircle } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -17,6 +17,7 @@ import {
   TableRow,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
+import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
 import { PhaseProgress, workPhases } from './PhaseProgress';
@@ -40,6 +41,7 @@ export function OrdersTable({
   onDeleteOrder,
   onAdvancePhase,
 }: OrdersTableProps) {
+  const { currencySymbol } = useBusinessBranding();
   return (
     <Card variant="elevated" padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
@@ -69,6 +71,8 @@ export function OrdersTable({
                 <TableHead>Type</TableHead>
                 <TableHead className="min-w-[260px]">Work Phase</TableHead>
                 <TableHead className="text-right">Value</TableHead>
+                <TableHead className="text-right">Paid</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -125,7 +129,17 @@ export function OrdersTable({
                         </Button>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">₱{order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
+                      {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
+                        <Badge variant="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</Badge>
+                      ) : (
+                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1.5">
                         <Button
@@ -164,7 +178,7 @@ export function OrdersTable({
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="py-12">
+                  <TableCell colSpan={8} className="py-12">
                     <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>

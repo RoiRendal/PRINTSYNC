@@ -1,4 +1,4 @@
-import { Banknote, CheckCircle2, CreditCard } from 'lucide-react';
+import { Banknote, CheckCircle2, CreditCard, Printer } from 'lucide-react';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Button, Modal } from '../../../../shared/components/ui';
@@ -14,6 +14,7 @@ interface POSCheckoutModalProps {
   onPaymentMethodChange: (method: 'Cash' | 'Card') => void;
   onConfirm: () => void;
   onClose: () => void;
+  onPrintReceipt: () => void;
 }
 
 export function POSCheckoutModal({
@@ -27,6 +28,7 @@ export function POSCheckoutModal({
   onPaymentMethodChange,
   onConfirm,
   onClose,
+  onPrintReceipt,
 }: POSCheckoutModalProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
 
@@ -39,9 +41,16 @@ export function POSCheckoutModal({
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-macos-text dark:text-zinc-100">Transaction Successful</h4>
-              <p className="text-xs text-macos-text-muted dark:text-zinc-400">Inventory updated and record saved.</p>
+              <h4 className="text-lg font-bold text-macos-text dark:text-zinc-100">
+                {posMode === 'retail' ? 'Transaction Successful' : 'Order Created'}
+              </h4>
+              <p className="text-xs text-macos-text-muted dark:text-zinc-400">
+                {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
+              </p>
             </div>
+            <Button type="button" variant="secondary" onClick={onPrintReceipt} leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}>
+              {posMode === 'retail' ? 'Print Receipt' : 'Print Order Summary'}
+            </Button>
           </div>
         ) : (
           <>
@@ -78,7 +87,7 @@ export function POSCheckoutModal({
 
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-              <Button type="button" fullWidth onClick={onConfirm}>Confirm & Pay</Button>
+              <Button type="button" fullWidth onClick={onConfirm}>{posMode === 'retail' ? 'Confirm & Pay' : 'Create Order'}</Button>
             </div>
           </>
         )}

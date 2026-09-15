@@ -13,6 +13,7 @@ import { paymentsApi, type PaymentTransaction } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
 import { POSCheckoutModal } from '../components/pos/POSCheckoutModal';
+import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
 import { useCartTotals } from '../hooks/useCartTotals';
@@ -55,6 +56,8 @@ export default function POS() {
     const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_PAYMENT_METHOD_KEY) : null;
     return saved === 'Card' ? 'Card' : 'Cash';
   });
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [lastOrderId, setLastOrderId] = useState<string | undefined>(undefined);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
@@ -385,12 +388,14 @@ export default function POS() {
 
       if (editingOrderId) {
         const existingOrder = orders.find((order) => order.id === editingOrderId);
-        await updateOrder(editingOrderId, {
+        const updated = await updateOrder(editingOrderId, {
           ...preparedOrder,
           status: existingOrder?.status ?? 'Pending',
         });
+        setLastOrderId(updated.id);
       } else {
-        await addOrder(preparedOrder);
+        const created = await addOrder(preparedOrder);
+        setLastOrderId(created.id);
       }
     }
 
@@ -541,6 +546,18 @@ export default function POS() {
         onPaymentMethodChange={handlePaymentMethodChange}
         onConfirm={finalizeTransaction}
         onClose={() => setIsCheckoutModalOpen(false)}
+        onPrintReceipt={() => { setIsCheckoutModalOpen(false); setIsReceiptModalOpen(true); }}
+      />
+
+      <ReceiptModal
+        isOpen={isReceiptModalOpen}
+        onClose={() => setIsReceiptModalOpen(false)}
+        posMode={posMode}
+        cart={cart}
+        totals={totals}
+        paymentMethod={paymentMethod}
+        customerName={customerName}
+        orderId={lastOrderId}
       />
     </div>
   );

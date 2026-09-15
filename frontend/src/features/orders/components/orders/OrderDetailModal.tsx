@@ -1,20 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon, MessageSquare, Printer } from 'lucide-react';
+import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, CreditCard, Image as ImageIcon, MessageSquare, Plus, Printer, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
+  Input,
   Modal,
+  Select,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import { useDesigns } from '../../../designs/state/DesignContext';
 import { useInventory } from '../../../inventory/state/InventoryContext';
+import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { Design } from '../../../designs/types';
 import type { InventoryItem } from '../../../inventory/types';
 import type { Order, OrderLineItem } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
 import { PhaseProgress, workPhases } from './PhaseProgress';
+import { orderPaymentsApi, type OrderPayment } from '../../api/orderPaymentsApi';
+import { ApiError } from '../../../../shared/api/errors';
 
 function ImageFallback({ label }: { label: string }) {
   return (
@@ -42,12 +47,20 @@ interface OrderDetailModalProps {
   order: Order | null;
   onClose: () => void;
   onAdvancePhase: (order: Order, direction: -1 | 1) => void;
+  onRefreshOrder: (id: string) => Promise<Order>;
 }
 
-export function OrderDetailModal({ order, onClose, onAdvancePhase }: OrderDetailModalProps) {
+export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrder }: OrderDetailModalProps) {
   const { items: inventoryItems } = useInventory();
   const { designs } = useDesigns();
+  const { currencySymbol } = useBusinessBranding();
   const [selectedLineItemIndex, setSelectedLineItemIndex] = useState(0);
+  const [payments, setPayments] = useState<OrderPayment[]>([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card' | 'Other'>('Cash');
+  const [paymentNotes, setPaymentNotes] = useState('');
 
   const getDesign = (id?: string): Design | undefined => designs.find((d) => d.id === id);
 
@@ -67,12 +80,46 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase }: OrderDetail
 
   useEffect(() => {
     setSelectedLineItemIndex(0);
+    setPayments([]);
+    setPaymentError(null);
+    setPaymentAmount('');
+    setPaymentMethod('Cash');
+    setPaymentNotes('');
+    if (!order?.id) return;
+    setPaymentsLoading(true);
+    void orderPaymentsApi.list(order.id)
+      .then((data) => { setPayments(data); setPaymentError(null); })
+      .catch((err: unknown) => setPaymentError(err instanceof ApiError ? err.message : 'Failed to load payments.'))
+      .finally(() => setPaymentsLoading(false));
   }, [order]);
 
   useEffect(() => {
     if (selectedLineItemIndex < selectedOrderLineItems.length) return;
     setSelectedLineItemIndex(0);
   }, [selectedLineItemIndex, selectedOrderLineItems.length]);
+
+  const handleRecordPayment = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!order) return;
+    const amount = parseFloat(paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    try {
+      await orderPaymentsApi.create({ orderId: order.id, amount, method: paymentMethod, notes: paymentNotes });
+      setPaymentAmount('');
+      setPaymentNotes('');
+      setPaymentError(null);
+      const [freshPayments] = await Promise.all([
+        orderPaymentsApi.list(order.id),
+        onRefreshOrder(order.id),
+      ]);
+      setPayments(freshPayments);
+    } catch (err: unknown) {
+      setPaymentError(err instanceof ApiError ? err.message : 'Payment could not be recorded.');
+    }
+  };
+
+  const balanceDue = order ? (order.balanceDue ?? Math.max(0, order.amount - (order.totalPaid ?? 0))) : 0;
+  const totalPaid = order ? (order.totalPaid ?? 0) : 0;
 
   return (
     <Modal
@@ -126,12 +173,26 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase }: OrderDetail
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="text-macos-text-muted dark:text-zinc-500">Unit Price</span>
-                    <span className="font-bold">₱{(order.amount / order.quantity).toFixed(2)}</span>
+                    <span className="font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Total Value</span>
-                    <span className="font-mono font-bold text-macos-text dark:text-zinc-100">₱{order.amount.toFixed(2)}</span>
+                    <span className="font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
                   </div>
+                  {selectedOrderIsCustom && (
+                    <>
+                      <div className="flex justify-between py-2 text-xs">
+                        <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Total Paid</span>
+                        <span className="font-mono font-bold text-macos-green dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between py-2 text-xs">
+                        <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Balance Due</span>
+                        <span className={cn('font-mono font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
+                          {currencySymbol}{balanceDue.toFixed(2)}
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </Card>
               </section>
 
@@ -188,6 +249,62 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase }: OrderDetail
             </div>
           </div>
 
+          {selectedOrderIsCustom && (
+            <Card variant="glass" padding="md" className="space-y-4">
+              <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
+                <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
+              </h4>
+              {paymentError && (
+                <div className="rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+                  {paymentError}
+                </div>
+              )}
+              {paymentsLoading ? (
+                <p className="text-xs text-macos-text-muted dark:text-zinc-500">Loading payments...</p>
+              ) : payments.length === 0 ? (
+                <p className="text-xs text-macos-text-muted dark:text-zinc-500">No payments recorded yet.</p>
+              ) : (
+                <div className="space-y-2">
+                  {payments.map((payment) => (
+                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-2.5 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                      <div className="flex items-center gap-2">
+                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-macos-green/14 text-macos-green' : payment.method === 'Card' ? 'bg-macos-blue/14 text-macos-blue' : 'bg-macos-purple/14 text-macos-purple')}>
+                          {payment.method[0]}
+                        </span>
+                        <div>
+                          <p className="text-[10px] font-bold text-macos-text dark:text-zinc-100">{payment.method}</p>
+                          <p className="text-[9px] text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <form onSubmit={handleRecordPayment} className="space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">Record Payment</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-[11px]" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
+                  <Select fieldSize="sm" className="text-[11px]" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'Cash' | 'Card' | 'Other')}>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="Other">Other</option>
+                  </Select>
+                </div>
+                <Input fieldSize="sm" className="text-[11px]" placeholder="Notes (optional)" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
+                <Button type="submit" size="sm" fullWidth leftIcon={<Plus className="h-3 w-3" aria-hidden="true" />}>Record Payment</Button>
+              </form>
+            </Card>
+          )}
+
+          {selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup' && (
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border border-macos-orange/20 bg-macos-orange/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700 dark:border-macos-orange/25 dark:bg-macos-orange/15 dark:text-orange-300">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              Balance due of {currencySymbol}{balanceDue.toFixed(2)} remains unpaid. Confirm payment before delivery.
+            </div>
+          )}
+
           <Card variant="glass" padding="md">
             <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Update Work Phase</h4>
             <div className="flex items-center gap-3">
@@ -209,7 +326,12 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase }: OrderDetail
                 type="button"
                 variant="secondary"
                 size="icon"
-                onClick={() => onAdvancePhase(order, 1)}
+                onClick={() => {
+                  if (selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup') {
+                    if (!window.confirm(`This order has an unpaid balance of ${currencySymbol}${balanceDue.toFixed(2)}. Proceed to Delivered anyway?`)) return;
+                  }
+                  onAdvancePhase(order, 1);
+                }}
                 disabled={workPhases.indexOf(order.status) === workPhases.length - 1}
                 className="rounded-full"
               >

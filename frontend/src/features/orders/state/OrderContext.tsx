@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { ordersApi } from '../api/ordersApi';
+import { orderPaymentsApi } from '../api/orderPaymentsApi';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateOrder, Order, UpdateOrder } from '../types';
+import type { CreateOrderPayment, OrderPayment } from '../api/orderPaymentsApi';
 
 interface OrderContextValue {
   orders: Order[];
@@ -11,6 +13,8 @@ interface OrderContextValue {
   addOrder: (order: CreateOrder) => Promise<Order>;
   updateOrder: (id: string, order: UpdateOrder) => Promise<Order>;
   deleteOrder: (id: string) => Promise<void>;
+  recordPayment: (payment: CreateOrderPayment) => Promise<OrderPayment>;
+  refreshOrder: (id: string) => Promise<Order>;
 }
 
 const OrderContext = createContext<OrderContextValue | undefined>(undefined);
@@ -66,8 +70,21 @@ export function OrderProvider({ children }: { children: ReactNode }) {
     setError(null);
   };
 
+  const recordPayment = async (payment: CreateOrderPayment) => {
+    const created = await orderPaymentsApi.create(payment);
+    setError(null);
+    return created;
+  };
+
+  const refreshOrder = async (id: string) => {
+    const order = await ordersApi.get(id);
+    setOrders((previousOrders) => previousOrders.map((o) => o.id === id ? order : o));
+    setError(null);
+    return order;
+  };
+
   return (
-    <OrderContext.Provider value={{ orders, isLoading, error, refresh: () => setRefreshKey((value) => value + 1), addOrder, updateOrder, deleteOrder }}>
+    <OrderContext.Provider value={{ orders, isLoading, error, refresh: () => setRefreshKey((value) => value + 1), addOrder, updateOrder, deleteOrder, recordPayment, refreshOrder }}>
       {children}
     </OrderContext.Provider>
   );
