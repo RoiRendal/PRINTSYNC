@@ -132,3 +132,12 @@ export async function voidTransaction(supabase: SupabaseClient, id: string, acto
   if (error || !data) throw new AppError(400, 'TRANSACTION_VOID_FAILED', error?.message ?? 'The transaction could not be voided.');
   return getTransaction(supabase, String((data as Record<string, unknown>).id));
 }
+
+export async function exportTransactions(supabase: SupabaseClient): Promise<TransactionRecord[]> {
+  const { data, error } = await supabase
+    .from('sales_transactions')
+    .select(transactionSelect)
+    .order('created_at', { ascending: false });
+  if (error) throw new AppError(503, 'TRANSACTIONS_LOOKUP_FAILED', 'Transactions could not be loaded.');
+  return mapTransactions(supabase, data);
+}

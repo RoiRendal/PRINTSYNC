@@ -19,6 +19,7 @@ import { customersRouter } from './routes/customers.routes.js';
 import { orderPaymentsRouter } from './routes/orderPayments.routes.js';
 import { suppliersRouter } from './routes/suppliers.routes.js';
 import { expensesRouter } from './routes/expenses.routes.js';
+import { exportRouter } from './routes/export.routes.js';
 
 export function createApp() {
   const app = express();
@@ -43,6 +44,7 @@ export function createApp() {
   app.use('/api/v1/order-payments', orderPaymentsRouter);
   app.use('/api/v1/suppliers', suppliersRouter);
   app.use('/api/v1/expenses', expensesRouter);
+  app.use('/api/v1/export', exportRouter);
   app.use(notFound);
   app.use(errorHandler);
 

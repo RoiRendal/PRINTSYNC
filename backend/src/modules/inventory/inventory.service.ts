@@ -124,3 +124,12 @@ export async function adjustInventoryStock(
   if (error || !data) throw new AppError(400, 'INVENTORY_ADJUSTMENT_FAILED', 'The inventory stock could not be adjusted.');
   return toItem(data as Record<string, unknown>);
 }
+
+export async function exportInventory(supabase: SupabaseClient): Promise<InventoryItem[]> {
+  const { data, error } = await supabase
+    .from('inventory_items')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
+    .order('name');
+  if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
+  return data.map((row) => toItem(row));
+}

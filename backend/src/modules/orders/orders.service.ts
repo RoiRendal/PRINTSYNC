@@ -197,3 +197,9 @@ export async function deleteOrder(supabase: SupabaseClient, id: string, actorId:
   const { error } = await supabase.rpc('delete_order_with_items', { p_order_id: id, p_actor_id: actorId });
   if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', error.message || 'The order could not be deleted.');
 }
+
+export async function exportOrders(supabase: SupabaseClient): Promise<OrderRecord[]> {
+  const { data, error } = await supabase.from('orders').select(orderSelect).order('created_at', { ascending: false });
+  if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');
+  return mapOrders(supabase, data);
+}

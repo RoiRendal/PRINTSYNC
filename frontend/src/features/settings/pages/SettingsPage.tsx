@@ -7,10 +7,7 @@ import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Select } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
-import { downloadCsv } from '../../../shared/lib/csvExport';
-import { ordersApi } from '../../orders/api/ordersApi';
-import { inventoryApi } from '../../inventory/api/inventoryApi';
-import { paymentsApi } from '../../orders/api/paymentsApi';
+import { exportApi } from '../api/exportApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -128,21 +125,7 @@ export default function Settings() {
   const handleExportOrders = async () => {
     setExportError('');
     try {
-      const orders = await ordersApi.list({ page: 1, limit: 10000 });
-      const rows = orders.data.map((o) => ({
-        id: o.id,
-        customer: o.customer,
-        item: o.item,
-        quantity: o.quantity,
-        status: o.status,
-        date: o.date,
-        amount: o.amount,
-        totalPaid: o.totalPaid ?? 0,
-        balanceDue: o.balanceDue ?? 0,
-        dueDate: o.dueDate ?? '',
-        isCustom: o.isCustom ? 'Yes' : 'No',
-      }));
-      downloadCsv(`orders_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      await exportApi.downloadOrders();
     } catch (error) {
       setExportError(error instanceof Error ? error.message : 'Orders could not be exported.');
     }
@@ -151,19 +134,7 @@ export default function Settings() {
   const handleExportInventory = async () => {
     setExportError('');
     try {
-      const items = await inventoryApi.list({ page: 1, limit: 10000 });
-      const rows = items.data.map((i) => ({
-        id: i.id,
-        name: i.name,
-        sku: i.sku,
-        category: i.category,
-        stock: i.stock,
-        reorderLevel: i.reorderLevel,
-        price: i.price,
-        costPrice: i.costPrice ?? 0,
-        unit: i.unit,
-      }));
-      downloadCsv(`inventory_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      await exportApi.downloadInventory();
     } catch (error) {
       setExportError(error instanceof Error ? error.message : 'Inventory could not be exported.');
     }
@@ -172,19 +143,7 @@ export default function Settings() {
   const handleExportTransactions = async () => {
     setExportError('');
     try {
-      const transactions = await paymentsApi.list({ page: 1, limit: 10000 });
-      const rows = transactions.data.map((t) => ({
-        id: t.id,
-        date: t.date,
-        paymentMethod: t.paymentMethod,
-        subtotal: t.subtotal,
-        discount: t.discount,
-        tax: t.tax,
-        total: t.total,
-        status: t.status,
-        items: t.items.map((i) => `${i.quantity}x ${i.name}`).join('; '),
-      }));
-      downloadCsv(`transactions_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+      await exportApi.downloadTransactions();
     } catch (error) {
       setExportError(error instanceof Error ? error.message : 'Transactions could not be exported.');
     }
