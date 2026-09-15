@@ -4,12 +4,16 @@ import { Badge, Card, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { cn } from '../../../../shared/lib/cn';
 
+import type { RefObject } from 'react';
+
 interface POSCatalogProps {
   inventory: InventoryItem[];
   filteredProducts: InventoryItem[];
   categories: string[];
   searchTerm: string;
   activeCategory: string;
+  currencySymbol: string;
+  searchRef?: RefObject<HTMLInputElement | null>;
   onSearchChange: (value: string) => void;
   onCategoryChange: (category: string) => void;
   onAddToCart: (product: InventoryItem) => void;
@@ -20,6 +24,8 @@ export function POSCatalog({
   categories,
   searchTerm,
   activeCategory,
+  currencySymbol,
+  searchRef,
   onSearchChange,
   onCategoryChange,
   onAddToCart,
@@ -31,11 +37,13 @@ export function POSCatalog({
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
             <Input
+              ref={searchRef}
               type="text"
               aria-label="Search catalog"
               className="pl-9 text-xs"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
+              autoFocus
             />
           </div>
 
@@ -88,7 +96,7 @@ export function POSCatalog({
             </div>
             <h3 className="line-clamp-2 text-[11px] font-bold uppercase tracking-tight text-macos-text dark:text-zinc-100 xl:text-[12px]">{product.name}</h3>
             <div className="mt-2 flex items-center justify-between">
-              <p className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100 xl:text-[11px]">₱{product.price.toFixed(2)}</p>
+              <p className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100 xl:text-[11px]">{currencySymbol}{product.price.toFixed(2)}</p>
               <Plus className="h-3.5 w-3.5 text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-500 dark:group-hover:text-macos-cyan" aria-hidden="true" />
             </div>
           </button>

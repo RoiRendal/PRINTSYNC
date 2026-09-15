@@ -35,7 +35,7 @@ export const ADMIN_PAGE_ACCESS: PageAccessKey[] = [
   'settings',
 ];
 
-export const STAFF_PAGE_ACCESS: PageAccessKey[] = ['orders', 'pos'];
+export const STAFF_PAGE_ACCESS: PageAccessKey[] = ['orders', 'pos', 'inventory'];
 
 export const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard },

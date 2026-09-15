@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { History, ShoppingBag, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { ApiError } from '../../../shared/api/errors';
 import { Button, GlassCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
@@ -18,12 +19,16 @@ import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { useOrders } from '../state/OrderContext';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
 
+const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
+
 export default function POS() {
   const { items: inventory } = useInventory();
   const { designs } = useDesigns();
   const { addOrder, orders, updateOrder } = useOrders();
+  const { vatRate, currencySymbol } = useBusinessBranding();
   const location = useLocation();
   const navigate = useNavigate();
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [cart, setCart] = useState<CartItem[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -42,8 +47,11 @@ export default function POS() {
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [cartDiscount, setCartDiscount] = useState(0);
-  const [vatRatePercent, setVatRatePercent] = useState(12);
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
+  const [vatRatePercent, setVatRatePercent] = useState(vatRate);
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_PAYMENT_METHOD_KEY) : null;
+    return saved === 'Card' ? 'Card' : 'Cash';
+  });
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
@@ -239,11 +247,34 @@ export default function POS() {
     setCartDiscount((d) => Math.min(Math.max(0, d), s));
   }, [cart]);
 
+  useEffect(() => {
+    setVatRatePercent(vatRate);
+  }, [vatRate]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (isCheckoutModalOpen || isDesignModalOpen) return;
+      const target = event.target as HTMLElement;
+      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+
+      if (event.key === '/' && !isTyping) {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (event.key === 'Enter' && !isTyping && cart.length > 0 && view === 'pos') {
+        event.preventDefault();
+        handleCheckout();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCheckoutModalOpen, isDesignModalOpen, cart.length, view]);
+
   const resetSaleState = () => {
     setCart([]);
     setEditingOrderId(null);
     setCartDiscount(0);
-    setVatRatePercent(12);
+    setVatRatePercent(vatRate);
   };
 
   const addToCart = (product: InventoryItem) => {
@@ -362,12 +393,16 @@ export default function POS() {
     setCustomerName('');
     setOrderNotes('');
     setEditingOrderId(null);
-    setPaymentMethod('Cash');
 
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
       setCheckoutSuccess(false);
     }, 2000);
+  };
+
+  const handlePaymentMethodChange = (method: 'Cash' | 'Card') => {
+    setPaymentMethod(method);
+    localStorage.setItem(LAST_PAYMENT_METHOD_KEY, method);
   };
 
   const voidTransaction = async (id: string) => {
@@ -437,6 +472,8 @@ export default function POS() {
             categories={categories}
             searchTerm={searchTerm}
             activeCategory={activeCategory}
+            currencySymbol={currencySymbol}
+            searchRef={searchInputRef}
             onSearchChange={setSearchTerm}
             onCategoryChange={setActiveCategory}
             onAddToCart={addToCart}
@@ -451,6 +488,7 @@ export default function POS() {
             cartDiscount={cartDiscount}
             vatRatePercent={vatRatePercent}
             totals={totals}
+            currencySymbol={currencySymbol}
             onCustomerNameChange={setCustomerName}
             onOrderNotesChange={setOrderNotes}
             onCartDiscountChange={setCartDiscount}
@@ -458,7 +496,7 @@ export default function POS() {
             onUpdateQty={updateQty}
             onRemoveFromCart={removeFromCart}
             onOpenDesignSelector={openDesignSelector}
-            onReset={() => { setCart([]); setCartDiscount(0); setVatRatePercent(12); }}
+            onReset={() => { setCart([]); setCartDiscount(0); setVatRatePercent(vatRate); }}
             onCheckout={handleCheckout}
           />
         </div>
@@ -489,7 +527,8 @@ export default function POS() {
         cart={cart}
         totals={totals}
         paymentMethod={paymentMethod}
-        onPaymentMethodChange={setPaymentMethod}
+        currencySymbol={currencySymbol}
+        onPaymentMethodChange={handlePaymentMethodChange}
         onConfirm={finalizeTransaction}
         onClose={() => setIsCheckoutModalOpen(false)}
       />

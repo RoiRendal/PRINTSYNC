@@ -13,6 +13,8 @@ type BusinessBrandingContextValue = {
   effectiveBusinessLogoUrl: string;
   customBusinessLogoDataUrl: string | null;
   setCustomBusinessLogoDataUrl: (dataUrl: string | null) => Promise<void>;
+  vatRate: number;
+  currencySymbol: string;
   maxCustomLogoBytes: number;
   brandingError: string | null;
 };
@@ -22,6 +24,8 @@ const BusinessBrandingContext = createContext<BusinessBrandingContextValue | nul
 export function BusinessBrandingProvider({ children }: { children: React.ReactNode }) {
   const [businessDisplayName, setBusinessDisplayNameState] = useState(DEFAULT_BUSINESS_DISPLAY_NAME);
   const [customBusinessLogoDataUrl, setCustomBusinessLogoDataUrlState] = useState<string | null>(null);
+  const [vatRate, setVatRate] = useState(12);
+  const [currencySymbol, setCurrencySymbol] = useState('₱');
   const [brandingError, setBrandingError] = useState<string | null>(null);
   const { currentUser } = useAuth();
 
@@ -33,6 +37,8 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
         if (!mounted) return;
         setBusinessDisplayNameState(settings.businessName);
         setCustomBusinessLogoDataUrlState(settings.logoUrl);
+        setVatRate(settings.vatRate ?? 12);
+        setCurrencySymbol(settings.currencySymbol ?? '₱');
         setBrandingError(null);
       })
       .catch((error: unknown) => {
@@ -65,10 +71,12 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
       effectiveBusinessLogoUrl,
       customBusinessLogoDataUrl,
       setCustomBusinessLogoDataUrl,
+      vatRate,
+      currencySymbol,
       maxCustomLogoBytes: MAX_CUSTOM_LOGO_BYTES,
       brandingError,
     }),
-    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl, brandingError],
+    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl, vatRate, currencySymbol, brandingError],
   );
 
   return (

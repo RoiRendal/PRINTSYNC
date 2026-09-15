@@ -62,6 +62,8 @@ export default function UserManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const adminCount = users.filter((user) => user.role === 'admin').length;
   const staffCount = users.filter((user) => user.role === 'staff').length;
@@ -104,6 +106,26 @@ export default function UserManagement() {
     setIsModalOpen(false);
     setEditingUserId(null);
     setForm(EMPTY_FORM);
+  };
+
+  const openDelete = (user: UserRecord) => {
+    setUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setUserToDelete(null);
+    setIsDeleteModalOpen(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await deleteUser(userToDelete.id);
+      closeDeleteModal();
+    } catch {
+      return;
+    }
   };
 
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -213,7 +235,7 @@ export default function UserManagement() {
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
                               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => deleteUser(user.id)} disabled={user.id === firstAdminId} title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'} className="h-8 w-8 text-macos-red hover:text-macos-red">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(user)} disabled={user.id === firstAdminId} title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'} className="h-8 w-8 text-macos-red hover:text-macos-red">
                               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
                           </div>
@@ -271,6 +293,18 @@ export default function UserManagement() {
             <Button type="submit">{editingUserId ? 'Save Changes' : 'Create User'}</Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
+        <div className="space-y-4">
+          <p className="text-sm text-macos-text-muted dark:text-zinc-400">
+            Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{userToDelete?.name}</strong>? This action cannot be undone.
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal}>Cancel</Button>
+            <Button type="button" variant="danger" fullWidth onClick={confirmDelete}>Delete User</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
