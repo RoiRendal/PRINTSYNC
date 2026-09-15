@@ -17,7 +17,7 @@ export function createAuditApi(client: ApiClient = apiClient) {
       if (query.action) params.set('action', query.action);
       if (query.entityType) params.set('entityType', query.entityType);
       const queryString = params.toString();
-      return client.get<AuditLogListResult>(`/audit${queryString ? `?${queryString}` : ''}`);
+      return client.get<AuditLogListResult>(`/audit-logs${queryString ? `?${queryString}` : ''}`);
     },
   };
 }
