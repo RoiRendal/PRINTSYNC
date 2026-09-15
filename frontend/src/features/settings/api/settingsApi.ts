@@ -1,12 +1,7 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
+import type { BusinessSettings } from '@printsync/shared-types';
 
-export interface BusinessSettings {
-  businessName: string;
-  logoUrl: string | null;
-  vatRate: number;
-  currencySymbol: string;
-  updatedAt: string;
-}
+export type { BusinessSettings };
 
 export function createSettingsApi(client: ApiClient = apiClient) {
   return {

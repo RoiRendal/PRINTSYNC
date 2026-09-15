@@ -1,5 +1,5 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
-import type { CreateCustomer, Customer, UpdateCustomer } from '../types';
+import type { CreateCustomer, Customer, UpdateCustomer } from '@printsync/shared-types';
 
 export function createCustomersApi(client: ApiClient = apiClient) {
   return {

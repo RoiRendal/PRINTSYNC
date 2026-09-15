@@ -21,6 +21,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@printsync/shared-types": [
+        "../packages/shared-types/src/index.ts"
       ]
     },
     "allowImportingTsExtensions": true,

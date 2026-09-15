@@ -1,15 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Customer } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 
-export interface Customer {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-}
+export type { Customer };
 
 export interface CustomerInput {
   name: string;

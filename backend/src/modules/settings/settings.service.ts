@@ -1,13 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { BusinessSettings } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 
-export interface BusinessSettings {
-  businessName: string;
-  logoUrl: string | null;
-  vatRate: number;
-  currencySymbol: string;
-  updatedAt: string;
-}
+export type { BusinessSettings };
 
 export interface BusinessSettingsInput {
   businessName: string;
