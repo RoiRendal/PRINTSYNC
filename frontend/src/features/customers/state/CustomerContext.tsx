@@ -5,9 +5,13 @@ import type { CreateCustomer, Customer, UpdateCustomer } from '../types';
 
 interface CustomerContextValue {
   customers: Customer[];
+  total: number;
+  page: number;
+  limit: number;
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
+  goToPage: (page: number) => void;
   addCustomer: (customer: CreateCustomer) => Promise<Customer>;
   updateCustomer: (id: string, customer: UpdateCustomer) => Promise<Customer>;
   deleteCustomer: (id: string) => Promise<void>;
@@ -17,6 +21,9 @@ const CustomerContext = createContext<CustomerContextValue | undefined>(undefine
 
 export function CustomerProvider({ children }: { children: ReactNode }) {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -24,10 +31,11 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    void customersApi.list()
-      .then((loaded) => {
+    void customersApi.list({ page, limit })
+      .then((response) => {
         if (mounted) {
-          setCustomers(loaded);
+          setCustomers(response.data);
+          setTotal(response.total);
           setError(null);
         }
       })
@@ -38,7 +46,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         if (mounted) setIsLoading(false);
       });
     return () => { mounted = false; };
-  }, [refreshKey]);
+  }, [refreshKey, page, limit]);
 
   const addCustomer = async (newCustomer: CreateCustomer) => {
     const customer = await customersApi.create(newCustomer);
@@ -60,13 +68,20 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     setError(null);
   };
 
+  const goToPage = (nextPage: number) => setPage(Math.max(1, nextPage));
+  const refresh = () => setRefreshKey((value) => value + 1);
+
   return (
     <CustomerContext.Provider
       value={{
         customers,
+        total,
+        page,
+        limit,
         isLoading,
         error,
-        refresh: () => setRefreshKey((value) => value + 1),
+        refresh,
+        goToPage,
         addCustomer,
         updateCustomer,
         deleteCustomer,

@@ -96,9 +96,9 @@ export default function POS() {
   useEffect(() => {
     let mounted = true;
     void paymentsApi.list()
-      .then((loadedTransactions) => {
+      .then((response) => {
         if (mounted) {
-          setTransactions(loadedTransactions.map(mapPaymentTransaction));
+          setTransactions(response.data.map(mapPaymentTransaction));
           setTransactionError(null);
         }
       })

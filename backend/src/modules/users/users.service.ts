@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export type UserRole = 'admin' | 'staff';
 
@@ -92,11 +94,16 @@ async function toSummary(
   };
 }
 
-export async function listUsers(supabase: SupabaseClient): Promise<UserSummary[]> {
-  const { data: profiles, error } = await supabase
+export async function listUsers(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<UserSummary>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data: profiles, error, count } = await supabase
     .from('profiles')
-    .select('id, name, phone, position, role_id, created_at, roles(name)')
-    .order('created_at', { ascending: true });
+    .select('id, name, phone, position, role_id, created_at, roles(name)', { count: 'exact' })
+    .order('created_at', { ascending: true })
+    .range(start, end);
 
   if (error) throw new AppError(503, 'USERS_LOOKUP_FAILED', 'Users could not be loaded.');
 
@@ -104,13 +111,14 @@ export async function listUsers(supabase: SupabaseClient): Promise<UserSummary[]
   if (authUsersError) throw new AppError(503, 'USERS_LOOKUP_FAILED', 'Users could not be loaded.');
 
   const emails = new Map(authUsers.users.map((user) => [user.id, user.email ?? '']));
-  return Promise.all(profiles.map((profile) => {
+  const items = await Promise.all(profiles.map((profile) => {
     const role = (profile.roles as unknown as { name: UserRole } | null)?.name;
     if (role !== 'admin' && role !== 'staff') {
       throw new AppError(503, 'INVALID_ROLE_CONFIGURATION', 'A user has an invalid role configuration.');
     }
     return toSummary(supabase, profile, emails.get(profile.id) ?? '', role);
   }));
+  return createPaginatedResponse(items, count ?? 0, params.page, params.limit);
 }
 
 export async function createUser(supabase: SupabaseClient, input: UserInput): Promise<UserSummary> {

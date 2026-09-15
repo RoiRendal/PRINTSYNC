@@ -7,6 +7,7 @@ import { createCustomer, deleteCustomer, getCustomer, listCustomers, updateCusto
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const customersRouter = Router();
 
@@ -29,8 +30,8 @@ function getCustomerId(request: { params: Record<string, string | string[] | und
   return id;
 }
 
-customersRouter.get('/', authenticate, requirePermission('customers.read'), async (_request, response) => {
-  sendSuccess(response, await listCustomers(getSupabase()));
+customersRouter.get('/', authenticate, requirePermission('customers.read'), async (request, response) => {
+  sendSuccess(response, await listCustomers(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 customersRouter.get('/:id', authenticate, requirePermission('customers.read'), async (request, response) => {

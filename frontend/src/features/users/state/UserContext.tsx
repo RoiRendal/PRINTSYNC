@@ -34,9 +34,13 @@ interface UpdateUserInput {
 
 interface UserContextValue {
   users: UserRecord[];
+  total: number;
+  page: number;
+  limit: number;
   isUsersLoading: boolean;
   userError: string | null;
   refreshUsers: () => void;
+  goToPage: (page: number) => void;
   createUser: (payload: CreateUserInput) => Promise<UserRecord>;
   updateUser: (id: string, payload: UpdateUserInput) => Promise<UserRecord>;
   deleteUser: (id: string) => Promise<void>;
@@ -53,6 +57,9 @@ const UserContext = createContext<UserContextValue | undefined>(undefined);
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const { currentUser } = useAuth();
   const [users, setUsers] = useState<UserRecord[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [userError, setUserError] = useState<string | null>(null);
   const [usersRefreshKey, setUsersRefreshKey] = useState(0);
@@ -66,13 +73,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     let isMounted = true;
     setIsUsersLoading(true);
-    void usersApi.list()
-      .then((loadedUsers) => {
+    void usersApi.list({ page, limit })
+      .then((response) => {
         if (!isMounted) return;
-        setUsers(loadedUsers.map((user) => ({
+        setUsers(response.data.map((user) => ({
           ...user,
           access: normalizeAccess(user.role, user.access),
         })));
+        setTotal(response.total);
         setUserError(null);
       })
       .catch((error: unknown) => {
@@ -82,7 +90,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         if (isMounted) setIsUsersLoading(false);
       });
     return () => { isMounted = false; };
-  }, [currentUser, usersRefreshKey]);
+  }, [currentUser, usersRefreshKey, page, limit]);
 
   const createUser = async (payload: CreateUserInput) => {
     const createdUser = await usersApi.create({
@@ -120,13 +128,20 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     setUserError(null);
   };
 
+  const goToPage = (nextPage: number) => setPage(Math.max(1, nextPage));
+  const refreshUsers = () => setUsersRefreshKey((value) => value + 1);
+
   return (
     <UserContext.Provider
       value={{
         users,
+        total,
+        page,
+        limit,
         isUsersLoading,
         userError,
-        refreshUsers: () => setUsersRefreshKey((value) => value + 1),
+        refreshUsers,
+        goToPage,
         createUser,
         updateUser,
         deleteUser,

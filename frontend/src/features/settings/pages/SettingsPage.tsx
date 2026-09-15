@@ -128,8 +128,8 @@ export default function Settings() {
   const handleExportOrders = async () => {
     setExportError('');
     try {
-      const orders = await ordersApi.list();
-      const rows = orders.map((o) => ({
+      const orders = await ordersApi.list({ page: 1, limit: 10000 });
+      const rows = orders.data.map((o) => ({
         id: o.id,
         customer: o.customer,
         item: o.item,
@@ -151,8 +151,8 @@ export default function Settings() {
   const handleExportInventory = async () => {
     setExportError('');
     try {
-      const items = await inventoryApi.list();
-      const rows = items.map((i) => ({
+      const items = await inventoryApi.list({ page: 1, limit: 10000 });
+      const rows = items.data.map((i) => ({
         id: i.id,
         name: i.name,
         sku: i.sku,
@@ -172,8 +172,8 @@ export default function Settings() {
   const handleExportTransactions = async () => {
     setExportError('');
     try {
-      const transactions = await paymentsApi.list();
-      const rows = transactions.map((t) => ({
+      const transactions = await paymentsApi.list({ page: 1, limit: 10000 });
+      const rows = transactions.data.map((t) => ({
         id: t.id,
         date: t.date,
         paymentMethod: t.paymentMethod,

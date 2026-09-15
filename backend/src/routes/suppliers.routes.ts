@@ -7,6 +7,7 @@ import { createSupplier, deleteSupplier, getSupplier, listSuppliers, updateSuppl
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const suppliersRouter = Router();
 
@@ -30,8 +31,8 @@ function getSupplierId(request: { params: Record<string, string | string[] | und
   return id;
 }
 
-suppliersRouter.get('/', authenticate, requirePermission('suppliers.read'), async (_request, response) => {
-  sendSuccess(response, await listSuppliers(getSupabase()));
+suppliersRouter.get('/', authenticate, requirePermission('suppliers.read'), async (request, response) => {
+  sendSuccess(response, await listSuppliers(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 suppliersRouter.get('/:id', authenticate, requirePermission('suppliers.read'), async (request, response) => {

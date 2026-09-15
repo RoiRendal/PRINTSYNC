@@ -7,6 +7,7 @@ export type { CardPadding, CardProps, CardVariant } from './Card';
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 export { Modal } from './Modal';
+export { Pagination } from './Pagination';
 export {
   Table,
   TableBody,

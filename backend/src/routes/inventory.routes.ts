@@ -13,6 +13,7 @@ import {
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const inventoryRouter = Router();
 
@@ -44,8 +45,8 @@ function getItemId(request: { params: Record<string, string | string[] | undefin
   return id;
 }
 
-inventoryRouter.get('/', authenticate, requirePermission('inventory.read'), async (_request, response) => {
-  sendSuccess(response, await listInventory(getSupabase()));
+inventoryRouter.get('/', authenticate, requirePermission('inventory.read'), async (request, response) => {
+  sendSuccess(response, await listInventory(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 inventoryRouter.post('/', authenticate, requirePermission('inventory.manage'), async (request, response) => {

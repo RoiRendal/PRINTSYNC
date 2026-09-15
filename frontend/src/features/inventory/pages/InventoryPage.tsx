@@ -9,11 +9,12 @@ import { InventoryStats } from '../components/InventoryStats';
 import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../state/InventoryContext';
+import { Pagination } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 
 export default function Inventory() {
-  const { items, isLoading, error, refresh, addItem, updateItem, deleteItem } = useInventory();
+  const { items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem } = useInventory();
   const [viewMode, setViewMode] = useState<'inventory' | 'designs'>('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -118,6 +119,7 @@ export default function Inventory() {
             onEditItem={(item) => handleOpenModal(item)}
             onDeleteItem={handleDeleteInitiate}
           />
+          <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
         </div>
       ) : (
         <DesignRepository />

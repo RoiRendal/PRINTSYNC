@@ -5,9 +5,13 @@ import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '..
 
 interface InventoryContextValue {
   items: InventoryItem[];
+  total: number;
+  page: number;
+  limit: number;
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
+  goToPage: (page: number) => void;
   addItem: (item: CreateInventoryItem) => Promise<InventoryItem>;
   updateItem: (id: string, item: UpdateInventoryItem) => Promise<InventoryItem>;
   deleteItem: (id: string) => Promise<void>;
@@ -17,6 +21,9 @@ const InventoryContext = createContext<InventoryContextValue | undefined>(undefi
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(20);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -24,10 +31,11 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
     setIsLoading(true);
-    void inventoryApi.list()
-      .then((inventory) => {
+    void inventoryApi.list({ page, limit })
+      .then((response) => {
         if (mounted) {
-          setItems(inventory);
+          setItems(response.data);
+          setTotal(response.total);
           setError(null);
         }
       })
@@ -38,7 +46,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         if (mounted) setIsLoading(false);
       });
     return () => { mounted = false; };
-  }, [refreshKey]);
+  }, [refreshKey, page, limit]);
 
   const addItem = async (newItem: CreateInventoryItem) => {
     const item = await inventoryApi.create(newItem);
@@ -65,8 +73,11 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     setItems((previousItems) => previousItems.filter((item) => item.id !== id));
   };
 
+  const goToPage = (nextPage: number) => setPage(Math.max(1, nextPage));
+  const refresh = () => setRefreshKey((value) => value + 1);
+
   return (
-    <InventoryContext.Provider value={{ items, isLoading, error, refresh: () => setRefreshKey((value) => value + 1), addItem, updateItem, deleteItem }}>
+    <InventoryContext.Provider value={{ items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem }}>
       {children}
     </InventoryContext.Provider>
   );

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export interface Supplier {
   id: string;
@@ -33,10 +35,18 @@ function toSupplier(row: Record<string, unknown>): Supplier {
   };
 }
 
-export async function listSuppliers(supabase: SupabaseClient): Promise<Supplier[]> {
-  const { data, error } = await supabase.from('suppliers').select('*').order('name');
+export async function listSuppliers(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<Supplier>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
+    .from('suppliers')
+    .select('*', { count: 'exact' })
+    .order('name')
+    .range(start, end);
   if (error) throw new AppError(503, 'SUPPLIERS_LOOKUP_FAILED', 'Suppliers could not be loaded.');
-  return data.map((row) => toSupplier(row));
+  return createPaginatedResponse(data.map((row) => toSupplier(row)), count ?? 0, params.page, params.limit);
 }
 
 export async function getSupplier(supabase: SupabaseClient, id: string): Promise<Supplier> {

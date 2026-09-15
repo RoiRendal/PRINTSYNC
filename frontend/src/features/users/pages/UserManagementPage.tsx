@@ -15,6 +15,7 @@ import {
   GlassCard,
   Input,
   Modal,
+  Pagination,
   Select,
   Table,
   TableBody,
@@ -55,7 +56,7 @@ function initials(name: string) {
 }
 
 export default function UserManagement() {
-  const { users, isUsersLoading, userError, refreshUsers, createUser, updateUser, deleteUser } = useUserContext();
+  const { users, total, page, limit, isUsersLoading, userError, refreshUsers, goToPage, createUser, updateUser, deleteUser } = useUserContext();
   const { currentUser, getDefaultAccess } = useAuth();
   const firstAdminId = currentUser?.id ?? '';
   const [search, setSearch] = useState('');
@@ -250,6 +251,9 @@ export default function UserManagement() {
                   </TableBody>
                 </Table>
               </TableContainer>
+              <div className="p-3">
+                <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
+              </div>
             </CardContent>
           </Card>
         </div>

@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
 export type TransactionStatus = 'completed' | 'voided';
@@ -88,10 +90,19 @@ async function mapTransactions(supabase: SupabaseClient, rows: Record<string, un
   }));
 }
 
-export async function listTransactions(supabase: SupabaseClient): Promise<TransactionRecord[]> {
-  const { data, error } = await supabase.from('sales_transactions').select(transactionSelect).order('created_at', { ascending: false });
+export async function listTransactions(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<TransactionRecord>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
+    .from('sales_transactions')
+    .select(transactionSelect, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(start, end);
   if (error) throw new AppError(503, 'TRANSACTIONS_LOOKUP_FAILED', 'Transactions could not be loaded.');
-  return mapTransactions(supabase, data);
+  const transactions = await mapTransactions(supabase, data);
+  return createPaginatedResponse(transactions, count ?? 0, params.page, params.limit);
 }
 
 export async function getTransaction(supabase: SupabaseClient, id: string): Promise<TransactionRecord> {

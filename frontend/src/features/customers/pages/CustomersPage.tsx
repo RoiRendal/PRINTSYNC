@@ -12,6 +12,7 @@ import {
   CardTitle,
   Input,
   Modal,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -43,7 +44,7 @@ function initials(name: string) {
 }
 
 export default function CustomersPage() {
-  const { customers, isLoading, error, refresh, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  const { customers, total, page, limit, isLoading, error, refresh, goToPage, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -222,6 +223,9 @@ export default function CustomersPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
+              <div className="p-3">
+                <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
+              </div>
             </CardContent>
           </Card>
         </div>

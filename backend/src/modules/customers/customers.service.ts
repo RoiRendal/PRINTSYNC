@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Customer } from '@printsync/shared-types';
+import type { Customer, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export type { Customer };
 
@@ -23,10 +24,18 @@ function toCustomer(row: Record<string, unknown>): Customer {
   };
 }
 
-export async function listCustomers(supabase: SupabaseClient): Promise<Customer[]> {
-  const { data, error } = await supabase.from('customers').select('*').order('name');
+export async function listCustomers(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<Customer>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
+    .from('customers')
+    .select('*', { count: 'exact' })
+    .order('name')
+    .range(start, end);
   if (error) throw new AppError(503, 'CUSTOMERS_LOOKUP_FAILED', 'Customers could not be loaded.');
-  return data.map((row) => toCustomer(row));
+  return createPaginatedResponse(data.map((row) => toCustomer(row)), count ?? 0, params.page, params.limit);
 }
 
 export async function getCustomer(supabase: SupabaseClient, id: string): Promise<Customer> {

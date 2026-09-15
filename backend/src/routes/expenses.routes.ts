@@ -7,6 +7,7 @@ import { createExpense, deleteExpense, listExpenses, updateExpense } from '../mo
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const expensesRouter = Router();
 
@@ -29,8 +30,8 @@ function getExpenseId(request: { params: Record<string, string | string[] | unde
   return id;
 }
 
-expensesRouter.get('/', authenticate, requirePermission('expenses.read'), async (_request, response) => {
-  sendSuccess(response, await listExpenses(getSupabase()));
+expensesRouter.get('/', authenticate, requirePermission('expenses.read'), async (request, response) => {
+  sendSuccess(response, await listExpenses(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 expensesRouter.post('/', authenticate, requirePermission('expenses.manage'), async (request, response) => {

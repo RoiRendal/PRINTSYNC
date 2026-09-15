@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export interface InventoryItem {
   id: string;
@@ -42,13 +44,18 @@ function toItem(row: Record<string, unknown>): InventoryItem {
   };
 }
 
-export async function listInventory(supabase: SupabaseClient): Promise<InventoryItem[]> {
-  const { data, error } = await supabase
+export async function listInventory(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<InventoryItem>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
     .from('inventory_items')
-    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
-    .order('name');
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at', { count: 'exact' })
+    .order('name')
+    .range(start, end);
   if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
-  return data.map((row) => toItem(row));
+  return createPaginatedResponse(data.map((row) => toItem(row)), count ?? 0, params.page, params.limit);
 }
 
 export async function createInventoryItem(

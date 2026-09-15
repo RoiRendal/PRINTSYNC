@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export interface Expense {
   id: string;
@@ -30,13 +32,18 @@ function toExpense(row: Record<string, unknown>): Expense {
   };
 }
 
-export async function listExpenses(supabase: SupabaseClient): Promise<Expense[]> {
-  const { data, error } = await supabase
+export async function listExpenses(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<Expense>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
     .from('operating_expenses')
-    .select('*')
-    .order('expense_date', { ascending: false });
+    .select('*', { count: 'exact' })
+    .order('expense_date', { ascending: false })
+    .range(start, end);
   if (error) throw new AppError(503, 'EXPENSES_LOOKUP_FAILED', 'Expenses could not be loaded.');
-  return data.map((row) => toExpense(row));
+  return createPaginatedResponse(data.map((row) => toExpense(row)), count ?? 0, params.page, params.limit);
 }
 
 export async function createExpense(

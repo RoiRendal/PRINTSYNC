@@ -3,7 +3,7 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Button, Input } from '../../../shared/components/ui';
+import { Button, Input, Pagination } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
@@ -24,7 +24,7 @@ const STATUS_FILTERS: Array<{ label: string; value: OrderStatus | 'All' }> = [
 ];
 
 export default function Orders() {
-  const { orders, isLoading, error, refresh, updateOrder, deleteOrder, refreshOrder } = useOrders();
+  const { orders, total, page, limit, isLoading, error, refresh, goToPage, updateOrder, deleteOrder, refreshOrder } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
@@ -143,6 +143,7 @@ export default function Orders() {
         onDeleteOrder={handleDeleteOrder}
         onAdvancePhase={updateOrderStatusByStep}
       />
+      <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} className="mt-4" />
 
       <OrderDetailModal
         order={selectedOrder}

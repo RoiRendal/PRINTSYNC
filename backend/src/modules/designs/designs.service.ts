@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export interface DesignRecord {
   id: string;
@@ -38,10 +40,18 @@ function toRecord(row: Record<string, unknown>): DesignRecord {
   };
 }
 
-export async function listDesigns(supabase: SupabaseClient): Promise<DesignRecord[]> {
-  const { data, error } = await supabase.from('designs').select(designSelect).order('created_at', { ascending: false });
+export async function listDesigns(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<DesignRecord>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
+    .from('designs')
+    .select(designSelect, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(start, end);
   if (error) throw new AppError(503, 'DESIGNS_LOOKUP_FAILED', 'Designs could not be loaded.');
-  return data.map((row) => toRecord(row));
+  return createPaginatedResponse(data.map((row) => toRecord(row)), count ?? 0, params.page, params.limit);
 }
 
 export async function createDesign(

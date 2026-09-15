@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
 export type OrderStatus = 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Delivered';
 
@@ -121,10 +123,19 @@ async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>
   return rows.map((row) => toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0));
 }
 
-export async function listOrders(supabase: SupabaseClient): Promise<OrderRecord[]> {
-  const { data, error } = await supabase.from('orders').select(orderSelect).order('created_at', { ascending: false });
+export async function listOrders(
+  supabase: SupabaseClient,
+  params: PaginationParams,
+): Promise<PaginatedResponse<OrderRecord>> {
+  const { start, end } = calculateRange(params.page, params.limit);
+  const { data, error, count } = await supabase
+    .from('orders')
+    .select(orderSelect, { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(start, end);
   if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');
-  return mapOrders(supabase, data);
+  const orders = await mapOrders(supabase, data);
+  return createPaginatedResponse(orders, count ?? 0, params.page, params.limit);
 }
 
 export async function getOrder(supabase: SupabaseClient, id: string): Promise<OrderRecord> {
