@@ -25,6 +25,8 @@ const orderSchema = z.object({
   status: z.enum(statuses).default('Pending'),
   notes: z.string().trim().default(''),
   isCustom: z.boolean().default(false),
+  customerId: z.string().uuid().optional(),
+  dueDate: z.string().date().optional(),
 });
 const updateSchema = orderSchema.partial();
 

@@ -9,6 +9,7 @@ export interface InventoryItem {
   stock: number;
   reorderLevel: number;
   price: number;
+  costPrice: number;
   imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -21,6 +22,7 @@ export interface InventoryInput {
   stock?: number | undefined;
   reorderLevel: number;
   price: number;
+  costPrice?: number | undefined;
   imageUrl?: string | null | undefined;
 }
 
@@ -33,6 +35,7 @@ function toItem(row: Record<string, unknown>): InventoryItem {
     stock: Number(row.stock),
     reorderLevel: Number(row.reorder_level),
     price: Number(row.price),
+    costPrice: Number(row.cost_price ?? 0),
     imageUrl: row.image_url ? String(row.image_url) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -42,7 +45,7 @@ function toItem(row: Record<string, unknown>): InventoryItem {
 export async function listInventory(supabase: SupabaseClient): Promise<InventoryItem[]> {
   const { data, error } = await supabase
     .from('inventory_items')
-    .select('id, sku, name, category, stock, reorder_level, price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
     .order('name');
   if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
   return data.map((row) => toItem(row));
@@ -61,9 +64,10 @@ export async function createInventoryItem(
       stock: input.stock ?? 0,
       reorder_level: input.reorderLevel,
       price: input.price,
+      cost_price: input.costPrice ?? 0,
       image_url: input.imageUrl ?? null,
     })
-    .select('id, sku, name, category, stock, reorder_level, price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
     .single();
   if (error || !data) throw new AppError(400, 'INVENTORY_CREATE_FAILED', 'The inventory item could not be created.');
   return toItem(data);
@@ -82,10 +86,11 @@ export async function updateInventoryItem(
       category: input.category,
       reorder_level: input.reorderLevel,
       price: input.price,
+      cost_price: input.costPrice ?? 0,
       image_url: input.imageUrl ?? null,
     })
     .eq('id', id)
-    .select('id, sku, name, category, stock, reorder_level, price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
     .single();
   if (error || !data) throw new AppError(404, 'INVENTORY_NOT_FOUND', 'The inventory item was not found.');
   return toItem(data);

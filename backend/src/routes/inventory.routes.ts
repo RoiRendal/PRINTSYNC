@@ -23,6 +23,7 @@ const itemSchema = z.object({
   stock: z.number().int().min(0).optional(),
   reorderLevel: z.number().int().min(0),
   price: z.number().min(0),
+  costPrice: z.number().min(0).optional(),
   imageUrl: z.string().trim().nullable().optional(),
 });
 

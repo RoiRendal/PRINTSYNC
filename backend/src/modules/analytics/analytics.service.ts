@@ -76,6 +76,7 @@ interface TransactionItemRow {
   name: string;
   quantity: number;
   unit_price: number;
+  inventory_item_id: string | null;
   transaction: { total: number; created_at: string } | null;
 }
 
@@ -94,6 +95,7 @@ interface InventoryItemRow {
   stock: number;
   reorder_level: number;
   price: number;
+  cost_price: number;
 }
 
 function toDateKey(value: string): string {
@@ -269,7 +271,7 @@ export async function getSalesTimeline(
   bucket: AnalyticsBucket,
 ): Promise<SalesTimeline> {
   const normalizedRange = normalizeRange(range);
-  const [transactionsResult, itemsResult] = await Promise.all([
+  const [transactionsResult, itemsResult, inventoryResult] = await Promise.all([
     supabase
       .from('sales_transactions')
       .select('total, created_at')
@@ -279,18 +281,20 @@ export async function getSalesTimeline(
       .order('created_at', { ascending: true }),
     supabase
       .from('sales_transaction_items')
-      .select('name, quantity, unit_price, transaction:sales_transactions!inner(total, created_at)')
+      .select('name, quantity, unit_price, inventory_item_id, transaction:sales_transactions!inner(total, created_at)')
       .eq('transaction.status', 'completed')
       .gte('transaction.created_at', normalizedRange.from)
       .lte('transaction.created_at', normalizedRange.to),
+    supabase.from('inventory_items').select('id, cost_price'),
   ]);
 
-  if (transactionsResult.error || itemsResult.error) {
+  if (transactionsResult.error || itemsResult.error || inventoryResult.error) {
     throw new AppError(503, 'ANALYTICS_LOOKUP_FAILED', 'Sales timeline could not be generated.');
   }
 
   const transactions = transactionsResult.data as TransactionRow[];
   const items = itemsResult.data as unknown as TransactionItemRow[];
+  const costMap = new Map((inventoryResult.data as Array<{ id: string; cost_price: number }>).map((i) => [i.id, Number(i.cost_price)]));
 
   const revenueByBucket = new Map<string, { revenue: number; transactionCount: number; firstDate: Date }>();
   for (const txn of transactions) {
@@ -308,7 +312,8 @@ export async function getSalesTimeline(
     if (!item.transaction) continue;
     const date = new Date(item.transaction.created_at);
     const key = bucketKey(date, bucket);
-    cogsByBucket.set(key, (cogsByBucket.get(key) ?? 0) + Number(item.quantity) * Number(item.unit_price));
+    const costPrice = item.inventory_item_id ? (costMap.get(item.inventory_item_id) ?? 0) : 0;
+    cogsByBucket.set(key, (cogsByBucket.get(key) ?? 0) + Number(item.quantity) * costPrice);
   }
 
   const sortedKeys = [...revenueByBucket.keys()].sort((a, b) => {
@@ -423,7 +428,7 @@ export async function getInventoryForecast(
       .lte('transaction.created_at', normalizedRange.to),
     supabase
       .from('inventory_items')
-      .select('id, name, sku, stock, reorder_level, price'),
+      .select('id, name, sku, stock, reorder_level, price, cost_price'),
   ]);
 
   if (itemsResult.error || inventoryResult.error) {
@@ -459,6 +464,7 @@ export async function getInventoryForecast(
     const currentStock = Number(inv.stock);
     const reorderLevel = Number(inv.reorder_level);
     const unitPrice = Number(inv.price);
+    const costPrice = Number(inv.cost_price ?? 0);
 
     const recommendedReorder = Math.max(0, reorderLevel + forecastDemand - currentStock);
 
@@ -470,7 +476,7 @@ export async function getInventoryForecast(
     }
 
     projectedRevenue += forecastDemand * unitPrice;
-    projectedCogs += demand ? forecastDemand * demand.unitPrice : 0;
+    projectedCogs += forecastDemand * costPrice;
 
     return {
       name: inv.name,

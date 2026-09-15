@@ -4,18 +4,24 @@ import { AppError } from '../../shared/errors.js';
 export interface BusinessSettings {
   businessName: string;
   logoUrl: string | null;
+  vatRate: number;
+  currencySymbol: string;
   updatedAt: string;
 }
 
 export interface BusinessSettingsInput {
   businessName: string;
   logoUrl?: string | null | undefined;
+  vatRate?: number | undefined;
+  currencySymbol?: string | undefined;
 }
 
 function toSettings(row: Record<string, unknown>): BusinessSettings {
   return {
     businessName: String(row.business_name),
     logoUrl: row.logo_url ? String(row.logo_url) : null,
+    vatRate: Number(row.vat_rate ?? 12),
+    currencySymbol: String(row.currency_symbol ?? '₱'),
     updatedAt: String(row.updated_at),
   };
 }
@@ -40,10 +46,12 @@ export async function updateBusinessSettings(
     .update({
       business_name: input.businessName,
       logo_url: input.logoUrl ?? null,
+      vat_rate: input.vatRate,
+      currency_symbol: input.currencySymbol,
       updated_by: actorId,
     })
     .eq('id', 1)
-    .select('business_name, logo_url, updated_at')
+    .select('business_name, logo_url, vat_rate, currency_symbol, updated_at')
     .single();
   if (error || !data) throw new AppError(400, 'SETTINGS_UPDATE_FAILED', 'Business settings could not be updated.');
   return toSettings(data);
