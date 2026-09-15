@@ -13,6 +13,8 @@ export const settingsRouter = Router();
 const settingsSchema = z.object({
   businessName: z.string().trim().min(1).max(160),
   logoUrl: z.string().trim().max(1_200_000).refine((value) => value.startsWith('data:image/') || value.startsWith('http://') || value.startsWith('https://'), 'The logo must be an image URL or data URL.').nullable().optional(),
+  vatRate: z.number().min(0).max(100).optional(),
+  currencySymbol: z.string().trim().min(1).max(10).optional(),
 });
 
 function getSupabase() {

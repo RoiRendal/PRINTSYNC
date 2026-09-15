@@ -2,7 +2,7 @@ import { ApiError } from './errors';
 
 export interface ApiClient {
   request<TResponse>(path: string, options?: RequestInit): Promise<TResponse>;
-  get<TResponse>(path: string): Promise<TResponse>;
+  get<TResponse>(path: string, query?: Record<string, string | number | undefined>): Promise<TResponse>;
   post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
   patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
   delete<TResponse = void>(path: string): Promise<TResponse>;
@@ -28,6 +28,15 @@ async function parseResponse(response: Response): Promise<unknown> {
     return response.json();
   }
   return response.text();
+}
+
+function buildQueryString(query: Record<string, string | number | undefined>): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) params.append(key, String(value));
+  }
+  const string = params.toString();
+  return string ? `?${string}` : '';
 }
 
 async function request<TResponse>(path: string, options: RequestInit = {}, allowRefresh = true): Promise<TResponse> {
@@ -70,7 +79,8 @@ async function request<TResponse>(path: string, options: RequestInit = {}, allow
 
 export const apiClient: ApiClient = {
   request,
-  get: <TResponse>(path: string) => request<TResponse>(path),
+  get: <TResponse>(path: string, query?: Record<string, string | number | undefined>) =>
+    request<TResponse>(path + (query ? buildQueryString(query) : '')),
   post: <TResponse, TBody>(path: string, body: TBody) =>
     request<TResponse>(path, { method: 'POST', body: JSON.stringify(body) }),
   patch: <TResponse, TBody>(path: string, body: TBody) =>

@@ -1,65 +1,32 @@
-import React, { useState, useMemo } from 'react';
-import { Search, Plus, Trash2, Edit2, AlertTriangle, Package, Box, Image as ImageIcon } from 'lucide-react';
-import type { CreateInventoryItem, InventoryItem } from '../types';
-import { Modal } from '../../../shared/components/ui/Modal';
-import { Tooltip } from '../../../shared/components/ui/Tooltip';
-import { EmptyState } from '../../../shared/components/feedback/EmptyState';
+import { useState } from 'react';
+import { AlertTriangle, Box, Image as ImageIcon } from 'lucide-react';
+import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { cn } from '../../../shared/lib/cn';
+import { DeleteConfirmModal, InventoryFormModal } from '../components/InventoryFormModal';
+import { InventoryStats } from '../components/InventoryStats';
+import { InventoryTable } from '../components/InventoryTable';
+import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../state/InventoryContext';
-import { DesignRepository } from '../../designs/components/DesignRepository';
+import { Pagination } from '../../../shared/components/ui';
+import { ApiError } from '../../../shared/api/errors';
+import type { CreateInventoryItem, InventoryItem } from '../types';
 
 export default function Inventory() {
-  const { items, isLoading, error, refresh, addItem, updateItem, deleteItem } = useInventory();
+  const { items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem } = useInventory();
   const [viewMode, setViewMode] = useState<'inventory' | 'designs'>('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState<CreateInventoryItem>({
-    name: '',
-    category: '',
-    stock: 0,
-    reorderLevel: 10,
-    price: 0,
-    imageUrl: '',
-  });
-
-  const filteredItems = useMemo(() => {
-    return items.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [items, searchTerm]);
+  const { filteredItems, categories, inventoryStats } = useFilteredInventory(items, searchTerm);
 
   const handleOpenModal = (item?: InventoryItem) => {
-    if (item) {
-      setEditingItem(item);
-      setFormData({
-        name: item.name,
-        category: item.category,
-        stock: item.stock,
-        reorderLevel: item.reorderLevel,
-        price: item.price,
-        imageUrl: item.imageUrl || '',
-      });
-    } else {
-      setEditingItem(null);
-      setFormData({
-        name: '',
-        category: '',
-        stock: 0,
-        reorderLevel: 10,
-        price: 0,
-        imageUrl: '',
-      });
-    }
+    setEditingItem(item ?? null);
     setIsModalOpen(true);
   };
 
@@ -68,14 +35,18 @@ export default function Inventory() {
     setEditingItem(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (editingItem) {
-      updateItem(editingItem.id, formData);
-    } else {
-      addItem(formData);
+  const handleSubmit = async (formData: CreateInventoryItem) => {
+    setMutationError(null);
+    try {
+      if (editingItem) {
+        await updateItem(editingItem.id, formData);
+      } else {
+        await addItem(formData);
+      }
+      handleCloseModal();
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The inventory item could not be saved.');
     }
-    handleCloseModal();
   };
 
   const handleDeleteInitiate = (item: InventoryItem) => {
@@ -83,22 +54,16 @@ export default function Inventory() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({ ...prev, imageUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteItem(itemToDelete.id);
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    setMutationError(null);
+    try {
+      await deleteItem(itemToDelete.id);
       setIsDeleteModalOpen(false);
       setItemToDelete(null);
+    } catch (error: unknown) {
+      setMutationError(error instanceof ApiError ? error.message : 'The inventory item could not be deleted.');
+      setIsDeleteModalOpen(false);
     }
   };
 
@@ -106,345 +71,75 @@ export default function Inventory() {
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {mutationError && (
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-3 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{mutationError}</span>
+          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
+        </div>
+      )}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
-          <p className="text-xs text-gray-500 dark:text-zinc-500 mt-1 uppercase tracking-wider font-medium">
-            {viewMode === 'inventory' ? 'Manage your raw materials and stock levels' : 'Digital asset library for custom apparel designs'}
+
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Inventory Management</h1>
+          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+            {viewMode === 'inventory' ? 'Manage raw materials, reorder thresholds, and stock valuation.' : 'Digital asset library for custom apparel designs.'}
           </p>
         </div>
 
-        <div className="inline-flex p-1 bg-gray-100 dark:bg-zinc-800 rounded-lg self-start">
+        <div className="flex items-center rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8">
           <button
+            type="button"
             onClick={() => setViewMode('inventory')}
-            className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-              viewMode === 'inventory' 
-              ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
-            }`}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'inventory' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
           >
-            <Box className="w-3.5 h-3.5" /> Stock List
+            <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
+            type="button"
             onClick={() => setViewMode('designs')}
-            className={`flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${
-              viewMode === 'designs' 
-              ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-700 dark:text-zinc-200' 
-              : 'text-gray-500 hover:text-gray-700 dark:text-zinc-500 dark:hover:text-zinc-300'
-            }`}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'designs' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
           >
-            <ImageIcon className="w-3.5 h-3.5" /> Design Repo
+            <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>
         </div>
       </div>
 
-      <div className="view-container">
-        {viewMode === 'inventory' ? (
-          <div key="inventory-view" className="space-y-4">
-            <div className="flex gap-3 items-center bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
-                <input 
-                  type="text" 
-                  placeholder="Search SKU, material or category..."
-                  className="w-full pl-9 pr-4 py-2 border border-gray-100 bg-gray-50 text-xs focus:outline-none focus:border-zinc-400 rounded transition-colors dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-                <button
-                  onClick={() => handleOpenModal()}
-                  className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider rounded hover:bg-zinc-800 shadow-sm ml-0 md:ml-2"
-                  id="add-stock-btn"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Stock
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white border border-gray-200 rounded shadow-sm overflow-hidden dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs xl:text-sm">
-            <thead>
-              <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">SKU</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider">Material Description</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-center">Category</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Stock</th>
-                <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[10px] tracking-wider text-right">Price</th>
-                <th className="py-2.5 px-4 md:px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                {filteredItems.map((item) => {
-                  const isLowStock = item.stock <= item.reorderLevel;
-                  return (
-                    <tr 
-                      key={item.id}
-                      className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group"
-                    >
-                      <td className="py-2.5 px-4 md:px-6 font-mono text-gray-400 dark:text-zinc-500">{item.sku}</td>
-                      <td className="py-2.5 px-4 md:px-6 font-semibold text-gray-800 dark:text-zinc-200">{item.name}</td>
-                      <td className="py-2.5 px-4 md:px-6 text-gray-500 dark:text-zinc-400 text-center">
-                        <span className="px-2 py-0.5 bg-gray-100 dark:bg-zinc-800 rounded text-[10px]">
-                          {item.category}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4 md:px-6 font-mono font-medium dark:text-zinc-300 text-right">
-                        <span className={isLowStock ? 'text-red-500' : ''}>
-                          {item.stock}
-                        </span>
-                        <span className="text-[9px] text-gray-400 ml-1">PCS</span>
-                      </td>
-                      <td className="py-2.5 px-4 md:px-6 font-mono dark:text-zinc-300 text-right">₱{item.price.toFixed(2)}</td>
-                      <td className="py-2.5 px-4 md:px-6 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Tooltip content="Edit Item">
-                            <button 
-                              type="button"
-                              onClick={() => handleOpenModal(item)}
-                              className="p-1 px-2 hover:bg-zinc-100 text-zinc-900 hover:text-zinc-800 rounded dark:hover:bg-zinc-800/40 dark:text-zinc-200 dark:hover:text-white"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                          <Tooltip content="Delete Item">
-                            <button 
-                              type="button"
-                              onClick={() => handleDeleteInitiate(item)}
-                              className="p-1 px-2 hover:bg-red-50 text-red-500 hover:text-red-600 rounded dark:hover:bg-red-900/20 dark:text-red-400"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </Tooltip>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              {filteredItems.length === 0 && (
-                <tr>
-                   <td colSpan={6} className="py-20 text-center">
-                    <EmptyState title="No stock items found" icon={<Package className="w-8 h-8 opacity-20" aria-hidden="true" />} />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center p-3 text-[10px] text-gray-500 uppercase tracking-widest font-medium dark:text-zinc-500">
-        <span>Displaying {filteredItems.length} of {items.length} items</span>
-        <div className="flex gap-4">
-           <span className="font-bold opacity-30 tracking-normal italic">PRINTSYNC CLOUD SECURE SYNCED</span>
-        </div>
-      </div>
-    </div>
-  ) : (
-    <div key="designs-view">
-      <DesignRepository />
-    </div>
-  )}
-</div>
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={handleCloseModal} 
-        title={editingItem ? 'Edit Stock Item' : 'Add New Stock'}
-        maxWidth="max-w-3xl"
-        disableAnimation
-      >
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-          <div className="grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-6 md:gap-8 items-start">
-            <div className="space-y-3 md:sticky md:top-0">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                Item Image
-              </label>
-              <div className="relative w-full max-w-md mx-auto md:mx-0 aspect-square max-h-[min(42vh,380px)] rounded border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-950 overflow-hidden flex items-center justify-center">
-                {formData.imageUrl ? (
-                  <img
-                    src={formData.imageUrl}
-                    alt={formData.name || 'Item preview'}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-300 dark:text-zinc-600 p-6 text-center">
-                    <ImageIcon className="w-14 h-14 opacity-40" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                className="w-full text-xs text-gray-600 file:mr-3 file:px-3 file:py-2 file:border-0 file:bg-zinc-900 file:text-white file:text-[10px] file:font-bold file:uppercase file:tracking-wider hover:file:bg-zinc-800 dark:text-zinc-300 dark:file:bg-zinc-700 dark:hover:file:bg-zinc-600"
-                onChange={handleImageUpload}
-              />
-              {formData.imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, imageUrl: '' })}
-                  className="w-full px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/40 rounded"
-                >
-                  Remove Image
-                </button>
-              )}
-              {editingItem && (
-                <div className="pt-1 space-y-1 text-[10px] text-gray-500 dark:text-zinc-500">
-                  <p>
-                    <span className="font-bold uppercase tracking-wider text-gray-400 dark:text-zinc-400">SKU</span>{' '}
-                    <span className="font-mono text-gray-800 dark:text-zinc-300">{editingItem.sku}</span>
-                  </p>
-                  <p className="text-[9px] leading-relaxed">
-                    Use this dialog to review full item details or update fields. Changes apply when you save.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4 min-w-0">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Material Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  placeholder="e.g. Premium Cotton T-shirt (Black)"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Category
-                </label>
-                <select
-                  required
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
-                  <option value="">Select Category</option>
-                  {[...new Set([
-                    'Apparel',
-                    'Outerwear',
-                    'Accessories',
-                    'Consumables',
-                    'Supplies',
-                    'Equipment',
-                    'Packaging',
-                    ...items.map((item) => item.category),
-                  ])]
-                    .filter(Boolean)
-                    .sort()
-                    .map((category) => (
-                      <option key={category} value={category}>{category}</option>
-                    ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                    Current Stock
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                    value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                    Reorder Level
-                  </label>
-                  <input
-                    required
-                    type="number"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                    value={formData.reorderLevel}
-                    onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-zinc-400">
-                  Unit Price (₱)
-                </label>
-                <input
-                  required
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:border-zinc-400 transition-colors dark:text-zinc-200"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-2 border-t border-gray-100 dark:border-zinc-800">
-            <button
-              type="button"
-              onClick={handleCloseModal}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-4 py-2 bg-zinc-900 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-zinc-800 shadow-sm transition-colors"
-            >
-              {editingItem ? 'Save Changes' : 'Create Item'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirm Deletion"
-        maxWidth="max-w-sm"
-        disableAnimation
-      >
+      {viewMode === 'inventory' ? (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg">
-            <AlertTriangle className="w-6 h-6 flex-shrink-0" />
-            <p className="text-xs font-medium">
-              Are you sure you want to delete <span className="font-bold">{itemToDelete?.name}</span>? This action cannot be undone.
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={confirmDelete}
-              className="flex-1 px-4 py-2.5 bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-red-700 rounded shadow-sm transition-colors"
-            >
-              Confirm Delete
-            </button>
-          </div>
+          <InventoryStats stats={inventoryStats} />
+
+          <InventoryTable
+            items={filteredItems}
+            totalCount={items.length}
+            searchTerm={searchTerm}
+            onSearchTermChange={setSearchTerm}
+            onAddItem={() => handleOpenModal()}
+            onEditItem={(item) => handleOpenModal(item)}
+            onDeleteItem={handleDeleteInitiate}
+          />
+          <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
         </div>
-      </Modal>
+      ) : (
+        <DesignRepository />
+      )}
+
+      <InventoryFormModal
+        isOpen={isModalOpen}
+        editingItem={editingItem}
+        categories={categories}
+        mutationError={mutationError}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmit}
+      />
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        item={itemToDelete}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
-

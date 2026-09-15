@@ -1,5 +1,6 @@
 import { Inbox } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '../../lib/cn';
 
 interface EmptyStateProps {
   title: string;
@@ -12,16 +13,20 @@ interface EmptyStateProps {
 export function EmptyState({
   title,
   message,
-  icon = <Inbox className="h-8 w-8 opacity-20" aria-hidden="true" />,
+  icon = <Inbox className="h-7 w-7" aria-hidden="true" />,
   action,
   className = '',
 }: EmptyStateProps) {
   return (
-    <div className={`flex flex-col items-center justify-center gap-2 text-gray-400 ${className}`}>
-      {icon}
-      <p className="text-[10px] font-bold uppercase tracking-widest">{title}</p>
-      {message && <p className="text-xs text-gray-500 dark:text-zinc-500">{message}</p>}
-      {action}
+    <div className={cn('flex flex-col items-center justify-center gap-3 text-center text-macos-text-muted dark:text-zinc-500', className)}>
+      <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-white/55 bg-white/62 text-macos-blue shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8 dark:text-macos-cyan">
+        {icon}
+      </div>
+      <div className="space-y-1">
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-macos-text dark:text-zinc-100">{title}</p>
+        {message && <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{message}</p>}
+      </div>
+      {action && <div className="pt-1">{action}</div>}
     </div>
   );
 }

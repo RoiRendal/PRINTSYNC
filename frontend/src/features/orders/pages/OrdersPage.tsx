@@ -1,88 +1,43 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ClipboardList, Search, ArrowRight, Printer, CheckCircle2, Eye, MessageSquare, Image as ImageIcon, ChevronLeft, ChevronRight, Edit3, Trash2 } from 'lucide-react';
-import { useInventory } from '../../inventory/state/InventoryContext';
-import { useDesigns } from '../../designs/state/DesignContext';
-import { useOrders } from '../state/OrderContext';
-import { Modal } from '../../../shared/components/ui/Modal';
+import { useState } from 'react';
+import { ArrowRight, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import type { Order, OrderLineItem } from '../types';
-import { useNavigate } from 'react-router-dom';
-import { isCustomOrder } from '../utils/orderType';
+import { Button, Input, Pagination } from '../../../shared/components/ui';
+import { cn } from '../../../shared/lib/cn';
+import { OrderDetailModal } from '../components/orders/OrderDetailModal';
+import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
+import { OrdersTable } from '../components/orders/OrdersTable';
+import { useOrderFilters } from '../hooks/useOrderFilters';
+import { useOrders } from '../state/OrderContext';
+import type { Order, OrderStatus } from '../types';
+import { workPhases } from '../components/orders/PhaseProgress';
 
-const statusColors: any = {
-  'In Production': 'text-zinc-800 bg-zinc-100 border-zinc-200 dark:bg-zinc-800/50 dark:text-zinc-300 dark:border-zinc-700',
-  'Pending': 'text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900/40',
-  'Ready for Pickup': 'text-green-700 bg-green-50 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-900/40',
-  'Designing': 'text-purple-700 bg-purple-50 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-900/40',
-  'Completed': 'text-zinc-700 bg-zinc-100 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
-  'Delivered': 'text-indigo-700 bg-indigo-50 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-900/40',
-};
-
-const workPhases: Order['status'][] = [
-  'Pending',
-  'In Production',
-  'Designing',
-  'Ready for Pickup',
-  'Delivered',
-  'Completed',
+const STATUS_FILTERS: Array<{ label: string; value: OrderStatus | 'All' }> = [
+  { label: 'All', value: 'All' },
+  { label: 'Pending', value: 'Pending' },
+  { label: 'Designing', value: 'Designing' },
+  { label: 'In Production', value: 'In Production' },
+  { label: 'Ready', value: 'Ready for Pickup' },
+  { label: 'Completed', value: 'Completed' },
+  { label: 'Delivered', value: 'Delivered' },
 ];
 
 export default function Orders() {
-  const { items: inventoryItems } = useInventory();
-  const { designs } = useDesigns();
-  const { orders, isLoading, error, refresh, updateOrder, deleteOrder } = useOrders();
+  const { orders, total, page, limit, isLoading, error, refresh, goToPage, updateOrder, deleteOrder, refreshOrder } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [selectedLineItemIndex, setSelectedLineItemIndex] = useState(0);
 
-  const filteredOrders = orders.filter(order => 
-    order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.item.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const getDesign = (id?: string) => designs.find(d => d.id === id);
-  const getOrderLineItems = (order: Order): OrderLineItem[] => {
-    if (order.lineItems && order.lineItems.length > 0) return order.lineItems;
-    return order.item
-      .split(',')
-      .map(name => name.trim())
-      .filter(Boolean)
-      .map(name => ({
-        name,
-        quantity: order.quantity,
-        designId: order.designId
-      }));
-  };
-
-  const selectedOrderLineItems = useMemo(() => {
-    if (!selectedOrder) return [];
-    return getOrderLineItems(selectedOrder);
-  }, [selectedOrder]);
-
-  const activeLineItem = selectedOrderLineItems[selectedLineItemIndex];
-  const activeLineItemDesign = getDesign(activeLineItem?.designId || selectedOrder?.designId);
-  const activeLineInventoryItem = activeLineItem
-    ? (activeLineItem.itemId
-        ? inventoryItems.find((i) => i.id === activeLineItem.itemId)
-        : inventoryItems.find((i) => i.name.toLowerCase() === activeLineItem.name.toLowerCase()))
-    : undefined;
-  const selectedOrderIsCustom = selectedOrder ? isCustomOrder(selectedOrder) : false;
-
-  useEffect(() => {
-    if (!selectedOrder) {
-      setSelectedLineItemIndex(0);
-      return;
-    }
-    setSelectedLineItemIndex(0);
-  }, [selectedOrder]);
-
-  useEffect(() => {
-    if (selectedLineItemIndex < selectedOrderLineItems.length) return;
-    setSelectedLineItemIndex(0);
-  }, [selectedLineItemIndex, selectedOrderLineItems.length]);
+  const filteredOrders = useOrderFilters(orders, {
+    searchTerm,
+    statusFilter,
+    dateFrom,
+    dateTo,
+  });
 
   const updateOrderStatusByStep = async (order: Order, direction: -1 | 1) => {
     const currentIndex = workPhases.indexOf(order.status);
@@ -92,10 +47,11 @@ export default function Orders() {
     const nextStatus = workPhases[nextIndex];
     if (!nextStatus) return;
     try {
-      const updated = await updateOrder(order.id, { status: nextStatus });
-      if (selectedOrder?.id === order.id) setSelectedOrder(updated);
-    } catch {
-      return;
+      await updateOrder(order.id, { status: nextStatus });
+      const refreshed = await refreshOrder(order.id);
+      if (selectedOrder?.id === order.id) setSelectedOrder(refreshed);
+    } catch (updateError) {
+      console.error('Unable to update order status:', updateError);
     }
   };
 
@@ -104,377 +60,97 @@ export default function Orders() {
     try {
       await deleteOrder(order.id);
       if (selectedOrder?.id === order.id) setSelectedOrder(null);
-    } catch {
-      return;
+    } catch (deleteError) {
+      console.error('Unable to delete order:', deleteError);
     }
   };
 
   const handleEditOrder = (order: Order) => {
-    navigate('/pos', {
-      state: {
-        editOrderId: order.id,
-      },
-    });
+    navigate('/pos', { state: { editOrderId: order.id } });
   };
 
   if (isLoading) return <LoadingState label="Loading orders" className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 xl:gap-4">
-         {[
-           { label: 'Designing', icon: Eye, count: orders.filter(o => o.status === 'Designing').length, color: 'text-purple-500' },
-           { label: 'In Production', icon: Printer, count: orders.filter(o => o.status === 'In Production').length, color: 'text-zinc-700' },
-           { label: 'Ready', icon: CheckCircle2, count: orders.filter(o => o.status === 'Ready for Pickup').length, color: 'text-green-500' },
-           { label: 'Total Active', icon: ClipboardList, count: orders.filter(o => o.status !== 'Completed').length, color: 'text-amber-500' },
-         ].map((card) => (
-           <div key={card.label} className="bg-white p-3 md:p-4 border border-gray-200 rounded shadow-sm flex items-center justify-between group hover:border-zinc-500 transition-all cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:border-zinc-500">
-              <div className="flex items-center gap-3">
-                 <div className={`p-1.5 md:p-2 bg-gray-50 rounded group-hover:bg-zinc-100 transition-colors dark:bg-zinc-800 dark:group-hover:bg-zinc-800/50 ${card.color}`}>
-                    <card.icon className="w-4 h-4 md:w-5 md:h-5" />
-                 </div>
-                 <span className="text-[10px] md:text-[11px] font-bold uppercase tracking-tight text-gray-600 dark:text-zinc-500">{card.label}</span>
-              </div>
-              <span className="text-lg md:text-xl font-mono font-bold italic text-gray-900 dark:text-zinc-100">{card.count}</span>
-           </div>
-         ))}
+    <div className="space-y-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Orders</h1>
+          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+            Track active jobs, phase movement, customer artwork, and production-ready details.
+          </p>
+        </div>
+        <Button onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
+          New POS Order
+        </Button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded shadow-sm relative overflow-hidden dark:bg-zinc-900 dark:border-zinc-800">
-         <div className="p-3 md:p-4 border-b border-gray-100 flex gap-3 bg-gray-50/50 items-center dark:bg-zinc-900/50 dark:border-zinc-800">
-            <div className="relative flex-1">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" />
-               <input 
-                  type="text" 
-                  placeholder="Filter active orders / client data..." 
-                  className="w-full pl-9 pr-4 py-1.5 md:py-2 bg-white border border-gray-200 rounded text-xs focus:outline-none focus:border-zinc-400 shadow-inner dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-200 lg:text-[13px]"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-               />
-            </div>
+      <OrderSummaryCards orders={orders} />
 
-         </div>
-
-         <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs xl:text-sm">
-              <thead>
-                 <tr className="bg-gray-50 text-gray-500 border-b border-gray-200 dark:bg-zinc-900/50 dark:text-zinc-400 dark:border-zinc-800">
-                    <th className="py-2.5 px-5 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Order ID</th>
-                    <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Project / Client</th>
-                    <th className="py-2.5 px-5 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em]">Type</th>
-                    <th className="py-2.5 px-6 md:px-8 font-bold uppercase text-[9px] tracking-[0.2em]">Work Phase</th>
-                    <th className="py-2.5 px-4 md:px-6 font-bold uppercase text-[9px] tracking-[0.2em] text-right">Value</th>
-                    <th className="py-2.5 px-6"></th>
-                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-                 {filteredOrders.map((order) => (
-                   <tr key={order.id} className="hover:bg-zinc-100/20 dark:hover:bg-zinc-800/30 transition-colors group cursor-pointer" onClick={() => setSelectedOrder(order)}>
-                      <td className="py-2.5 px-5 md:px-6 font-mono text-zinc-900 dark:text-zinc-200">#{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}</td>
-                      <td className="py-2.5 px-5 md:px-6">
-                         <div>
-                            <h3 className="font-bold text-gray-800 dark:text-zinc-200 md:text-sm">{order.customer}</h3>
-                            <p className="text-[10px] md:text-[11px] text-gray-400 mt-0.5 dark:text-zinc-500">{order.item} × {order.quantity} units</p>
-                         </div>
-                      </td>
-                      <td className="py-2.5 px-5 md:px-6">
-                        <span
-                          className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tight border ${
-                            isCustomOrder(order)
-                              ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-900/25 dark:text-purple-200 dark:border-purple-900/50'
-                              : 'bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800/80 dark:text-zinc-300 dark:border-zinc-700'
-                          }`}
-                        >
-                          {isCustomOrder(order) ? 'Custom' : 'Retail'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-5 md:px-6">
-                         <div className="flex items-center gap-2 max-w-[270px]">
-                           <button
-                             type="button"
-                             onClick={(event) => {
-                               event.stopPropagation();
-                               updateOrderStatusByStep(order, -1);
-                             }}
-                             disabled={workPhases.indexOf(order.status) === 0}
-                             className="p-1 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
-                             title="Back step"
-                           >
-                             <ChevronLeft className="w-3 h-3" />
-                           </button>
-                           <div className="flex-1">
-                             <div className="flex gap-1 mb-1">
-                               {workPhases.map((phase, index) => {
-                                 const activeIndex = workPhases.indexOf(order.status);
-                                 const isDone = index <= activeIndex;
-                                 return (
-                                   <span
-                                     key={`${order.id}-${phase}`}
-                                     className={`h-1.5 flex-1 rounded-full ${isDone ? 'bg-sky-500' : 'bg-gray-200 dark:bg-zinc-700'}`}
-                                   />
-                                 );
-                               })}
-                             </div>
-                             <span className={`px-2 py-0.5 border text-[9px] md:text-[10px] font-bold uppercase rounded-full ${statusColors[order.status]}`}>
-                               {order.status}
-                             </span>
-                           </div>
-                           <button
-                             type="button"
-                             onClick={(event) => {
-                               event.stopPropagation();
-                               updateOrderStatusByStep(order, 1);
-                             }}
-                             disabled={workPhases.indexOf(order.status) === workPhases.length - 1}
-                             className="p-1 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-200"
-                             title="Next step"
-                           >
-                             <ChevronRight className="w-3 h-3" />
-                           </button>
-                         </div>
-                      </td>
-                      <td className="py-2.5 px-4 md:px-6 font-mono font-bold text-right text-gray-900 dark:text-zinc-100 leading-none md:text-sm">
-                         ₱{order.amount.toFixed(2)}
-                      </td>
-                      <td className="py-2.5 px-5 md:px-6 text-right">
-                         <div className="flex justify-end gap-1.5">
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleEditOrder(order);
-                            }}
-                            className="p-1.5 md:p-2 bg-gray-50 hover:bg-indigo-600 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400"
-                            title="Edit order in POS"
-                          >
-                            <Edit3 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          </button>
-                          <button
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleDeleteOrder(order);
-                            }}
-                            className="p-1.5 md:p-2 bg-gray-50 hover:bg-red-600 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400"
-                            title="Delete order"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          </button>
-                          <button className="p-1.5 md:p-2 bg-gray-50 hover:bg-zinc-900 hover:text-white transition-all rounded dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-white">
-                            <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                          </button>
-                         </div>
-                      </td>
-                   </tr>
-                 ))}
-                 {filteredOrders.length === 0 && (
-                   <tr>
-                     <td colSpan={6} className="py-12 text-center text-gray-400 italic">No matching orders found.</td>
-                   </tr>
-                 )}
-              </tbody>
-            </table>
-         </div>
-         
-         <div className="p-3 bg-gray-50/50 border-t border-gray-100 flex justify-center text-[9px] font-bold uppercase tracking-widest text-gray-400 dark:bg-zinc-900/50 dark:border-zinc-800">
-            End of Active Dispatch Queue
-         </div>
-      </div>
-
-      <Modal
-        isOpen={!!selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        title="Order Production Detail"
-        maxWidth="max-w-5xl"
-      >
-        {selectedOrder && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-start border-b border-gray-100 dark:border-zinc-800 pb-4">
-              <div>
-                <span className={`px-2 py-0.5 border text-[9px] font-bold uppercase rounded-full ${statusColors[selectedOrder.status]} mb-2 inline-block`}>
-                  {selectedOrder.status}
-                </span>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100">{selectedOrder.customer}</h3>
-                <p className="text-xs text-gray-500 font-mono">#{selectedOrder.id}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Order Date</p>
-                <p className="text-sm font-bold text-gray-800 dark:text-zinc-200">{selectedOrder.date}</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                    <ClipboardList className="w-3 h-3" /> Job Specifications
-                  </h4>
-                  <div className="bg-gray-50 dark:bg-zinc-800/50 p-3 rounded border border-gray-100 dark:border-zinc-800 divide-y divide-gray-200 dark:divide-zinc-700">
-                    <div className="py-2 flex justify-between items-start gap-4 text-xs">
-                      <span className="text-gray-500 pt-1">Item</span>
-                      <div className="font-bold text-right space-y-1">
-                        {selectedOrderLineItems.map((lineItem, index) => (
-                          <button
-                            key={`${lineItem.name}-${index}`}
-                            type="button"
-                            onClick={() => setSelectedLineItemIndex(index)}
-                            className={`block text-right w-full underline-offset-2 hover:underline transition-colors ${
-                              selectedLineItemIndex === index
-                                ? 'text-zinc-900 dark:text-zinc-200'
-                                : 'text-gray-900 dark:text-zinc-200'
-                            }`}
-                          >
-                            {lineItem.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="py-2 flex justify-between text-xs">
-                      <span className="text-gray-500">Quantity</span>
-                      <span className="font-bold">{selectedOrder.quantity} Units</span>
-                    </div>
-                    <div className="py-2 flex justify-between text-xs">
-                      <span className="text-gray-500">Unit Price</span>
-                      <span className="font-bold">₱{(selectedOrder.amount / selectedOrder.quantity).toFixed(2)}</span>
-                    </div>
-                    <div className="py-2 flex justify-between text-xs pt-2">
-                      <span className="text-gray-500 font-bold uppercase">Total Value</span>
-                      <span className="font-bold text-zinc-900 dark:text-zinc-200">₱{selectedOrder.amount.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {selectedOrder.notes && (
-                  <div className="space-y-2">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                      <MessageSquare className="w-3 h-3" /> Production Notes
-                    </h4>
-                    <div className="bg-zinc-100 dark:bg-zinc-800/30 p-3 rounded border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-800 dark:text-zinc-300 italic">
-                      "{selectedOrder.notes}"
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-2">
-                    <ImageIcon className="w-3 h-3" /> Visual Assets
-                  </h4>
-                  {selectedOrderIsCustom ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Product</p>
-                        {activeLineInventoryItem?.imageUrl ? (
-                          <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
-                            <img
-                              src={activeLineInventoryItem.imageUrl}
-                              alt={activeLineInventoryItem.name}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="aspect-square bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
-                            <ImageIcon className="w-8 h-8 opacity-20" />
-                            <p className="text-[10px] uppercase font-bold tracking-widest text-center px-2">No product image</p>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-1.5">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Custom design</p>
-                        {activeLineItemDesign ? (
-                          <div className="relative aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
-                            <img
-                              src={activeLineItemDesign.imageUrl}
-                              alt="Custom design"
-                              className="w-full h-full object-contain"
-                            />
-                            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[8px] font-bold text-white uppercase tracking-widest">
-                              Ref: {activeLineItem?.designId || selectedOrder.designId}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="aspect-square bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
-                            <ImageIcon className="w-8 h-8 opacity-20" />
-                            <p className="text-[10px] uppercase font-bold tracking-widest">No design attached</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 dark:text-zinc-500">Product</p>
-                      {activeLineInventoryItem?.imageUrl ? (
-                        <div className="relative max-w-md aspect-square bg-gray-100 dark:bg-zinc-800 rounded-lg overflow-hidden border border-gray-200 dark:border-zinc-700">
-                          <img
-                            src={activeLineInventoryItem.imageUrl}
-                            alt={activeLineInventoryItem.name}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      ) : (
-                        <div className="aspect-square max-w-md bg-gray-50 dark:bg-zinc-800/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-zinc-800 flex flex-col items-center justify-center text-gray-400 gap-2">
-                          <ImageIcon className="w-8 h-8 opacity-20" />
-                          <p className="text-[10px] uppercase font-bold tracking-widest">No product image</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-gray-100 dark:border-zinc-800">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Update Work Phase</h4>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => updateOrderStatusByStep(selectedOrder, -1)}
-                  disabled={workPhases.indexOf(selectedOrder.status) === 0}
-                  className="p-2 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-400"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <div className="flex-1">
-                  <div className="flex gap-1.5 mb-2">
-                    {workPhases.map((phase, index) => {
-                      const activeIndex = workPhases.indexOf(selectedOrder.status);
-                      const isDone = index <= activeIndex;
-                      return (
-                        <span
-                          key={`modal-${phase}`}
-                          className={`h-2 flex-1 rounded-full ${isDone ? 'bg-sky-500' : 'bg-gray-200 dark:bg-zinc-700'}`}
-                        />
-                      );
-                    })}
-                  </div>
-                  <span className={`px-2 py-0.5 border text-[10px] font-bold uppercase rounded-full ${statusColors[selectedOrder.status]}`}>
-                    {selectedOrder.status}
-                  </span>
-                </div>
-                <button
-                  onClick={() => updateOrderStatusByStep(selectedOrder, 1)}
-                  disabled={workPhases.indexOf(selectedOrder.status) === workPhases.length - 1}
-                  className="p-2 rounded-full border border-gray-200 text-gray-500 hover:text-zinc-900 hover:border-zinc-400 disabled:opacity-40 disabled:cursor-not-allowed dark:border-zinc-700 dark:text-zinc-400"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-6 flex gap-3">
-              <button className="flex-1 py-2.5 bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-widest rounded hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 transition-all flex items-center justify-center gap-2">
-                <Printer className="w-3.5 h-3.5" /> Print Job Ticket
-              </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap gap-1.5">
+          {STATUS_FILTERS.map((filter) => {
+            const isActive = statusFilter === filter.value;
+            return (
               <button
-                onClick={() => setSelectedOrder(null)}
-                className="flex-1 py-2.5 bg-zinc-900 text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-zinc-800 transition-all dark:bg-white dark:text-zinc-950"
+                key={filter.value}
+                type="button"
+                onClick={() => setStatusFilter(filter.value)}
+                className={cn(
+                  'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] transition-all',
+                  isActive
+                    ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]'
+                    : 'border border-white/45 bg-white/52 text-macos-text-muted hover:bg-white/72 hover:text-macos-text dark:border-white/10 dark:bg-white/6 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-200',
+                )}
               >
-                Close View
+                {filter.label}
               </button>
-            </div>
-          </div>
-        )}
-      </Modal>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Calendar className="h-3.5 w-3.5 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-8 w-auto text-[10px]"
+            placeholder="From"
+          />
+          <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-8 w-auto text-[10px]"
+            placeholder="To"
+          />
+          {(dateFrom || dateTo) && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>
+              Clear dates
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <OrdersTable
+        orders={filteredOrders}
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        onSelectOrder={setSelectedOrder}
+        onEditOrder={handleEditOrder}
+        onDeleteOrder={handleDeleteOrder}
+        onAdvancePhase={updateOrderStatusByStep}
+      />
+      <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} className="mt-4" />
+
+      <OrderDetailModal
+        order={selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        onAdvancePhase={updateOrderStatusByStep}
+        onRefreshOrder={refreshOrder}
+      />
     </div>
   );
 }
-

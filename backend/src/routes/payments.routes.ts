@@ -7,6 +7,7 @@ import { createTransaction, getTransaction, listTransactions, voidTransaction } 
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const paymentsRouter = Router();
 
@@ -39,8 +40,8 @@ function getTransactionId(request: { params: Record<string, string | string[] | 
   return id;
 }
 
-paymentsRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (_request, response) => {
-  sendSuccess(response, await listTransactions(getSupabase()));
+paymentsRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (request, response) => {
+  sendSuccess(response, await listTransactions(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 paymentsRouter.get('/transactions/:id', authenticate, requirePermission('payments.read'), async (request, response) => {

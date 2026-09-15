@@ -8,6 +8,7 @@ import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { uploadDesignAsset } from '../services/designAssetService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const designsRouter = Router();
 
@@ -32,8 +33,8 @@ function getDesignId(request: { params: Record<string, string | string[] | undef
   return id;
 }
 
-designsRouter.get('/', authenticate, requirePermission('designs.read'), async (_request, response) => {
-  sendSuccess(response, await listDesigns(getSupabase()));
+designsRouter.get('/', authenticate, requirePermission('designs.read'), async (request, response) => {
+  sendSuccess(response, await listDesigns(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 designsRouter.post('/', authenticate, requirePermission('designs.manage'), async (request, response) => {

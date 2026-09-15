@@ -6,6 +6,7 @@ import { requirePermission } from '../middleware/authorize.js';
 import { AppError } from '../shared/errors.js';
 import { createUser, deleteUser, listUsers, updateUser } from '../modules/users/users.service.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const usersRouter = Router();
 
@@ -29,8 +30,8 @@ function getSupabase() {
 
 usersRouter.use(authenticate, requirePermission('users.manage'));
 
-usersRouter.get('/', async (_request, response) => {
-  response.json({ data: await listUsers(getSupabase()) });
+usersRouter.get('/', async (request, response) => {
+  response.json({ data: await listUsers(getSupabase(), parsePaginationQuery(request.query)) });
 });
 
 usersRouter.post('/', async (request, response) => {

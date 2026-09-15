@@ -1,26 +1,60 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# PRINTSYNC — Frontend
 
-# Install Coding Agent Plugin
+The React 19 + Vite single-page application for PRINTSYNC.
 
-Turn your coding agent into a Vercel expert. Simply copy and run this in your terminal to install the plugin. Available for Claude, Cursor and Codex.
+> **Full documentation lives in the [root README](../README.md)** — setup,
+> environment variables, scripts, architecture, API reference, and permissions.
 
-`npx plugins add vercel/vercel-plugin`
+## Quick start
 
-# Run and deploy your AI Studio app
+From this directory:
 
-This contains everything you need to run your app locally.
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
 
-View your app in AI Studio: https://ai.studio/apps/cc651e1e-47b5-474b-afd7-eb4121f4afd5
+The dev server proxies `/api` to `http://127.0.0.1:4000`, so run the API
+alongside it:
 
-## Run Locally
+```bash
+cd ../backend && npm run dev
+```
 
-**Prerequisites:**  Node.js
+To target an API somewhere else, set `VITE_API_BASE_URL` in `.env`
+(see `.env.example`). Vite only exposes `VITE_`-prefixed variables to the
+browser — never put secrets here.
 
+## Scripts
 
-1. Install dependencies:
-   `npm install`
-2. Optionally set `VITE_API_BASE_URL` in [.env.local](.env.local) when running against a backend. Keep provider API keys in the backend environment; they must not be exposed through Vite.
-3. Run the app:
-   `npm run dev`
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Dev server on port 3000 |
+| `npm run build` | Production build into `dist/` |
+| `npm run preview` | Preview the production build |
+| `npm run clean` | Remove `dist/` |
+| `npm run lint` | Type-check without emitting (`tsc --noEmit`) |
+
+## Source layout
+
+```
+src/
+├── app/          # Router, layout, providers (auth, theme, notifications, branding)
+├── features/     # Vertical slices: auth, orders (+ POS), inventory, customers,
+│                 # designs, analytics, users, audit, settings, dashboard
+└── shared/       # API client, UI kit, constants, hooks, error handling
+```
+
+Each feature folder keeps its own `pages/`, `components/`, `hooks/`, `api/`,
+and `types.ts` so a domain can be understood without leaving its directory.
+
+Pages are lazy-loaded and gated by `RequireAuth` / `RequirePageAccess`, which
+check the signed-in user's role before rendering a route.
+
+## Conventions
+
+- Call the backend through `shared/api/client.ts` (`apiClient`) — it handles the
+  base URL, JSON envelopes, `credentials: 'include'`, and automatic token refresh.
+- Shared request/response contracts belong in `packages/shared-types`, not here.
+- Use the `shared/components/ui` primitives (Button, Card, Input, Modal, Table,
+  Badge, Tooltip) before introducing a new component library.

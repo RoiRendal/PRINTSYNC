@@ -1,9 +1,10 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
+import type { PaginatedResponse } from '@printsync/shared-types';
 import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../types';
 
 export function createInventoryApi(client: ApiClient = apiClient) {
   return {
-    list: () => client.get<InventoryItem[]>('/inventory'),
+    list: (query?: { page?: number; limit?: number }) => client.get<PaginatedResponse<InventoryItem>>('/inventory', query),
     create: (payload: CreateInventoryItem) => client.post<InventoryItem, CreateInventoryItem>('/inventory', payload),
     update: (id: string, payload: UpdateInventoryItem) => client.patch<InventoryItem, UpdateInventoryItem>(`/inventory/${id}`, payload),
     adjust: (id: string, payload: { quantity: number; reason: string }) =>

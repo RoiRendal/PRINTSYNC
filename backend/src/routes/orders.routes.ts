@@ -7,6 +7,7 @@ import { createOrder, deleteOrder, getOrder, listOrders, updateOrder } from '../
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const ordersRouter = Router();
 
@@ -25,6 +26,8 @@ const orderSchema = z.object({
   status: z.enum(statuses).default('Pending'),
   notes: z.string().trim().default(''),
   isCustom: z.boolean().default(false),
+  customerId: z.string().uuid().optional(),
+  dueDate: z.string().date().optional(),
 });
 const updateSchema = orderSchema.partial();
 
@@ -40,8 +43,8 @@ function getOrderId(request: { params: Record<string, string | string[] | undefi
   return id;
 }
 
-ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (_request, response) => {
-  sendSuccess(response, await listOrders(getSupabase()));
+ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (request, response) => {
+  sendSuccess(response, await listOrders(getSupabase(), parsePaginationQuery(request.query)));
 });
 
 ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (request, response) => {

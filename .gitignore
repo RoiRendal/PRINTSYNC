@@ -1,5 +1,9 @@
 **/0_never-push-this-dump-folder/
 **/.codebuddy/
+**/.workbuddy-ai/
+
+# Deployment tooling metadata (contains project ids)
+**/.vercel/
 
 # Dependencies and generated output
 **/node_modules/

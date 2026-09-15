@@ -1,28 +1,50 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
-import { Bell, Sun, Moon, PanelLeft, ChevronLeft } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
+import { useNotifications } from '../providers/NotificationProvider';
+import { NotificationPanel } from '../components/NotificationPanel';
+import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
-import { useUserContext } from '../../features/users/state/UserContext';
+import { useAuth } from '../../features/users/state/AuthContext';
+import { Button, Tooltip } from '../../shared/components/ui';
+
+const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
+  light: 'Dark',
+  dark: 'System',
+  system: 'Light',
+};
+
+const ThemeIcon: React.FC<{ theme: 'light' | 'dark' | 'system'; isDark: boolean }> = ({ theme, isDark }) => {
+  if (theme === 'light') return <Sun className="h-4 w-4" />;
+  if (theme === 'dark') return <Moon className="h-4 w-4" />;
+  // 'system' — show a neutral monitor icon so the state is unambiguous.
+  // Tone the icon with the actual rendered mode for a subtle visual cue.
+  return (
+    <Monitor
+      className={cn(
+        'h-4 w-4',
+        isDark ? 'text-macos-blue' : 'text-macos-text',
+      )}
+    />
+  );
+};
 
 export const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const currentLabel = NAV_ITEMS.find(item => item.path === currentPath)?.label || 'Dashboard';
+  const currentItem = NAV_ITEMS.find(item => item.path === currentPath);
+  const currentLabel = currentItem?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
   const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
-  const { currentUser, logout } = useUserContext();
+  const { currentUser, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [logoFailed, setLogoFailed] = useState(false);
 
   const handleLogoError = useCallback(() => {
@@ -64,12 +86,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       if (!target.closest('#user-profile-trigger')) {
         setIsProfileOpen(false);
       }
+      if (!target.closest('#notification-trigger')) {
+        setIsNotificationsOpen(false);
+      }
     };
-    if (isProfileOpen) {
+    if (isProfileOpen || isNotificationsOpen) {
       window.addEventListener('click', handleClickOutside);
     }
     return () => window.removeEventListener('click', handleClickOutside);
-  }, [isProfileOpen]);
+  }, [isProfileOpen, isNotificationsOpen]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const closeSidebar = () => {
@@ -86,111 +111,174 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     .toUpperCase();
 
   return (
-    <div className="flex flex-col h-screen w-full overflow-hidden bg-gray-50 text-gray-900 font-sans selection:bg-zinc-200 selection:text-zinc-900 dark:selection:bg-zinc-700 dark:selection:text-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(90,200,250,0.18),transparent_30rem),radial-gradient(circle_at_85%_18%,rgba(175,82,222,0.13),transparent_28rem),radial-gradient(circle_at_55%_95%,rgba(0,122,255,0.10),transparent_34rem)]" />
+
       {/* Global Top Header */}
-      <header className="relative h-11 bg-white border-b border-gray-300 flex items-center justify-between px-4 lg:px-5 shrink-0 dark:bg-zinc-900 dark:border-zinc-800 transition-colors duration-300 z-[60]">
-        <div className="flex items-center gap-8">
+      <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
+        <div className="flex min-w-0 items-center gap-3">
           <div
-            className="flex items-center gap-2 overflow-hidden whitespace-nowrap"
-            title={`${APP_NAME}`}
+            className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
+            title={APP_NAME}
           >
             {logoFailed ? (
-              <div className="w-5 h-5 bg-zinc-800 rounded-sm flex items-center justify-center text-white font-bold text-[10px] shrink-0">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)]">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
-              <img
-                src={effectiveBusinessLogoUrl}
-                alt=""
-                width={20}
-                height={20}
-                className="h-5 w-auto max-w-[7rem] object-contain object-left shrink-0"
-                onError={handleLogoError}
-              />
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-[var(--shadow-card)] ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10">
+                <img
+                  src={effectiveBusinessLogoUrl}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="h-5 w-auto max-w-[7rem] object-contain object-left"
+                  onError={handleLogoError}
+                />
+              </span>
             )}
-            <h1 className="text-gray-900 dark:text-white font-bold tracking-tight text-base truncate">
-              {businessDisplayName}
-            </h1>
+            <div className="min-w-0">
+              <h1 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white">
+                {businessDisplayName}
+              </h1>
+              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500 sm:block">
+                {APP_NAME} Workspace
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4 dark:border-zinc-800">
-            <button 
+        <div className="flex items-center gap-2">
+          <Tooltip content={`Theme: ${theme[0].toUpperCase()}${theme.slice(1)} (click for ${NEXT_THEME_LABEL[theme]})`}>
+            <Button
+              size="icon"
+              variant="ghost"
               onClick={toggleTheme}
-              className="p-1 text-gray-400 hover:text-gray-900 dark:text-zinc-500 dark:hover:text-zinc-100 transition-colors"
-              title={`Current theme: ${theme}. Click to cycle themes.`}
+              title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
             >
-              {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-            </button>
-            <button className="relative p-1 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 transition-colors group">
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-zinc-900" />
-            </button>
-            
-            <div 
-              id="user-profile-trigger"
-              className="relative flex items-center gap-2 px-2 py-1 dark:border-zinc-800 cursor-pointer group hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              <ThemeIcon theme={theme} isDark={isDark} />
+            </Button>
+          </Tooltip>
+          <div
+            id="notification-trigger"
+            className="relative"
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+          >
+            <Button
+              size="icon"
+              variant="ghost"
+              aria-label="Notifications"
+              aria-expanded={isNotificationsOpen}
+              className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
             >
-              <div className="w-7 h-7 rounded-full bg-zinc-900 dark:bg-zinc-800 flex items-center justify-center text-[9px] font-bold text-white shadow-lg shadow-black/10">
+              <Bell className="h-4 w-4" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-macos-red px-1 text-[9px] font-bold text-white dark:border-zinc-950">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Button>
+            <AnimatePresence>
+              {isNotificationsOpen && <NotificationPanel onClose={() => setIsNotificationsOpen(false)} />}
+            </AnimatePresence>
+          </div>
+
+          <div
+            id="user-profile-trigger"
+            className="relative"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+          >
+            <button
+              type="button"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-white/40 bg-white/42 py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-white/70 active:scale-[0.98] dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/14"
+              aria-expanded={isProfileOpen}
+            >
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-macos-blue to-macos-cyan text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
                 {initials}
               </div>
+              <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
+                {currentUser?.name ?? 'Admin'}
+              </span>
+            </button>
 
-              {/* Dropdown Menu */}
+            <AnimatePresence>
               {isProfileOpen && (
-                <div 
-                  className="absolute top-full right-0 mt-1.5 w-56 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-md shadow-xl py-1 z-[100]"
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                  className="glass-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="px-4 py-2 border-b border-gray-100 dark:border-zinc-800">
-                    <p className="text-xs font-bold text-gray-900 dark:text-zinc-100 leading-tight">
+                  <div className="border-b border-black/5 px-4 py-3 dark:border-white/10">
+                    <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
                       {currentUser?.name ?? 'Admin'}
                     </p>
-                    <p className="text-[10px] text-gray-500 dark:text-zinc-500 mt-1 uppercase tracking-tighter">
-                      {(currentUser?.role ?? 'admin').replace(/_/g, ' ').toUpperCase()}
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
+                      {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                     </p>
                   </div>
                   <button
+                    type="button"
                     onClick={logout}
-                    className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-macos-red transition-colors hover:bg-macos-red/10"
                   >
                     Logout
                   </button>
-                </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
         </div>
       </header>
 
-      {/* New Header */}
-      <div className="relative h-9 bg-gray-50 border-b border-gray-300 flex items-center px-3 lg:px-4 shrink-0 dark:bg-zinc-950 dark:border-zinc-800 transition-colors duration-300 z-[40]">
-        <button 
-          onClick={toggleCollapse}
-          className="p-1.5 mr-4 hover:bg-gray-200 dark:hover:bg-zinc-800 rounded text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-100 transition-colors"
-          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-        >
-          {isCollapsed ? <PanelLeft className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </button>
-        <span className="text-sm font-bold tracking-tight text-gray-900 dark:text-zinc-100">{currentLabel}</span>
+      {/* Page Toolbar */}
+      <div className="glass-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={toggleCollapse}
+            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+          <div className="min-w-0">
+            <span className="block truncate text-base font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
+
+          </div>
+        </div>
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}
-      <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar 
-          isCollapsed={isCollapsed} 
+      <div className="relative z-10 flex flex-1 overflow-hidden">
+        <Sidebar
+          isCollapsed={isCollapsed}
           onNavigate={closeSidebar}
           className={cn(
-            "lg:static absolute top-0 left-0 bottom-0 z-50",
-            isCollapsed && "hidden lg:flex"
+            'absolute bottom-0 left-0 top-0 z-50 lg:static',
+            isCollapsed && 'hidden lg:flex',
           )}
         />
-        {/* Overlay */}
-        {!isCollapsed && <div className="lg:hidden absolute inset-0 bg-black/50 z-40" onClick={toggleCollapse} />}
-        <main className="flex-1 flex flex-col overflow-hidden bg-gray-50 dark:bg-zinc-950 transition-colors duration-300">
-          <div className="flex-1 overflow-y-auto p-4 lg:p-5 xl:p-6 scrollbar-hide">
-            <section className="min-h-full border border-gray-300 rounded-lg bg-gray-50 p-3 lg:p-4 dark:bg-zinc-950 dark:border-zinc-800">
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-40 bg-black/35 backdrop-blur-[2px] lg:hidden"
+              onClick={toggleCollapse}
+            />
+          )}
+        </AnimatePresence>
+        <main className="flex flex-1 flex-col overflow-hidden bg-transparent transition-colors duration-300">
+          <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
+            <section className="min-h-full rounded-[1.5rem] border border-white/65 bg-white/86 p-3 shadow-[var(--shadow-card)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/82 lg:p-4">
               {children}
             </section>
           </div>
@@ -199,5 +287,3 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     </div>
   );
 };
-
-

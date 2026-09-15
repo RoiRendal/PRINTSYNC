@@ -1,59 +1,75 @@
 import { NavLink } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import { useUserContext } from '../../features/users/state/UserContext';
-
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from '../../shared/lib/cn';
+import { useAuth } from '../../features/users/state/AuthContext';
 
 export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
-  const { currentUser } = useUserContext();
+  const { currentUser } = useAuth();
   const visibleItems = currentUser
     ? NAV_ITEMS.filter((item) => currentUser.access.includes(item.key))
     : [];
 
   return (
-    <aside 
+    <motion.aside
+      initial={false}
+      animate={{ width: isCollapsed ? 0 : 196 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
       className={cn(
-        "bg-gray-50 text-gray-900 flex flex-col shrink-0 dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden",
-        isCollapsed ? "w-0" : "w-fit min-w-[3.25rem]",
-        className
+        'glass-panel flex shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
+        'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
+        className,
       )}
     >
-      <nav className="flex-1 px-1.5 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden scrollbar-hide">
-        {visibleItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-2 px-2 py-1 rounded text-[13px] font-medium group relative",
-                isActive 
-                  ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/10 dark:shadow-zinc-950/40" 
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-200 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-800",
-                isCollapsed && "justify-center px-0"
-              )
-            }
-            title={isCollapsed ? item.label : undefined}
-          >
-            <item.icon className="w-4 h-4 opacity-80 shrink-0" />
-            {!isCollapsed && (
-              <span className="whitespace-nowrap overflow-hidden">
-                {item.label}
-              </span>
-            )}
-            {isCollapsed && (
-              <div className="absolute left-full ml-3 px-2 py-1 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity font-bold uppercase tracking-wider z-50 whitespace-nowrap shadow-xl border border-gray-300 dark:border-zinc-800">
-                {item.label}
-              </div>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+      <div className="flex h-full min-w-[196px] flex-col">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-hide">
+          {visibleItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                cn(
+                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
+                  isActive
+                    ? 'text-white dark:text-white'
+                    : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.span
+                      layoutId="sidebar-active-pill"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
+                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                  <motion.span
+                    whileTap={{ scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                    className={cn(
+                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
+                      isActive
+                        ? 'border-white/20 bg-white/20 text-white'
+                        : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/20 dark:bg-white/22 dark:text-zinc-200 dark:group-hover:bg-white/30 dark:group-hover:text-zinc-100',
+                    )}
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </motion.span>
+                  <span className="relative z-10 truncate whitespace-nowrap">
+                    {item.label}
+                  </span>
+                  {isActive && (
+                    <span className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_12px_rgb(255_255_255/0.8)]" />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
+    </motion.aside>
   );
 };
-
