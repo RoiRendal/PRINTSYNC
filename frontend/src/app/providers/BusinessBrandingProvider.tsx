@@ -49,20 +49,39 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
   const [brandingError, setBrandingError] = useState<string | null>(null);
   const { currentUser } = useAuth();
 
+  // Brand identity is public, so it is loaded once on mount regardless of whether
+  // anyone is signed in. This is what lets the login screen render the uploaded
+  // logo instead of the bundled fallback on a cold load.
+  useEffect(() => {
+    let mounted = true;
+    void settingsApi.getPublicBranding()
+      .then((branding) => {
+        if (!mounted) return;
+        setBusinessDisplayNameState(branding.businessName);
+        setBusinessLogoUrlState(toHostedLogoUrl(branding.logoUrl));
+        setBrandingError(null);
+      })
+      .catch((error: unknown) => {
+        if (mounted) setBrandingError(error instanceof ApiError ? error.message : 'Business branding could not be loaded.');
+      });
+    return () => { mounted = false; };
+  }, []);
+
+  // VAT rate and currency symbol are operational configuration, not branding, so
+  // they stay behind the authenticated endpoint and are fetched once a session
+  // exists. Each effect owns distinct state, so neither can overwrite the other.
   useEffect(() => {
     if (!currentUser) return;
     let mounted = true;
     void settingsApi.getBusiness()
       .then((settings) => {
         if (!mounted) return;
-        setBusinessDisplayNameState(settings.businessName);
-        setBusinessLogoUrlState(toHostedLogoUrl(settings.logoUrl));
         setVatRate(settings.vatRate ?? 12);
         setCurrencySymbol(settings.currencySymbol ?? '₱');
         setBrandingError(null);
       })
       .catch((error: unknown) => {
-        if (mounted) setBrandingError(error instanceof ApiError ? error.message : 'Business branding could not be loaded.');
+        if (mounted) setBrandingError(error instanceof ApiError ? error.message : 'Business defaults could not be loaded.');
       });
     return () => { mounted = false; };
   }, [currentUser]);

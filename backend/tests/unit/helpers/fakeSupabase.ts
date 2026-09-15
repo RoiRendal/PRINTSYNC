@@ -53,11 +53,38 @@ export interface FakeStorageUpload {
   options: { contentType?: string; upsert?: boolean } | undefined;
 }
 
+/** A recorded `storage.from(bucket).remove(paths)` call. */
+export interface FakeStorageRemoval {
+  bucket: string;
+  /** The paths handed to `remove()`, copied for the same reason as upload bytes. */
+  paths: string[];
+}
+
+/** A recorded `storage.from(bucket).list(prefix, options)` call. */
+export interface FakeStorageListing {
+  bucket: string;
+  prefix: string | undefined;
+  options: { limit?: number; offset?: number } | undefined;
+}
+
+/** An object the fake bucket reports from `list()`. */
+export interface FakeBucketObject {
+  name: string;
+  /** ISO timestamp. `null`/omitted models a listing with no usable age. */
+  created_at?: string | null;
+  /** `null` marks a directory entry rather than a stored object. */
+  metadata?: Record<string, unknown> | null;
+}
+
 export interface FakeBucketOptions {
   /** When set, `upload()` resolves with this as its `error` instead of succeeding. */
   error?: unknown;
   /** Prefix used to build public URLs. Defaults to a realistic Supabase shape. */
   publicUrlBase?: string;
+  /** When set, `list()` resolves with this as its `error`. */
+  listError?: unknown;
+  /** When set, `remove()` resolves with this as its `error`. */
+  removeError?: unknown;
 }
 
 const cloneCall = (call: FakeCall): FakeCall => ({
@@ -170,6 +197,17 @@ class FakeStorageBucket {
     return this.db.recordStorageUpload(this.bucket, path, data, options);
   }
 
+  list(
+    prefix?: string,
+    options?: { limit?: number; offset?: number },
+  ): Promise<{ data: unknown[] | null; error: unknown }> {
+    return this.db.recordStorageList(this.bucket, prefix, options);
+  }
+
+  remove(paths: string[]): Promise<{ data: unknown[] | null; error: unknown }> {
+    return this.db.recordStorageRemoval(this.bucket, paths);
+  }
+
   getPublicUrl(path: string): { data: { publicUrl: string } } {
     return { data: { publicUrl: this.db.publicUrlFor(this.bucket, path) } };
   }
@@ -195,8 +233,11 @@ export class FakeSupabase {
   private readonly rpcQueue = new Map<string, FakeResult[]>();
   private readonly rpcDefaults = new Map<string, FakeResult>();
   private readonly bucketOptions = new Map<string, FakeBucketOptions>();
+  private readonly bucketContents = new Map<string, FakeBucketObject[]>();
   private readonly recorded: FakeCall[] = [];
   private readonly recordedUploads: FakeStorageUpload[] = [];
+  private readonly recordedRemovals: FakeStorageRemoval[] = [];
+  private readonly recordedListings: FakeStorageListing[] = [];
 
   constructor() {
     this.client = this as unknown as SupabaseClient;
@@ -249,6 +290,21 @@ export class FakeSupabase {
     return this;
   }
 
+  /**
+   * Objects the bucket reports from `list()`, keyed by the prefix they live under.
+   *
+   * A Supabase listing is one level deep, so the fake mirrors that: `list('')`
+   * returns whatever is registered for `''`, and a directory entry (one with
+   * `metadata: null`) is how a test tells the service to descend. Registering
+   * contents also enables `list()` on the bucket — a test that lists a bucket
+   * with no contents configured gets an empty listing rather than a throw, which
+   * keeps the common "nothing to sweep" case a one-liner.
+   */
+  onBucketContents(bucket: string, prefix: string, objects: FakeBucketObject[]): this {
+    this.bucketContents.set(`${bucket}\u0000${prefix}`, objects);
+    return this;
+  }
+
   // ─── Introspection ───────────────────────────────────────────────
 
   get calls(): FakeCall[] {
@@ -287,14 +343,34 @@ export class FakeSupabase {
     return this.storageUploads.filter((upload) => upload.bucket === bucket);
   }
 
+  /** Every `remove()` recorded so far, oldest first. */
+  get storageRemovals(): FakeStorageRemoval[] {
+    return this.recordedRemovals.map((removal) => ({ ...removal, paths: [...removal.paths] }));
+  }
+
+  /** Paths passed to `remove()` on `bucket`, flattened across every call. */
+  removedPathsFor(bucket: string): string[] {
+    return this.storageRemovals
+      .filter((removal) => removal.bucket === bucket)
+      .flatMap((removal) => removal.paths);
+  }
+
+  /** Every `list()` recorded so far, oldest first. */
+  get storageListings(): FakeStorageListing[] {
+    return this.recordedListings.map((listing) => ({ ...listing }));
+  }
+
   reset(): this {
     this.tableQueue.clear();
     this.tableDefaults.clear();
     this.rpcQueue.clear();
     this.rpcDefaults.clear();
     this.bucketOptions.clear();
+    this.bucketContents.clear();
     this.recorded.length = 0;
     this.recordedUploads.length = 0;
+    this.recordedRemovals.length = 0;
+    this.recordedListings.length = 0;
     return this;
   }
 
@@ -355,6 +431,49 @@ export class FakeSupabase {
     });
     if (config.error) return Promise.resolve({ data: null, error: config.error });
     return Promise.resolve({ data: { path }, error: null });
+  }
+
+  /**
+   * Called by FakeStorageBucket.list. Applies the same offset/limit window Storage
+   * does so a service that pages correctly sees every entry, and one that ignores
+   * `offset` would see the first page forever.
+   */
+  recordStorageList(
+    bucket: string,
+    prefix: string | undefined,
+    options?: { limit?: number; offset?: number },
+  ): Promise<{ data: unknown[] | null; error: unknown }> {
+    const config = this.bucketOptions.get(bucket);
+    if (!config) {
+      throw new Error(
+        `FakeSupabase: no bucket configured with id "${bucket}". ` +
+          'Use onBucket() to allow listing it.',
+      );
+    }
+    this.recordedListings.push({ bucket, prefix, options });
+    if (config.listError) return Promise.resolve({ data: null, error: config.listError });
+
+    const all = this.bucketContents.get(`${bucket}\u0000${prefix ?? ''}`) ?? [];
+    const offset = options?.offset ?? 0;
+    const limit = options?.limit ?? all.length;
+    return Promise.resolve({ data: all.slice(offset, offset + limit), error: null });
+  }
+
+  /** Called by FakeStorageBucket.remove. */
+  recordStorageRemoval(
+    bucket: string,
+    paths: string[],
+  ): Promise<{ data: unknown[] | null; error: unknown }> {
+    const config = this.bucketOptions.get(bucket);
+    if (!config) {
+      throw new Error(
+        `FakeSupabase: no bucket configured with id "${bucket}". ` +
+          'Use onBucket() to allow removing from it.',
+      );
+    }
+    this.recordedRemovals.push({ bucket, paths: [...paths] });
+    if (config.removeError) return Promise.resolve({ data: null, error: config.removeError });
+    return Promise.resolve({ data: paths.map((path) => ({ name: path })), error: null });
   }
 
   /** Called by FakeStorageBucket.getPublicUrl. */

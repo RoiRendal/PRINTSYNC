@@ -7,7 +7,10 @@ import {
   BUSINESS_ASSET_BUCKET,
   MAX_BUSINESS_LOGO_BYTES,
 } from '../../src/services/businessAssetService.js';
-import { ALLOWED_IMAGE_CONTENT_TYPES } from '../../src/services/imageAssetService.js';
+import {
+  ALLOWED_IMAGE_CONTENT_TYPES,
+  objectPathFromPublicUrl,
+} from '../../src/services/imageAssetService.js';
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
 
@@ -352,6 +355,53 @@ describe('image asset uploads', () => {
     it('keeps the logo ceiling at or below the bucket file_size_limit', () => {
       // `20260915000000_storage_bucket.sql` sets file_size_limit = 2097152.
       assert.equal(MAX_BUSINESS_LOGO_BYTES, 2097152);
+    });
+  });
+
+  describe('objectPathFromPublicUrl', () => {
+    it('round-trips a URL built by getPublicUrl', () => {
+      const db = dbWithBuckets();
+
+      const { data } = db.storage.from(BUSINESS_ASSET_BUCKET).getPublicUrl('actor-1/logo.webp');
+
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, data.publicUrl), 'actor-1/logo.webp');
+    });
+
+    it('returns null for the bundled fallback logo', () => {
+      // The same-origin fallback is not a Storage object, so there is nothing to
+      // protect — and nothing to delete.
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, '/brand-logo.png'), null);
+    });
+
+    it('returns null for null or empty input', () => {
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, null), null);
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, ''), null);
+    });
+
+    it('returns null for a URL belonging to another bucket', () => {
+      const url = `https://fake.supabase.co/storage/v1/object/public/${DESIGN_ASSET_BUCKET}/actor-1/art.png`;
+
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, url), null);
+      assert.equal(objectPathFromPublicUrl(DESIGN_ASSET_BUCKET, url), 'actor-1/art.png');
+    });
+
+    it('returns null for an externally hosted logo', () => {
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, 'https://cdn.example.com/logo.png'), null);
+    });
+
+    it('drops the query string', () => {
+      const url = `https://fake.supabase.co/storage/v1/object/public/${BUSINESS_ASSET_BUCKET}/actor-1/abc.png?v=2`;
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, url), 'actor-1/abc.png');
+    });
+
+    it('decodes percent-escaped path segments', () => {
+      const url = `https://fake.supabase.co/storage/v1/object/public/${BUSINESS_ASSET_BUCKET}/actor%201/my%20logo.png`;
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, url), 'actor 1/my logo.png');
+    });
+
+    it('returns null when the URL stops at the bucket', () => {
+      const url = `https://fake.supabase.co/storage/v1/object/public/${BUSINESS_ASSET_BUCKET}/`;
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, url), null);
     });
   });
 });

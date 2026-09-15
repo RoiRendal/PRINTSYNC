@@ -7,7 +7,7 @@ import { getBusinessSettings, setBusinessLogo, updateBusinessSettings } from '..
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
-import { uploadBusinessLogo } from '../services/businessAssetService.js';
+import { uploadBusinessLogo, sweepOrphanedBusinessLogosSafely } from '../services/businessAssetService.js';
 
 export const settingsRouter = Router();
 
@@ -77,6 +77,9 @@ settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'),
     entityId: '1',
     metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes },
   });
+  // Housekeeping runs after the response is ready and never throws: the logo is
+  // already persisted, so a Storage hiccup here must not fail the request.
+  await sweepOrphanedBusinessLogosSafely(getSupabase(), settings.logoUrl);
   sendSuccess(response, settings);
 });
 
@@ -90,5 +93,7 @@ settingsRouter.delete('/logo', authenticate, requirePermission('settings.manage'
     entityType: 'business_settings',
     entityId: '1',
   });
+  // Nothing is referenced any more, so every aged-out object becomes removable.
+  await sweepOrphanedBusinessLogosSafely(getSupabase(), null);
   sendSuccess(response, settings);
 });

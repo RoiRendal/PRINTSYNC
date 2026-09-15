@@ -100,3 +100,34 @@ export async function uploadStorageImage(
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return { imageUrl: data.publicUrl, assetType: input.contentType, assetSizeBytes: buffer.length };
 }
+
+/** Marks the object path inside a Supabase public object URL. */
+const PUBLIC_URL_MARKER = '/object/public/';
+
+/**
+ * Inverse of `getPublicUrl`: recover the object path a public URL points at.
+ *
+ * Returns `null` when the value is not a public URL for `bucket` — a legacy
+ * externally-hosted URL, or the bundled `/brand-logo.png` fallback. Callers use
+ * that to decide whether a stored URL refers to an object they may manage.
+ *
+ * Lives next to `getPublicUrl` so the two halves of the URL contract cannot drift.
+ */
+export function objectPathFromPublicUrl(bucket: string, url: string | null): string | null {
+  if (!url) return null;
+
+  const marker = `${PUBLIC_URL_MARKER}${bucket}/`;
+  const markerIndex = url.indexOf(marker);
+  if (markerIndex === -1) return null;
+
+  const withoutQuery = url.slice(markerIndex + marker.length).split('?')[0];
+  if (!withoutQuery) return null;
+
+  try {
+    return decodeURIComponent(withoutQuery);
+  } catch {
+    // A malformed escape sequence is not worth failing over; the raw path is still
+    // a better answer than null.
+    return withoutQuery;
+  }
+}

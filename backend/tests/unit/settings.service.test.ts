@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 
 import {
   getBusinessSettings,
+  getPublicBranding,
   setBusinessLogo,
   updateBusinessSettings,
 } from '../../src/modules/settings/settings.service.js';
@@ -61,6 +62,63 @@ describe('settings.service', () => {
       db.queueTable('business_settings', { data: null, error: { message: 'no rows returned' } });
 
       await assertAppError(() => getBusinessSettings(db.client), 503, 'SETTINGS_LOOKUP_FAILED');
+    });
+  });
+
+  describe('getPublicBranding', () => {
+    it('maps only the brand columns', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      const branding = await getPublicBranding(db.client);
+
+      assert.deepEqual(branding, {
+        businessName: 'IC Printing Services',
+        logoUrl: '/brand-logo.png',
+      });
+    });
+
+    it('never reads the operational columns on the unauthenticated path', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      await getPublicBranding(db.client);
+
+      // The projection is the guard: if `vat_rate` is never selected, a careless
+      // edit to the mapping below cannot leak it to a signed-out caller.
+      const columns = db.callsFor('business_settings')[0]?.columns ?? '';
+      assert.equal(columns.includes('business_name'), true);
+      assert.equal(columns.includes('logo_url'), true);
+      assert.equal(columns.includes('vat_rate'), false);
+      assert.equal(columns.includes('currency_symbol'), false);
+    });
+
+    it('returns a null logo when the bundled asset is in use', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
+
+      const branding = await getPublicBranding(db.client);
+
+      assert.equal(branding.logoUrl, null);
+      assert.equal(branding.businessName, 'IC Printing Services');
+    });
+
+    it('always reads the singleton row (id = 1)', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      await getPublicBranding(db.client);
+
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('business_settings')[0], 'eq'), ['id', 1]);
+    });
+
+    it('maps a missing row to a 503 BRANDING_LOOKUP_FAILED', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: null, error: { message: 'no rows returned' } });
+
+      // Distinct from SETTINGS_LOOKUP_FAILED so the login screen can tell a broken
+      // branding read apart from a broken settings read.
+      await assertAppError(() => getPublicBranding(db.client), 503, 'BRANDING_LOOKUP_FAILED');
     });
   });
 

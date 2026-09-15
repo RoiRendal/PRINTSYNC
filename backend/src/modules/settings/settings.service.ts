@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BusinessSettings } from '@printsync/shared-types';
+import type { BusinessSettings, PublicBranding } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 
-export type { BusinessSettings };
+export type { BusinessSettings, PublicBranding };
 
 /**
  * Fields the generic settings form owns.
@@ -38,6 +38,27 @@ export async function getBusinessSettings(supabase: SupabaseClient): Promise<Bus
     .single();
   if (error || !data) throw new AppError(503, 'SETTINGS_LOOKUP_FAILED', 'Business settings could not be loaded.');
   return toSettings(data);
+}
+
+/**
+ * Brand identity for the unauthenticated login screen.
+ *
+ * Only `business_name` and `logo_url` are selected — the operational columns
+ * (`vat_rate`, `currency_symbol`) are never read here, so they cannot leak even if
+ * the mapping below is changed carelessly. The query stays narrow on purpose:
+ * this is the one settings read that runs without a session.
+ */
+export async function getPublicBranding(supabase: SupabaseClient): Promise<PublicBranding> {
+  const { data, error } = await supabase
+    .from('business_settings')
+    .select('business_name, logo_url')
+    .eq('id', 1)
+    .single();
+  if (error || !data) throw new AppError(503, 'BRANDING_LOOKUP_FAILED', 'Business branding could not be loaded.');
+  return {
+    businessName: String(data.business_name),
+    logoUrl: data.logo_url ? String(data.logo_url) : null,
+  };
 }
 
 export async function updateBusinessSettings(
