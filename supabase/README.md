@@ -37,7 +37,7 @@ From the `backend` directory in PowerShell:
 ```powershell
 $env:PROVISION_EMAIL = 'admin@printsync.com'
 $env:PROVISION_PASSWORD = '<local-password-at-least-8-characters>'
-$env:PROVISION_NAME = 'Irene Saquian'
+$env:PROVISION_NAME = 'Admin'
 $env:PROVISION_PHONE = '09171234567'
 $env:PROVISION_POSITION = 'System Administrator'
 $env:PROVISION_ROLE = 'admin'
