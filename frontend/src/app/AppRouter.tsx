@@ -16,6 +16,7 @@ const UserManagement = lazy(() => import('../features/users/pages/UserManagement
 const Orders = lazy(() => import('../features/orders/pages/OrdersPage'));
 const Settings = lazy(() => import('../features/settings/pages/SettingsPage'));
 const Customers = lazy(() => import('../features/customers/pages/CustomersPage'));
+const AuditLog = lazy(() => import('../features/audit/pages/AuditLogPage'));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { currentUser, isSessionLoading } = useAuth();
@@ -73,6 +74,7 @@ export default function App() {
               <Route path="/analytics" element={<RequirePageAccess><Analytics /></RequirePageAccess>} />
               <Route path="/customers" element={<RequirePageAccess><Customers /></RequirePageAccess>} />
               <Route path="/users" element={<RequirePageAccess><UserManagement /></RequirePageAccess>} />
+              <Route path="/audit" element={<RequirePageAccess><AuditLog /></RequirePageAccess>} />
               <Route path="/settings" element={<RequirePageAccess><Settings /></RequirePageAccess>} />
             </Route>
             <Route path="*" element={<NavigateToFirstAllowedPage />} />
