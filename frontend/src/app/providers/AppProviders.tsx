@@ -2,6 +2,7 @@ import React from 'react';
 import { InventoryProvider } from '../../features/inventory/state/InventoryContext';
 import { DesignProvider } from '../../features/designs/state/DesignContext';
 import { OrderProvider } from '../../features/orders/state/OrderContext';
+import { CustomerProvider } from '../../features/customers/state/CustomerContext';
 import { UserProvider } from '../../features/users/state/UserContext';
 import { AuthProvider, useAuth } from '../../features/users/state/AuthContext';
 import { BusinessBrandingProvider } from './BusinessBrandingProvider';
@@ -20,14 +21,16 @@ function AuthenticatedDataProviders({ children }: { children: React.ReactNode })
   if (!currentUser) return <>{children}</>;
 
   return (
-    <InventoryProvider>
-      <DesignProvider>
-        <OrderProvider>
-          <NotificationGenerator />
-          {children}
-        </OrderProvider>
-      </DesignProvider>
-    </InventoryProvider>
+    <CustomerProvider>
+      <InventoryProvider>
+        <DesignProvider>
+          <OrderProvider>
+            <NotificationGenerator />
+            {children}
+          </OrderProvider>
+        </DesignProvider>
+      </InventoryProvider>
+    </CustomerProvider>
   );
 }
 

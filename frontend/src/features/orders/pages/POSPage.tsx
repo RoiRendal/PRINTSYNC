@@ -8,6 +8,7 @@ import { cn } from '../../../shared/lib/cn';
 import { useDesigns } from '../../designs/state/DesignContext';
 import type { InventoryItem } from '../../inventory/types';
 import { useInventory } from '../../inventory/state/InventoryContext';
+import { useCustomers } from '../../customers/state/CustomerContext';
 import { paymentsApi, type PaymentTransaction } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
@@ -25,6 +26,7 @@ export default function POS() {
   const { items: inventory } = useInventory();
   const { designs } = useDesigns();
   const { addOrder, orders, updateOrder } = useOrders();
+  const { customers } = useCustomers();
   const { vatRate, currencySymbol } = useBusinessBranding();
   const location = useLocation();
   const navigate = useNavigate();
@@ -48,6 +50,7 @@ export default function POS() {
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
   const [cartDiscount, setCartDiscount] = useState(0);
   const [vatRatePercent, setVatRatePercent] = useState(vatRate);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_PAYMENT_METHOD_KEY) : null;
     return saved === 'Card' ? 'Card' : 'Cash';
@@ -236,6 +239,7 @@ export default function POS() {
     setView('pos');
     setPosMode('custom');
     setCustomerName(orderToEdit.customer);
+    setCustomerId(orderToEdit.customerId ?? null);
     setOrderNotes(orderToEdit.notes || '');
     setCart(hydratedCart);
     setEditingOrderId(orderToEdit.id);
@@ -275,6 +279,7 @@ export default function POS() {
     setEditingOrderId(null);
     setCartDiscount(0);
     setVatRatePercent(vatRate);
+    setCustomerId(null);
   };
 
   const addToCart = (product: InventoryItem) => {
@@ -362,6 +367,7 @@ export default function POS() {
     } else {
       const preparedOrder: CreateOrder = {
         customer: customerName,
+        customerId: customerId ?? undefined,
         item: cart.map(i => i.name).join(', '),
         lineItems: cart.map(i => ({
           itemId: i.id,
@@ -391,6 +397,7 @@ export default function POS() {
     setCheckoutSuccess(true);
     setCart([]);
     setCustomerName('');
+    setCustomerId(null);
     setOrderNotes('');
     setEditingOrderId(null);
 
@@ -483,6 +490,8 @@ export default function POS() {
             designs={designs}
             posMode={posMode}
             editingOrderId={editingOrderId}
+            customers={customers}
+            customerId={customerId}
             customerName={customerName}
             orderNotes={orderNotes}
             cartDiscount={cartDiscount}
@@ -490,13 +499,14 @@ export default function POS() {
             totals={totals}
             currencySymbol={currencySymbol}
             onCustomerNameChange={setCustomerName}
+            onCustomerIdChange={setCustomerId}
             onOrderNotesChange={setOrderNotes}
             onCartDiscountChange={setCartDiscount}
             onVatRatePercentChange={setVatRatePercent}
             onUpdateQty={updateQty}
             onRemoveFromCart={removeFromCart}
             onOpenDesignSelector={openDesignSelector}
-            onReset={() => { setCart([]); setCartDiscount(0); setVatRatePercent(vatRate); }}
+            onReset={() => { setCart([]); setCartDiscount(0); setVatRatePercent(vatRate); setCustomerId(null); }}
             onCheckout={handleCheckout}
           />
         </div>

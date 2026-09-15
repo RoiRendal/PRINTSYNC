@@ -1,16 +1,20 @@
-import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, ShoppingBag, Trash2, User } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Badge, Button, GlassCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { cn } from '../../../../shared/lib/cn';
+import { CustomerSelector } from '../../../customers/components/CustomerSelector';
+import type { Customer } from '../../../customers/types';
 
 interface POSCartProps {
   cart: CartItem[];
   designs: Design[];
   posMode: 'retail' | 'custom';
   editingOrderId: string | null;
+  customers: Customer[];
+  customerId: string | null;
   customerName: string;
   orderNotes: string;
   cartDiscount: number;
@@ -18,6 +22,7 @@ interface POSCartProps {
   totals: CartTotals;
   currencySymbol: string;
   onCustomerNameChange: (value: string) => void;
+  onCustomerIdChange: (id: string | null) => void;
   onOrderNotesChange: (value: string) => void;
   onCartDiscountChange: (value: number) => void;
   onVatRatePercentChange: (value: number) => void;
@@ -33,6 +38,8 @@ export function POSCart({
   designs,
   posMode,
   editingOrderId,
+  customers,
+  customerId,
   customerName,
   orderNotes,
   cartDiscount,
@@ -40,6 +47,7 @@ export function POSCart({
   totals,
   currencySymbol,
   onCustomerNameChange,
+  onCustomerIdChange,
   onOrderNotesChange,
   onCartDiscountChange,
   onVatRatePercentChange,
@@ -72,11 +80,13 @@ export function POSCart({
         {posMode === 'custom' && (
           <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border border-macos-purple/20 bg-macos-purple/10 p-3 dark:border-macos-purple/25 dark:bg-macos-purple/12">
             <label className="block space-y-1.5">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-purple-700 dark:text-purple-300">Client Name</span>
-              <div className="relative">
-                <User className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-purple" aria-hidden="true" />
-                <Input fieldSize="sm" className="pl-8 text-[11px]" value={customerName} onChange={(e) => onCustomerNameChange(e.target.value)} aria-label="Client name" />
-              </div>
+              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-purple-700 dark:text-purple-300">Customer</span>
+              <CustomerSelector
+                customers={customers}
+                customerId={customerId}
+                customerName={customerName}
+                onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
+              />
             </label>
             <label className="block space-y-1.5">
               <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-purple-700 dark:text-purple-300">Production Notes</span>

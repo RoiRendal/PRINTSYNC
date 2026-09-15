@@ -4,6 +4,7 @@ import {
   ShoppingCart,
   BarChart3,
   Users,
+  UserCircle,
   ClipboardList,
   Settings as SettingsIcon,
 } from 'lucide-react';
@@ -15,6 +16,7 @@ export type PageAccessKey =
   | 'inventory'
   | 'pos'
   | 'analytics'
+  | 'customers'
   | 'users'
   | 'settings';
 
@@ -31,11 +33,12 @@ export const ADMIN_PAGE_ACCESS: PageAccessKey[] = [
   'inventory',
   'pos',
   'analytics',
+  'customers',
   'users',
   'settings',
 ];
 
-export const STAFF_PAGE_ACCESS: PageAccessKey[] = ['orders', 'pos', 'inventory'];
+export const STAFF_PAGE_ACCESS: PageAccessKey[] = ['orders', 'pos', 'inventory', 'customers'];
 
 export const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -43,6 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
   { key: 'inventory', label: 'Inventory', path: '/inventory', icon: Box },
   { key: 'pos', label: 'Point of Sale', path: '/pos', icon: ShoppingCart },
   { key: 'analytics', label: 'Analytics', path: '/analytics', icon: BarChart3 },
+  { key: 'customers', label: 'Customers', path: '/customers', icon: UserCircle },
   { key: 'users', label: 'Users', path: '/users', icon: Users },
   { key: 'settings', label: 'Settings', path: '/settings', icon: SettingsIcon },
 ];

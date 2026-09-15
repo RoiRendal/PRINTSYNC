@@ -19,12 +19,16 @@ export type OrderStatus =
 export interface Order {
   id: string;
   customer: string;
+  customerId?: string;
   item: string;
   lineItems?: OrderLineItem[];
   quantity: number;
   status: OrderStatus;
   date: string;
   amount: number;
+  totalPaid?: number;
+  balanceDue?: number;
+  dueDate?: string;
   designId?: string;
   notes?: string;
   isCustom?: boolean;
