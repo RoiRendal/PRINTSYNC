@@ -1,0 +1,9 @@
+{
+  "//": "Type-checks the test suites. `tsconfig.json` is scoped to `src` so the production build stays lean; this config widens the include list and emits nothing.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
+}
