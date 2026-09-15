@@ -29,7 +29,7 @@ function toSettings(row: Record<string, unknown>): BusinessSettings {
 export async function getBusinessSettings(supabase: SupabaseClient): Promise<BusinessSettings> {
   const { data, error } = await supabase
     .from('business_settings')
-    .select('business_name, logo_url, updated_at')
+    .select('business_name, logo_url, vat_rate, currency_symbol, updated_at')
     .eq('id', 1)
     .single();
   if (error || !data) throw new AppError(503, 'SETTINGS_LOOKUP_FAILED', 'Business settings could not be loaded.');

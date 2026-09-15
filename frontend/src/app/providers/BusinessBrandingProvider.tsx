@@ -14,7 +14,9 @@ type BusinessBrandingContextValue = {
   customBusinessLogoDataUrl: string | null;
   setCustomBusinessLogoDataUrl: (dataUrl: string | null) => Promise<void>;
   vatRate: number;
+  setVatRate: (rate: number) => Promise<void>;
   currencySymbol: string;
+  setCurrencySymbol: (symbol: string) => Promise<void>;
   maxCustomLogoBytes: number;
   brandingError: string | null;
 };
@@ -57,10 +59,22 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
   }, [customBusinessLogoDataUrl]);
 
   const setCustomBusinessLogoDataUrl = useCallback(async (dataUrl: string | null) => {
-    const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, logoUrl: dataUrl });
+    const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, logoUrl: dataUrl, vatRate, currencySymbol });
     setCustomBusinessLogoDataUrlState(settings.logoUrl);
     setBrandingError(null);
-  }, [businessDisplayName]);
+  }, [businessDisplayName, vatRate, currencySymbol]);
+
+  const setVatRateCallback = useCallback(async (rate: number) => {
+    const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, logoUrl: customBusinessLogoDataUrl, vatRate: rate, currencySymbol });
+    setVatRate(settings.vatRate ?? 12);
+    setBrandingError(null);
+  }, [businessDisplayName, customBusinessLogoDataUrl, currencySymbol]);
+
+  const setCurrencySymbolCallback = useCallback(async (symbol: string) => {
+    const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, logoUrl: customBusinessLogoDataUrl, vatRate, currencySymbol: symbol });
+    setCurrencySymbol(settings.currencySymbol ?? '₱');
+    setBrandingError(null);
+  }, [businessDisplayName, customBusinessLogoDataUrl, vatRate]);
 
   const effectiveBusinessLogoUrl = customBusinessLogoDataUrl ?? BRAND_LOGO_URL;
 
@@ -72,11 +86,13 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
       customBusinessLogoDataUrl,
       setCustomBusinessLogoDataUrl,
       vatRate,
+      setVatRate: setVatRateCallback,
       currencySymbol,
+      setCurrencySymbol: setCurrencySymbolCallback,
       maxCustomLogoBytes: MAX_CUSTOM_LOGO_BYTES,
       brandingError,
     }),
-    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl, vatRate, currencySymbol, brandingError],
+    [businessDisplayName, setBusinessDisplayName, effectiveBusinessLogoUrl, customBusinessLogoDataUrl, setCustomBusinessLogoDataUrl, vatRate, setVatRateCallback, currencySymbol, setCurrencySymbolCallback, brandingError],
   );
 
   return (

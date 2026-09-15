@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, Building2, Cloud, Database, History, ImagePlus, Palette, Shield } from 'lucide-react';
+import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from 'lucide-react';
 
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input } from '../../../shared/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Select } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
+import { downloadCsv } from '../../../shared/lib/csvExport';
+import { ordersApi } from '../../orders/api/ordersApi';
+import { inventoryApi } from '../../inventory/api/inventoryApi';
+import { paymentsApi } from '../../orders/api/paymentsApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
@@ -40,23 +44,58 @@ export default function Settings() {
     effectiveBusinessLogoUrl,
     customBusinessLogoDataUrl,
     setCustomBusinessLogoDataUrl,
+    vatRate,
+    setVatRate,
+    currencySymbol,
+    setCurrencySymbol,
     maxCustomLogoBytes,
     brandingError,
   } = useBusinessBranding();
   const { settings, toggleStockAlerts, toggleExportAlerts } = useNotifications();
   const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
+  const [vatDraft, setVatDraft] = useState(String(vatRate));
+  const [currencyDraft, setCurrencyDraft] = useState(currencySymbol);
   const [logoUploadError, setLogoUploadError] = useState('');
+  const [defaultsError, setDefaultsError] = useState('');
+  const [exportError, setExportError] = useState('');
   const logoFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setCompanyDraft(businessDisplayName);
   }, [businessDisplayName]);
 
+  useEffect(() => {
+    setVatDraft(String(vatRate));
+  }, [vatRate]);
+
+  useEffect(() => {
+    setCurrencyDraft(currencySymbol);
+  }, [currencySymbol]);
+
   const handleSaveCompanyName = async () => {
     try {
       await setBusinessDisplayName(companyDraft);
     } catch (error) {
       setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be saved.');
+    }
+  };
+
+  const handleSaveDefaults = async () => {
+    setDefaultsError('');
+    try {
+      const rate = parseFloat(vatDraft);
+      if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
+        setDefaultsError('VAT rate must be between 0 and 100.');
+        return;
+      }
+      const symbol = currencyDraft.trim();
+      if (!symbol) {
+        setDefaultsError('Currency symbol is required.');
+        return;
+      }
+      await Promise.all([setVatRate(rate), setCurrencySymbol(symbol)]);
+    } catch (error) {
+      setDefaultsError(error instanceof Error ? error.message : 'Defaults could not be saved.');
     }
   };
 
@@ -86,18 +125,76 @@ export default function Settings() {
     reader.readAsDataURL(file);
   };
 
-  const archives = [
-    { name: 'Weekly Auto-Backup', date: 'Yesterday 11:45 PM', size: '14.2 MB' },
-    { name: 'End-of-Month Audit', date: '2024-04-30', size: '128.5 MB' },
-    { name: 'Inventory Snapshot', date: '2024-04-15', size: '2.1 MB' },
-  ];
+  const handleExportOrders = async () => {
+    setExportError('');
+    try {
+      const orders = await ordersApi.list();
+      const rows = orders.map((o) => ({
+        id: o.id,
+        customer: o.customer,
+        item: o.item,
+        quantity: o.quantity,
+        status: o.status,
+        date: o.date,
+        amount: o.amount,
+        totalPaid: o.totalPaid ?? 0,
+        balanceDue: o.balanceDue ?? 0,
+        dueDate: o.dueDate ?? '',
+        isCustom: o.isCustom ? 'Yes' : 'No',
+      }));
+      downloadCsv(`orders_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Orders could not be exported.');
+    }
+  };
+
+  const handleExportInventory = async () => {
+    setExportError('');
+    try {
+      const items = await inventoryApi.list();
+      const rows = items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        sku: i.sku,
+        category: i.category,
+        stock: i.stock,
+        reorderLevel: i.reorderLevel,
+        price: i.price,
+        costPrice: i.costPrice ?? 0,
+        unit: i.unit,
+      }));
+      downloadCsv(`inventory_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Inventory could not be exported.');
+    }
+  };
+
+  const handleExportTransactions = async () => {
+    setExportError('');
+    try {
+      const transactions = await paymentsApi.list();
+      const rows = transactions.map((t) => ({
+        id: t.id,
+        date: t.date,
+        paymentMethod: t.paymentMethod,
+        subtotal: t.subtotal,
+        discount: t.discount,
+        tax: t.tax,
+        total: t.total,
+        status: t.status,
+        items: t.items.map((i) => `${i.quantity}x ${i.name}`).join('; '),
+      }));
+      downloadCsv(`transactions_${new Date().toISOString().slice(0, 10)}.csv`, rows);
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'Transactions could not be exported.');
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
-
         <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Settings</h1>
-        <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Tune identity, sync posture, appearance, and operational safeguards.</p>
+        <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage business identity, defaults, appearance, and data export.</p>
       </div>
 
       <Card variant="elevated" padding="lg" className="overflow-hidden">
@@ -178,51 +275,59 @@ export default function Settings() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <Card variant="elevated" padding="none" className="overflow-hidden">
-          <CardHeader className="mb-0 border-b border-black/5 p-4 dark:border-white/10">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
+        <Card variant="elevated" padding="lg" className="overflow-hidden">
+          <CardHeader className="border-b border-black/5 pb-4 dark:border-white/10">
             <div className="flex items-start gap-3">
-              <SettingIcon><Database className="h-5 w-5" aria-hidden="true" /></SettingIcon>
+              <SettingIcon><Settings2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
               <div>
-                <CardTitle>Data & Safekeeping</CardTitle>
-                <CardDescription>System archive activity and database connection telemetry.</CardDescription>
+                <CardTitle>Business Defaults</CardTitle>
+                <CardDescription>System-wide values applied to POS transactions and reports.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="grid gap-5 p-4 md:grid-cols-2">
-            <div className="space-y-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">System Archives</h3>
-              {archives.map((item) => (
-                <button
-                  key={item.name}
-                  type="button"
-                  className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] hover:border-macos-blue/30 dark:border-white/10 dark:bg-white/6"
+          <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
+            <div className="space-y-5">
+              <label className="block space-y-1.5" htmlFor="vat-rate">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
+                <Input
+                  id="vat-rate"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.01"
+                  value={vatDraft}
+                  onChange={(e) => setVatDraft(e.target.value)}
+                />
+              </label>
+              <label className="block space-y-1.5" htmlFor="currency-symbol">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
+                <Select
+                  id="currency-symbol"
+                  value={currencyDraft}
+                  onChange={(e) => setCurrencyDraft(e.target.value)}
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-black/5 text-macos-text-muted dark:bg-white/8 dark:text-zinc-500"><History className="h-4 w-4" aria-hidden="true" /></span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-xs font-bold text-macos-text dark:text-zinc-100">{item.name}</span>
-                      <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">{item.date}</span>
-                    </span>
-                  </span>
-                  <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{item.size}</span>
-                </button>
-              ))}
+                  <option value="₱">₱ (Philippine Peso)</option>
+                  <option value="$">$ (US Dollar)</option>
+                  <option value="€">€ (Euro)</option>
+                  <option value="£">£ (British Pound)</option>
+                  <option value="¥">¥ (Japanese Yen)</option>
+                  <option value="₹">₹ (Indian Rupee)</option>
+                  <option value="A$">A$ (Australian Dollar)</option>
+                  <option value="C$">C$ (Canadian Dollar)</option>
+                </Select>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={handleSaveDefaults}>Save defaults</Button>
+              </div>
+              {defaultsError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{defaultsError}</p>}
             </div>
 
             <GlassCard className="space-y-4 p-4">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Connection Status</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Cloud className="h-4 w-4 text-macos-green" aria-hidden="true" />
-                  <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Cloud Sync</span>
-                </div>
-                <Badge variant="green">Online</Badge>
-              </div>
-              <div className="h-px bg-black/5 dark:bg-white/10" />
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
               <div className="space-y-3 text-[10px]">
-                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Database Version</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">v14.2.1-stable</span></div>
-                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Integrity Check</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">May 01, 2026</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
               </div>
             </GlassCard>
           </CardContent>
@@ -254,20 +359,43 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <Card variant="glass" padding="lg">
-          <CardHeader>
+        <Card variant="elevated" padding="lg" className="overflow-hidden">
+          <CardHeader className="border-b border-black/5 pb-4 dark:border-white/10">
             <div className="flex items-start gap-3">
-              <SettingIcon><Shield className="h-5 w-5" aria-hidden="true" /></SettingIcon>
+              <SettingIcon><Download className="h-5 w-5" aria-hidden="true" /></SettingIcon>
               <div>
-                <CardTitle>Security</CardTitle>
-                <CardDescription>Mac-style toggles for protective controls.</CardDescription>
+                <CardTitle>Data Export</CardTitle>
+                <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <div className="space-y-3">
-            <ToggleSwitch label="Two-Factor Authentication" enabled />
-            <ToggleSwitch label="IP Access Restriction" enabled={false} />
-          </div>
+          <CardContent className="space-y-3 pt-5">
+            {exportError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{exportError}</p>}
+            <button
+              type="button"
+              onClick={handleExportOrders}
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+            >
+              <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
+              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportInventory}
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+            >
+              <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
+              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportTransactions}
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+            >
+              <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
+              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+            </button>
+          </CardContent>
         </Card>
 
         <Card variant="glass" padding="lg">
