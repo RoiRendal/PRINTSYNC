@@ -136,9 +136,24 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
               <h3 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{order.customer}</h3>
               <p className="font-mono text-xs text-macos-text-muted dark:text-zinc-500">#{order.id}</p>
             </div>
-            <div className="sm:text-right">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Order Date</p>
-              <p className="text-sm font-bold text-macos-text dark:text-zinc-100">{order.date}</p>
+            <div className="flex flex-col gap-2 sm:text-right">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Order Date</p>
+                <p className="text-sm font-bold text-macos-text dark:text-zinc-100">{order.date}</p>
+              </div>
+              {order.dueDate && (
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Due Date</p>
+                  <p className={cn(
+                    'text-sm font-bold',
+                    new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered'
+                      ? 'text-macos-red dark:text-red-300'
+                      : 'text-macos-text dark:text-zinc-100',
+                  )}>
+                    {order.dueDate}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -296,6 +311,13 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                 <Button type="submit" size="sm" fullWidth leftIcon={<Plus className="h-3 w-3" aria-hidden="true" />}>Record Payment</Button>
               </form>
             </Card>
+          )}
+
+          {order.dueDate && new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' && (
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              This order is overdue (due {order.dueDate}). Prioritize completion or update the customer.
+            </div>
           )}
 
           {selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup' && (

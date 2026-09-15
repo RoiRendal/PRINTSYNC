@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2, AlertCircle } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2, AlertCircle, Clock } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -17,6 +17,7 @@ import {
   TableRow,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
+import { cn } from '../../../../shared/lib/cn';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
@@ -70,6 +71,7 @@ export function OrdersTable({
                 <TableHead>Project / Client</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead className="min-w-[260px]">Work Phase</TableHead>
+                <TableHead className="text-right">Due Date</TableHead>
                 <TableHead className="text-right">Value</TableHead>
                 <TableHead className="text-right">Paid</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
@@ -129,6 +131,22 @@ export function OrdersTable({
                         </Button>
                       </div>
                     </TableCell>
+                    <TableCell className="text-right">
+                      {order.dueDate ? (
+                        <div className="flex items-center justify-end gap-1.5">
+                          {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
+                            <>
+                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red shadow-[0_0_6px_rgb(255_59_48/0.6)]" />
+                              <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
+                            </>
+                          ) : (
+                            <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
@@ -178,7 +196,7 @@ export function OrdersTable({
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={8} className="py-12">
+                  <TableCell colSpan={9} className="py-12">
                     <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>
