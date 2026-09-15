@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { cn } from '../../shared/lib/cn';
-import { useAuth } from '../../features/users/state/AuthContext';
+import { useAuth } from '../../app/stores/useAuthStore';
 
 export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
   const { currentUser } = useAuth();

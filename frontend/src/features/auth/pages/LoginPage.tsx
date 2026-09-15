@@ -4,7 +4,7 @@ import { Lock, Mail } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, GlassCard, Input } from '../../../shared/components/ui';
-import { useAuth } from '../../users/state/AuthContext';
+import { useAuth } from '../../../app/stores/useAuthStore';
 
 export default function LoginPage() {
   const { login, currentUser, isSessionLoading, authError } = useAuth();

@@ -2,7 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './layout/AppLayout';
 import { AppProviders } from './providers/AppProviders';
-import { useAuth } from '../features/users/state/AuthContext';
+import { useAuth } from '../app/stores/useAuthStore';
 import LoginPage from '../features/auth/pages/LoginPage';
 import { NAV_ITEMS } from '../shared/constants/navigation';
 import { ErrorBoundary } from '../shared/components/feedback/ErrorBoundary';

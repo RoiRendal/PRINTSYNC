@@ -19,3 +19,6 @@
 
 # Supabase CLI local metadata
 supabase/.temp/
+
+# Temporary scratch / verification scratchpad (duplicates public assets)
+**/.tmp-verify/

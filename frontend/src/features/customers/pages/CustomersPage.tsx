@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
-import { useCustomers } from '../state/CustomerContext';
+import { useCustomers } from '../../../app/stores/useCustomerStore';
 import type { Customer } from '../types';
 import { cn } from '../../../shared/lib/cn';
 

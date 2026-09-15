@@ -1,15 +1,24 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BusinessSettings } from '@printsync/shared-types';
+import type { BusinessSettings, PublicBranding } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 
-export type { BusinessSettings };
+export type { BusinessSettings, PublicBranding };
 
+/**
+ * Fields the generic settings form owns.
+ *
+ * `logo_url` is deliberately absent: the logo is a Storage-backed URL now, so it
+ * has its own writer (`setBusinessLogo`) instead of being re-sent on every save.
+ * That removes the old coupling where editing the VAT rate had to echo the logo
+ * back or silently wipe it.
+ */
 export interface BusinessSettingsInput {
   businessName: string;
-  logoUrl?: string | null | undefined;
   vatRate?: number | undefined;
   currencySymbol?: string | undefined;
 }
+
+const SETTINGS_COLUMNS = 'business_name, logo_url, vat_rate, currency_symbol, updated_at';
 
 function toSettings(row: Record<string, unknown>): BusinessSettings {
   return {
@@ -24,11 +33,32 @@ function toSettings(row: Record<string, unknown>): BusinessSettings {
 export async function getBusinessSettings(supabase: SupabaseClient): Promise<BusinessSettings> {
   const { data, error } = await supabase
     .from('business_settings')
-    .select('business_name, logo_url, vat_rate, currency_symbol, updated_at')
+    .select(SETTINGS_COLUMNS)
     .eq('id', 1)
     .single();
   if (error || !data) throw new AppError(503, 'SETTINGS_LOOKUP_FAILED', 'Business settings could not be loaded.');
   return toSettings(data);
+}
+
+/**
+ * Brand identity for the unauthenticated login screen.
+ *
+ * Only `business_name` and `logo_url` are selected — the operational columns
+ * (`vat_rate`, `currency_symbol`) are never read here, so they cannot leak even if
+ * the mapping below is changed carelessly. The query stays narrow on purpose:
+ * this is the one settings read that runs without a session.
+ */
+export async function getPublicBranding(supabase: SupabaseClient): Promise<PublicBranding> {
+  const { data, error } = await supabase
+    .from('business_settings')
+    .select('business_name, logo_url')
+    .eq('id', 1)
+    .single();
+  if (error || !data) throw new AppError(503, 'BRANDING_LOOKUP_FAILED', 'Business branding could not be loaded.');
+  return {
+    businessName: String(data.business_name),
+    logoUrl: data.logo_url ? String(data.logo_url) : null,
+  };
 }
 
 export async function updateBusinessSettings(
@@ -40,13 +70,34 @@ export async function updateBusinessSettings(
     .from('business_settings')
     .update({
       business_name: input.businessName,
-      logo_url: input.logoUrl ?? null,
       vat_rate: input.vatRate,
       currency_symbol: input.currencySymbol,
       updated_by: actorId,
     })
     .eq('id', 1)
-    .select('business_name, logo_url, vat_rate, currency_symbol, updated_at')
+    .select(SETTINGS_COLUMNS)
+    .single();
+  if (error || !data) throw new AppError(400, 'SETTINGS_UPDATE_FAILED', 'Business settings could not be updated.');
+  return toSettings(data);
+}
+
+/**
+ * The single writer for `logo_url`.
+ *
+ * Pass a Storage public URL after an upload, or `null` to fall back to the
+ * bundled `/brand-logo.png`. Only the logo column is touched, so this can never
+ * clobber a concurrent edit of the business name or defaults.
+ */
+export async function setBusinessLogo(
+  supabase: SupabaseClient,
+  logoUrl: string | null,
+  actorId: string,
+): Promise<BusinessSettings> {
+  const { data, error } = await supabase
+    .from('business_settings')
+    .update({ logo_url: logoUrl, updated_by: actorId })
+    .eq('id', 1)
+    .select(SETTINGS_COLUMNS)
     .single();
   if (error || !data) throw new AppError(400, 'SETTINGS_UPDATE_FAILED', 'Business settings could not be updated.');
   return toSettings(data);

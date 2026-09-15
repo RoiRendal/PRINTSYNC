@@ -22,8 +22,8 @@ import {
   getStatusBadgeVariant,
 } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
-import { useInventory } from '../../inventory/state/InventoryContext';
-import { useOrders } from '../../orders/state/OrderContext';
+import { useInventory } from '../../../app/stores/useInventoryStore';
+import { useOrders } from '../../../app/stores/useOrderStore';
 import { isCustomOrder } from '../../orders/utils/orderType';
 
 type StatTone = 'green' | 'blue' | 'red' | 'purple';

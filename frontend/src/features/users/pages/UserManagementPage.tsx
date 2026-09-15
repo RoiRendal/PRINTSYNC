@@ -25,8 +25,9 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
-import { RbacRole, UserRecord, useUserContext } from '../state/UserContext';
-import { useAuth } from '../state/AuthContext';
+import { useUserContext } from '../../../app/stores/useUserStore';
+import type { RbacRole, UserSummary } from '../types';
+import { useAuth } from '../../../app/stores/useAuthStore';
 import { cn } from '../../../shared/lib/cn';
 
 interface FormState {
@@ -63,7 +64,7 @@ export default function UserManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [userToDelete, setUserToDelete] = useState<UserRecord | null>(null);
+  const [userToDelete, setUserToDelete] = useState<UserSummary | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const adminCount = users.filter((user) => user.role === 'admin').length;
@@ -88,7 +89,7 @@ export default function UserManagement() {
     setIsModalOpen(true);
   };
 
-  const openEdit = (user: UserRecord) => {
+  const openEdit = (user: UserSummary) => {
     setEditingUserId(user.id);
     setForm({
       name: user.name,
@@ -109,7 +110,7 @@ export default function UserManagement() {
     setForm(EMPTY_FORM);
   };
 
-  const openDelete = (user: UserRecord) => {
+  const openDelete = (user: UserSummary) => {
     setUserToDelete(user);
     setIsDeleteModalOpen(true);
   };

@@ -6,10 +6,13 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "provision:user": "tsx src/scripts/provisionUser.ts",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:integration": "tsx --test tests/integration/*.test.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
-    "lint": "tsc --noEmit -p tsconfig.json"
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "lint:tests": "tsc --noEmit -p tsconfig.test.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

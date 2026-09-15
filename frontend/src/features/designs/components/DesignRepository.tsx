@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Tag, Trash2, UploadCloud } from 'lucide-react';
 
 import { designsApi } from '../api/designsApi';
-import { useDesigns } from '../state/DesignContext';
+import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { CreateDesign, Design } from '../types';
 import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
+import { readFileAsDataUrl } from '../../../shared/lib/readFileAsDataUrl';
 import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -12,15 +13,6 @@ import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error('The selected image could not be read.'));
-    reader.readAsDataURL(file);
-  });
-}
 
 export function DesignRepository() {
   const { designs, isLoading, error, refresh, addDesign, deleteDesign, updateDesign } = useDesigns();
