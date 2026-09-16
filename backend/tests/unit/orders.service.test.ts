@@ -223,6 +223,8 @@ describe('orders.service', () => {
   });
 
   describe('updateOrder', () => {
+    const version = ORDER_ROW.updated_at;
+
     it('replaces line items through the dedicated RPC, keeping unchanged fields', async () => {
       const db = createFakeSupabase();
       // First read: the existing order (updateOrder reads it to merge).
@@ -236,11 +238,15 @@ describe('orders.service', () => {
         'order-1',
         { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20 }] },
         'actor-1',
+        version,
       );
 
       const rpcPayload = db.lastCall('replace_order_with_items')?.payload as Record<string, unknown>;
       assert.equal(rpcPayload.p_order_id, 'order-1');
       assert.equal(rpcPayload.p_actor_id, 'actor-1');
+      // The version the editor loaded travels with the write, so the RPC can
+      // refuse it if the order moved on.
+      assert.equal(rpcPayload.p_expected_updated_at, version);
       // Values not supplied fall back to the existing order.
       assert.equal(rpcPayload.p_customer, 'Acme Print Co');
       assert.equal(rpcPayload.p_status, 'In Production');
@@ -251,16 +257,57 @@ describe('orders.service', () => {
       assert.equal(rpcPayload.p_due_date, '2026-09-30');
     });
 
+    it('maps a lost race on the RPC path to a 409 carrying both versions', async () => {
+      const db = createFakeSupabase();
+      queueOrderSingle(db);
+      db.queueRpc('replace_order_with_items', {
+        data: null,
+        error: {
+          message: 'This order was changed by someone else while you were editing it.',
+          details: JSON.stringify({
+            orderId: 'order-1',
+            expectedUpdatedAt: version,
+            currentUpdatedAt: '2026-09-15T09:00:00.000Z',
+          }),
+        },
+      });
+
+      const error = await assertAppError(
+        () =>
+          updateOrder(
+            db.client,
+            'order-1',
+            { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20 }] },
+            'actor-1',
+            version,
+          ),
+        409,
+        'ORDER_CONFLICT',
+      );
+
+      assert.deepEqual(error.details, {
+        orderId: 'order-1',
+        expectedUpdatedAt: version,
+        currentUpdatedAt: '2026-09-15T09:00:00.000Z',
+      });
+    });
+
     it('patches scalar fields directly when no line items are supplied', async () => {
       const db = createFakeSupabase();
       db.queueTable('orders', { data: { ...ORDER_ROW, status: 'Completed' }, error: null });
       queueOrderSingle(db);
 
-      await updateOrder(db.client, 'order-1', { status: 'Completed', notes: 'Done' }, 'actor-1');
+      await updateOrder(db.client, 'order-1', { status: 'Completed', notes: 'Done' }, 'actor-1', version);
 
       const update = db.lastCall('orders', 'update');
       assert.equal(update?.kind, 'update');
       assert.deepEqual(update?.payload, { status: 'Completed', notes: 'Done' });
+      // The version rides in the WHERE clause, which is what makes this path a
+      // compare-and-swap rather than a blind overwrite.
+      assert.deepEqual(update?.filters.filter((filter) => filter.method === 'eq'), [
+        { method: 'eq', args: ['id', 'order-1'] },
+        { method: 'eq', args: ['updated_at', version] },
+      ]);
       // The line-item RPC must not be involved in a scalar patch.
       assert.equal(db.callsFor('replace_order_with_items').length, 0);
     });
@@ -270,7 +317,7 @@ describe('orders.service', () => {
       db.queueTable('orders', { data: ORDER_ROW, error: null });
       queueOrderSingle(db);
 
-      await updateOrder(db.client, 'order-1', { customerId: 'customer-2', dueDate: '2026-10-01', isCustom: false }, 'actor-1');
+      await updateOrder(db.client, 'order-1', { customerId: 'customer-2', dueDate: '2026-10-01', isCustom: false }, 'actor-1', version);
 
       assert.deepEqual(db.lastCall('orders', 'update')?.payload, {
         is_custom: false,
@@ -284,7 +331,7 @@ describe('orders.service', () => {
       db.queueTable('orders', { data: ORDER_ROW, error: null });
       queueOrderSingle(db);
 
-      await updateOrder(db.client, 'order-1', { customerId: undefined, dueDate: undefined }, 'actor-1');
+      await updateOrder(db.client, 'order-1', { customerId: undefined, dueDate: undefined }, 'actor-1', version);
 
       // `undefined` means "not supplied" in the update type, so nothing is sent.
       assert.deepEqual(db.lastCall('orders', 'update')?.payload, {});
@@ -292,9 +339,34 @@ describe('orders.service', () => {
 
     it('raises 404 when the order to patch does not exist', async () => {
       const db = createFakeSupabase();
-      db.queueTable('orders', { data: null, error: null });
+      // The update matches nothing, and the follow-up lookup confirms it is gone.
+      db.queueTable('orders', { data: null, error: null }, { data: null, error: null });
 
-      await assertAppError(() => updateOrder(db.client, 'missing', { status: 'Completed' }, 'actor-1'), 404, 'ORDER_NOT_FOUND');
+      await assertAppError(
+        () => updateOrder(db.client, 'missing', { status: 'Completed' }, 'actor-1', version),
+        404,
+        'ORDER_NOT_FOUND',
+      );
+    });
+
+    it('reports a conflict, not a 404, when a scalar patch loses a race', async () => {
+      const db = createFakeSupabase();
+      // Nothing matched the compare-and-swap...
+      db.queueTable('orders', { data: null, error: null });
+      // ...but the order is still there, carrying a newer version.
+      db.queueTable('orders', { data: { id: 'order-1', updated_at: '2026-09-15T09:00:00.000Z' }, error: null });
+
+      const error = await assertAppError(
+        () => updateOrder(db.client, 'order-1', { status: 'Completed' }, 'actor-1', version),
+        409,
+        'ORDER_CONFLICT',
+      );
+
+      assert.deepEqual(error.details, {
+        orderId: 'order-1',
+        expectedUpdatedAt: version,
+        currentUpdatedAt: '2026-09-15T09:00:00.000Z',
+      });
     });
   });
 

@@ -1,11 +1,27 @@
 import { Banknote, CheckCircle2, CreditCard, Printer } from 'lucide-react';
+import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Button, Modal } from '../../../../shared/components/ui';
+import { cn } from '../../../../shared/lib/cn';
+
+/**
+ * Why the last checkout attempt did not go through.
+ *
+ * `stock` is populated only for a short-stock rejection, which is the one
+ * failure the cashier can act on without leaving the till — so the modal flags
+ * the exact cart line instead of leaving them to guess which item is short.
+ */
+export interface CheckoutError {
+  message: string;
+  stock: InsufficientStockDetails | null;
+}
 
 interface POSCheckoutModalProps {
   isOpen: boolean;
   checkoutSuccess: boolean;
+  isSubmitting: boolean;
+  checkoutError: CheckoutError | null;
   posMode: 'retail' | 'custom';
   cart: CartItem[];
   totals: CartTotals;
@@ -20,6 +36,8 @@ interface POSCheckoutModalProps {
 export function POSCheckoutModal({
   isOpen,
   checkoutSuccess,
+  isSubmitting,
+  checkoutError,
   posMode,
   cart,
   totals,
@@ -32,8 +50,17 @@ export function POSCheckoutModal({
 }: POSCheckoutModalProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
 
+  /**
+   * The shortfall that applies to one cart line, or `null`.
+   *
+   * Done per line rather than once up front so TypeScript can narrow `stock` to
+   * non-null where it is rendered.
+   */
+  const shortfallFor = (itemId: string): InsufficientStockDetails | null =>
+    checkoutError?.stock && checkoutError.stock.itemId === itemId ? checkoutError.stock : null;
+
   return (
-    <Modal isOpen={isOpen} onClose={() => !checkoutSuccess && onClose()} title="Process Checkout">
+    <Modal isOpen={isOpen} onClose={() => !checkoutSuccess && !isSubmitting && onClose()} title="Process Checkout">
       <div className="space-y-6">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
@@ -54,6 +81,20 @@ export function POSCheckoutModal({
           </div>
         ) : (
           <>
+            {/*
+              The failure has to live inside the dialog. The page-level banner sits
+              behind this overlay, so a cashier whose sale was rejected used to see
+              the button simply do nothing.
+            */}
+            {checkoutError && (
+              <div
+                role="alert"
+                className="rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-semibold leading-relaxed text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300"
+              >
+                {checkoutError.message}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Amount to Pay</span>
@@ -70,24 +111,45 @@ export function POSCheckoutModal({
               <div className="space-y-2">
                 <label className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-400">Payment Method</label>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
-                  <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
+                  <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
+                  <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
                 </div>
               </div>
             )}
 
             <div className="max-h-40 space-y-2 overflow-y-auto border-t border-black/5 pt-4 pr-2 dark:border-white/10">
-              {cart.map((item, idx) => (
-                <div key={`${item.id}-${idx}`} className="flex justify-between text-[10px]">
-                  <span className="font-medium uppercase text-macos-text-muted">{item.qty}x {item.name}</span>
-                  <span className="font-mono text-macos-text dark:text-zinc-300">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
-                </div>
-              ))}
+              {cart.map((item, idx) => {
+                const shortfall = shortfallFor(item.id);
+                return (
+                  <div key={`${item.id}-${idx}`} className="space-y-0.5">
+                    <div className="flex justify-between text-[10px]">
+                      <span className={cn('font-medium uppercase', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
+                        {item.qty}x {item.name}
+                      </span>
+                      <span className={cn('font-mono', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-300')}>
+                        {currencySymbol}{(item.price * item.qty).toFixed(2)}
+                      </span>
+                    </div>
+                    {shortfall && (
+                      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-red-700 dark:text-red-300">
+                        Only {shortfall.available} left — {shortfall.requested} requested
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex gap-3 pt-2">
-              <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-              <Button type="button" fullWidth onClick={onConfirm}>{posMode === 'retail' ? 'Confirm & Pay' : 'Create Order'}</Button>
+              <Button type="button" variant="secondary" fullWidth disabled={isSubmitting} onClick={onClose}>Cancel</Button>
+              {/*
+                Disabled while a sale is in flight. The idempotency key already
+                makes a repeat harmless, but stopping the second request at the
+                button is what keeps a double-click from looking like a hang.
+              */}
+              <Button type="button" fullWidth isLoading={isSubmitting} onClick={onConfirm}>
+                {isSubmitting ? 'Processing…' : posMode === 'retail' ? 'Confirm & Pay' : 'Create Order'}
+              </Button>
             </div>
           </>
         )}

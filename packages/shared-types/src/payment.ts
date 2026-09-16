@@ -22,3 +22,20 @@ export interface Transaction {
 }
 
 export type CreateTransaction = Omit<Transaction, 'id' | 'date'>;
+
+/**
+ * The structured context the API attaches when a sale is rejected because stock
+ * ran short, carried on the `INSUFFICIENT_STOCK` (409) response.
+ *
+ * It exists so the POS can point at the offending cart line and say how many are
+ * actually left, instead of showing a bare "the transaction could not be
+ * completed" banner that leaves the cashier guessing. Kept here, rather than
+ * duplicated, so the side that raises it and the side that renders it cannot
+ * drift apart.
+ */
+export interface InsufficientStockDetails {
+  itemId: string;
+  itemName: string;
+  available: number;
+  requested: number;
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';

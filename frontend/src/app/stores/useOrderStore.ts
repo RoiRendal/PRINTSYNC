@@ -8,7 +8,12 @@ import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface OrderActions {
   addOrder: (order: CreateOrder) => Promise<Order>;
-  updateOrder: (id: string, order: UpdateOrder) => Promise<Order>;
+  /**
+   * @param expectedUpdatedAt the order's `updatedAt` as the editor loaded it. The
+   *   save is refused if the order has moved on since, so two staff editing the
+   *   same order cannot silently overwrite each other.
+   */
+  updateOrder: (id: string, order: UpdateOrder, expectedUpdatedAt: string) => Promise<Order>;
   deleteOrder: (id: string) => Promise<void>;
   recordPayment: (payment: CreateOrderPayment) => Promise<OrderPayment>;
   refreshOrder: (id: string) => Promise<Order>;
@@ -33,8 +38,8 @@ export const useOrderStore = createListStore<Order, OrderActions>({
       return created;
     },
 
-    updateOrder: async (id, order) => {
-      const updated = await ordersApi.update(id, order);
+    updateOrder: async (id, order, expectedUpdatedAt) => {
+      const updated = await ordersApi.update(id, order, expectedUpdatedAt);
       mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
       setError(null);
       emitDataChange('orders');

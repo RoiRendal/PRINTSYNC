@@ -81,6 +81,19 @@ export const NotificationPanel = React.forwardRef<
               </button>
             </>
           )}
+          {/*
+            Always rendered, unlike the two above: the panel can be empty, and
+            without this the only way to dismiss it would be to click outside it.
+          */}
+          <button
+            type="button"
+            onClick={onClose}
+            title="Close"
+            aria-label="Close notifications"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+          >
+            <X className="h-3.5 w-3.5" aria-hidden="true" />
+          </button>
         </div>
       </div>
 

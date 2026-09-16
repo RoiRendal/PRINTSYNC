@@ -1,7 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
+import type { OrderConflictDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+
+/**
+ * The structured context the RPC attaches when a save loses a race with another
+ * editor. Lives in `@printsync/shared-types` so the API that raises it and the UI
+ * that explains it share one definition; re-exported to keep this module's own
+ * surface unchanged.
+ */
+export type { OrderConflictDetails };
 
 export type OrderStatus = 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Delivered';
 
@@ -23,6 +31,13 @@ export interface OrderRecord {
   quantity: number;
   status: OrderStatus;
   date: string;
+  /**
+   * The row's `updated_at`, handed to the client so its next save can name the
+   * version it was working from. Passed back verbatim — it is a version token,
+   * not a date to be parsed and re-formatted, and rounding it to milliseconds
+   * would make every save look like a conflict.
+   */
+  updatedAt: string;
   amount: number;
   totalPaid: number;
   balanceDue: number;
@@ -70,6 +85,7 @@ function toRecord(
     quantity: items.reduce((total, item) => total + item.quantity, 0),
     status: String(row.status) as OrderStatus,
     date: String(row.created_at).slice(0, 10),
+    updatedAt: String(row.updated_at),
     amount: Number(row.amount),
     totalPaid,
     balanceDue: Math.max(0, Number(row.amount) - totalPaid),
@@ -161,7 +177,53 @@ export async function createOrder(supabase: SupabaseClient, input: OrderInput, a
   return getOrder(supabase, String((data as Record<string, unknown>).id));
 }
 
-export async function updateOrder(supabase: SupabaseClient, id: string, input: OrderUpdateInput, actorId: string): Promise<OrderRecord> {
+function isOrderConflictDetails(value: unknown): value is OrderConflictDetails {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.orderId === 'string' &&
+    typeof candidate.expectedUpdatedAt === 'string' &&
+    typeof candidate.currentUpdatedAt === 'string'
+  );
+}
+
+/**
+ * Turns an RPC failure into the right HTTP outcome.
+ *
+ * A lost race is not a bad request — the payload was well formed and would have
+ * succeeded a moment earlier — so it is a 409, and it carries the version the
+ * caller was working from so the UI can say what happened.
+ */
+function mapUpdateFailure(error: { message?: string; details?: string | null } | null): AppError {
+  const message = error?.message ?? 'The order could not be updated.';
+
+  if (typeof error?.details === 'string' && error.details.length > 0) {
+    try {
+      const parsed: unknown = JSON.parse(error.details);
+      if (isOrderConflictDetails(parsed)) {
+        return new AppError(409, 'ORDER_CONFLICT', message, parsed);
+      }
+    } catch {
+      // `details` is not always ours — Postgres also puts constraint names there.
+      // A parse failure simply means "no structured context".
+    }
+  }
+
+  return new AppError(400, 'ORDER_UPDATE_FAILED', message);
+}
+
+/**
+ * @param expectedUpdatedAt the `updatedAt` the editor loaded. The write is refused
+ *   if the order has moved on since, so two staff editing the same order cannot
+ *   silently overwrite each other — the second save fails loudly instead.
+ */
+export async function updateOrder(
+  supabase: SupabaseClient,
+  id: string,
+  input: OrderUpdateInput,
+  actorId: string,
+  expectedUpdatedAt: string,
+): Promise<OrderRecord> {
   if (input.lineItems !== undefined) {
     const existing = await getOrder(supabase, id);
     const { data, error } = await supabase.rpc('replace_order_with_items', {
@@ -175,8 +237,9 @@ export async function updateOrder(supabase: SupabaseClient, id: string, input: O
       p_actor_id: actorId,
       p_customer_id: input.customerId ?? existing.customerId ?? null,
       p_due_date: input.dueDate ?? existing.dueDate ?? null,
+      p_expected_updated_at: expectedUpdatedAt,
     });
-    if (error || !data) throw new AppError(400, 'ORDER_UPDATE_FAILED', error?.message ?? 'The order could not be updated.');
+    if (error || !data) throw mapUpdateFailure(error);
     return getOrder(supabase, id);
   }
 
@@ -188,8 +251,39 @@ export async function updateOrder(supabase: SupabaseClient, id: string, input: O
   if (input.isCustom !== undefined) updates.is_custom = input.isCustom;
   if (input.customerId !== undefined) updates.customer_id = input.customerId ?? null;
   if (input.dueDate !== undefined) updates.due_date = input.dueDate ?? null;
-  const { data, error } = await supabase.from('orders').update(updates).eq('id', id).select(orderSelect).maybeSingle();
-  if (error || !data) throw new AppError(404, 'ORDER_NOT_FOUND', 'The order was not found.');
+
+  /*
+   * A compare-and-swap rather than a plain update: carrying the loaded version in
+   * the filter means the statement matches no row at all if someone else got
+   * there first. This path has no RPC to lock inside, so the WHERE clause is what
+   * makes it atomic.
+   */
+  const { data, error } = await supabase
+    .from('orders')
+    .update(updates)
+    .eq('id', id)
+    .eq('updated_at', expectedUpdatedAt)
+    .select(orderSelect)
+    .maybeSingle();
+  if (error) throw new AppError(400, 'ORDER_UPDATE_FAILED', error.message);
+
+  if (!data) {
+    // Nothing matched. Ask why, so a lost race reads as a conflict rather than a
+    // bare "not found" that would send the user hunting for a deleted order.
+    const current = await supabase.from('orders').select('id, updated_at').eq('id', id).maybeSingle();
+    if (!current.data) throw new AppError(404, 'ORDER_NOT_FOUND', 'The order was not found.');
+    throw new AppError(
+      409,
+      'ORDER_CONFLICT',
+      'This order was changed by someone else while you were editing it.',
+      {
+        orderId: id,
+        expectedUpdatedAt,
+        currentUpdatedAt: String(current.data.updated_at),
+      } satisfies OrderConflictDetails,
+    );
+  }
+
   return getOrder(supabase, String(data.id));
 }
 

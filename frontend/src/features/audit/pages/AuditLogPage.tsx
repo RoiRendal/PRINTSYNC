@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Filter, RefreshCw, Search, ScrollText } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ChevronLeft, ChevronRight, RefreshCw, Search, ScrollText } from 'lucide-react';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
@@ -10,7 +10,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  GlassCard,
   Input,
   Select,
   Table,
@@ -21,9 +20,9 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
+import type { BadgeVariant } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { useAuditLogs } from '../hooks/useAuditLogs';
-import type { AuditLogRecord } from '../types';
 
 const ACTION_OPTIONS = [
   { value: '', label: 'All Actions' },
@@ -73,8 +72,15 @@ function formatAction(action: string): string {
     .join(' ');
 }
 
+/**
+ * `BadgeVariant` is the only valid set of values — the previous local union
+ * declared `'default'` and `'yellow'`, neither of which exists. `Badge` looks its
+ * variant up in a record, so an unknown value resolved to `undefined` and the
+ * badge rendered with no colour at all. Typing the variable as `BadgeVariant`
+ * makes that class of mistake a compile error.
+ */
 function ActionBadge({ action }: { action: string }) {
-  let variant: 'default' | 'green' | 'blue' | 'red' | 'purple' | 'yellow' = 'default';
+  let variant: BadgeVariant = 'neutral';
   if (action.includes('.created')) variant = 'green';
   else if (action.includes('.updated')) variant = 'blue';
   else if (action.includes('.deleted') || action.includes('.voided')) variant = 'red';
@@ -112,7 +118,6 @@ export default function AuditLogPage() {
     isLoading,
     error,
     page,
-    pageSize,
     total,
     totalPages,
     actionFilter,

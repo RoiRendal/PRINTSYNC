@@ -48,3 +48,19 @@ export interface OrderPayment {
 }
 
 export type CreateOrderPayment = Omit<OrderPayment, 'id' | 'createdAt'>;
+
+/**
+ * The structured context the API attaches when an order save is refused because
+ * someone else changed the order first, carried on the `ORDER_CONFLICT` (409)
+ * response.
+ *
+ * The editor sent `expectedUpdatedAt`; the row now carries `currentUpdatedAt`. It
+ * exists so the UI can explain the conflict in one sentence and pull the other
+ * person's version, instead of reporting a generic failure and leaving the user
+ * to work out that their edit was based on a stale screen.
+ */
+export interface OrderConflictDetails {
+  orderId: string;
+  expectedUpdatedAt: string;
+  currentUpdatedAt: string;
+}

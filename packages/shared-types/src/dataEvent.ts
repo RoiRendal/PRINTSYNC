@@ -35,8 +35,12 @@ export type DataDomain =
  * `connected` is sent once when the stream is established, so the client can
  * distinguish "live" from "still dialling". `data-change` carries a
  * `DataChangeEvent` payload.
+ *
+ * `heartbeat` is a keep-alive, and it is a named event rather than a `: ping`
+ * comment on purpose — the browser's `EventSource` never surfaces comment frames
+ * to script, so a client watching for silence cannot see them.
  */
-export type RealtimeEventName = 'connected' | 'data-change';
+export type RealtimeEventName = 'connected' | 'data-change' | 'heartbeat';
 
 /**
  * Payload of a `data-change` event.

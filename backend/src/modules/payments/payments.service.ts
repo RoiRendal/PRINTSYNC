@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
+import type { InsufficientStockDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
@@ -34,6 +34,12 @@ export interface TransactionInput {
   total: number;
   paymentMethod: PaymentMethod;
   paymentAmount: number;
+  /**
+   * Identifies this one checkout attempt. Replaying the same value returns the
+   * original transaction instead of creating a second sale, which is what stops a
+   * double-click or a retry after a dropped response from charging twice.
+   */
+  idempotencyKey: string;
 }
 
 const transactionSelect = 'id, status, subtotal, discount, tax, total, payment_method, created_at';
@@ -112,6 +118,51 @@ export async function getTransaction(supabase: SupabaseClient, id: string): Prom
   return transaction as TransactionRecord;
 }
 
+/**
+ * The structured context the RPC attaches when stock runs short.
+ *
+ * The shape itself lives in `@printsync/shared-types` so the API that raises it
+ * and the POS that renders it share one definition; this re-export keeps the
+ * service's own surface unchanged.
+ */
+export type { InsufficientStockDetails };
+
+function isInsufficientStockDetails(value: unknown): value is InsufficientStockDetails {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.itemId === 'string' &&
+    typeof candidate.itemName === 'string' &&
+    typeof candidate.available === 'number' &&
+    typeof candidate.requested === 'number'
+  );
+}
+
+/**
+ * Turns an RPC failure into the right HTTP outcome.
+ *
+ * A stock shortfall is not a bad request — it was well formed and would have
+ * succeeded a minute earlier — so it is a 409, and it carries the numbers the POS
+ * needs to point at the offending cart line rather than showing a bare banner.
+ */
+function mapCreateFailure(error: { message?: string; details?: string | null } | null): AppError {
+  const message = error?.message ?? 'The transaction could not be created.';
+
+  if (typeof error?.details === 'string' && error.details.length > 0) {
+    try {
+      const parsed: unknown = JSON.parse(error.details);
+      if (isInsufficientStockDetails(parsed)) {
+        return new AppError(409, 'INSUFFICIENT_STOCK', message, parsed);
+      }
+    } catch {
+      // `details` is not always ours — Postgres also puts constraint names there.
+      // A parse failure simply means "no structured context".
+    }
+  }
+
+  return new AppError(400, 'TRANSACTION_CREATE_FAILED', message);
+}
+
 export async function createTransaction(supabase: SupabaseClient, input: TransactionInput, actorId: string): Promise<TransactionRecord> {
   const { data, error } = await supabase.rpc('create_transaction_with_payment', {
     p_subtotal: input.subtotal,
@@ -122,8 +173,9 @@ export async function createTransaction(supabase: SupabaseClient, input: Transac
     p_received_amount: input.paymentAmount,
     p_created_by: actorId,
     p_items: input.items,
+    p_idempotency_key: input.idempotencyKey,
   });
-  if (error || !data) throw new AppError(400, 'TRANSACTION_CREATE_FAILED', error?.message ?? 'The transaction could not be created.');
+  if (error || !data) throw mapCreateFailure(error);
   return getTransaction(supabase, String((data as Record<string, unknown>).id));
 }
 

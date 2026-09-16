@@ -9,10 +9,11 @@ import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { InventoryItem } from '../../inventory/types';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
-import { paymentsApi, type PaymentTransaction } from '../api/paymentsApi';
+import { paymentsApi, readInsufficientStock, type PaymentTransaction } from '../api/paymentsApi';
+import { readOrderConflict } from '../api/ordersApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
-import { POSCheckoutModal } from '../components/pos/POSCheckoutModal';
+import { POSCheckoutModal, type CheckoutError } from '../components/pos/POSCheckoutModal';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
@@ -27,8 +28,27 @@ const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
 /** Coalesces a burst of payment events into a single refetch. */
 const HISTORY_RELOAD_DEBOUNCE_MS = 400;
 
+/**
+ * A fresh key for one checkout attempt.
+ *
+ * `crypto.randomUUID` is only exposed in a secure context, so a shop running the
+ * terminal over plain HTTP on the local network would not have it. `getRandomValues`
+ * carries no such restriction, so it is the fallback — shaped into a real UUID so
+ * the server's validation accepts either path.
+ */
+function createIdempotencyKey(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
+  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
 export default function POS() {
-  const { items: inventory } = useInventory();
+  const { items: inventory, refresh: refreshInventory } = useInventory();
   const { designs } = useDesigns();
   const { addOrder, orders, updateOrder } = useOrders();
   const { customers } = useCustomers();
@@ -52,7 +72,18 @@ export default function POS() {
   const [currentItemToDesign, setCurrentItemToDesign] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<CheckoutError | null>(null);
   const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  /**
+   * The edited order's `updatedAt` as it was when this cart was hydrated.
+   *
+   * Captured here rather than read from the store at save time on purpose: a
+   * background refresh can replace the store's copy with a newer one, and saving
+   * against *that* version would let this form overwrite the change it was
+   * supposed to be protected from.
+   */
+  const [editingOrderVersion, setEditingOrderVersion] = useState<string | null>(null);
   const [cartDiscount, setCartDiscount] = useState(0);
   const [vatRatePercent, setVatRatePercent] = useState(vatRate);
   const [customerId, setCustomerId] = useState<string | null>(null);
@@ -63,9 +94,32 @@ export default function POS() {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [lastOrderId, setLastOrderId] = useState<string | undefined>(undefined);
 
+  /** The idempotency key for the checkout attempt currently in progress, if any. */
+  const checkoutAttemptKeyRef = useRef<string | null>(null);
+
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
   const totals = useCartTotals(cart, cartDiscount, vatRatePercent);
+
+  /**
+   * Identifies what is being sold, so a change in the cart can be told apart from
+   * a mere re-render — `updateQty` rebuilds the array even when the quantity it
+   * clamps to is unchanged.
+   */
+  const cartSignature = useMemo(
+    () => cart.map((item) => `${item.id}:${item.qty}:${item.designId ?? ''}`).join('|'),
+    [cart],
+  );
+
+  /*
+   * A different cart is a different sale, so the next attempt must not be able to
+   * replay the previous one. A cart that has *not* changed deliberately keeps its
+   * key — that is what lets a retry after a dropped response come back as the
+   * original sale instead of a second charge.
+   */
+  useEffect(() => {
+    checkoutAttemptKeyRef.current = null;
+  }, [cartSignature]);
 
   const mapPaymentTransaction = useCallback((transaction: PaymentTransaction): Transaction => ({
     id: transaction.id,
@@ -276,6 +330,7 @@ export default function POS() {
     setOrderNotes(orderToEdit.notes || '');
     setCart(hydratedCart);
     setEditingOrderId(orderToEdit.id);
+    setEditingOrderVersion(orderToEdit.updatedAt);
     navigate('/pos', { replace: true });
   }, [inventory, location.state, navigate, orders]);
 
@@ -310,6 +365,7 @@ export default function POS() {
   const resetSaleState = () => {
     setCart([]);
     setEditingOrderId(null);
+    setEditingOrderVersion(null);
     setCartDiscount(0);
     setVatRatePercent(vatRate);
     setCustomerId(null);
@@ -368,11 +424,18 @@ export default function POS() {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
+    // Opening a checkout is a fresh look at the cart; a message from the previous
+    // attempt would only be stale noise.
+    setCheckoutError(null);
     setIsCheckoutModalOpen(true);
   };
 
   const finalizeTransaction = async () => {
     if (cart.length === 0) return;
+    // The second click of a double-click lands while the first request is still
+    // open. The idempotency key would make it harmless, but there is no reason to
+    // send it at all.
+    if (isSubmitting) return;
     if (posMode === 'custom' && !customerName) {
       alert('Please enter customer name for custom orders.');
       return;
@@ -380,8 +443,19 @@ export default function POS() {
 
     const { subtotal: trxSubtotal, discount: trxDiscount, tax: trxTax, total: trxTotal } = totals;
 
-    if (posMode === 'retail') {
-      try {
+    setIsSubmitting(true);
+    setCheckoutError(null);
+
+    try {
+      if (posMode === 'retail') {
+        /*
+         * One key per checkout attempt, reused for every retry of that attempt,
+         * so the server recognises a repeat and replays the original sale instead
+         * of charging again. Cleared on success and whenever the cart changes.
+         */
+        const idempotencyKey = checkoutAttemptKeyRef.current ?? createIdempotencyKey();
+        checkoutAttemptKeyRef.current = idempotencyKey;
+
         const createdTransaction = await paymentsApi.create({
           items: cart.map((item) => ({ itemId: item.id, name: item.name, quantity: item.qty, unitPrice: item.price })),
           subtotal: trxSubtotal,
@@ -390,47 +464,80 @@ export default function POS() {
           total: trxTotal,
           paymentMethod: paymentMethod,
           paymentAmount: trxTotal,
+          idempotencyKey,
         });
+        checkoutAttemptKeyRef.current = null;
         setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
         setTransactionError(null);
         // A retail sale writes a payment row *and* decrements stock server-side.
         // Both domains are announced so the POS catalogue, the dashboard's
         // stock alerts, and analytics all re-read without a page reload.
         emitDataChange('payments', 'inventory');
-      } catch (error) {
-        setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be completed.');
-        return;
-      }
-    } else {
-      const preparedOrder: CreateOrder = {
-        customer: customerName,
-        customerId: customerId ?? undefined,
-        item: cart.map(i => i.name).join(', '),
-        lineItems: cart.map(i => ({
-          itemId: i.id,
-          name: i.name,
-          quantity: i.qty,
-          designId: i.designId,
-        })),
-        quantity: cart.reduce((acc, i) => acc + i.qty, 0),
-        amount: trxTotal,
-        status: 'Pending',
-        isCustom: true,
-        notes: orderNotes,
-        designId: cart[0]?.designId,
-      };
-
-      if (editingOrderId) {
-        const existingOrder = orders.find((order) => order.id === editingOrderId);
-        const updated = await updateOrder(editingOrderId, {
-          ...preparedOrder,
-          status: existingOrder?.status ?? 'Pending',
-        });
-        setLastOrderId(updated.id);
       } else {
-        const created = await addOrder(preparedOrder);
-        setLastOrderId(created.id);
+        const preparedOrder: CreateOrder = {
+          customer: customerName,
+          customerId: customerId ?? undefined,
+          item: cart.map(i => i.name).join(', '),
+          lineItems: cart.map(i => ({
+            itemId: i.id,
+            name: i.name,
+            quantity: i.qty,
+            designId: i.designId,
+          })),
+          quantity: cart.reduce((acc, i) => acc + i.qty, 0),
+          amount: trxTotal,
+          status: 'Pending',
+          isCustom: true,
+          notes: orderNotes,
+          designId: cart[0]?.designId,
+        };
+
+        if (editingOrderId) {
+          if (!editingOrderVersion) {
+            // Unreachable in normal use — the two are set together when the cart is
+            // hydrated. Failing loudly beats saving without the precondition.
+            setCheckoutError({
+              message: 'This order could not be saved because its version was not loaded. Reopen it from the Orders page and try again.',
+              stock: null,
+            });
+            return;
+          }
+          const existingOrder = orders.find((order) => order.id === editingOrderId);
+          const updated = await updateOrder(
+            editingOrderId,
+            {
+              ...preparedOrder,
+              status: existingOrder?.status ?? 'Pending',
+            },
+            // The version this form was built from, so a save cannot land on top of
+            // an edit someone else made while this cart was open.
+            editingOrderVersion,
+          );
+          setLastOrderId(updated.id);
+        } else {
+          const created = await addOrder(preparedOrder);
+          setLastOrderId(created.id);
+        }
       }
+    } catch (error) {
+      const shortfall = readInsufficientStock(error);
+      const conflict = readOrderConflict(error);
+      setCheckoutError({
+        message: shortfall
+          ? `Only ${shortfall.available} left in stock for "${shortfall.itemName}" — ${shortfall.requested} requested.`
+          : conflict
+            ? 'Someone else changed this order while you were editing it, so your changes were not saved. Close this and reopen the order to see their version.'
+            : error instanceof ApiError
+              ? error.message
+              : 'The transaction could not be completed.',
+        stock: shortfall,
+      });
+      // The sale was refused because our stock picture was out of date. Pull the
+      // real numbers so the catalogue — and the next attempt — agree with the till.
+      if (shortfall) void refreshInventory();
+      return;
+    } finally {
+      setIsSubmitting(false);
     }
 
     setCheckoutSuccess(true);
@@ -439,6 +546,7 @@ export default function POS() {
     setCustomerId(null);
     setOrderNotes('');
     setEditingOrderId(null);
+    setEditingOrderVersion(null);
 
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
@@ -574,6 +682,8 @@ export default function POS() {
       <POSCheckoutModal
         isOpen={isCheckoutModalOpen}
         checkoutSuccess={checkoutSuccess}
+        isSubmitting={isSubmitting}
+        checkoutError={checkoutError}
         posMode={posMode}
         cart={cart}
         totals={totals}
@@ -581,7 +691,10 @@ export default function POS() {
         currencySymbol={currencySymbol}
         onPaymentMethodChange={handlePaymentMethodChange}
         onConfirm={finalizeTransaction}
-        onClose={() => setIsCheckoutModalOpen(false)}
+        onClose={() => {
+          setIsCheckoutModalOpen(false);
+          setCheckoutError(null);
+        }}
         onPrintReceipt={() => { setIsCheckoutModalOpen(false); setIsReceiptModalOpen(true); }}
       />
 

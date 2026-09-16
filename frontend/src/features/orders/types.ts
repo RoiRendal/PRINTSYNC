@@ -25,6 +25,16 @@ export interface Order {
   quantity: number;
   status: OrderStatus;
   date: string;
+  /**
+   * The row's version token, as the server sent it.
+   *
+   * Echo it back untouched on the next save — it names the version this screen is
+   * working from, and the server refuses the write if the order has moved on since
+   * (someone else edited it). Do not run it through `new Date()`: parsing and
+   * re-serialising drops the microseconds, which would make every save look like a
+   * conflict.
+   */
+  updatedAt: string;
   amount: number;
   totalPaid?: number;
   balanceDue?: number;
@@ -34,7 +44,7 @@ export interface Order {
   isCustom?: boolean;
 }
 
-export type CreateOrder = Omit<Order, 'id' | 'date'>;
+export type CreateOrder = Omit<Order, 'id' | 'date' | 'updatedAt'>;
 export type UpdateOrder = Partial<CreateOrder>;
 
 export interface CartItem extends InventoryItem {

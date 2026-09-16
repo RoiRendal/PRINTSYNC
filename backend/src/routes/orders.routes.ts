@@ -30,7 +30,15 @@ const orderSchema = z.object({
   customerId: z.string().uuid().optional(),
   dueDate: z.string().date().optional(),
 });
-const updateSchema = orderSchema.partial();
+const updateSchema = orderSchema.partial().extend({
+  /**
+   * The `updatedAt` the editor loaded, echoed back so the server can refuse a save
+   * that would silently overwrite someone else's. Required on purpose: a client
+   * that does not send one is buggy and should fail loudly rather than quietly
+   * lose its protection against lost updates.
+   */
+  expectedUpdatedAt: z.string().datetime({ offset: true }),
+});
 
 function getSupabase() {
   const supabase = getSupabaseAdminClient();
@@ -66,12 +74,15 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
   const parsed = updateSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_ORDER_REQUEST', 'The order details are invalid.');
   const orderId = getOrderId(request);
-  const order = await updateOrder(getSupabase(), orderId, parsed.data, request.auth.user.id);
+  // The version precondition is not part of the order, so it is kept out of the
+  // payload the service writes.
+  const { expectedUpdatedAt, ...updates } = parsed.data;
+  const order = await updateOrder(getSupabase(), orderId, updates, request.auth.user.id, expectedUpdatedAt);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.updated', entityType: 'order', entityId: order.id, metadata: { status: order.status } });
   // Only a line-item change re-reserves stock (`replace_order_with_items`); a
   // status/notes-only update leaves inventory untouched, so we do not wake the
   // inventory pages for it.
-  if (parsed.data.lineItems !== undefined) publishDataChange('orders', 'inventory');
+  if (updates.lineItems !== undefined) publishDataChange('orders', 'inventory');
   else publishDataChange('orders');
   sendSuccess(response, order);
 });

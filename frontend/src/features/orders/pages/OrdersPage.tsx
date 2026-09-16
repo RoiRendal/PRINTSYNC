@@ -5,9 +5,11 @@ import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { Button, Input, Pagination } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
+import { ApiError } from '../../../shared/api/errors';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
+import { readOrderConflict } from '../api/ordersApi';
 import { useOrderFilters } from '../hooks/useOrderFilters';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import type { Order, OrderStatus } from '../types';
@@ -31,6 +33,7 @@ export default function Orders() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const filteredOrders = useOrderFilters(orders, {
     searchTerm,
@@ -47,11 +50,25 @@ export default function Orders() {
     const nextStatus = workPhases[nextIndex];
     if (!nextStatus) return;
     try {
-      await updateOrder(order.id, { status: nextStatus });
+      // `order.updatedAt` is the version this board is showing. Sending it means
+      // a phase change cannot land on top of an edit someone else made while
+      // this row was on screen.
+      await updateOrder(order.id, { status: nextStatus }, order.updatedAt);
+      setStatusError(null);
       const refreshed = await refreshOrder(order.id);
       if (selectedOrder?.id === order.id) setSelectedOrder(refreshed);
     } catch (updateError) {
-      console.error('Unable to update order status:', updateError);
+      // Worth saying out loud rather than only logging: the row the user clicked
+      // was out of date, so their change was not applied.
+      setStatusError(
+        readOrderConflict(updateError)
+          ? `Someone else changed ${order.customer}'s order first, so this move was not applied. The board has been refreshed — check the current phase and try again.`
+          : updateError instanceof ApiError
+            ? updateError.message
+            : 'The order status could not be updated.',
+      );
+      // Show the other person's version rather than leaving stale phases on screen.
+      await refresh();
     }
   };
 
@@ -74,6 +91,22 @@ export default function Orders() {
 
   return (
     <div className="space-y-5">
+      {statusError && (
+        <div
+          role="alert"
+          className="flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[11px] font-semibold leading-relaxed text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300"
+        >
+          <span>{statusError}</span>
+          <button
+            type="button"
+            onClick={() => setStatusError(null)}
+            className="shrink-0 cursor-pointer text-[10px] font-bold uppercase tracking-[0.18em] underline decoration-dotted underline-offset-2"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Orders</h1>

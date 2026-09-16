@@ -6,8 +6,8 @@
 | --- | --- |
 | **Reported by** | Operations (management) |
 | **Business requirement** | Data changed anywhere in the system must appear everywhere immediately. Staff must never need to reload a page to see current information. The system must hold up with several staff members working at the same time. |
-| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 specified below, not started. |
-| **Verified by** | Backend unit suite 170/170 passing; `tsc --noEmit` clean on every new and changed file; `npm run build` succeeds on both workspaces; live end-to-end run against the real Supabase project (§4.3) |
+| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 **implemented and verified live** (§5). |
+| **Verified by** | Backend unit suite **174/174 passing**; `tsc --noEmit` clean on frontend, backend and backend tests; `npm run build` succeeds on all three workspaces; **26/26 live end-to-end checks** against the real Supabase project (§5.4); both new migrations applied and in sync |
 
 ---
 
@@ -393,9 +393,9 @@ acceptable, but one more argument for serving the API over HTTP/2 in production.
 
 ---
 
-## 5. Tier 3 — Hardening for daily multi-staff operation
+## 5. Tier 3 — Hardening for daily multi-staff operation (implemented and verified)
 
-### 5.1 What is already good (verified, no action needed)
+### 5.1 What was already good (verified, no action needed)
 
 Worth stating plainly, because it is a real strength and it was checked rather
 than assumed. The backend is **correctly built for concurrent staff**:
@@ -414,19 +414,151 @@ than assumed. The backend is **correctly built for concurrent staff**:
 - The service-role key is confined to `backend/.env` and never reaches the
   browser.
 
-So the multi-staff requirement is sound at the data layer. The gaps below are
-presentation and resilience, not correctness.
+So the multi-staff requirement was already sound at the data layer. The gaps below
+were about money-safety, error reporting, and what happens when two people touch
+the same record — not about the atomicity of a single write.
 
-### 5.2 Recommended next items, in priority order
+### 5.2 What this tier changed
+
+| # | Defect | What it cost in practice | Status |
+| --- | --- | --- | --- |
+| 1 | No idempotency on checkout | A double-click, or a retry after a dropped response, created **two sales and charged twice**. | Fixed |
+| 2 | Generic checkout failure | The database knew exactly which item was short and by how much; the cashier saw "the transaction could not be completed" and had to guess. | Fixed |
+| 3 | Last-write-wins on order edits | Two staff editing one order: the second save silently discarded the first person's work, with no warning to either. | Fixed |
+| 4 | No type-check gate, no CI | 16 type errors had accumulated unnoticed; nothing stopped more. | Fixed |
+
+#### 5.2.1 Double-charge protection
+
+`supabase/migrations/20260916000000_idempotent_sales_and_stock_errors.sql`
+
+- `sales_transactions` gains a nullable `idempotency_key` plus a **partial unique
+  index** (`where idempotency_key is not null`), so existing rows are unaffected
+  and a duplicate key is rejected by the database rather than by application code.
+- `create_transaction_with_payment` gains `p_idempotency_key`. The **replay guard
+  runs first, before validation** — deliberately. A retry exists precisely
+  because the first attempt may have committed with its response lost, and that
+  attempt has *already deducted stock*; re-validating would reject the very retry
+  the mechanism is there to protect. An `exception when unique_violation` branch
+  closes the check-then-act window, so two simultaneous retries still yield one sale.
+- The API requires the key (`z.string().uuid()`), so a client that forgets it
+  fails loudly instead of quietly losing its protection.
+- The POS mints **one key per checkout attempt**, reuses it across retries of that
+  attempt, and rotates it on success or when the cart changes. A key is *not*
+  cleared by closing the checkout dialog — otherwise the exact scenario the key
+  defends against (committed, response lost, cashier tries again) would get a new
+  key and charge twice.
+- The Confirm button is disabled while a sale is in flight, so the second click of
+  a double-click is never sent at all.
+
+#### 5.2.2 A short-stock sale now says which item
+
+- The RPC raises with structured context rather than a sentence alone:
+  `itemId`, `itemName`, `available`, `requested`.
+- `AppError` gained an optional `details` field, the error envelope carries it, and
+  the client reads it back off `ApiError.details` — so the UI branches on a
+  machine-readable code instead of pattern-matching on prose.
+- The POS flags **the exact cart line** — "Only 1 left — 2 requested" — and
+  refreshes the catalogue, because the stock figure on screen was what was wrong.
+- The failure is rendered **inside** the checkout dialog. The page-level error
+  banner sits behind the overlay, so previously a rejected sale looked like the
+  button doing nothing.
+
+#### 5.2.3 Two staff can no longer overwrite each other silently
+
+`supabase/migrations/20260916000001_optimistic_order_updates.sql`
+
+- `replace_order_with_items` gains `p_expected_updated_at`. The comparison happens
+  **after** the `for update` row lock, so a save arriving while another is still in
+  flight waits for it and then sees the committed version instead of racing past it.
+- The status/notes-only path has no RPC, so it uses a **compare-and-swap**:
+  `.eq('updated_at', expected)`. The statement matches no row at all if someone got
+  there first. A lost race is reported as a conflict, not as a misleading 404.
+- `OrderRecord` and the frontend `Order` now expose `updatedAt`, and the PATCH body
+  requires `expectedUpdatedAt`. Both the Orders board and the POS edit form send
+  the version they actually loaded — the POS captures it when the cart is
+  hydrated, *not* from the live store, because a background refresh would otherwise
+  hand it a newer version and let it overwrite the very change it should catch.
+- A lost race returns `409 ORDER_CONFLICT` carrying both versions. The Orders board
+  explains it and refreshes the row; the checkout dialog says to reopen the order.
+
+#### 5.2.4 The type-check and CI gate
+
+- All 16 frontend type errors cleared, including the one real defect: `AuditLogPage`
+  used a local union where neither `'default'` nor `'yellow'` exists in
+  `BadgeVariant`, so the badge rendered with no styling at all.
+- `.github/workflows/ci.yml` runs lint, the unit suite, and both builds on every
+  push, with the shared-types package built first (the backend type-checks against
+  its `dist`, so ordering matters). `test:integration` is deliberately excluded —
+  it needs live Supabase credentials, which do not belong in CI.
+
+### 5.3 A defect found *while* verifying this tier
+
+The live run exposed a Tier 2 bug that no unit test could have caught.
+
+The client uses the browser's `EventSource`. **`EventSource` never surfaces
+comment frames to script** — so the `: ping` keep-alive the server was sending was
+invisible to the client's watchdog, which saw three silent intervals on a
+perfectly healthy connection and forced a reconnect every 75 seconds. The stream
+worked, but it was needlessly redialling all shift, and each redial is a window in
+which a pushed change can be missed.
+
+The heartbeat is now a **named `heartbeat` event**. The distinction is the whole
+fix: a comment keeps the socket alive on the wire but cannot be observed, and
+observability is the entire reason the watchdog exists. Confirmed on the wire —
+three `heartbeat` frames over 80 seconds, 25s apart, with no legacy comment.
+
+This is also why the tier was verified live rather than only in tests: the server
+*sending* a heartbeat and the browser *being able to see* one are different claims,
+and only the first is testable in isolation.
+
+### 5.4 Verification
+
+| Check | Result |
+| --- | --- |
+| Backend unit suite | **174/174 passing** (22 added across Tiers 2 and 3) |
+| `tsc --noEmit` — frontend, backend, backend tests | **Clean** |
+| `npm run build` — frontend, backend, shared-types | **Succeeds** |
+| Live end-to-end against the real Supabase project | **26/26 checks passed**, zero server errors |
+| Database migrations applied | Both registered; `migration list` in sync |
+
+The live run exercised, against the real database: a repeated checkout with one
+key returning the *same* sale; a checkout with no key rejected; an oversell
+returning `409` naming the item and the real numbers, with a sale that *fits*
+still succeeding afterwards (proving the rejected attempt consumed no stock); a
+stale order save returning `409` with both versions; and every probe cleaning up
+after itself.
+
+### 5.5 Known limits — deliberate trade-offs, not oversights
+
+- **A replayed checkout returns `201` and writes a second audit entry.** The RPC's
+  return value carries no "was this a replay?" signal, and adding one would mean
+  duplicating a 120-line `SECURITY DEFINER` function, since `create or replace`
+  cannot change a return type. The guarantee that matters holds — one transaction,
+  one charge, one stock deduction — so the audit log records a create *request*
+  being served rather than a row being inserted. Worth revisiting only if the audit
+  trail is ever used to count sales; sales should be counted from the table.
+- **The residual double-charge window.** If an attempt commits, its response is
+  lost, *and* the cashier edits the cart before retrying, the changed cart gets a
+  new key and a second sale. Keeping the key stable across a dialog close/reopen
+  removes the common path; the remaining one needs a reconciliation view
+  ("sales in the last 5 minutes") to be fully closed.
+- **`updatedAt` must round-trip verbatim.** It is a version token, not a date. A
+  client that parses it with `new Date()` and re-serialises would drop the
+  microseconds and see *every* save as a conflict. That failure is loud, not
+  silent, which is the right direction to fail in — but the field is documented
+  accordingly on both sides.
+- **Realtime is still single-instance.** See §4.4. Unchanged by this tier.
+
+### 5.6 Still open, in priority order
 
 | # | Item | Business value | Technical approach |
 | --- | --- | --- | --- |
 | 1 | **Optimistic UI** | Staff see their action land instantly instead of waiting on the network. Perceived speed on a slow connection. | Mutations currently `await` the server before touching the UI. Apply the change locally first, then reconcile; roll back and toast on failure. The store already exposes `mutateItems`/`replaceItem` for this. |
-| 2 | **Surface the real "out of stock" message** | A cashier currently gets a generic failure; they need to know *which* item and *how many* are available. | The DB raises a precise message; map it to a field-level error on the cart line in `POSCheckoutModal`. |
-| 3 | **Idempotency keys on sale creation** | Prevents a double-charge from a double-click or a retry after a dropped response. Money-safety. | Client generates a UUID per checkout attempt; `create_transaction_with_payment` rejects a duplicate key. |
-| 4 | **Optimistic concurrency on orders** | Two staff editing the same order currently last-write-wins, silently discarding the other's change. | Add a `version`/`updated_at` check to the order update RPC; return `409` and prompt to reload. |
-| 5 | **Expose `isRevalidating` in the UI** | Reassures staff that the screen is live. | The flag already exists and is unused; render a subtle "syncing" indicator. |
-| 6 | **Scheduled/paginated analytics caching** | Analytics currently issues 5 queries on every change event. Fine now; will need attention at volume. | Add a short server-side cache or a materialised view for the summary RPC. |
+| 2 | **A "recent sales" reconciliation view** | Closes the residual double-charge window in §5.5, and lets a cashier confirm a sale that appeared to fail. | A small read-only list of the last few transactions per workstation, refreshed on checkout failure. |
+| 3 | **Expose `isRevalidating` in the UI** | Reassures staff that the screen is live. | The flag already exists and is unused; render a subtle "syncing" indicator. |
+| 4 | **Frontend tests** | The revalidation and idempotency-key timing logic has no coverage, and it is the part that regresses silently. | Vitest + Testing Library; see §6.5. |
+| 5 | **Scheduled/paginated analytics caching** | Analytics issues 5 queries on every change event. Fine now; will need attention at volume. | A short server-side cache or a materialised view for the summary RPC. |
+| 6 | **Postgres `LISTEN`/`NOTIFY` for the event bus** | Removes the single-instance ceiling on realtime. | See §4.4 — the call sites will not need to change. |
 
 ---
 
@@ -434,12 +566,12 @@ presentation and resilience, not correctness.
 
 These are outside the reported request but affect readiness for real operations.
 
-### 6.1 The frontend does not currently pass its own type-check
+### 6.1 The frontend type-check — **fixed in Tier 3**
 
-`npm run lint` in `frontend/` fails with **16 errors across 8 files**. None are
-in the files changed by this work, and `npm run build` still succeeds (Vite strips
-types without checking them), so this has gone unnoticed. It means the type
-system is not actually gating anything today.
+`npm run lint` in `frontend/` was failing with **16 errors across 8 files**. None
+were in the files changed by Tier 1 or 2, and `npm run build` still succeeded
+(Vite strips types without checking them), which is why it went unnoticed — the
+type system was not actually gating anything.
 
 ```
 src/app/components/NotificationPanel.tsx          unused parameter
@@ -452,17 +584,30 @@ src/features/orders/components/orders/OrdersTable.tsx        unused imports
 src/features/settings/api/exportApi.ts            unused import
 ```
 
-**Recommendation:** clear these, then add CI (see 6.2) so they cannot come back.
-The `AuditLogPage` Badge variant is the only one that is a genuine defect rather
-than dead code — `'default'` is not a valid `BadgeVariant` and the badge will not
-render as intended.
+All 16 are now cleared. Most were dead code, but one was a genuine defect:
+`AuditLogPage` declared its own `'default' | 'green' | 'blue' | 'red' | 'purple' |
+'yellow'` union, and neither `'default'` nor `'yellow'` exists in `BadgeVariant` —
+so `variantClasses[variant]` resolved to `undefined` and the action badge rendered
+with **no styling at all**. It now uses the shared `BadgeVariant` type, with the
+mapping from action to variant written out explicitly.
 
-### 6.2 No CI pipeline
+### 6.2 CI — **added in Tier 3**
 
-There is no `.github/workflows/`. Nothing runs `lint`, `test:integration`, or
-`build` on a commit. Given §6.1, this is why the type errors accumulated.
-**Recommendation:** a workflow running lint + integration tests + build on every
-push, with `macOS-UI-2` protected.
+`.github/workflows/ci.yml` now runs on every push and pull request:
+
+| Job | Steps |
+| --- | --- |
+| `shared-types` | lint, build, upload `dist` as an artifact |
+| `backend` | needs `shared-types`; downloads the artifact, then lint, lint:tests, test:unit, build |
+| `frontend` | lint, build |
+
+The `shared-types` job is not decoration: the backend resolves
+`@printsync/shared-types` to `../packages/shared-types/dist/index.d.ts`, so without
+building it first the backend job fails for reasons that have nothing to do with
+the change under review. `test:integration` is deliberately excluded — it requires
+live Supabase credentials, which should not be stored in CI.
+
+**Still recommended:** protect `macOS-UI-2` so a red build cannot be merged.
 
 ### 6.3 Credentials that must never reach production
 
@@ -497,20 +642,32 @@ no-ops while fresh; a failed background refresh leaves data intact.
 
 ## 7. Summary for management
 
-| | Before | After Tier 1 | After Tier 2 |
-| --- | --- | --- | --- |
-| Change made on the same page | Visible | Visible | Visible |
-| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate |
-| Change made by another staff member | Never visible | Within 60s | Under 2s |
-| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately |
-| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes |
-| Staff action requires a page reload | Always | Never | Never |
+| | Before | After Tier 1 | After Tier 2 | After Tier 3 |
+| --- | --- | --- | --- | --- |
+| Change made on the same page | Visible | Visible | Visible | Visible |
+| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate | Immediate |
+| Change made by another staff member | Never visible | Within 60s | Under 2s | Under 2s |
+| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately | Corrected immediately |
+| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes | Self-refreshes, no wasted redials |
+| Staff action requires a page reload | Always | Never | Never | Never |
+| A double-click at checkout | Charges twice | Charges twice | Charges twice | **Charges once** |
+| "Out of stock" at checkout | "Transaction failed" | "Transaction failed" | "Transaction failed" | **Names the item and how many are left** |
+| Two staff editing one order | Second save silently wins | Same | Same | **Second save is refused; both are told** |
+| A type error reaching the codebase | Undetected | Undetected | Undetected | **Blocked by CI** |
 
-Tiers 1 and 2 are done and verified. The "change made by another staff member"
-row went from *never visible* to *under a second*, and the poll that used to paper
-over it now only runs as a fallback.
+All three tiers are done and verified against the real system. Tier 1 made a
+change visible everywhere on the workstation; Tier 2 extended that to every
+workstation in under a second; Tier 3 hardened the parts that cost money or lose
+work when several people use the system at once.
 
-What is left is not about live updates. The items that matter most for real daily
-operation are **§5** (money-safety on checkout — idempotency keys and the real
-"out of stock" message) and **§6** (no CI pipeline, and the default development
-passwords that must be rotated before anything is deployed).
+**The two items that matter most before release are unchanged, and neither is a
+code problem:**
+
+1. **Rotate the default development passwords** (§6.3). Predictable credentials on
+   a reachable URL are the highest-impact risk in the codebase.
+2. **Move `SUPABASE_SERVICE_ROLE_KEY` out of `backend/.env`** into the host's
+   secrets (§6.3), and rotate it at that point.
+
+Beyond those, the highest-value next work is **§5.6**: a "recent sales"
+reconciliation view, frontend tests for the timing logic, and the `LISTEN`/`NOTIFY`
+change that lifts the single-instance ceiling on realtime (§4.4).

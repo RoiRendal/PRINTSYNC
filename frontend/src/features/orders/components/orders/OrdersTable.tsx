@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2, AlertCircle, Clock } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -17,7 +17,6 @@ import {
   TableRow,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
-import { cn } from '../../../../shared/lib/cn';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';

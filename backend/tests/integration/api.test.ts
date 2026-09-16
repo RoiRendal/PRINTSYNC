@@ -263,6 +263,26 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(response.status, 200);
   });
 
+  it('rejects a transaction that carries no idempotency key', async (context) => {
+    if (skipIfUnauthenticated(context, 'idempotency key required')) return;
+
+    const response = await request('/payments/transactions', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: [{ name: 'Test item', quantity: 1, unitPrice: 10 }],
+        subtotal: 10,
+        discount: 0,
+        tax: 0,
+        total: 10,
+        paymentMethod: 'Cash',
+        paymentAmount: 10,
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(errorCode(response), 'INVALID_TRANSACTION_REQUEST');
+  });
+
   it('rejects inconsistent transaction totals before writing', async (context) => {
     if (skipIfUnauthenticated(context, 'transaction validation')) return;
 
@@ -276,6 +296,7 @@ describe('PRINTSYNC API integration', () => {
         total: 999,
         paymentMethod: 'Cash',
         paymentAmount: 999,
+        idempotencyKey: crypto.randomUUID(),
       }),
     });
 
@@ -295,6 +316,7 @@ describe('PRINTSYNC API integration', () => {
         total: 10,
         paymentMethod: 'Crypto',
         paymentAmount: 10,
+        idempotencyKey: crypto.randomUUID(),
       }),
     });
 
@@ -310,6 +332,40 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(errorCode(response), 'TRANSACTION_NOT_FOUND');
   });
 
+  it('replays the original sale when the same idempotency key is submitted twice', async (context) => {
+    if (skipIfUnauthenticated(context, 'idempotency replay')) return;
+
+    const idempotencyKey = crypto.randomUUID();
+    const body = JSON.stringify({
+      items: [{ name: 'Idempotency test item', quantity: 1, unitPrice: 10 }],
+      subtotal: 10,
+      discount: 0,
+      tax: 0,
+      total: 10,
+      paymentMethod: 'Cash',
+      paymentAmount: 10,
+      idempotencyKey,
+    });
+
+    const first = await request<{ id: string }>('/payments/transactions', { method: 'POST', body });
+    const second = await request<{ id: string }>('/payments/transactions', { method: 'POST', body });
+
+    assert.equal(first.status, 201);
+    assert.equal(second.status, 201);
+    // The whole point of the key: a retry after a dropped response must come back
+    // as the sale that already exists, not a second charge on the customer's card.
+    assert.equal(dataOf(second).id, dataOf(first).id);
+
+    // This sale is real, so void it here rather than leaving it in the ledger —
+    // `temporaryTransactionId` is already spoken for by the lifecycle test.
+    const transactionId = dataOf(first).id;
+    const voided = await request(`/payments/transactions/${transactionId}/void`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+    assert.equal(voided.status, 200);
+  });
+
   it('creates and voids a payment transaction through the API', async (context) => {
     if (skipIfUnauthenticated(context, 'transaction lifecycle')) return;
 
@@ -323,6 +379,7 @@ describe('PRINTSYNC API integration', () => {
         total: 10,
         paymentMethod: 'Card',
         paymentAmount: 10,
+        idempotencyKey: crypto.randomUUID(),
       }),
     });
     const createdTransaction = dataOf(created);
@@ -360,7 +417,7 @@ describe('PRINTSYNC API integration', () => {
   it('creates, updates, and deletes an order through the API', async (context) => {
     if (skipIfUnauthenticated(context, 'order lifecycle')) return;
 
-    const created = await request<{ id: string; status: string }>('/orders', {
+    const created = await request<{ id: string; status: string; updatedAt: string }>('/orders', {
       method: 'POST',
       body: JSON.stringify({
         customer: 'Automated Integration Test',
@@ -375,17 +432,68 @@ describe('PRINTSYNC API integration', () => {
     temporaryOrderId = createdOrder.id;
     assert.equal(created.status, 201);
     assert.equal(createdOrder.status, 'Pending');
+    // The version token is what lets a later save name the state it was based on.
+    assert.equal(typeof createdOrder.updatedAt, 'string');
 
-    const updated = await request<{ status: string }>(`/orders/${temporaryOrderId}`, {
+    const updated = await request<{ status: string; updatedAt: string }>(`/orders/${temporaryOrderId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'In Production' }),
+      body: JSON.stringify({ status: 'In Production', expectedUpdatedAt: createdOrder.updatedAt }),
     });
     assert.equal(updated.status, 200);
     assert.equal(dataOf(updated).status, 'In Production');
+    // A successful write advances the version, which is what the next save checks.
+    assert.notEqual(dataOf(updated).updatedAt, createdOrder.updatedAt);
 
     const deleted = await request(`/orders/${temporaryOrderId}`, { method: 'DELETE' });
     assert.equal(deleted.status, 204);
     temporaryOrderId = null;
+  });
+
+  it('refuses an order save that was based on a stale version', async (context) => {
+    if (skipIfUnauthenticated(context, 'order conflict')) return;
+
+    const created = await request<{ id: string; updatedAt: string }>('/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        customer: 'Conflict Test',
+        lineItems: [{ name: 'Test line', quantity: 1, unitPrice: 0 }],
+        amount: 0,
+        status: 'Pending',
+        isCustom: true,
+      }),
+    });
+    const order = dataOf(created);
+    temporaryOrderId = order.id;
+
+    // One staff member saves first, moving the version on.
+    const firstSave = await request(`/orders/${order.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes: 'Edited by the first staff member', expectedUpdatedAt: order.updatedAt }),
+    });
+    assert.equal(firstSave.status, 200);
+
+    // A second staff member is still holding the version they loaded.
+    const staleSave = await request(`/orders/${order.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ notes: 'Edited by the second staff member', expectedUpdatedAt: order.updatedAt }),
+    });
+    assert.equal(staleSave.status, 409);
+    assert.equal(errorCode(staleSave), 'ORDER_CONFLICT');
+
+    await request(`/orders/${order.id}`, { method: 'DELETE' });
+    temporaryOrderId = null;
+  });
+
+  it('rejects an order update that carries no version', async (context) => {
+    if (skipIfUnauthenticated(context, 'order version required')) return;
+
+    const response = await request('/orders/00000000-0000-0000-0000-000000000000', {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'Completed' }),
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(errorCode(response), 'INVALID_ORDER_REQUEST');
   });
 
   it('fetches a single order by id', async (context) => {

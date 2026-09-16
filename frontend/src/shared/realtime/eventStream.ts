@@ -56,7 +56,7 @@ const RECONNECT_JITTER_RATIO = 0.2;
 
 /**
  * Must match `HEARTBEAT_INTERVAL_MS` in `backend/src/routes/events.routes.ts`.
- * The server writes a `: ping` comment this often; if we go three intervals
+ * The server sends a `heartbeat` event this often; if we go three intervals
  * without hearing anything, the socket is presumed dead.
  */
 const SERVER_HEARTBEAT_INTERVAL_MS = 25_000;
@@ -193,9 +193,9 @@ function startWatchdog(): void {
   watchdogTimer = window.setInterval(() => {
     if (activeConsumers === 0 || !source) return;
     if (Date.now() - lastFrameAt <= SILENCE_TIMEOUT_MS) return;
-    // Nothing has arrived for three heartbeat intervals — not even a comment
-    // frame. The socket is half-open and the browser has no way to tell, so
-    // only a new connection recovers it.
+    // Nothing has arrived for three heartbeat intervals — not even a keep-alive.
+    // The socket is half-open and the browser has no way to tell, so only a new
+    // connection recovers it.
     scheduleReconnect('heartbeat timeout');
   }, WATCHDOG_TICK_MS);
 }
@@ -254,6 +254,19 @@ function connect(): void {
     if (domains.length === 0) return;
     publishSnapshot({ lastEventAt: Date.now() });
     emitDataChange(...domains);
+  });
+
+  /*
+   * The server's keep-alive, and the only frame that arrives while nothing is
+   * happening. Listening for it is what makes the watchdog below correct: a
+   * `: ping` comment keeps the socket alive on the wire but `EventSource` never
+   * surfaces it to script, so a comment-only heartbeat would leave the watchdog
+   * seeing silence on a perfectly healthy connection and reconnecting every
+   * interval for no reason.
+   */
+  stream.addEventListener('heartbeat', () => {
+    if (stream !== source) return;
+    lastFrameAt = Date.now();
   });
 
   stream.onopen = () => {

@@ -38,6 +38,9 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, _nex
       error: {
         code: error.code,
         message: error.message,
+        // Omitted rather than sent as `null` when absent, so the client can tell
+        // "no structured context" from "context that happens to be null".
+        ...(error.details === undefined ? {} : { details: error.details }),
       },
     });
     return;

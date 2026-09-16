@@ -27,6 +27,13 @@ const transactionSchema = z.object({
   total: z.number().min(0),
   paymentMethod: z.enum(paymentMethods),
   paymentAmount: z.number().positive(),
+  // Money safety: the client generates this once per checkout attempt and reuses
+  // it for every retry of that attempt. The RPC replays the existing transaction
+  // instead of inserting a second one, so a double-click or a retry after a
+  // dropped response can never charge twice. Required on purpose — a client that
+  // does not send one is buggy and should fail loudly rather than silently lose
+  // its protection.
+  idempotencyKey: z.string().uuid(),
 });
 
 function getSupabase() {

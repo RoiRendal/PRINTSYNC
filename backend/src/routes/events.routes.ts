@@ -29,13 +29,18 @@ export const eventsRouter = Router();
  */
 
 /**
- * How often to send a comment frame to keep the connection alive.
+ * How often to send a keep-alive frame.
  *
  * Idle SSE connections are dropped by proxies and load balancers — nginx's
  * `proxy_read_timeout` defaults to 60s, many managed load balancers to 30s, and
  * Vite's dev proxy will hold a stalled socket. 25s sits comfortably under all of
- * them. A comment (`: ping`) rather than a named event, so it never surfaces as
- * a message to client code.
+ * them.
+ *
+ * It is a **named** event, not a `: ping` comment, and that distinction matters.
+ * A comment keeps the socket alive on the wire but the browser's `EventSource`
+ * never surfaces it to script — so a client that watches for silence to detect a
+ * half-open connection cannot see a comment at all, and treats a perfectly
+ * healthy stream as dead. Naming it is what makes the heartbeat observable.
  *
  * The browser client mirrors this value to decide when a silent socket should be
  * presumed dead — see `SERVER_HEARTBEAT_INTERVAL_MS` in
@@ -98,7 +103,7 @@ eventsRouter.get('/', authenticate, (request, response) => {
 
   const heartbeat = setInterval(() => {
     if (closed || response.writableEnded) return;
-    response.write(': ping\n\n');
+    send('heartbeat', { at: new Date().toISOString() });
   }, HEARTBEAT_INTERVAL_MS);
 
   /**

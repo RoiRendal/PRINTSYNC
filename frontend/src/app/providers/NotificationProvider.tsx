@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type NotificationType = 'stock' | 'order' | 'system';
 
@@ -82,7 +82,6 @@ const NotificationContext = createContext<NotificationContextValue | null>(null)
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(loadNotifications);
   const [settings, setSettings] = useState<NotificationSettings>(loadSettings);
-  const prevIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     saveNotifications(notifications);

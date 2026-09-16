@@ -7,6 +7,7 @@ import {
   getTransaction,
   listTransactions,
   voidTransaction,
+  type TransactionInput,
 } from '../../src/modules/payments/payments.service.js';
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
@@ -149,24 +150,23 @@ describe('payments.service', () => {
   });
 
   describe('createTransaction', () => {
-    it('forwards totals, payment method and actor to the create RPC', async () => {
+    const baseInput: TransactionInput = {
+      items: [{ name: 'Glossy Paper', quantity: 2, unitPrice: 100 }],
+      subtotal: 200,
+      discount: 20,
+      tax: 24,
+      total: 204,
+      paymentMethod: 'Cash',
+      paymentAmount: 250,
+      idempotencyKey: 'a1b2c3d4-0000-4000-8000-000000000000',
+    };
+
+    it('forwards totals, payment method, actor and idempotency key to the create RPC', async () => {
       const db = createFakeSupabase();
       db.queueRpc('create_transaction_with_payment', { data: { id: 'txn-1' } });
       queueTransactionSingle(db);
 
-      const transaction = await createTransaction(
-        db.client,
-        {
-          items: [{ name: 'Glossy Paper', quantity: 2, unitPrice: 100 }],
-          subtotal: 200,
-          discount: 20,
-          tax: 24,
-          total: 204,
-          paymentMethod: 'Cash',
-          paymentAmount: 250,
-        },
-        'actor-1',
-      );
+      const transaction = await createTransaction(db.client, baseInput, 'actor-1');
 
       const payload = db.lastCall('create_transaction_with_payment')?.payload as Record<string, unknown>;
       assert.equal(payload.p_subtotal, 200);
@@ -176,6 +176,7 @@ describe('payments.service', () => {
       assert.equal(payload.p_payment_method, 'Cash');
       assert.equal(payload.p_received_amount, 250);
       assert.equal(payload.p_created_by, 'actor-1');
+      assert.equal(payload.p_idempotency_key, baseInput.idempotencyKey);
       assert.equal(transaction.id, 'txn-1');
     });
 
@@ -184,24 +185,50 @@ describe('payments.service', () => {
       db.queueRpc('create_transaction_with_payment', { data: null, error: { message: 'totals do not match items' } });
 
       await assertAppError(
-        () =>
-          createTransaction(
-            db.client,
-            {
-              items: [{ name: 'Item', quantity: 1, unitPrice: 10 }],
-              subtotal: 999,
-              discount: 0,
-              tax: 0,
-              total: 999,
-              paymentMethod: 'Cash',
-              paymentAmount: 999,
-            },
-            'actor-1',
-          ),
+        () => createTransaction(db.client, { ...baseInput, subtotal: 999, total: 999 }, 'actor-1'),
         400,
         'TRANSACTION_CREATE_FAILED',
         'totals do not match items',
       );
+    });
+
+    it('turns a structured stock shortfall into a 409 carrying the numbers', async () => {
+      const db = createFakeSupabase();
+      db.queueRpc('create_transaction_with_payment', {
+        data: null,
+        error: {
+          message: 'Only 1 left in stock for "Glossy Paper" (2 requested).',
+          details: JSON.stringify({ itemId: 'inv-1', itemName: 'Glossy Paper', available: 1, requested: 2 }),
+        },
+      });
+
+      const error = await assertAppError(
+        () => createTransaction(db.client, baseInput, 'actor-1'),
+        409,
+        'INSUFFICIENT_STOCK',
+      );
+
+      // The POS points at the offending cart line from this, so the shape matters
+      // as much as the status code.
+      assert.deepEqual(error.details, { itemId: 'inv-1', itemName: 'Glossy Paper', available: 1, requested: 2 });
+    });
+
+    it('does not mistake a foreign `details` value for a stock shortfall', async () => {
+      const db = createFakeSupabase();
+      // Postgres puts constraint names in `details` too; only our own JSON payload
+      // should be read as structured context.
+      db.queueRpc('create_transaction_with_payment', {
+        data: null,
+        error: { message: 'duplicate key value violates unique constraint', details: 'sales_transactions_pkey' },
+      });
+
+      const error = await assertAppError(
+        () => createTransaction(db.client, baseInput, 'actor-1'),
+        400,
+        'TRANSACTION_CREATE_FAILED',
+      );
+
+      assert.equal(error.details, undefined);
     });
   });
 
