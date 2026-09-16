@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
-import { createTransaction, getTransaction, listTransactions, voidTransaction } from '../modules/payments/payments.service.js';
+import { createTransaction, findTransactionByIdempotencyKey, getTransaction, listTransactions, voidTransaction } from '../modules/payments/payments.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
@@ -50,6 +50,27 @@ function getTransactionId(request: { params: Record<string, string | string[] | 
 
 paymentsRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (request, response) => {
   sendSuccess(response, await listTransactions(getSupabase(), parsePaginationQuery(request.query)));
+});
+
+const idempotencyKeySchema = z.string().uuid();
+
+/**
+ * Checkout reconciliation: "did the sale I just attempted actually commit?"
+ *
+ * Registered before `/transactions/:id` so the literal `by-key` segment can
+ * never be mistaken for a transaction id.
+ *
+ * Answers `200` with `data: null` when nothing carries the key, rather than a
+ * `404`. "No sale was written" is the *expected* outcome for most calls here —
+ * a checkout failed and nothing landed — so making the client parse an error
+ * envelope to learn the ordinary answer would be the wrong shape. A `404` is
+ * reserved for a lookup that could not be performed at all.
+ */
+paymentsRouter.get('/transactions/by-key/:key', authenticate, requirePermission('payments.read'), async (request, response) => {
+  const rawKey = request.params.key;
+  const parsedKey = idempotencyKeySchema.safeParse(Array.isArray(rawKey) ? rawKey[0] : rawKey);
+  if (!parsedKey.success) throw new AppError(400, 'INVALID_IDEMPOTENCY_KEY', 'The checkout reference is invalid.');
+  sendSuccess(response, await findTransactionByIdempotencyKey(getSupabase(), parsedKey.data));
 });
 
 paymentsRouter.get('/transactions/:id', authenticate, requirePermission('payments.read'), async (request, response) => {

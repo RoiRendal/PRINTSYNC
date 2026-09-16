@@ -79,6 +79,18 @@ export function createPaymentsApi(client: ApiClient = apiClient) {
     list: (query?: { page?: number; limit?: number }) => client.get<PaginatedResponse<PaymentTransaction>>('/payments/transactions', query),
     create: (payload: CreatePaymentTransaction) => client.post<PaymentTransaction, CreatePaymentTransaction>('/payments/transactions', payload),
     void: (id: string) => client.post<PaymentTransaction, Record<string, never>>(`/payments/transactions/${id}/void`, {}),
+    /**
+     * Finds the sale a checkout attempt committed under `key`, if it committed.
+     *
+     * Resolves to `null` when nothing carries the key, which is an ordinary
+     * answer rather than an error — most calls happen after a checkout failed and
+     * nothing landed. It throws only when the lookup itself could not be
+     * performed, and the caller must treat that as "unknown" rather than "no
+     * sale": telling a cashier nothing was written when the till simply could not
+     * ask is how a customer gets charged twice.
+     */
+    findByIdempotencyKey: (key: string) =>
+      client.get<PaymentTransaction | null>(`/payments/transactions/by-key/${encodeURIComponent(key)}`),
   };
 }
 

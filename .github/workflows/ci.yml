@@ -115,6 +115,15 @@ jobs:
         run: npm run lint
         working-directory: frontend
 
+      # The suite covers the parts that fail silently rather than loudly: the
+      # store freshness rules, the idempotency-key lifetime that decides whether
+      # a retry double-charges, the structured-error contract, and the realtime
+      # heartbeat. None of those produce a visible error when they break — the
+      # screen just quietly goes stale, or a customer is charged twice.
+      - name: Unit tests
+        run: npm test
+        working-directory: frontend
+
       - name: Build
         run: npm run build
         working-directory: frontend

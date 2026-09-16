@@ -87,11 +87,26 @@ export function subscribeToDataChanges(listener: DataChangeListener): () => void
  * touches several domains should wake each subscriber once, not once per
  * domain. Listeners are iterated over a copy so that a listener which
  * unsubscribes during dispatch cannot disturb the loop.
+ *
+ * A listener that throws is logged and skipped, exactly as the server-side bus
+ * does it. Without that, one broken subscriber — a component that unmounted
+ * mid-dispatch, a handler reading a field that a failed fetch left undefined —
+ * would silently swallow the notification for every subscriber after it,
+ * including the list stores. The symptom would be a page that quietly stops
+ * updating, with nothing in the UI to explain why. Isolating the failure keeps
+ * live updates working for everything else.
  */
 export function emitDataChange(...domains: DataDomain[]): void {
   if (domains.length === 0) return;
   for (const listener of [...listeners]) {
-    listener(domains);
+    try {
+      listener(domains);
+    } catch (error) {
+      console.error('[data-events] listener threw while handling a change', {
+        domains,
+        error,
+      });
+    }
   }
 }
 

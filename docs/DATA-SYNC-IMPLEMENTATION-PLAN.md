@@ -6,8 +6,8 @@
 | --- | --- |
 | **Reported by** | Operations (management) |
 | **Business requirement** | Data changed anywhere in the system must appear everywhere immediately. Staff must never need to reload a page to see current information. The system must hold up with several staff members working at the same time. |
-| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 **implemented and verified live** (§5). |
-| **Verified by** | Backend unit suite **174/174 passing**; `tsc --noEmit` clean on frontend, backend and backend tests; `npm run build` succeeds on all three workspaces; **26/26 live end-to-end checks** against the real Supabase project (§5.4); both new migrations applied and in sync |
+| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 **implemented and verified live** (§5). Tier 4 **implemented and verified live** (§6). |
+| **Verified by** | Backend unit suite **177/177 passing**; frontend unit suite **79/79 passing**; `tsc --noEmit` clean on frontend, backend and backend tests; `npm run build` succeeds on all three workspaces; **26/26** live end-to-end checks for Tier 3 (§5.4) and **15/15** for Tier 4 (§6.4) against the real Supabase project; both new migrations applied and in sync |
 
 ---
 
@@ -353,8 +353,8 @@ frontend, matching how every other shared contract is used.
   `payments.read`, that `users.manage` does not imply `users.read`, and that staff
   receive every domain except `users`.
 - Backend unit suite: **170 tests, 170 passing.** Backend `tsc --noEmit` clean.
-  Frontend unchanged at its 16 pre-existing errors (§6.1). `npm run build`
-  succeeds on both workspaces.
+  Frontend unchanged at its 16 pre-existing errors *at the time* — since fixed in
+  Tier 3 (§7.1). `npm run build` succeeds on both workspaces.
 
 **Live**, against the real Supabase project with the API running:
 
@@ -549,24 +549,193 @@ after itself.
   accordingly on both sides.
 - **Realtime is still single-instance.** See §4.4. Unchanged by this tier.
 
-### 5.6 Still open, in priority order
+### 5.6 What Tier 3 left open
+
+Kept as the record of what Tier 3 handed forward. **Items 2, 3 and 4 were closed by
+Tier 4** (§6); 1, 5 and 6 remain open and are carried in §6.6.
 
 | # | Item | Business value | Technical approach |
 | --- | --- | --- | --- |
 | 1 | **Optimistic UI** | Staff see their action land instantly instead of waiting on the network. Perceived speed on a slow connection. | Mutations currently `await` the server before touching the UI. Apply the change locally first, then reconcile; roll back and toast on failure. The store already exposes `mutateItems`/`replaceItem` for this. |
-| 2 | **A "recent sales" reconciliation view** | Closes the residual double-charge window in §5.5, and lets a cashier confirm a sale that appeared to fail. | A small read-only list of the last few transactions per workstation, refreshed on checkout failure. |
-| 3 | **Expose `isRevalidating` in the UI** | Reassures staff that the screen is live. | The flag already exists and is unused; render a subtle "syncing" indicator. |
-| 4 | **Frontend tests** | The revalidation and idempotency-key timing logic has no coverage, and it is the part that regresses silently. | Vitest + Testing Library; see §6.5. |
+| 2 | **A "recent sales" reconciliation view** | Closes the residual double-charge window in §5.5, and lets a cashier confirm a sale that appeared to fail. | ~~A read-only list of recent transactions~~ — **done in Tier 4 as a direct lookup by attempt key** (§6.3), which answers the question without the cashier having to scan a list. |
+| 3 | **Expose `isRevalidating` in the UI** | Reassures staff that the screen is live. | **Done in Tier 4** (§6.2) — a debounced "Syncing" state on the existing connection chip. |
+| 4 | **Frontend tests** | The revalidation and idempotency-key timing logic has no coverage, and it is the part that regresses silently. | **Done in Tier 4** — Vitest + Testing Library, 79 tests (§6.2). |
 | 5 | **Scheduled/paginated analytics caching** | Analytics issues 5 queries on every change event. Fine now; will need attention at volume. | A short server-side cache or a materialised view for the summary RPC. |
 | 6 | **Postgres `LISTEN`/`NOTIFY` for the event bus** | Removes the single-instance ceiling on realtime. | See §4.4 — the call sites will not need to change. |
 
 ---
 
-## 6. Other findings from the scan
+## 6. Tier 4 — Closing the last money gap, and proving it (implemented and verified)
+
+### 6.1 Why this tier, and what it deliberately is not
+
+Tier 3 made a retry safe. It did not make a retry *unnecessary*, and it gave nobody
+a way to find out what had actually happened. That gap was the last way to take
+money twice:
+
+> A cashier rings up a sale. The response never arrives — the connection drops, or
+> the API answers 500 *after* the sale committed. The till says "failed". The
+> cashier, quite reasonably, rings it up again.
+
+Reusing the attempt key makes that second attempt harmless **as long as the cart has
+not changed**. If the cashier adjusts the cart first — re-adds the item, or corrects
+a quantity — a new key is minted and a second sale is created. That is the residual
+window Tier 3 documented in §5.5.
+
+Tier 4 closes it by asking the server directly, and adds the two supporting pieces
+Tier 3 recommended: an automated test suite for the logic that regresses silently,
+and a visible indicator that the screen is current.
+
+**Deliberately not in this tier:** Postgres `LISTEN`/`NOTIFY` (§4.4). It requires a
+new `DATABASE_URL` secret holding the *direct* connection string, because Supabase's
+transaction pooler does not support `LISTEN`. It is also not needed for the stated
+requirement — "several staff on one shop" means one API process serving many
+concurrent users, which already works. It becomes the right change when the API is
+scaled horizontally, and the call sites will not need to change when it happens.
+
+### 6.2 The frontend test suite — 79 tests where there were none
+
+Tier 3 shipped CI that gated types and builds, but the frontend still had **zero**
+tests, and the parts with no coverage were exactly the parts that fail quietly.
+
+| File | Tests | What it protects |
+| --- | --- | --- |
+| `shared/store/createListStore.test.ts` | 16 | The freshness model: `revalidate()` respects `staleTime`, `forceRevalidate()` bypasses it, a failed background refresh keeps the last good data and stays stale, out-of-order responses are discarded, and a store the user never opened is never fetched on their behalf (the admin-only `users` 403). |
+| `shared/store/dataEvents.test.ts` | 11 | The domain bus: batching, unsubscribe, a listener that throws, and that the runtime domain list still matches the shared type. |
+| `shared/realtime/eventStream.test.ts` | 13 | The realtime client — including a direct regression guard for the Tier 2 heartbeat defect (§5.3) and the expired-token reconnect path. |
+| `features/orders/api/checkoutErrors.test.ts` | 18 | The structured-error contract, including that neither reader claims the other's error, and `isServerRejection()` — the rule that decides whether a failure is a verdict or an open question. |
+| `features/orders/hooks/useCheckoutAttemptKey.test.ts` | 15 | **The double-charge defence.** One key per attempt, reused across retries, rotated when the cart changes. |
+| `app/hooks/useIsSyncing.test.tsx` | 6 | The sync indicator, including that it stays quiet for fast refreshes so it never becomes flicker. |
+
+The idempotency-key rule had no test at all before this, because it lived inside a
+700-line page component. Tier 4 lifted it into
+`features/orders/hooks/useCheckoutAttemptKey.ts`, which is what made it testable —
+and since both ways of getting it wrong are silent, every branch is asserted.
+
+Tooling: Vitest + Testing Library + jsdom, declared in `frontend/package.json`, with
+the `test` block added to the existing `vite.config.ts` so the runner cannot drift
+from the app's module aliases. `npm test` now runs in the CI frontend job (§7.2).
+
+Pure-logic suites declare `// @vitest-environment node`; leaving them on jsdom cost
+about 25 of the suite's 26 seconds. It now runs in roughly 6.
+
+### 6.3 Checkout reconciliation — "did my sale go through?"
+
+A new endpoint answers it:
+
+```
+GET /api/v1/payments/transactions/by-key/:key        requires payments.read
+```
+
+It returns the sale if one committed under that key, and `200` with `data: null` if
+none did. It deliberately does **not** answer `404` for "no sale": that is the
+ordinary outcome — most calls follow a failure where nothing was written — and
+making the client parse an error envelope to learn the normal case would be the
+wrong shape. `404` is reserved for a lookup that could not be performed at all.
+
+The route is registered before `/transactions/:id`, so the literal `by-key` segment
+can never be read as a transaction id.
+
+On the till, failure handling now distinguishes two kinds of failure:
+
+- **A verdict (4xx).** The API validated the request and refused it, so nothing was
+  written. This covers the short-stock and order-conflict cases from Tier 3. No
+  investigation happens.
+- **No verdict (a dropped connection, a timeout, a 5xx).** The till genuinely cannot
+  say. It looks the attempt key up and reports one of three outcomes:
+
+| Outcome | What the cashier sees |
+| --- | --- |
+| **Committed** | The normal success screen, plus *"This sale had already been saved — the earlier attempt did go through. Do not ring it up again."* The sale is adopted into the history table and the receipt becomes printable. |
+| **Not committed** | *"Nothing was charged — safe to try again."* |
+| **Could not confirm** | *"Could not confirm — retrying is safe."* Retrying genuinely is safe here, because the attempt key survives a failure, so a retry either replays the sale or creates it. |
+
+The 5xx case is not hypothetical: the route writes an audit entry *after* the sale
+RPC returns, so a failure there leaves a real, committed sale behind. Treating a 500
+as "nothing was written" is exactly how a customer gets charged twice, which is why
+`isServerRejection()` is tested for it explicitly.
+
+`unknown` is a real outcome and is presented as one. A lookup that fails must never
+be reported as "no sale".
+
+### 6.4 Verification
+
+| Check | Result |
+| --- | --- |
+| Backend unit suite | **177/177 passing** |
+| Frontend unit suite | **79/79 passing**, 6 files |
+| `tsc --noEmit` | Clean on frontend, backend, backend tests |
+| `npm run build` | Succeeds on all three workspaces |
+| Live checks, real Supabase project | **15/15 passing**, zero server errors |
+
+The live run covers: an unauthenticated lookup refused (401); a malformed key
+rejected before it reaches the database (400 `INVALID_IDEMPOTENCY_KEY`); an unknown
+key answering `200` with `data: null`; a staff session succeeding, confirming staff
+hold `payments.read`; a real sale committed and then found by its key; the
+transaction-by-id route still resolving, proving the new literal route did not
+swallow it; an unrelated key not matching that sale; stock genuinely deducted; the
+test sale voided and **stock restored, so the run left no net data change**; and a
+voided sale still reported and flagged `voided` — because it *did* commit, and
+saying so is the honest answer.
+
+### 6.5 Two defects found while building this tier
+
+1. **The post-sale receipt printed nothing.** `POSPage` cleared the cart the instant
+   a sale succeeded, and `ReceiptModal` rendered from that live cart — so a cashier
+   who clicked "Print Receipt" inside the two-second success window got an empty
+   slip. Pre-existing and unrelated to Tier 4; it surfaced only because
+   reconciliation needs a receipt for a sale the cashier never saw succeed. Fixed by
+   capturing a `ReceiptSnapshot` (cart, totals, method, customer) at the moment the
+   sale completes.
+
+2. **One throwing subscriber could silently stop all live updates.** The frontend
+   domain bus dispatched without isolating listeners — unlike its server-side
+   counterpart, which has always isolated them. A subscriber that threw (a component
+   that unmounted mid-dispatch, a handler reading a field a failed fetch left
+   undefined) would skip every subscriber after it, including the list stores, and
+   the page would quietly stop updating with nothing in the UI to explain why. Found
+   by writing the test that expected isolation and watching it fail. The bus now logs
+   and skips, matching the backend.
+
+### 6.6 Still open, in priority order
+
+| # | Item | Business value | Technical approach |
+| --- | --- | --- | --- |
+| 1 | **Optimistic UI** | Staff see their action land instantly instead of waiting on the network. Perceived speed on a slow connection. | Apply the change locally first, then reconcile; roll back and toast on failure. The store already exposes `mutateItems`/`replaceItem` for this. |
+| 2 | **Scheduled/paginated analytics caching** | Analytics issues 5 queries on every change event. Fine now; will need attention at volume. | A short server-side cache or a materialised view for the summary RPC. |
+| 3 | **Postgres `LISTEN`/`NOTIFY` for the event bus** | Removes the single-instance ceiling on realtime. Requires a new `DATABASE_URL` secret (direct connection, not the pooler). | See §4.4 — the call sites will not need to change. |
+| 4 | **Protect `macOS-UI-2`** | A red build currently cannot block a merge. | A branch-protection rule in GitHub settings. Not a code change. |
+
+### 6.7 Files touched
+
+**New (frontend):** `src/test/setup.ts`,
+`src/shared/store/createListStore.test.ts`, `src/shared/store/dataEvents.test.ts`,
+`src/shared/realtime/eventStream.test.ts`,
+`src/features/orders/api/checkoutErrors.test.ts`,
+`src/features/orders/hooks/useCheckoutAttemptKey.ts` + `.test.ts`,
+`src/app/hooks/useIsSyncing.ts` + `.test.tsx`.
+
+**Changed (frontend):** `vite.config.ts` (test block), `package.json` (scripts +
+dev deps), `src/shared/store/dataEvents.ts` (listener isolation),
+`src/shared/api/errors.ts` (`isServerRejection`),
+`src/features/orders/api/paymentsApi.ts` (`findByIdempotencyKey`),
+`src/features/orders/components/pos/POSCheckoutModal.tsx` (reconciliation panel),
+`src/features/orders/pages/POSPage.tsx` (attempt hook, reconciliation, receipt
+snapshot), `src/app/components/ConnectionStatus.tsx` (syncing state).
+
+**Changed (backend):** `src/modules/payments/payments.service.ts`
+(`findTransactionByIdempotencyKey`), `src/routes/payments.routes.ts` (the route),
+`tests/unit/payments.service.test.ts` (3 tests).
+
+**Changed (CI):** `.github/workflows/ci.yml` — `npm test` added to the frontend job.
+
+---
+
+## 7. Other findings from the scan
 
 These are outside the reported request but affect readiness for real operations.
 
-### 6.1 The frontend type-check — **fixed in Tier 3**
+### 7.1 The frontend type-check — **fixed in Tier 3**
 
 `npm run lint` in `frontend/` was failing with **16 errors across 8 files**. None
 were in the files changed by Tier 1 or 2, and `npm run build` still succeeded
@@ -591,15 +760,15 @@ so `variantClasses[variant]` resolved to `undefined` and the action badge render
 with **no styling at all**. It now uses the shared `BadgeVariant` type, with the
 mapping from action to variant written out explicitly.
 
-### 6.2 CI — **added in Tier 3**
+### 7.2 CI — **added in Tier 3, extended in Tier 4**
 
-`.github/workflows/ci.yml` now runs on every push and pull request:
+`.github/workflows/ci.yml` runs on every push and pull request:
 
 | Job | Steps |
 | --- | --- |
 | `shared-types` | lint, build, upload `dist` as an artifact |
 | `backend` | needs `shared-types`; downloads the artifact, then lint, lint:tests, test:unit, build |
-| `frontend` | lint, build |
+| `frontend` | lint, **test**, build |
 
 The `shared-types` job is not decoration: the backend resolves
 `@printsync/shared-types` to `../packages/shared-types/dist/index.d.ts`, so without
@@ -607,9 +776,15 @@ building it first the backend job fails for reasons that have nothing to do with
 the change under review. `test:integration` is deliberately excluded — it requires
 live Supabase credentials, which should not be stored in CI.
 
-**Still recommended:** protect `macOS-UI-2` so a red build cannot be merged.
+The frontend `test` step was added in Tier 4 (§6.2). It is the step that matters
+most in this file: every other job catches a change that is *visibly* wrong, while
+this one catches the changes that are silently wrong — a retry that double-charges,
+a screen that quietly stops updating.
 
-### 6.3 Credentials that must never reach production
+**Still recommended:** protect `macOS-UI-2` so a red build cannot be merged. This
+is a GitHub settings change, not a code change (§6.6, item 4).
+
+### 7.3 Credentials that must never reach production
 
 - `0_never-push-this-dump-folder/postgre-supabase-data/0_profiles.txt` contains
   **plaintext account passwords** for the admin and two staff accounts. The
@@ -624,50 +799,61 @@ live Supabase credentials, which should not be stored in CI.
   before deployment, and the key should be rotated at that point.
 - `frontend/.env` is clean — no secrets, only the API base URL. Good.
 
-### 6.4 Repository hygiene
+### 7.4 Repository hygiene
 
 `frontend/vercel.json`, `frontend/.vercel/`, `backend/.vercel/`, and the
 `.tmp-verify/` directories are leftovers from an earlier experiment. `README.md`
 already notes they are unused and safe to delete.
 
-### 6.5 No frontend tests
+### 7.5 No frontend tests — **fixed in Tier 4**
 
-`backend/tests/integration/` exists, but the frontend has no test setup at all.
-The revalidation behaviour added here is precisely the kind of cross-component
-timing logic that regresses silently. **Recommendation:** Vitest + Testing Library,
-starting with three cases — mutation announces the right domains; `revalidate()`
-no-ops while fresh; a failed background refresh leaves data intact.
+`backend/tests/integration/` existed, but the frontend had no test setup at all,
+and the revalidation behaviour is precisely the kind of cross-component timing
+logic that regresses silently.
+
+Tier 4 added Vitest + Testing Library and **79 tests** across six files — see §6.2
+for the full table. The three cases recommended here (a mutation announcing the
+right domains; `revalidate()` no-oping while fresh; a failed background refresh
+leaving data intact) are all covered, along with the one that turned out to matter
+most and had no coverage at all: the idempotency-key lifetime that decides whether
+a retry double-charges.
 
 ---
 
-## 7. Summary for management
+## 8. Summary for management
 
-| | Before | After Tier 1 | After Tier 2 | After Tier 3 |
-| --- | --- | --- | --- | --- |
-| Change made on the same page | Visible | Visible | Visible | Visible |
-| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate | Immediate |
-| Change made by another staff member | Never visible | Within 60s | Under 2s | Under 2s |
-| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately | Corrected immediately |
-| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes | Self-refreshes, no wasted redials |
-| Staff action requires a page reload | Always | Never | Never | Never |
-| A double-click at checkout | Charges twice | Charges twice | Charges twice | **Charges once** |
-| "Out of stock" at checkout | "Transaction failed" | "Transaction failed" | "Transaction failed" | **Names the item and how many are left** |
-| Two staff editing one order | Second save silently wins | Same | Same | **Second save is refused; both are told** |
-| A type error reaching the codebase | Undetected | Undetected | Undetected | **Blocked by CI** |
+| | Before | After Tier 1 | After Tier 2 | After Tier 3 | After Tier 4 |
+| --- | --- | --- | --- | --- | --- |
+| Change made on the same page | Visible | Visible | Visible | Visible | Visible |
+| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate | Immediate | Immediate |
+| Change made by another staff member | Never visible | Within 60s | Under 2s | Under 2s | Under 2s |
+| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately | Corrected immediately | Corrected immediately |
+| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes | Self-refreshes, no wasted redials | Same |
+| Staff action requires a page reload | Always | Never | Never | Never | Never |
+| A double-click at checkout | Charges twice | Charges twice | Charges twice | **Charges once** | Charges once |
+| "Out of stock" at checkout | "Transaction failed" | "Transaction failed" | "Transaction failed" | **Names the item and how many are left** | Same |
+| Two staff editing one order | Second save silently wins | Same | Same | **Second save is refused; both are told** | Same |
+| A checkout whose response is lost | Cashier has to guess | Same | Same | Retrying is safe, but still a guess | **Till says whether it went through** |
+| Can staff tell the screen is current? | No | No | Connection chip only | Same | **Chip shows "Syncing" while fetching** |
+| Receipt printed after a sale | Printed empty | Same | Same | Same | **Prints the actual sale** |
+| A type error reaching the codebase | Undetected | Undetected | Undetected | **Blocked by CI** | Blocked by CI |
+| A silent regression in the timing logic | Undetected | Undetected | Undetected | Undetected | **Caught by 79 frontend tests in CI** |
 
-All three tiers are done and verified against the real system. Tier 1 made a
-change visible everywhere on the workstation; Tier 2 extended that to every
-workstation in under a second; Tier 3 hardened the parts that cost money or lose
-work when several people use the system at once.
+All four tiers are done and verified against the real system. Tier 1 made a change
+visible everywhere on the workstation; Tier 2 extended that to every workstation in
+under a second; Tier 3 hardened the parts that cost money or lose work when several
+people use the system at once; Tier 4 closed the last way to take money twice, and
+put a test suite in front of the logic that fails without announcing itself.
 
 **The two items that matter most before release are unchanged, and neither is a
 code problem:**
 
-1. **Rotate the default development passwords** (§6.3). Predictable credentials on
+1. **Rotate the default development passwords** (§7.3). Predictable credentials on
    a reachable URL are the highest-impact risk in the codebase.
 2. **Move `SUPABASE_SERVICE_ROLE_KEY` out of `backend/.env`** into the host's
-   secrets (§6.3), and rotate it at that point.
+   secrets (§7.3), and rotate it at that point.
 
-Beyond those, the highest-value next work is **§5.6**: a "recent sales"
-reconciliation view, frontend tests for the timing logic, and the `LISTEN`/`NOTIFY`
-change that lifts the single-instance ceiling on realtime (§4.4).
+Beyond those, the highest-value next work is **§6.6**: optimistic UI so a slow
+connection does not feel slow, analytics caching before the volume grows, and the
+`LISTEN`/`NOTIFY` change that lifts the single-instance ceiling on realtime (§4.4)
+when the API is scaled beyond one process.

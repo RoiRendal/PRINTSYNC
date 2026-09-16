@@ -1,4 +1,5 @@
 import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
+import { useIsSyncing } from '../hooks/useIsSyncing';
 import type { RealtimeStatus } from '../../shared/realtime/eventStream';
 import { Tooltip } from '../../shared/components/ui';
 import { cn } from '../../shared/lib/cn';
@@ -75,21 +76,44 @@ const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
     'No connection. Changes made on other devices will not appear here until this screen is back online.',
 };
 
+/**
+ * Shown in place of `live` while a background refresh is taking a noticeable
+ * amount of time.
+ *
+ * Being connected and being current are different claims, and the app can be
+ * one without the other: the stream can be perfectly healthy while a slow fetch
+ * leaves the numbers on screen a moment out of date. This is the only place a
+ * staff member can see that difference, so it is worth the extra state.
+ */
+const SYNCING_PRESENTATION: StatusPresentation = {
+  label: 'Syncing',
+  dot: 'bg-macos-blue',
+  chip: 'border-macos-blue/25 bg-macos-blue/12 text-blue-700 dark:text-blue-300',
+  pulse: true,
+  hint: 'Fetching the latest data',
+};
+
+const SYNCING_DESCRIPTION =
+  'Connected, and fetching the latest data now. What is on screen is still usable.';
+
 export function ConnectionStatus({ className }: { className?: string }) {
   const { status } = useRealtimeStatus();
+  const isSyncing = useIsSyncing();
 
   // Nothing is running before sign-in, and an "idle" chip would be noise on a
   // login screen.
   if (status === 'idle') return null;
 
-  const presentation = STATUS_PRESENTATION[status];
+  const syncing = status === 'live' && isSyncing;
+  const presentation = syncing ? SYNCING_PRESENTATION : STATUS_PRESENTATION[status];
+  const description = syncing ? SYNCING_DESCRIPTION : STATUS_DESCRIPTION[status];
 
   return (
     <Tooltip content={presentation.hint}>
       <span
         role="status"
         aria-live="polite"
-        aria-label={`Live updates: ${presentation.label}. ${STATUS_DESCRIPTION[status]}`}
+        aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
           'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] backdrop-blur-md',
           presentation.chip,

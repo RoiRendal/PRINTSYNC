@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import {
   createTransaction,
   exportTransactions,
+  findTransactionByIdempotencyKey,
   getTransaction,
   listTransactions,
   voidTransaction,
@@ -146,6 +147,41 @@ describe('payments.service', () => {
       db.queueTable('sales_transactions', { data: null, error: null });
 
       await assertAppError(() => getTransaction(db.client, 'missing'), 404, 'TRANSACTION_NOT_FOUND');
+    });
+  });
+
+  describe('findTransactionByIdempotencyKey', () => {
+    it('returns the transaction a checkout committed under that key', async () => {
+      const db = createFakeSupabase();
+      queueTransactionSingle(db);
+
+      const transaction = await findTransactionByIdempotencyKey(db.client, 'key-1');
+
+      assert.ok(transaction);
+      assert.equal(transaction.id, 'txn-1');
+    });
+
+    it('returns null — not an error — when nothing carries the key', async () => {
+      // This is the ordinary answer, not a failure: most calls happen after a
+      // checkout failed and nothing was written. Reporting it as an error would
+      // make the caller treat "nothing happened" as "the lookup broke".
+      const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: null, error: null });
+
+      assert.equal(await findTransactionByIdempotencyKey(db.client, 'key-unknown'), null);
+    });
+
+    it('raises 503 rather than reporting "no sale" when the lookup itself fails', async () => {
+      // The one wrong answer. If a database outage were reported as "no sale",
+      // the till would invite the cashier to ring the sale up a second time.
+      const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: null, error: { message: 'connection reset' } });
+
+      await assertAppError(
+        () => findTransactionByIdempotencyKey(db.client, 'key-1'),
+        503,
+        'TRANSACTION_LOOKUP_FAILED',
+      );
     });
   });
 

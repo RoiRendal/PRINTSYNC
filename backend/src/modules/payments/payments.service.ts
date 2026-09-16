@@ -119,6 +119,37 @@ export async function getTransaction(supabase: SupabaseClient, id: string): Prom
 }
 
 /**
+ * Finds the sale a checkout attempt committed under `key`, if it committed at all.
+ *
+ * This exists to answer one question the cashier cannot otherwise answer: **did
+ * my sale actually go through?** When a checkout fails without a verdict — the
+ * connection dropped, the request timed out, the API answered 5xx after the
+ * write landed — the till genuinely cannot tell whether the customer was
+ * charged, and the natural response is to ring the sale up again. The
+ * idempotency key makes that retry safe; this lookup makes it *unnecessary*,
+ * because it can say what actually happened.
+ *
+ * Returns `null` when no sale carries the key, which is a normal answer rather
+ * than an error — the caller renders it as "nothing was written, safe to retry".
+ * A genuine lookup failure is different, and throws: reporting a database outage
+ * as "no sale" is the one wrong answer, because it would invite a second charge.
+ */
+export async function findTransactionByIdempotencyKey(
+  supabase: SupabaseClient,
+  key: string,
+): Promise<TransactionRecord | null> {
+  const { data, error } = await supabase
+    .from('sales_transactions')
+    .select(transactionSelect)
+    .eq('idempotency_key', key)
+    .maybeSingle();
+  if (error) throw new AppError(503, 'TRANSACTION_LOOKUP_FAILED', 'The checkout could not be verified.');
+  if (!data) return null;
+  const [transaction] = await mapTransactions(supabase, [data]);
+  return transaction as TransactionRecord;
+}
+
+/**
  * The structured context the RPC attaches when stock runs short.
  *
  * The shape itself lives in `@printsync/shared-types` so the API that raises it

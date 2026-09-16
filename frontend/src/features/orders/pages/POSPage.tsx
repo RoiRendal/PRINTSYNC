@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { History, ShoppingBag, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
-import { ApiError } from '../../../shared/api/errors';
+import { ApiError, isServerRejection } from '../../../shared/api/errors';
 import { Button, GlassCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -13,11 +13,12 @@ import { paymentsApi, readInsufficientStock, type PaymentTransaction } from '../
 import { readOrderConflict } from '../api/ordersApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
-import { POSCheckoutModal, type CheckoutError } from '../components/pos/POSCheckoutModal';
+import { POSCheckoutModal, type CheckoutError, type ReconciliationOutcome } from '../components/pos/POSCheckoutModal';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
-import { useCartTotals } from '../hooks/useCartTotals';
+import { useCartTotals, type CartTotals } from '../hooks/useCartTotals';
+import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
@@ -29,23 +30,32 @@ const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
 const HISTORY_RELOAD_DEBOUNCE_MS = 400;
 
 /**
- * A fresh key for one checkout attempt.
+ * Everything the receipt needs, frozen at the moment the sale completed.
  *
- * `crypto.randomUUID` is only exposed in a secure context, so a shop running the
- * terminal over plain HTTP on the local network would not have it. `getRandomValues`
- * carries no such restriction, so it is the fallback — shaped into a real UUID so
- * the server's validation accepts either path.
+ * Captured rather than read from live state, because the cart is cleared the
+ * instant a sale succeeds — a receipt rendered from `cart` would print an empty
+ * slip, which is exactly what it used to do.
  */
-function createIdempotencyKey(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  bytes[6] = (bytes[6]! & 0x0f) | 0x40;
-  bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+interface ReceiptSnapshot {
+  cart: CartItem[];
+  totals: CartTotals;
+  paymentMethod: 'Cash' | 'Card';
+  customerName: string;
+  orderId?: string;
 }
+
+/**
+ * What the cashier is told when a checkout's fate had to be investigated.
+ *
+ * `committed` has no entry: that is a completed sale, and it is presented as one
+ * — success panel, receipt, done — rather than as a failure with a note attached.
+ */
+const RECONCILIATION_MESSAGE: Record<Exclude<ReconciliationOutcome['kind'], 'committed'>, string> = {
+  'not-committed':
+    'The sale did not reach the server, so nothing was charged and no stock was taken. You can try again.',
+  unknown:
+    'The till could not reach the server to check. Trying again will not charge twice — the same reference is reused, so a repeat is recognised as the same sale.',
+};
 
 export default function POS() {
   const { items: inventory, refresh: refreshInventory } = useInventory();
@@ -93,9 +103,10 @@ export default function POS() {
   });
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [lastOrderId, setLastOrderId] = useState<string | undefined>(undefined);
-
-  /** The idempotency key for the checkout attempt currently in progress, if any. */
-  const checkoutAttemptKeyRef = useRef<string | null>(null);
+  /** `true` when the success on screen came from reconciling a failed attempt. */
+  const [checkoutRecovered, setCheckoutRecovered] = useState(false);
+  /** The sale to print, frozen at completion. See `ReceiptSnapshot`. */
+  const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
@@ -117,9 +128,7 @@ export default function POS() {
    * key — that is what lets a retry after a dropped response come back as the
    * original sale instead of a second charge.
    */
-  useEffect(() => {
-    checkoutAttemptKeyRef.current = null;
-  }, [cartSignature]);
+  const { beginAttempt, peekAttempt, completeAttempt } = useCheckoutAttemptKey(cartSignature);
 
   const mapPaymentTransaction = useCallback((transaction: PaymentTransaction): Transaction => ({
     id: transaction.id,
@@ -422,11 +431,36 @@ export default function POS() {
     }
   };
 
+  /**
+   * Asks the server whether the attempt that just failed actually committed.
+   *
+   * Three outcomes, and the third is the one that matters. If the lookup itself
+   * fails, falling back to "nothing was charged" would be exactly the answer that
+   * leads to a second charge — so an unanswerable question is reported as an
+   * unanswerable question, not as a negative.
+   */
+  const reconcileAttempt = async (key: string): Promise<ReconciliationOutcome> => {
+    try {
+      const committed = await paymentsApi.findByIdempotencyKey(key);
+      if (!committed) return { kind: 'not-committed' };
+
+      // The sale exists. Adopt it, so the history table and the stock figures
+      // describe what actually happened rather than what the till believed.
+      setTransactions((previous) => [mapPaymentTransaction(committed), ...previous]);
+      setTransactionError(null);
+      emitDataChange('payments', 'inventory');
+      return { kind: 'committed', reference: committed.id };
+    } catch {
+      return { kind: 'unknown' };
+    }
+  };
+
   const handleCheckout = () => {
     if (cart.length === 0) return;
     // Opening a checkout is a fresh look at the cart; a message from the previous
     // attempt would only be stale noise.
     setCheckoutError(null);
+    setCheckoutRecovered(false);
     setIsCheckoutModalOpen(true);
   };
 
@@ -442,22 +476,28 @@ export default function POS() {
     }
 
     const { subtotal: trxSubtotal, discount: trxDiscount, tax: trxTax, total: trxTotal } = totals;
+    // Frozen before anything is sent: the success path clears the cart, and the
+    // receipt must still be able to describe what was sold.
+    const saleCart = cart;
+    const saleTotals = totals;
 
     setIsSubmitting(true);
     setCheckoutError(null);
+    setCheckoutRecovered(false);
+
+    /** `true` once the sale is known to have completed — however we found out. */
+    let saleCompleted = false;
+    let saleRecovered = false;
 
     try {
       if (posMode === 'retail') {
-        /*
-         * One key per checkout attempt, reused for every retry of that attempt,
-         * so the server recognises a repeat and replays the original sale instead
-         * of charging again. Cleared on success and whenever the cart changes.
-         */
-        const idempotencyKey = checkoutAttemptKeyRef.current ?? createIdempotencyKey();
-        checkoutAttemptKeyRef.current = idempotencyKey;
+        // One key per attempt, reused for every retry of it, so the server
+        // recognises a repeat and replays the original sale instead of charging
+        // again. See `useCheckoutAttemptKey`.
+        const idempotencyKey = beginAttempt();
 
         const createdTransaction = await paymentsApi.create({
-          items: cart.map((item) => ({ itemId: item.id, name: item.name, quantity: item.qty, unitPrice: item.price })),
+          items: saleCart.map((item) => ({ itemId: item.id, name: item.name, quantity: item.qty, unitPrice: item.price })),
           subtotal: trxSubtotal,
           discount: trxDiscount,
           tax: trxTax,
@@ -466,13 +506,15 @@ export default function POS() {
           paymentAmount: trxTotal,
           idempotencyKey,
         });
-        checkoutAttemptKeyRef.current = null;
+        completeAttempt();
         setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
         setTransactionError(null);
         // A retail sale writes a payment row *and* decrements stock server-side.
         // Both domains are announced so the POS catalogue, the dashboard's
         // stock alerts, and analytics all re-read without a page reload.
         emitDataChange('payments', 'inventory');
+        setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName });
+        saleCompleted = true;
       } else {
         const preparedOrder: CreateOrder = {
           customer: customerName,
@@ -514,33 +556,66 @@ export default function POS() {
             editingOrderVersion,
           );
           setLastOrderId(updated.id);
+          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: updated.id });
         } else {
           const created = await addOrder(preparedOrder);
           setLastOrderId(created.id);
+          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: created.id });
         }
+        saleCompleted = true;
       }
     } catch (error) {
       const shortfall = readInsufficientStock(error);
       const conflict = readOrderConflict(error);
-      setCheckoutError({
-        message: shortfall
-          ? `Only ${shortfall.available} left in stock for "${shortfall.itemName}" — ${shortfall.requested} requested.`
-          : conflict
-            ? 'Someone else changed this order while you were editing it, so your changes were not saved. Close this and reopen the order to see their version.'
-            : error instanceof ApiError
-              ? error.message
-              : 'The transaction could not be completed.',
-        stock: shortfall,
-      });
-      // The sale was refused because our stock picture was out of date. Pull the
-      // real numbers so the catalogue — and the next attempt — agree with the till.
-      if (shortfall) void refreshInventory();
-      return;
+
+      /*
+       * A 4xx is a verdict and needs no investigation — the API validated the
+       * request and refused it, so nothing was written. Anything else leaves the
+       * till genuinely unable to say whether the customer was charged, so ask.
+       *
+       * This is the last line of defence against a double charge, and it is
+       * deliberately the *second* one: the reused idempotency key already makes
+       * retrying safe. Reconciling means the cashier does not have to retry at
+       * all — they get told what happened.
+       */
+      const attemptKey = posMode === 'retail' ? peekAttempt() : null;
+      let reconciliation: ReconciliationOutcome | null = null;
+
+      if (attemptKey && !isServerRejection(error)) {
+        reconciliation = await reconcileAttempt(attemptKey);
+        if (reconciliation.kind === 'committed') {
+          completeAttempt();
+          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName });
+          saleCompleted = true;
+          saleRecovered = true;
+        }
+      }
+
+      if (!saleCompleted) {
+        setCheckoutError({
+          message: reconciliation
+            ? RECONCILIATION_MESSAGE[reconciliation.kind as 'not-committed' | 'unknown']
+            : shortfall
+              ? `Only ${shortfall.available} left in stock for "${shortfall.itemName}" — ${shortfall.requested} requested.`
+              : conflict
+                ? 'Someone else changed this order while you were editing it, so your changes were not saved. Close this and reopen the order to see their version.'
+                : error instanceof ApiError
+                  ? error.message
+                  : 'The transaction could not be completed.',
+          stock: shortfall,
+          reconciliation,
+        });
+        // The sale was refused because our stock picture was out of date. Pull the
+        // real numbers so the catalogue — and the next attempt — agree with the till.
+        if (shortfall) void refreshInventory();
+        return;
+      }
     } finally {
       setIsSubmitting(false);
     }
 
     setCheckoutSuccess(true);
+    setCheckoutRecovered(saleRecovered);
     setCart([]);
     setCustomerName('');
     setCustomerId(null);
@@ -551,6 +626,7 @@ export default function POS() {
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
       setCheckoutSuccess(false);
+      setCheckoutRecovered(false);
     }, 2000);
   };
 
@@ -689,24 +765,31 @@ export default function POS() {
         totals={totals}
         paymentMethod={paymentMethod}
         currencySymbol={currencySymbol}
+        recovered={checkoutRecovered}
         onPaymentMethodChange={handlePaymentMethodChange}
         onConfirm={finalizeTransaction}
         onClose={() => {
           setIsCheckoutModalOpen(false);
           setCheckoutError(null);
+          setCheckoutRecovered(false);
         }}
         onPrintReceipt={() => { setIsCheckoutModalOpen(false); setIsReceiptModalOpen(true); }}
       />
 
+      {/*
+        The receipt reads from the snapshot rather than live state: the cart is
+        cleared the instant a sale completes, so a receipt built from `cart`
+        printed an empty slip.
+      */}
       <ReceiptModal
         isOpen={isReceiptModalOpen}
         onClose={() => setIsReceiptModalOpen(false)}
         posMode={posMode}
-        cart={cart}
-        totals={totals}
-        paymentMethod={paymentMethod}
-        customerName={customerName}
-        orderId={lastOrderId}
+        cart={receipt?.cart ?? []}
+        totals={receipt?.totals ?? totals}
+        paymentMethod={receipt?.paymentMethod ?? paymentMethod}
+        customerName={receipt?.customerName ?? customerName}
+        orderId={receipt?.orderId ?? lastOrderId}
       />
     </div>
   );

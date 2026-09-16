@@ -36,3 +36,21 @@ export function readApiErrorBody(error: unknown): ApiErrorBody | null {
   if (!envelope || typeof envelope !== 'object') return null;
   return envelope as ApiErrorBody;
 }
+
+/**
+ * `true` when the server answered and *refused* the request — a 4xx.
+ *
+ * This is the difference between "the request was rejected" and "we do not know
+ * what happened", and the distinction is load-bearing wherever a failure might
+ * have left a side effect behind. A 4xx means the API reached its own validation
+ * and said no, so nothing was written. Anything else — a `fetch` that never
+ * completed, a timeout, a 5xx raised *after* the write committed — leaves the
+ * caller unable to say.
+ *
+ * Callers that treat an unanswerable question as a negative answer are how
+ * double charges happen, so this deliberately does not try to be clever about
+ * 5xx: they are ambiguous, not negative.
+ */
+export function isServerRejection(error: unknown): boolean {
+  return error instanceof ApiError && error.status >= 400 && error.status < 500;
+}
