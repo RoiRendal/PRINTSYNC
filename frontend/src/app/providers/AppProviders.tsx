@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { loadDataStores, resetDataStores, useAuthStore } from '../stores';
+import { useDataRevalidation } from '../hooks/useDataRevalidation';
 import { useNotificationGenerator } from '../hooks/useNotificationGenerator';
 import { BusinessBrandingProvider } from './BusinessBrandingProvider';
 import { ThemeProvider } from './ThemeProvider';
@@ -23,6 +24,11 @@ function NotificationGenerator() {
 function StoreBootstrap({ children }: { children: React.ReactNode }) {
   const currentUser = useAuthStore((state) => state.currentUser);
   const restoreSession = useAuthStore((state) => state.restoreSession);
+
+  // Keeps every loaded collection current: on domain events raised by
+  // mutations, when the workstation returns to the tab, and on a slow poll.
+  // Disabled while signed out so the login screen never polls.
+  useDataRevalidation(Boolean(currentUser));
 
   useEffect(() => {
     void restoreSession();

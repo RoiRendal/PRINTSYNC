@@ -4,6 +4,7 @@ import type { CreateOrderPayment, OrderPayment } from '../../features/orders/api
 import { ordersApi } from '../../features/orders/api/ordersApi';
 import type { CreateOrder, Order, UpdateOrder } from '../../features/orders/types';
 import { createListStore } from '../../shared/store/createListStore';
+import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface OrderActions {
   addOrder: (order: CreateOrder) => Promise<Order>;
@@ -26,6 +27,9 @@ export const useOrderStore = createListStore<Order, OrderActions>({
       const created = await ordersApi.create({ ...order, lineItems });
       mutateItems((items) => [created, ...items]);
       setError(null);
+      // Order creation can move inventory server-side, so both domains are
+      // announced: the dashboard pipeline and the stock ledger must agree.
+      emitDataChange('orders', 'inventory');
       return created;
     },
 
@@ -33,6 +37,7 @@ export const useOrderStore = createListStore<Order, OrderActions>({
       const updated = await ordersApi.update(id, order);
       mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
       setError(null);
+      emitDataChange('orders');
       return updated;
     },
 
@@ -40,11 +45,15 @@ export const useOrderStore = createListStore<Order, OrderActions>({
       await ordersApi.remove(id);
       mutateItems((items) => items.filter((current) => current.id !== id));
       setError(null);
+      emitDataChange('orders');
     },
 
     recordPayment: async (payment) => {
       const created = await orderPaymentsApi.create(payment);
       setError(null);
+      // A partial payment changes the order's balance, the dashboard revenue
+      // figure, and the transaction history at the same time.
+      emitDataChange('orders', 'payments');
       return created;
     },
 

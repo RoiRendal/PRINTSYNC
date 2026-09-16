@@ -2,6 +2,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { inventoryApi } from '../../features/inventory/api/inventoryApi';
 import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../../features/inventory/types';
 import { createListStore } from '../../shared/store/createListStore';
+import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface InventoryActions {
   addItem: (item: CreateInventoryItem) => Promise<InventoryItem>;
@@ -19,6 +20,9 @@ export const useInventoryStore = createListStore<InventoryItem, InventoryActions
       const created = await inventoryApi.create(item);
       mutateItems((items) => [...items, created]);
       setError(null);
+      // Announce the change so derived views (dashboard stock alerts, POS
+      // catalogue, analytics forecast, notifications) re-read it immediately.
+      emitDataChange('inventory');
       return created;
     },
 
@@ -35,6 +39,7 @@ export const useInventoryStore = createListStore<InventoryItem, InventoryActions
       if (nextStock === undefined || nextStock === updated.stock) {
         mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
         setError(null);
+        emitDataChange('inventory');
         return updated;
       }
 
@@ -44,6 +49,7 @@ export const useInventoryStore = createListStore<InventoryItem, InventoryActions
       });
       mutateItems((items) => items.map((current) => (current.id === id ? adjusted : current)));
       setError(null);
+      emitDataChange('inventory');
       return adjusted;
     },
 
@@ -51,6 +57,7 @@ export const useInventoryStore = createListStore<InventoryItem, InventoryActions
       await inventoryApi.remove(id);
       mutateItems((items) => items.filter((current) => current.id !== id));
       setError(null);
+      emitDataChange('inventory');
     },
 
     reset: () => {

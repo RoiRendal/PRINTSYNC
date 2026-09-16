@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   analyticsApi,
   type AnalyticsSummary,
@@ -7,7 +7,33 @@ import {
   type SalesTimeline,
 } from '../api/analyticsApi';
 import { ApiError } from '../../../shared/api/errors';
+import {
+  includesAnyDomain,
+  subscribeToDataChanges,
+  type DataDomain,
+} from '../../../shared/store/dataEvents';
 import { periodToBucket, periodToHorizonDays, type Period } from '../components/analytics-types';
+
+/**
+ * Domains that can move a number on this page. Analytics is fully derived from
+ * the operational tables, so any of them changing invalidates all five panels.
+ */
+const ANALYTICS_DOMAINS: readonly DataDomain[] = [
+  'orders',
+  'inventory',
+  'payments',
+  'customers',
+  'designs',
+  'settings',
+];
+
+/**
+ * One user action can announce several domains in quick succession (a POS sale
+ * touches payments and inventory; saving an order touches orders and
+ * inventory). Coalescing them into a single reload keeps one action from firing
+ * five parallel dashboard queries twice over.
+ */
+const RELOAD_DEBOUNCE_MS = 400;
 
 export interface AnalyticsDataState {
   dateRange: { from: string; to: string };
@@ -57,6 +83,41 @@ export function useAnalyticsData(
     return { from, to };
   }, []);
 
+  /*
+   * Bumping this token re-runs all five fetches below.
+   *
+   * The panels are mounted for as long as the admin stays on the page, so
+   * without a trigger they would keep rendering whatever the numbers were at
+   * mount time. Previously the only way to refresh them was to navigate away
+   * and back — which is exactly the "restart the page" behaviour we are
+   * removing.
+   */
+  const [reloadToken, setReloadToken] = useState(0);
+  const reloadTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const cancelPendingReload = () => {
+      if (reloadTimerRef.current !== null) {
+        window.clearTimeout(reloadTimerRef.current);
+        reloadTimerRef.current = null;
+      }
+    };
+
+    const unsubscribe = subscribeToDataChanges((domains) => {
+      if (!includesAnyDomain(domains, ANALYTICS_DOMAINS)) return;
+      cancelPendingReload();
+      reloadTimerRef.current = window.setTimeout(() => {
+        reloadTimerRef.current = null;
+        setReloadToken((token) => token + 1);
+      }, RELOAD_DEBOUNCE_MS);
+    });
+
+    return () => {
+      unsubscribe();
+      cancelPendingReload();
+    };
+  }, []);
+
   useEffect(() => {
     let mounted = true;
     void analyticsApi.summary(dateRange.from, dateRange.to)
@@ -73,7 +134,7 @@ export function useAnalyticsData(
         if (mounted) setIsLiveSummaryLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to]);
+  }, [dateRange.from, dateRange.to, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -92,7 +153,7 @@ export function useAnalyticsData(
         if (mounted) setIsSalesTimelineLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, salesPeriod]);
+  }, [dateRange.from, dateRange.to, salesPeriod, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -111,7 +172,7 @@ export function useAnalyticsData(
         if (mounted) setIsProfitTimelineLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, profitPeriod]);
+  }, [dateRange.from, dateRange.to, profitPeriod, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -130,7 +191,7 @@ export function useAnalyticsData(
         if (mounted) setIsProductTrendsLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, trendPeriod]);
+  }, [dateRange.from, dateRange.to, trendPeriod, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
@@ -149,7 +210,7 @@ export function useAnalyticsData(
         if (mounted) setIsInventoryForecastLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, forecastPeriod]);
+  }, [dateRange.from, dateRange.to, forecastPeriod, reloadToken]);
 
   return {
     dateRange,

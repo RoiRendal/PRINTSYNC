@@ -3,6 +3,7 @@ import { usersApi } from '../../features/users/api/usersApi';
 import type { CreateUserInput, UpdateUserInput, UserSummary } from '../../features/users/types';
 import { normalizeAccess } from '../../features/users/utils/access';
 import { createListStore } from '../../shared/store/createListStore';
+import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface UserActions {
   createUser: (payload: CreateUserInput) => Promise<UserSummary>;
@@ -39,6 +40,7 @@ export const useUserStore = createListStore<UserSummary, UserActions>({
       const normalized = { ...created, access: normalizeAccess(created.role, created.access) };
       mutateItems((items) => [normalized, ...items]);
       setError(null);
+      emitDataChange('users');
       return normalized;
     },
 
@@ -54,6 +56,7 @@ export const useUserStore = createListStore<UserSummary, UserActions>({
       const normalized = { ...updated, access: normalizeAccess(updated.role, updated.access) };
       mutateItems((items) => items.map((current) => (current.id === id ? normalized : current)));
       setError(null);
+      emitDataChange('users');
       return normalized;
     },
 
@@ -61,6 +64,7 @@ export const useUserStore = createListStore<UserSummary, UserActions>({
       await usersApi.remove(id);
       mutateItems((items) => items.filter((current) => current.id !== id));
       setError(null);
+      emitDataChange('users');
     },
 
     reset: () => {

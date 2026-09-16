@@ -19,9 +19,13 @@ import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHi
 import { useCartTotals } from '../hooks/useCartTotals';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { useOrders } from '../../../app/stores/useOrderStore';
+import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
+
+/** Coalesces a burst of payment events into a single refetch. */
+const HISTORY_RELOAD_DEBOUNCE_MS = 400;
 
 export default function POS() {
   const { items: inventory } = useInventory();
@@ -93,20 +97,46 @@ export default function POS() {
     status: transaction.status,
   }), [inventory]);
 
-  useEffect(() => {
-    let mounted = true;
-    void paymentsApi.list()
-      .then((response) => {
-        if (mounted) {
-          setTransactions(response.data.map(mapPaymentTransaction));
-          setTransactionError(null);
-        }
-      })
-      .catch((error: unknown) => {
-        if (mounted) setTransactionError(error instanceof ApiError ? error.message : 'Transactions could not be loaded.');
-      });
-    return () => { mounted = false; };
+  const loadTransactions = useCallback(async () => {
+    try {
+      const response = await paymentsApi.list();
+      setTransactions(response.data.map(mapPaymentTransaction));
+      setTransactionError(null);
+    } catch (error: unknown) {
+      setTransactionError(error instanceof ApiError ? error.message : 'Transactions could not be loaded.');
+    }
   }, [mapPaymentTransaction]);
+
+  useEffect(() => {
+    void loadTransactions();
+  }, [loadTransactions]);
+
+  /*
+   * The transaction history is a bespoke endpoint rather than a list store, so
+   * it subscribes to the bus directly. Without this, a sale rung up on another
+   * workstation — or a void performed here — would not appear in this table
+   * until the page was reloaded.
+   */
+  const historyReloadTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToDataChanges((domains) => {
+      if (!domains.includes('payments')) return;
+      if (historyReloadTimerRef.current !== null) window.clearTimeout(historyReloadTimerRef.current);
+      historyReloadTimerRef.current = window.setTimeout(() => {
+        historyReloadTimerRef.current = null;
+        void loadTransactions();
+      }, HISTORY_RELOAD_DEBOUNCE_MS);
+    });
+
+    return () => {
+      unsubscribe();
+      if (historyReloadTimerRef.current !== null) {
+        window.clearTimeout(historyReloadTimerRef.current);
+        historyReloadTimerRef.current = null;
+      }
+    };
+  }, [loadTransactions]);
 
   const orderToHistoryTransaction = useCallback(
     (order: Order): Transaction => {
@@ -363,6 +393,10 @@ export default function POS() {
         });
         setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
         setTransactionError(null);
+        // A retail sale writes a payment row *and* decrements stock server-side.
+        // Both domains are announced so the POS catalogue, the dashboard's
+        // stock alerts, and analytics all re-read without a page reload.
+        emitDataChange('payments', 'inventory');
       } catch (error) {
         setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be completed.');
         return;
@@ -423,6 +457,8 @@ export default function POS() {
         const voided = await paymentsApi.void(id);
         setTransactions((previous) => previous.map((transaction) => transaction.id === id ? mapPaymentTransaction(voided) : transaction));
         setTransactionError(null);
+        // Voiding restores the stock the sale consumed.
+        emitDataChange('payments', 'inventory');
       } catch (error) {
         setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be voided.');
       }

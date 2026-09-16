@@ -2,6 +2,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { customersApi } from '../../features/customers/api/customersApi';
 import type { CreateCustomer, Customer, UpdateCustomer } from '../../features/customers/types';
 import { createListStore } from '../../shared/store/createListStore';
+import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface CustomerActions {
   addCustomer: (customer: CreateCustomer) => Promise<Customer>;
@@ -19,6 +20,7 @@ export const useCustomerStore = createListStore<Customer, CustomerActions>({
       const created = await customersApi.create(customer);
       mutateItems((items) => [created, ...items]);
       setError(null);
+      emitDataChange('customers');
       return created;
     },
 
@@ -26,6 +28,7 @@ export const useCustomerStore = createListStore<Customer, CustomerActions>({
       const updated = await customersApi.update(id, customer);
       mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
       setError(null);
+      emitDataChange('customers');
       return updated;
     },
 
@@ -33,6 +36,7 @@ export const useCustomerStore = createListStore<Customer, CustomerActions>({
       await customersApi.remove(id);
       mutateItems((items) => items.filter((current) => current.id !== id));
       setError(null);
+      emitDataChange('customers');
     },
 
     reset: () => {

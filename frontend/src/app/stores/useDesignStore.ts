@@ -2,6 +2,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { designsApi } from '../../features/designs/api/designsApi';
 import type { CreateDesign, Design, UpdateDesign } from '../../features/designs/types';
 import { createListStore } from '../../shared/store/createListStore';
+import { emitDataChange } from '../../shared/store/dataEvents';
 
 interface DesignActions {
   addDesign: (design: CreateDesign) => Promise<Design>;
@@ -19,6 +20,7 @@ export const useDesignStore = createListStore<Design, DesignActions>({
       const created = await designsApi.create(design);
       mutateItems((items) => [created, ...items]);
       setError(null);
+      emitDataChange('designs');
       return created;
     },
 
@@ -37,6 +39,7 @@ export const useDesignStore = createListStore<Design, DesignActions>({
       });
       mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
       setError(null);
+      emitDataChange('designs');
       return updated;
     },
 
@@ -44,6 +47,7 @@ export const useDesignStore = createListStore<Design, DesignActions>({
       await designsApi.remove(id);
       mutateItems((items) => items.filter((current) => current.id !== id));
       setError(null);
+      emitDataChange('designs');
     },
 
     reset: () => {

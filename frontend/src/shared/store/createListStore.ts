@@ -13,6 +13,17 @@ import { ApiError } from '../api/errors';
 export const FIRST_PAGE = 1;
 export const DEFAULT_PAGE_SIZE = 20;
 
+/**
+ * How long a fetched page is considered authoritative before a revalidation
+ * trigger (window focus, a domain event, the background interval) is allowed to
+ * refetch it.
+ *
+ * This is what stops "refresh on every focus" from turning into a request storm
+ * when a cashier alt-tabs between the POS screen and the receipt printer. Short
+ * enough that data feels live, long enough that repeated triggers collapse.
+ */
+export const DEFAULT_STALE_TIME_MS = 15_000;
+
 export interface ListQuery {
   page?: number;
   limit?: number;
@@ -29,18 +40,33 @@ export interface PaginatedListState<TItem> {
   page: number;
   limit: number;
   isLoading: boolean;
+  /** `true` while a *background* refresh runs — never used to blank the view. */
+  isRevalidating: boolean;
   error: string | null;
   /** `true` once the first successful (or failed) load has completed. */
   hasLoaded: boolean;
+  /** Epoch ms of the last successful fetch; `null` means "known stale". */
+  lastFetchedAt: number | null;
 }
 
 export interface PaginatedListActions<TItem> {
-  /** Fetch a page. Persists `page`/`limit` so `refresh()` can re-use them. */
+  /** Fetch a page with the blocking loading state. Persists `page`/`limit`. */
   fetchList: (query?: ListQuery) => Promise<void>;
   /** Fetch only when the store has no data yet — safe to call from many components. */
   ensureLoaded: () => Promise<void>;
-  /** Re-fetch the page that is currently selected. */
+  /** Re-fetch the page that is currently selected, showing the loading state. */
   refresh: () => Promise<void>;
+  /**
+   * Bring the current page up to date **only if it is stale**, and without ever
+   * showing the loading state. This is the entry point every automatic trigger
+   * (focus, domain event, interval) goes through, so it must be safe to call
+   * frequently and safe to call for a store the user has never opened.
+   */
+  revalidate: () => Promise<void>;
+  /** `true` when the cached page should be refetched before being trusted. */
+  isStale: () => boolean;
+  /** Marks the cache stale so the next `revalidate()` refetches. */
+  invalidate: () => void;
   goToPage: (page: number) => Promise<void>;
   setListError: (error: string | null) => void;
   mutateItems: (updater: (items: TItem[]) => TItem[]) => void;
@@ -77,6 +103,8 @@ export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
   /** Message shown when the API rejects without a usable message. */
   fallbackErrorMessage: string;
   defaultLimit?: number;
+  /** Overrides `DEFAULT_STALE_TIME_MS` for stores that change very rapidly. */
+  staleTime?: number;
   /** Domain-specific actions layered on top of the generic list behaviour. */
   actions?: (context: ListStoreContext<TItem>) => TExtra;
 }
@@ -88,11 +116,25 @@ export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
  * shares this shape, which keeps pagination, error handling and cache updates
  * consistent and removes the per-feature `useEffect` fetch boilerplate that
  * React Context required.
+ *
+ * ### Freshness model
+ *
+ * The store tracks `lastFetchedAt`. Any successful fetch — including the
+ * response a mutation just returned — stamps it. `revalidate()` consults it and
+ * does nothing while the page is still fresh, which is what makes it safe to
+ * call `revalidate()` from a focus handler, a domain event, and a background
+ * interval simultaneously.
+ *
+ * A *failed* background refresh deliberately keeps the last good snapshot on
+ * screen and leaves `lastFetchedAt` untouched, so the next trigger retries.
+ * Blanking a cashier's product grid because one poll timed out would be worse
+ * than showing data that is a few seconds old.
  */
 export function createListStore<TItem extends Identifiable, TExtra extends object = Record<string, never>>(
   options: CreateListStoreOptions<TItem, TExtra>,
 ) {
   const defaultLimit = options.defaultLimit ?? DEFAULT_PAGE_SIZE;
+  const staleTime = options.staleTime ?? DEFAULT_STALE_TIME_MS;
   /** Guards against out-of-order responses when pages are changed quickly. */
   let latestRequestId = 0;
 
@@ -113,32 +155,61 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
     const toMessage = (error: unknown) =>
       error instanceof ApiError ? error.message : options.fallbackErrorMessage;
 
-    const listActions: PaginatedListActions<TItem> = {
-      fetchList: async (query) => {
-        const { page, limit } = get();
-        const nextPage = Math.max(FIRST_PAGE, query?.page ?? page);
-        const nextLimit = query?.limit ?? limit;
-        const requestId = ++latestRequestId;
+    /**
+     * @param mode `'blocking'` drives the page-level spinner and surfaces
+     *             failures as an error state; `'silent'` refreshes underneath
+     *             the rendered data and swallows failures.
+     */
+    const runFetch = async (query: ListQuery | undefined, mode: 'blocking' | 'silent') => {
+      const { page, limit } = get();
+      const nextPage = Math.max(FIRST_PAGE, query?.page ?? page);
+      const nextLimit = query?.limit ?? limit;
+      const requestId = ++latestRequestId;
 
+      if (mode === 'silent') {
+        patch({ isRevalidating: true });
+      } else {
         patch({ isLoading: true, page: nextPage, limit: nextLimit });
+      }
 
-        try {
-          const response = await options.list({ page: nextPage, limit: nextLimit });
-          if (requestId !== latestRequestId) return;
-          patch({
-            items: response.data,
-            total: response.total,
-            page: response.page || nextPage,
-            limit: response.limit || nextLimit,
-            error: null,
-            hasLoaded: true,
-            isLoading: false,
-          });
-        } catch (error: unknown) {
-          if (requestId !== latestRequestId) return;
-          patch({ isLoading: false, hasLoaded: true, error: toMessage(error) });
+      try {
+        const response = await options.list({ page: nextPage, limit: nextLimit });
+        if (requestId !== latestRequestId) return;
+        patch({
+          items: response.data,
+          total: response.total,
+          page: response.page || nextPage,
+          limit: response.limit || nextLimit,
+          error: null,
+          hasLoaded: true,
+          isLoading: false,
+          isRevalidating: false,
+          lastFetchedAt: Date.now(),
+        });
+      } catch (error: unknown) {
+        if (requestId !== latestRequestId) return;
+        if (mode === 'silent') {
+          patch({ isRevalidating: false });
+          return;
         }
-      },
+        patch({ isLoading: false, hasLoaded: true, error: toMessage(error) });
+      }
+    };
+
+    /**
+     * Every local mutation calls this: the mutation's own response *is* fresh
+     * server data, so the cache is authoritative as of now. Without it, the
+     * domain event a mutation emits would immediately bounce back and refetch
+     * the page it just updated.
+     *
+     * A function rather than a constant — the store factory runs once, so a
+     * captured `Date.now()` would freeze the timestamp at store-creation time
+     * and every mutation would look permanently fresh.
+     */
+    const markFresh = () => ({ lastFetchedAt: Date.now() });
+
+    const listActions: PaginatedListActions<TItem> = {
+      fetchList: (query) => runFetch(query, 'blocking'),
 
       ensureLoaded: async () => {
         const { hasLoaded, isLoading } = get();
@@ -146,27 +217,53 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
         await get().fetchList();
       },
 
-      refresh: async () => {
-        await get().fetchList();
+      refresh: () => runFetch(undefined, 'blocking'),
+
+      revalidate: async () => {
+        const { hasLoaded, isLoading } = get();
+        // A fetch is already in flight; letting a second one start would race
+        // and could resolve out of order.
+        if (isLoading) return;
+        if (!hasLoaded) {
+          // Never opened by this user — do not fetch it on their behalf.
+          // `loadDataStores()` decides what gets primed; this keeps a staff
+          // account from tripping a 403 on the admin-only users endpoint.
+          return;
+        }
+        if (!get().isStale()) return;
+        await runFetch(undefined, 'silent');
       },
 
-      goToPage: async (page) => {
-        await get().fetchList({ page });
+      isStale: () => {
+        const { lastFetchedAt, hasLoaded } = get();
+        if (!hasLoaded || lastFetchedAt === null) return true;
+        return Date.now() - lastFetchedAt >= staleTime;
       },
+
+      invalidate: () => patch({ lastFetchedAt: null }),
+
+      goToPage: (page) => runFetch({ page }, 'blocking'),
 
       setListError: (error) => patch({ error }),
 
-      mutateItems: (updater) => patch((state) => ({ items: updater(state.items) })),
+      mutateItems: (updater) =>
+        patch((state) => ({ items: updater(state.items), ...markFresh() })),
 
       replaceItem: (id, item) =>
         patch((state) => ({
           items: state.items.map((current) => (current.id === id ? item : current)),
+          ...markFresh(),
         })),
 
-      prependItem: (item) => patch((state) => ({ items: [item, ...state.items] })),
+      prependItem: (item) =>
+        patch((state) => ({ items: [item, ...state.items], total: state.total + 1, ...markFresh() })),
 
       removeItem: (id) =>
-        patch((state) => ({ items: state.items.filter((current) => current.id !== id) })),
+        patch((state) => ({
+          items: state.items.filter((current) => current.id !== id),
+          total: Math.max(0, state.total - 1),
+          ...markFresh(),
+        })),
 
       resetList: () =>
         patch({
@@ -175,8 +272,10 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
           page: FIRST_PAGE,
           limit: defaultLimit,
           isLoading: false,
+          isRevalidating: false,
           error: null,
           hasLoaded: false,
+          lastFetchedAt: null,
         }),
     };
 
@@ -197,8 +296,10 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
       page: FIRST_PAGE,
       limit: defaultLimit,
       isLoading: false,
+      isRevalidating: false,
       error: null,
       hasLoaded: false,
+      lastFetchedAt: null,
       ...listActions,
       ...extra,
     };
