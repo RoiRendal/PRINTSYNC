@@ -7,6 +7,7 @@ import { createTransaction, getTransaction, listTransactions, voidTransaction } 
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const paymentsRouter = Router();
@@ -53,6 +54,8 @@ paymentsRouter.post('/transactions', authenticate, requirePermission('payments.c
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_TRANSACTION_REQUEST', 'The transaction details are invalid.');
   const transaction = await createTransaction(getSupabase(), parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'transaction.created', entityType: 'sales_transaction', entityId: transaction.id, metadata: { total: transaction.total, paymentMethod: transaction.paymentMethod } });
+  // A retail sale writes a payment *and* decrements stock in one RPC.
+  publishDataChange('payments', 'inventory');
   response.status(201).json({ data: transaction });
 });
 
@@ -61,5 +64,7 @@ paymentsRouter.post('/transactions/:id/void', authenticate, requirePermission('p
   const transactionId = getTransactionId(request);
   const transaction = await voidTransaction(getSupabase(), transactionId, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'transaction.voided', entityType: 'sales_transaction', entityId: transaction.id });
+  // Voiding restores the deducted stock and voids the payment.
+  publishDataChange('payments', 'inventory');
   sendSuccess(response, transaction);
 });

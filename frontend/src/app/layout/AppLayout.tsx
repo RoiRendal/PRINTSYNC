@@ -6,6 +6,7 @@ import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
 import { useNotifications } from '../providers/NotificationProvider';
 import { NotificationPanel } from '../components/NotificationPanel';
+import { ConnectionStatus } from '../components/ConnectionStatus';
 import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
@@ -253,6 +254,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
           </div>
         </div>
+        <ConnectionStatus className="shrink-0" />
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}

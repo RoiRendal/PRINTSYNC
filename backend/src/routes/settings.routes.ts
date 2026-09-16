@@ -7,6 +7,7 @@ import { getBusinessSettings, setBusinessLogo, updateBusinessSettings } from '..
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { uploadBusinessLogo, sweepOrphanedBusinessLogosSafely } from '../services/businessAssetService.js';
 
 export const settingsRouter = Router();
@@ -53,6 +54,9 @@ settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), as
     entityId: '1',
     metadata: { businessName: settings.businessName },
   });
+  // The business name and currency symbol appear in page headers and every
+  // receipt, so the whole app needs to pick the new values up.
+  publishDataChange('settings');
   sendSuccess(response, settings);
 });
 
@@ -77,6 +81,7 @@ settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'),
     entityId: '1',
     metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes },
   });
+  publishDataChange('settings');
   // Housekeeping runs after the response is ready and never throws: the logo is
   // already persisted, so a Storage hiccup here must not fail the request.
   await sweepOrphanedBusinessLogosSafely(getSupabase(), settings.logoUrl);
@@ -93,6 +98,7 @@ settingsRouter.delete('/logo', authenticate, requirePermission('settings.manage'
     entityType: 'business_settings',
     entityId: '1',
   });
+  publishDataChange('settings');
   // Nothing is referenced any more, so every aged-out object becomes removable.
   await sweepOrphanedBusinessLogosSafely(getSupabase(), null);
   sendSuccess(response, settings);

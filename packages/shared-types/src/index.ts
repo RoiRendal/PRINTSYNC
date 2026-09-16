@@ -9,3 +9,4 @@ export * from './design.js';
 export * from './supplier.js';
 export * from './expense.js';
 export * from './audit.js';
+export * from './dataEvent.js';

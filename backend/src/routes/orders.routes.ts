@@ -7,6 +7,7 @@ import { createOrder, deleteOrder, getOrder, listOrders, updateOrder } from '../
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const ordersRouter = Router();
@@ -56,6 +57,8 @@ ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_ORDER_REQUEST', 'The order details are invalid.');
   const order = await createOrder(getSupabase(), parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order.created', entityType: 'order', entityId: order.id, metadata: { amount: order.amount, isCustom: order.isCustom } });
+  // `create_order_with_items` reserves stock, so the inventory pages are stale too.
+  publishDataChange('orders', 'inventory');
   response.status(201).json({ data: order });
 });
 
@@ -65,6 +68,11 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
   const orderId = getOrderId(request);
   const order = await updateOrder(getSupabase(), orderId, parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.updated', entityType: 'order', entityId: order.id, metadata: { status: order.status } });
+  // Only a line-item change re-reserves stock (`replace_order_with_items`); a
+  // status/notes-only update leaves inventory untouched, so we do not wake the
+  // inventory pages for it.
+  if (parsed.data.lineItems !== undefined) publishDataChange('orders', 'inventory');
+  else publishDataChange('orders');
   sendSuccess(response, order);
 });
 
@@ -73,5 +81,7 @@ ordersRouter.delete('/:id', authenticate, requirePermission('orders.delete'), as
   const orderId = getOrderId(request);
   await deleteOrder(getSupabase(), orderId, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.deleted', entityType: 'order', entityId: orderId });
+  // `delete_order_with_items` releases the reserved stock back to inventory.
+  publishDataChange('orders', 'inventory');
   response.status(204).send();
 });

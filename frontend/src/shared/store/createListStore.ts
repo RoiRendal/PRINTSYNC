@@ -63,6 +63,17 @@ export interface PaginatedListActions<TItem> {
    * frequently and safe to call for a store the user has never opened.
    */
   revalidate: () => Promise<void>;
+  /**
+   * Refreshes **regardless of `staleTime`**, still without showing the loading
+   * state.
+   *
+   * Reserved for authoritative signals — a mutation this app performed, or a
+   * server push saying "this domain changed". Those are not guesses: the data
+   * really is different, so a 15-second freshness window must not swallow them.
+   * The time-based triggers (focus, visibility, the fallback poll) deliberately
+   * keep using plain `revalidate()` so they cannot storm.
+   */
+  forceRevalidate: () => Promise<void>;
   /** `true` when the cached page should be refetched before being trusted. */
   isStale: () => boolean;
   /** Marks the cache stale so the next `revalidate()` refetches. */
@@ -208,6 +219,27 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
      */
     const markFresh = () => ({ lastFetchedAt: Date.now() });
 
+    /**
+     * Shared body of `revalidate()` and `forceRevalidate()`.
+     *
+     * @param force skip the `staleTime` check. See `forceRevalidate` for when
+     *              that is the correct choice.
+     */
+    const revalidateInternal = async (force: boolean) => {
+      const { hasLoaded, isLoading } = get();
+      // A fetch is already in flight; letting a second one start would race
+      // and could resolve out of order.
+      if (isLoading) return;
+      if (!hasLoaded) {
+        // Never opened by this user — do not fetch it on their behalf.
+        // `loadDataStores()` decides what gets primed; this keeps a staff
+        // account from tripping a 403 on the admin-only users endpoint.
+        return;
+      }
+      if (!force && !get().isStale()) return;
+      await runFetch(undefined, 'silent');
+    };
+
     const listActions: PaginatedListActions<TItem> = {
       fetchList: (query) => runFetch(query, 'blocking'),
 
@@ -219,20 +251,9 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
 
       refresh: () => runFetch(undefined, 'blocking'),
 
-      revalidate: async () => {
-        const { hasLoaded, isLoading } = get();
-        // A fetch is already in flight; letting a second one start would race
-        // and could resolve out of order.
-        if (isLoading) return;
-        if (!hasLoaded) {
-          // Never opened by this user — do not fetch it on their behalf.
-          // `loadDataStores()` decides what gets primed; this keeps a staff
-          // account from tripping a 403 on the admin-only users endpoint.
-          return;
-        }
-        if (!get().isStale()) return;
-        await runFetch(undefined, 'silent');
-      },
+      revalidate: () => revalidateInternal(false),
+
+      forceRevalidate: () => revalidateInternal(true),
 
       isStale: () => {
         const { lastFetchedAt, hasLoaded } = get();

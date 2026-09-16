@@ -13,6 +13,7 @@ import {
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const inventoryRouter = Router();
@@ -54,6 +55,7 @@ inventoryRouter.post('/', authenticate, requirePermission('inventory.manage'), a
   if (!parsed.success) throw new AppError(400, 'INVALID_INVENTORY_REQUEST', 'The inventory details are invalid.');
   const item = await createInventoryItem(getSupabase(), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.created', entityType: 'inventory_item', entityId: item.id, metadata: { sku: item.sku } });
+  publishDataChange('inventory');
   response.status(201).json({ data: item });
 });
 
@@ -63,6 +65,7 @@ inventoryRouter.patch('/:id', authenticate, requirePermission('inventory.manage'
   const itemId = getItemId(request);
   const item = await updateInventoryItem(getSupabase(), itemId, parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.updated', entityType: 'inventory_item', entityId: item.id, metadata: { sku: item.sku } });
+  publishDataChange('inventory');
   sendSuccess(response, item);
 });
 
@@ -72,6 +75,7 @@ inventoryRouter.post('/:id/movements', authenticate, requirePermission('inventor
   const itemId = getItemId(request);
   const item = await adjustInventoryStock(getSupabase(), itemId, parsed.data.quantity, parsed.data.reason, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'inventory.adjusted', entityType: 'inventory_item', entityId: item.id, metadata: { quantity: parsed.data.quantity, reason: parsed.data.reason } });
+  publishDataChange('inventory');
   sendSuccess(response, item);
 });
 
@@ -79,5 +83,6 @@ inventoryRouter.delete('/:id', authenticate, requirePermission('inventory.manage
   const itemId = getItemId(request);
   await deleteInventoryItem(getSupabase(), itemId);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.deleted', entityType: 'inventory_item', entityId: itemId });
+  publishDataChange('inventory');
   response.status(204).send();
 });

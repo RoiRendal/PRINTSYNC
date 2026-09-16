@@ -54,10 +54,16 @@ export function loadDataStores(canManageUsers: boolean): void {
  * onto a page nobody opened. It also stops background triggers from eagerly
  * fetching collections the user has not visited yet — priming stays the job of
  * `loadDataStores()`.
+ *
+ * @param force bypass the store's `staleTime`. Only authoritative signals pass
+ *              `true` — see `revalidateDataDomains`.
  */
-function revalidateIfLoaded(store: { hasLoaded: boolean; revalidate: () => Promise<void> }): void {
+function revalidateIfLoaded(
+  store: { hasLoaded: boolean; revalidate: () => Promise<void>; forceRevalidate: () => Promise<void> },
+  force: boolean,
+): void {
   if (!store.hasLoaded) return;
-  void store.revalidate();
+  void (force ? store.forceRevalidate() : store.revalidate());
 }
 
 /**
@@ -68,32 +74,48 @@ function revalidateIfLoaded(store: { hasLoaded: boolean; revalidate: () => Promi
  * branding provider) subscribe to the bus directly, because they read bespoke
  * endpoints rather than a paginated collection.
  */
-const DOMAIN_REVALIDATORS: Record<DataDomain, () => void> = {
-  orders: () => revalidateIfLoaded(useOrderStore.getState()),
-  inventory: () => revalidateIfLoaded(useInventoryStore.getState()),
-  customers: () => revalidateIfLoaded(useCustomerStore.getState()),
-  designs: () => revalidateIfLoaded(useDesignStore.getState()),
-  users: () => revalidateIfLoaded(useUserStore.getState()),
+const DOMAIN_REVALIDATORS: Record<DataDomain, (force: boolean) => void> = {
+  orders: (force) => revalidateIfLoaded(useOrderStore.getState(), force),
+  inventory: (force) => revalidateIfLoaded(useInventoryStore.getState(), force),
+  customers: (force) => revalidateIfLoaded(useCustomerStore.getState(), force),
+  designs: (force) => revalidateIfLoaded(useDesignStore.getState(), force),
+  users: (force) => revalidateIfLoaded(useUserStore.getState(), force),
   payments: () => {},
   settings: () => {},
 };
 
-/** Refreshes every loaded store whose domain appears in `domains`. */
-export function revalidateDataDomains(domains: readonly DataDomain[]): void {
+/**
+ * Refreshes every loaded store whose domain appears in `domains`.
+ *
+ * @param options.force skip each store's `staleTime` check.
+ *
+ * `force` exists because the freshness window and the push channel would
+ * otherwise work against each other. A domain event is *not* a guess — it is
+ * emitted only after a write committed, here or on another workstation — so
+ * letting a 15-second `staleTime` swallow it would leave a cashier looking at
+ * stock levels that are already wrong. Time-based triggers keep `force: false`,
+ * because those genuinely are guesses and must stay rate-limited.
+ */
+export function revalidateDataDomains(
+  domains: readonly DataDomain[],
+  options?: { force?: boolean },
+): void {
+  const force = options?.force ?? false;
   const seen = new Set<DataDomain>();
   for (const domain of domains) {
     if (seen.has(domain)) continue;
     seen.add(domain);
-    DOMAIN_REVALIDATORS[domain]();
+    DOMAIN_REVALIDATORS[domain](force);
   }
 }
 
 /**
  * Refreshes every loaded store.
  *
- * Used by the time-based triggers (focus, visibility, connectivity, poll),
- * which cannot know which domain changed. Cheap when nothing is stale — each
- * store checks its own `staleTime` before issuing a request.
+ * Used by the time-based triggers (focus, visibility, connectivity, the
+ * degraded-mode poll), which cannot know which domain changed and must respect
+ * each store's `staleTime` — hence no `force`. Cheap when nothing is stale: each
+ * store checks its own freshness before issuing a request.
  */
 export function revalidateAllDataStores(): void {
   revalidateDataDomains(['orders', 'inventory', 'customers', 'designs', 'users']);

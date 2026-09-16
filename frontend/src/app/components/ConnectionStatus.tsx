@@ -1,0 +1,107 @@
+import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
+import type { RealtimeStatus } from '../../shared/realtime/eventStream';
+import { Tooltip } from '../../shared/components/ui';
+import { cn } from '../../shared/lib/cn';
+
+/**
+ * Whether this workstation is receiving live updates.
+ *
+ * Exists because the app now refreshes itself, and staff have no other way to
+ * tell "this screen is current" from "this screen stopped updating ten minutes
+ * ago". Without it, the first symptom of a dropped stream is someone making a
+ * decision on stale stock — which is precisely the problem the live channel was
+ * built to remove.
+ *
+ * The wording is deliberately non-technical: "Live", not "SSE connected".
+ */
+
+type VisibleStatus = Exclude<RealtimeStatus, 'idle'>;
+
+interface StatusPresentation {
+  label: string;
+  /** Solid dot colour. */
+  dot: string;
+  /** Chip border + background + text. */
+  chip: string;
+  /** Whether the dot should pulse. */
+  pulse: boolean;
+  /** Plain-language explanation shown on hover. */
+  hint: string;
+}
+
+/**
+ * Hover text is kept short on purpose: `Tooltip` renders it in a
+ * `whitespace-nowrap` pill, so a full sentence would run off the edge of the
+ * screen. The longer explanation lives in the chip's `aria-label`.
+ */
+const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
+  live: {
+    label: 'Live',
+    dot: 'bg-macos-green',
+    chip: 'border-macos-green/25 bg-macos-green/12 text-green-700 dark:text-green-300',
+    pulse: true,
+    hint: 'Updating automatically',
+  },
+  connecting: {
+    label: 'Connecting',
+    dot: 'bg-macos-gray',
+    chip: 'border-gray-200 bg-white/70 text-gray-500 dark:border-white/10 dark:bg-white/8 dark:text-zinc-400',
+    pulse: true,
+    hint: 'Starting live updates',
+  },
+  reconnecting: {
+    label: 'Reconnecting',
+    dot: 'bg-macos-orange',
+    chip: 'border-macos-orange/25 bg-macos-orange/14 text-orange-700 dark:text-orange-300',
+    pulse: true,
+    hint: 'Restoring live updates',
+  },
+  offline: {
+    label: 'Offline',
+    dot: 'bg-macos-red',
+    chip: 'border-macos-red/25 bg-macos-red/12 text-red-700 dark:text-red-300',
+    pulse: false,
+    hint: 'May be out of date',
+  },
+};
+
+/** Spoken by screen readers, where a full sentence costs nothing. */
+const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
+  live: 'Connected. Changes made by other staff appear here on their own.',
+  connecting: 'Setting up live updates. This takes a moment after signing in.',
+  reconnecting:
+    'The connection dropped and is being restored. This screen may be a little behind until it reconnects.',
+  offline:
+    'No connection. Changes made on other devices will not appear here until this screen is back online.',
+};
+
+export function ConnectionStatus({ className }: { className?: string }) {
+  const { status } = useRealtimeStatus();
+
+  // Nothing is running before sign-in, and an "idle" chip would be noise on a
+  // login screen.
+  if (status === 'idle') return null;
+
+  const presentation = STATUS_PRESENTATION[status];
+
+  return (
+    <Tooltip content={presentation.hint}>
+      <span
+        role="status"
+        aria-live="polite"
+        aria-label={`Live updates: ${presentation.label}. ${STATUS_DESCRIPTION[status]}`}
+        className={cn(
+          'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] backdrop-blur-md',
+          presentation.chip,
+          className,
+        )}
+      >
+        <span
+          aria-hidden="true"
+          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', presentation.dot, presentation.pulse && 'animate-pulse')}
+        />
+        {presentation.label}
+      </span>
+    </Tooltip>
+  );
+}

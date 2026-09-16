@@ -21,6 +21,7 @@ import { orderPaymentsRouter } from './routes/orderPayments.routes.js';
 import { suppliersRouter } from './routes/suppliers.routes.js';
 import { expensesRouter } from './routes/expenses.routes.js';
 import { exportRouter } from './routes/export.routes.js';
+import { eventsRouter } from './routes/events.routes.js';
 
 /**
  * Routes that accept a base64 image in the request body.
@@ -56,6 +57,9 @@ export function createApp() {
   // Public: the login screen needs the company name and logo before sign-in.
   app.use('/api/v1/branding', brandingRouter);
   app.use('/api/v1/auth', authRouter);
+  // Server-sent events. Authenticated by the same session cookie as everything
+  // else; each client only receives the domains it holds a read capability for.
+  app.use('/api/v1/events', eventsRouter);
   app.use('/api/v1/audit-logs', auditRouter);
   app.use('/api/v1/inventory', inventoryRouter);
   app.use('/api/v1/designs', designsRouter);

@@ -6,6 +6,7 @@ import { requirePermission } from '../middleware/authorize.js';
 import { AppError } from '../shared/errors.js';
 import { createUser, deleteUser, listUsers, updateUser } from '../modules/users/users.service.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const usersRouter = Router();
@@ -47,6 +48,7 @@ usersRouter.post('/', async (request, response) => {
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
+  publishDataChange('users');
   response.status(201).json({ data: createdUser });
 });
 
@@ -63,6 +65,7 @@ usersRouter.patch('/:id', async (request, response) => {
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
+  publishDataChange('users');
   response.json({ data: updatedUser });
 });
 
@@ -79,5 +82,6 @@ usersRouter.delete('/:id', async (request, response) => {
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
+  publishDataChange('users');
   response.status(204).send();
 });

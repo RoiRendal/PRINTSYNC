@@ -16,20 +16,52 @@
  * announced. List stores subscribe in order to revalidate themselves; ad-hoc
  * hooks subscribe in order to refetch their own endpoints.
  *
+ * Events arrive from two sources, and both use `emitDataChange`:
+ *
+ *   - a mutation this tab just performed, and
+ *   - the server push channel, which reports a change made anywhere.
+ *
  * It is deliberately synchronous, dependency-free, and untyped beyond a small
  * union — the revalidation helpers downstream already skip work when the local
  * cache is still fresh, so a chatty emitter is cheap.
  */
 
-/** The server-backed domains a change can be attributed to. */
-export type DataDomain =
-  | 'orders'
-  | 'inventory'
-  | 'customers'
-  | 'designs'
-  | 'users'
-  | 'payments'
-  | 'settings';
+import type { DataDomain } from '@printsync/shared-types';
+
+/**
+ * The shared union is the source of truth for the *type*; this file owns the
+ * runtime list, because `@printsync/shared-types` is consumed as a type-only
+ * dependency and therefore cannot export a value the browser could inspect.
+ *
+ * `DOMAIN_COVERAGE` is what keeps the two in step: it is a `Record` keyed by
+ * every member of the union, so adding a domain to `dataEvent.ts` without
+ * listing it here is a **compile error**, not a silently unhandled event.
+ */
+const DOMAIN_COVERAGE: Record<DataDomain, true> = {
+  orders: true,
+  inventory: true,
+  customers: true,
+  designs: true,
+  users: true,
+  payments: true,
+  settings: true,
+};
+
+/** Every domain, as a runtime value. Order follows `DOMAIN_COVERAGE`. */
+export const DATA_DOMAINS = Object.keys(DOMAIN_COVERAGE) as readonly DataDomain[];
+
+/**
+ * Narrows an untrusted value — a parsed SSE payload, say — to a `DataDomain`.
+ *
+ * The revalidation registry is a plain object lookup, so a stray string would
+ * resolve to `undefined` and be called as a function. Validating at the
+ * boundary is cheaper than defending every consumer.
+ */
+export function isDataDomain(value: unknown): value is DataDomain {
+  return typeof value === 'string' && (DATA_DOMAINS as readonly string[]).includes(value);
+}
+
+export type { DataDomain };
 
 export type DataChangeListener = (domains: readonly DataDomain[]) => void;
 

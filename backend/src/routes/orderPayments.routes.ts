@@ -7,6 +7,7 @@ import { createOrderPayment, deleteOrderPayment, listOrderPayments } from '../mo
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 
 export const orderPaymentsRouter = Router();
 
@@ -34,6 +35,8 @@ orderPaymentsRouter.post('/', authenticate, requirePermission('order_payments.cr
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_PAYMENT_REQUEST', 'The payment details are invalid.');
   const payment = await createOrderPayment(getSupabase(), parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order_payment.created', entityType: 'order_payment', entityId: payment.id, metadata: { orderId: payment.orderId, amount: payment.amount } });
+  // Recording a payment changes the order's balance due, so both domains move.
+  publishDataChange('orders', 'payments');
   response.status(201).json({ data: payment });
 });
 
@@ -43,5 +46,7 @@ orderPaymentsRouter.delete('/:id', authenticate, requirePermission('order_paymen
   if (!id || Array.isArray(id)) throw new AppError(400, 'INVALID_PAYMENT_ID', 'The payment id is invalid.');
   await deleteOrderPayment(getSupabase(), id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order_payment.deleted', entityType: 'order_payment', entityId: id });
+  // Removing a payment also moves the order's balance due.
+  publishDataChange('orders', 'payments');
   response.status(204).send();
 });

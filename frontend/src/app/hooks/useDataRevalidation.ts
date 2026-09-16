@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getRealtimeSnapshot, startEventStream } from '../../shared/realtime/eventStream';
 import { subscribeToDataChanges } from '../../shared/store/dataEvents';
 import { revalidateAllDataStores, revalidateDataDomains } from '../stores';
 
@@ -13,41 +14,44 @@ import { revalidateAllDataStores, revalidateDataDomains } from '../stores';
 const FOCUS_COOLDOWN_MS = 5_000;
 
 /**
- * Safety-net poll interval.
+ * Poll interval used **only while the push channel is down**.
  *
- * PRINTSYNC has no server-push channel yet, so a change made by another staff
- * member is only discovered when this client asks. Focus and visibility
- * revalidation already cover the common "cashier comes back to the screen"
- * case; this interval covers the rarer one where a screen is left open and
- * unattended on the shop floor.
+ * The server-sent-events stream is the primary mechanism for noticing another
+ * workstation's changes; this is its fallback, not a companion. When the stream
+ * is `live` the interval fires and does nothing, because polling alongside a
+ * working push channel is pure waste.
  *
- * It is intentionally slow — 4 requests per minute per signed-in workstation.
- * When the server-sent-events channel described in
- * `docs/DATA-SYNC-IMPLEMENTATION-PLAN.md` (Tier 2) lands, set this to `0` to
- * disable polling entirely.
+ * It still earns its place: if the stream cannot connect — an aggressive proxy,
+ * a browser that blocks it, a misconfigured deployment — the app degrades to
+ * the Tier 1 behaviour of refreshing on a timer instead of going silently
+ * stale. That failure mode is exactly what this whole effort set out to remove.
  */
-const BACKGROUND_POLL_MS = 60_000;
+const DEGRADED_POLL_MS = 60_000;
 
 /**
  * Central revalidation driver.
  *
- * Mounted once, inside the authenticated shell. It turns the three signals that
- * mean "our cached data may be out of date" into store refreshes:
+ * Mounted once, inside the authenticated shell. It owns the two ways the app
+ * learns its cached data may be out of date:
  *
- *   1. **Domain events** — something was mutated in this tab. Stores that are
- *      not the originator of the change refetch; the originator already stamped
- *      its cache as fresh from the mutation response.
- *   2. **Returning to the tab** — focus / visibility / regaining connectivity.
- *   3. **The background poll** — the interim answer for cross-workstation
- *      freshness until the realtime channel exists.
+ *   1. **The push channel** — one `EventSource` per tab, open for the life of
+ *      the session, turning a server-pushed `data-change` into a domain event.
+ *   2. **Local triggers** — a domain event from a mutation in this tab,
+ *      returning to the tab, regaining connectivity, and the degraded-mode poll.
  *
- * Every path funnels into `revalidate()`, which no-ops while the cache is fresh
- * and never blanks the rendered data. That is what makes it safe to have all
- * three fire at once.
+ * Every path funnels into the stores' `revalidate()`, which never blanks the
+ * rendered data. That is what makes it safe for several of them to fire at once.
  *
- * @param isActive `false` while signed out, so a login screen never polls.
+ * @param isActive `false` while signed out, so a login screen neither polls nor
+ *                 holds a stream open.
  */
 export function useDataRevalidation(isActive: boolean): void {
+  // The push channel's lifetime is the session's lifetime.
+  useEffect(() => {
+    if (!isActive) return;
+    return startEventStream();
+  }, [isActive]);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -65,17 +69,22 @@ export function useDataRevalidation(isActive: boolean): void {
     const handleOnline = () => revalidateIfVisible(true);
     const handleVisibilityChange = () => revalidateIfVisible();
 
-    // A change announced anywhere in the app — including from a POS sale that
-    // writes a payment, decrements stock, and moves revenue simultaneously.
-    const unsubscribe = subscribeToDataChanges((domains) => revalidateDataDomains(domains));
+    // A domain event is authoritative: it is only emitted after a write
+    // committed, here or on another workstation. `force` makes it bypass each
+    // store's `staleTime` — otherwise a change pushed one second after a fetch
+    // would be discarded for the next fifteen, which is the very staleness this
+    // is meant to eliminate.
+    const unsubscribe = subscribeToDataChanges((domains) =>
+      revalidateDataDomains(domains, { force: true }),
+    );
 
     window.addEventListener('focus', handleFocus);
     window.addEventListener('online', handleOnline);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     const pollId = window.setInterval(() => {
-      if (BACKGROUND_POLL_MS > 0) revalidateIfVisible();
-    }, BACKGROUND_POLL_MS);
+      if (getRealtimeSnapshot().status !== 'live') revalidateIfVisible();
+    }, DEGRADED_POLL_MS);
 
     return () => {
       unsubscribe();

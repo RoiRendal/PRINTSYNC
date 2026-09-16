@@ -1,4 +1,5 @@
 import { ApiError } from './errors';
+import { API_BASE_URL } from './baseUrl';
 
 export interface ApiClient {
   request<TResponse>(path: string, options?: RequestInit): Promise<TResponse>;
@@ -7,8 +8,6 @@ export interface ApiClient {
   patch<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
   delete<TResponse = void>(path: string): Promise<TResponse>;
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 interface ApiSuccessEnvelope<T> {
   data: T;

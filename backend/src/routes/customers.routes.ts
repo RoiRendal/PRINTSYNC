@@ -7,6 +7,7 @@ import { createCustomer, deleteCustomer, getCustomer, listCustomers, updateCusto
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const customersRouter = Router();
@@ -43,6 +44,7 @@ customersRouter.post('/', authenticate, requirePermission('customers.manage'), a
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
   const customer = await createCustomer(getSupabase(), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.created', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
+  publishDataChange('customers');
   response.status(201).json({ data: customer });
 });
 
@@ -51,6 +53,7 @@ customersRouter.patch('/:id', authenticate, requirePermission('customers.manage'
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
   const customer = await updateCustomer(getSupabase(), getCustomerId(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.updated', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
+  publishDataChange('customers');
   sendSuccess(response, customer);
 });
 
@@ -59,5 +62,6 @@ customersRouter.delete('/:id', authenticate, requirePermission('customers.manage
   const customerId = getCustomerId(request);
   await deleteCustomer(getSupabase(), customerId);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.deleted', entityType: 'customer', entityId: customerId });
+  publishDataChange('customers');
   response.status(204).send();
 });

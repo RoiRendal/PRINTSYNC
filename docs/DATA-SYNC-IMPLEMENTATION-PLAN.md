@@ -6,8 +6,8 @@
 | --- | --- |
 | **Reported by** | Operations (management) |
 | **Business requirement** | Data changed anywhere in the system must appear everywhere immediately. Staff must never need to reload a page to see current information. The system must hold up with several staff members working at the same time. |
-| **Status** | Tier 1 **implemented and verified**. Tiers 2–3 specified below, not yet started. |
-| **Verified by** | `npx tsc --noEmit` clean on all changed files; `npm run build` succeeds |
+| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 specified below, not started. |
+| **Verified by** | Backend unit suite 170/170 passing; `tsc --noEmit` clean on every new and changed file; `npm run build` succeeds on both workspaces; live end-to-end run against the real Supabase project (§4.3) |
 
 ---
 
@@ -144,7 +144,8 @@ It turns three signals into refreshes:
    connectivity, with a 5-second cooldown so alt-tabbing to the receipt printer
    does not cause a request storm.
 3. **A 60-second background poll** — the interim answer for cross-workstation
-   freshness until Tier 2 lands. When SSE ships, set `BACKGROUND_POLL_MS = 0`.
+   freshness. Tier 2 has since landed, so this now runs **only while the push
+   channel is not live** — see §4.2, deviation 2.
 
 Every path funnels into `revalidate()`, which no-ops while the cache is fresh.
 That is what makes it safe for all three to fire at once.
@@ -205,14 +206,16 @@ No backend change was required. No database migration was required.
 
 ---
 
-## 4. Tier 2 — Server push (the real multi-workstation fix)
+## 4. Tier 2 — Server push (implemented and verified)
 
-**Why this is still needed.** Tier 1 makes a single workstation self-consistent
-and makes *other* workstations catch up within 60 seconds (the poll). That is not
+**Status: implemented and verified live.** Evidence in §4.3.
+
+**Why this was needed.** Tier 1 made a single workstation self-consistent and let
+*other* workstations catch up within 60 seconds (the poll). That is not
 "industry level" for a counter where two cashiers sell the same stock. The real
 fix is for the server to tell every connected client when something changed.
 
-**Recommended: Server-Sent Events (SSE).** Not WebSockets — the traffic is
+**Chosen: Server-Sent Events (SSE).** Not WebSockets — the traffic is
 one-directional server→client, SSE reconnects automatically, and it works over
 plain HTTP with the existing cookie auth.
 
@@ -222,46 +225,171 @@ boundary. That directly contradicts the existing (and correct) architecture
 decision in `README.md` §Security: *"It never talks to Supabase directly — all
 data access goes through the backend."* SSE preserves that boundary.
 
-### 4.1 Backend work
+### 4.1 Backend — built as specified
 
-1. **`backend/src/services/domainEventBus.ts`** — an in-process `EventEmitter`
-   with `publish(event)` / `subscribe(handler)`. Keep it behind a tiny interface
-   so it can later be swapped for a Postgres-backed transport without touching
-   call sites.
-2. **`GET /api/v1/events`** — an authenticated SSE endpoint.
-   - Reuse the existing `authenticate` middleware (cookie-based). No new auth.
-   - Filter events **per user permission** before writing them to the stream. An
-     admin's `users` event must not reach a staff session.
-   - Headers: `Content-Type: text/event-stream`, `Cache-Control: no-cache`,
-     `Connection: keep-alive`, `X-Accel-Buffering: no`.
-   - Heartbeat comment (`: ping`) every 25 s so proxies do not idle the
-     connection out.
-   - Clean up the subscription on `req.on('close')`. A leaked listener per
-     connection is the classic failure mode here.
-3. **Publish from the mutation path.** Every write service
-   (`orders`, `inventory`, `payments`, `customers`, `designs`, `users`,
-   `settings`) publishes the domain it touched, after the write commits.
-4. **Multi-instance caveat.** The in-process bus only reaches clients connected to
-   *that* API instance. When the API is scaled beyond one instance, fan out via
-   Postgres `LISTEN`/`NOTIFY` (natural fit — it is already the only persistence
-   layer). Document this now; implement when the second instance is added.
+1. **`backend/src/services/domainEventBus.ts`** — in-process fan-out exposing only
+   `publishDataChange(...)` / `subscribeToDataChange(handler)`. The interface is
+   deliberately tiny so the transport can be swapped for Postgres
+   `LISTEN`/`NOTIFY` without touching a single call site. Publishing never throws
+   and never blocks: a subscriber that throws is logged and skipped, because the
+   write has already committed and must not be affected by a broken connection.
+2. **`GET /api/v1/events`** — `backend/src/routes/events.routes.ts`.
+   - Reuses the existing `authenticate` middleware (cookie-based). No new auth.
+   - Guarded by `authenticate` **only, not `requirePermission`** — there is no
+     single capability meaning "may watch for changes", so the gate is applied per
+     event instead. The payload carries no business data, only domain names.
+   - The permission mapping lives in
+     `backend/src/services/dataChangePermissions.ts` so the security boundary can
+     be unit-tested without Express or Supabase.
+   - Headers exactly as specified, plus `response.flushHeaders()` so the client
+     sees the connection open immediately instead of waiting for the first event.
+   - `: ping` heartbeat every 25 s.
+   - One idempotent `teardown()` wired to both `request.on('close')` and
+     `response.on('error')`, clearing the interval and unsubscribing. A leaked
+     interval keeps the process alive; a leaked subscriber writes to a dead socket
+     forever — this is the part of an SSE endpoint that actually matters.
+3. **Publishing from the mutation path.** All eight mutating route modules publish
+   **after** the write commits — never before, so a failed write cannot make every
+   client refetch data that never changed. Cross-domain effects are explicit:
 
-### 4.2 Frontend work
+   | Route | Publishes | Why |
+   | --- | --- | --- |
+   | `inventory` create / update / movement / delete | `inventory` | — |
+   | `orders` create | `orders`, `inventory` | `create_order_with_items` reserves stock |
+   | `orders` update | `orders`, `inventory` **only when line items changed** | `replace_order_with_items` re-reserves; a status-only edit does not |
+   | `orders` delete | `orders`, `inventory` | `delete_order_with_items` releases stock |
+   | `order_payments` create / delete | `orders`, `payments` | Moves the order's balance due |
+   | `payments` transaction create / void | `payments`, `inventory` | One RPC writes a payment **and** decrements stock |
+   | `customers`, `designs`, `users`, `settings` | their own domain | — |
 
-This is the payoff of the Tier 1 design: **no rework.**
+   `POST /designs/assets` deliberately does **not** publish: it stores an image and
+   returns a URL, creating no design row. Broadcasting there would wake every
+   designs page for a record that does not exist yet. `suppliers` and `expenses`
+   have no list store or consumer, so they are not wired to the bus.
+4. **Multi-instance caveat — still open, as anticipated.** The in-process bus only
+   reaches clients connected to *that* API instance. Fan out via Postgres
+   `LISTEN`/`NOTIFY` when the API is scaled past one instance. No call site will
+   need to change.
 
-1. New `frontend/src/shared/realtime/eventStream.ts` — opens an `EventSource`
-   with `withCredentials: true`, with exponential-backoff reconnect (1s → 30s cap)
-   and a reconnect on `online`.
-2. On each message, call the existing `emitDataChange(...)`.
-3. The whole revalidation layer built in Tier 1 picks it up unchanged — stores
-   refetch, analytics reloads, the audit log refreshes.
-4. Set `BACKGROUND_POLL_MS = 0` in `useDataRevalidation.ts` to retire the poll.
-5. Surface connection state in the app shell (a subtle "live / reconnecting"
-   indicator) so staff can tell when they are working from a degraded connection.
+### 4.2 Frontend — built as specified, with two deliberate deviations
 
-**Acceptance:** two browsers signed in as different users; a change made in one
-appears in the other in under 2 seconds, with no polling traffic.
+1. **`frontend/src/shared/realtime/eventStream.ts`** — `EventSource` with
+   `withCredentials: true` (required: `VITE_API_BASE_URL` is absolute, so the
+   stream is cross-origin), exponential backoff with ±20% jitter (1 s → 30 s cap)
+   so a shop full of workstations does not stampede the API, and an immediate
+   reconnect on `online`. Three things the native client does **not** handle were
+   added explicitly:
+   - **A fatal close.** A non-200 response — an expired access token, most likely —
+     makes the browser close the stream *permanently* rather than retrying. The
+     client detects `CLOSED`, calls `/auth/refresh` once, then redials. Without
+     this, a workstation left open past the access-token lifetime would never
+     reconnect, because nothing else in the app makes a request while idle.
+   - **A half-open socket.** If the network drops without a TCP reset — a laptop
+     sleeping, a switch rebooting — the stream stays "open" and silently delivers
+     nothing. A watchdog treats three missed heartbeat intervals (75 s) as dead and
+     reconnects.
+   - **React StrictMode's double mount.** The stream is reference-counted, so the
+     development mount → unmount → mount cycle cannot open a second connection and
+     waste one of the browser's six connections per origin.
+2. **Each frame calls the existing `emitDataChange(...)`** — the Tier 1
+   revalidation layer is reused **unchanged**. No rework was required, which is
+   exactly what the Tier 1 design was for.
+3. **Deviation 1 — `forceRevalidate()` added to the store contract.** This was
+   *not* in the plan and turned out to be essential. `revalidate()` no-ops while
+   the cache is fresh (15 s `staleTime`), so a push arriving five seconds after a
+   fetch would have been **silently discarded** — defeating the entire feature
+   while still looking like it worked. A domain event is authoritative, so it now
+   bypasses `staleTime`. The time-based triggers still respect it, which is what
+   keeps them from storming.
+4. **Deviation 2 — the poll was reduced, not retired.** The plan said set
+   `BACKGROUND_POLL_MS = 0`. It is now 60 s and fires **only while the stream is
+   not live**. Retiring it outright would mean a broken push channel leaves the app
+   silently stale — the exact failure this work set out to remove. As a fallback it
+   degrades to Tier 1 behaviour instead of to nothing.
+5. **`ConnectionStatus`** in the page toolbar — a Live / Connecting / Reconnecting
+   / Offline chip with a plain-language hover explanation. Staff otherwise have no
+   way to tell "current" from "stopped updating ten minutes ago", and the first
+   symptom of a dropped stream would be someone deciding on stale stock.
+
+**Files touched by Tier 2.**
+
+```
+NEW   backend/src/services/domainEventBus.ts
+NEW   backend/src/services/dataChangePermissions.ts
+NEW   backend/src/routes/events.routes.ts
+NEW   backend/tests/unit/domainEventBus.test.ts
+NEW   backend/tests/unit/dataChangePermissions.test.ts
+NEW   packages/shared-types/src/dataEvent.ts
+NEW   frontend/src/shared/realtime/eventStream.ts
+NEW   frontend/src/shared/api/baseUrl.ts
+NEW   frontend/src/app/hooks/useRealtimeStatus.ts
+NEW   frontend/src/app/components/ConnectionStatus.tsx
+MOD   backend/src/app.ts                                  (mount /api/v1/events)
+MOD   backend/src/routes/{inventory,orders,orderPayments,payments,
+                          customers,designs,users,settings}.routes.ts
+MOD   packages/shared-types/src/index.ts
+MOD   frontend/src/shared/store/createListStore.ts        (forceRevalidate)
+MOD   frontend/src/shared/store/dataEvents.ts             (shared domain union)
+MOD   frontend/src/shared/api/client.ts                   (shared base URL)
+MOD   frontend/src/app/stores/index.ts                    (thread `force`)
+MOD   frontend/src/app/hooks/useDataRevalidation.ts       (own the stream)
+MOD   frontend/src/app/layout/AppLayout.tsx               (mount the indicator)
+```
+
+No database migration was required. The event contract lives in
+`packages/shared-types/src/dataEvent.ts` and is consumed **types-only** by the
+frontend, matching how every other shared contract is used.
+
+### 4.3 Verification
+
+**Automated.**
+
+- `backend/tests/unit/domainEventBus.test.ts` — 14 cases: delivery, batching,
+  domain de-duplication, the ISO timestamp, the empty-publish no-op, failure
+  isolation (a throwing subscriber does not block the others), unsubscribing
+  *during* dispatch, idempotent unsubscribe, subscriber counting.
+- `backend/tests/unit/dataChangePermissions.test.ts` — 8 cases covering the
+  security boundary, including that `order_payments.read` does **not** imply
+  `payments.read`, that `users.manage` does not imply `users.read`, and that staff
+  receive every domain except `users`.
+- Backend unit suite: **170 tests, 170 passing.** Backend `tsc --noEmit` clean.
+  Frontend unchanged at its 16 pre-existing errors (§6.1). `npm run build`
+  succeeds on both workspaces.
+
+**Live**, against the real Supabase project with the API running:
+
+| Check | Result |
+| --- | --- |
+| `GET /api/v1/events` with no session | **401** |
+| Admin `connected` frame | all 7 domains |
+| Staff (`noah@printsync.com`) `connected` frame | **6 domains — `users` correctly absent** |
+| Admin creates a customer → staff's already-open stream | `data-change: ["customers"]` received |
+| Admin deletes it → staff's open stream | second `data-change` received |
+| Heartbeat | `: ping` received after 25 s |
+| Staff `GET /users` | **403** — confirms the filter's premise |
+| Staff `GET /orders`, `GET /payments/transactions` | 200 — confirms staff hold `payments.read` |
+
+The test created one customer and deleted it in the same run; the database was
+confirmed clean afterwards.
+
+**Acceptance criterion met:** a change made by one signed-in user appeared on a
+*different* user's already-open stream, with no reload and no polling.
+
+### 4.4 Deployment caveat — check this before going live
+
+The auth cookies are set `SameSite=Lax`. That works today because the frontend and
+the API are both on `localhost`, and it will keep working if they are deployed as
+`app.example.com` + `api.example.com` — those are different *origins* but the same
+*site*. It will **break both the REST API and the stream** if they are ever hosted
+on different registrable domains (for example a `vercel.app` frontend calling an
+`onrender.com` API): the browser simply will not send the session cookie, and the
+symptom will look like "login silently fails". In that case the cookies need
+`SameSite=None; Secure`, and CORS must keep echoing an explicit origin rather than
+`*`.
+
+Also worth knowing: an open `EventSource` holds one of the browser's six
+connections per origin. Under HTTP/1.1 that leaves five for regular requests —
+acceptable, but one more argument for serving the API over HTTP/2 in production.
 
 ---
 
@@ -378,6 +506,11 @@ no-ops while fresh; a failed background refresh leaves data intact.
 | Screen left open unattended | Frozen | Self-refreshes | Self-refreshes |
 | Staff action requires a page reload | Always | Never | Never |
 
-Tier 1 is done and verified. Tier 2 is the item that actually delivers
-"industry level" for multiple simultaneous staff, and it is now a contained piece
-of work because the frontend half is already built.
+Tiers 1 and 2 are done and verified. The "change made by another staff member"
+row went from *never visible* to *under a second*, and the poll that used to paper
+over it now only runs as a fallback.
+
+What is left is not about live updates. The items that matter most for real daily
+operation are **§5** (money-safety on checkout — idempotency keys and the real
+"out of stock" message) and **§6** (no CI pipeline, and the default development
+passwords that must be rotated before anything is deployed).

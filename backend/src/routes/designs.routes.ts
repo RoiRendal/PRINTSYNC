@@ -7,6 +7,7 @@ import { createDesign, deleteDesign, listDesigns, updateDesign } from '../module
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import { publishDataChange } from '../services/domainEventBus.js';
 import { uploadDesignAsset } from '../services/designAssetService.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
@@ -42,6 +43,7 @@ designsRouter.post('/', authenticate, requirePermission('designs.manage'), async
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
   const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'design.created', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
+  publishDataChange('designs');
   response.status(201).json({ data: design });
 });
 
@@ -51,6 +53,7 @@ designsRouter.patch('/:id', authenticate, requirePermission('designs.manage'), a
   const designId = getDesignId(request);
   const design = await updateDesign(getSupabase(), designId, parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.updated', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
+  publishDataChange('designs');
   sendSuccess(response, design);
 });
 
@@ -58,6 +61,7 @@ designsRouter.delete('/:id', authenticate, requirePermission('designs.manage'), 
   const designId = getDesignId(request);
   await deleteDesign(getSupabase(), designId);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.deleted', entityType: 'design', entityId: designId });
+  publishDataChange('designs');
   response.status(204).send();
 });
 
@@ -68,6 +72,13 @@ const assetSchema = z.object({
   sizeBytes: z.number().int().positive(),
 });
 
+/**
+ * Uploads a design image to Storage and returns its URL. It deliberately does
+ * **not** publish a `designs` change: no design row is created here — the caller
+ * passes the returned URL into `POST /designs` afterwards. Broadcasting on the
+ * upload alone would wake every designs page for a record that does not exist
+ * yet.
+ */
 designsRouter.post('/assets', authenticate, requirePermission('designs.manage'), async (request, response) => {
   const parsed = assetSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_ASSET', 'The design image is invalid.');
