@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight, Edit3, Search, Trash2 } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Edit3, LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -30,6 +30,15 @@ interface OrdersTableProps {
   onEditOrder: (order: Order) => void;
   onDeleteOrder: (order: Order) => void;
   onAdvancePhase: (order: Order, direction: -1 | 1) => void;
+  /**
+   * Orders whose phase move has been sent but not yet answered.
+   *
+   * Required rather than optional on purpose: a caller that forgot to pass it
+   * would silently lose the guard, and the guard is what stops a second click on
+   * the same row from being refused by the server as a conflict with the user's
+   * own first click.
+   */
+  pendingOrderIds: ReadonlySet<string>;
 }
 
 export function OrdersTable({
@@ -40,6 +49,7 @@ export function OrdersTable({
   onEditOrder,
   onDeleteOrder,
   onAdvancePhase,
+  pendingOrderIds,
 }: OrdersTableProps) {
   const { currencySymbol } = useBusinessBranding();
   return (
@@ -80,6 +90,7 @@ export function OrdersTable({
             <TableBody>
               {orders.map((order) => {
                 const phaseIndex = workPhases.indexOf(order.status);
+                const isPending = pendingOrderIds.has(order.id);
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => onSelectOrder(order)}>
                     <TableCell className="font-mono font-semibold text-macos-text dark:text-zinc-100">
@@ -100,7 +111,7 @@ export function OrdersTable({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          disabled={phaseIndex === 0}
+                          disabled={phaseIndex === 0 || isPending}
                           onClick={(event) => {
                             event.stopPropagation();
                             onAdvancePhase(order, -1);
@@ -112,13 +123,25 @@ export function OrdersTable({
                         </Button>
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <PhaseProgress status={order.status} />
-                          <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                            {/*
+                              The phase on screen has already moved — this says the
+                              server has not confirmed it yet. Without it, a slow
+                              write looks like nothing is happening.
+                            */}
+                            {isPending && (
+                              <span role="status" aria-label="Saving phase change" className="inline-flex">
+                                <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          disabled={phaseIndex === workPhases.length - 1}
+                          disabled={phaseIndex === workPhases.length - 1 || isPending}
                           onClick={(event) => {
                             event.stopPropagation();
                             onAdvancePhase(order, 1);

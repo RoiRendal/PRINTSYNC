@@ -24,7 +24,14 @@ export const useOrderStore = createListStore<Order, OrderActions>({
   list: (query) => ordersApi.list(query),
   fallbackErrorMessage: 'Orders could not be loaded.',
 
-  actions: ({ snapshot, mutateItems, setError }) => ({
+  actions: ({
+    snapshot,
+    mutateItems,
+    setError,
+    optimisticUpdate,
+    commitOptimistic,
+    rollbackOptimistic,
+  }) => ({
     addOrder: async (order) => {
       const lineItems = order.lineItems?.length
         ? order.lineItems.map((item) => ({ ...item, unitPrice: item.unitPrice ?? 0 }))
@@ -38,12 +45,40 @@ export const useOrderStore = createListStore<Order, OrderActions>({
       return created;
     },
 
+    /**
+     * Applied to the board immediately, then confirmed or taken back.
+     *
+     * This is the only optimistic write in the app, and it is deliberately the
+     * one that is safe: a production phase is a label on a job, so showing the
+     * new one a moment early costs nothing if the server refuses. Everything that
+     * moves money — POS checkout, `voidTransaction`, `recordPayment` — and
+     * everything that changes stock still waits for the server, because a wrong
+     * balance or a phantom stock movement is worse than a slow screen.
+     *
+     * `updatedAt` is never part of the optimistic patch. It is the
+     * compare-and-swap version token, and a guessed value would corrupt the very
+     * check it exists to serve — the row has to keep carrying the version the
+     * server gave it. `UpdateOrder` omits the field, so the types enforce this as
+     * well as the comment does.
+     */
     updateOrder: async (id, order, expectedUpdatedAt) => {
-      const updated = await ordersApi.update(id, order, expectedUpdatedAt);
-      mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
-      setError(null);
-      emitDataChange('orders');
-      return updated;
+      optimisticUpdate(id, order);
+      try {
+        const updated = await ordersApi.update(id, order, expectedUpdatedAt);
+        commitOptimistic(id, updated);
+        setError(null);
+        emitDataChange('orders');
+        return updated;
+      } catch (error) {
+        rollbackOptimistic(id);
+        /*
+         * Rethrown rather than swallowed. The caller keeps its own failure
+         * handling — the orders board turns a stale version into a sentence naming
+         * the other person's change — and swallowing here would leave the board
+         * showing a phase the server had just refused.
+         */
+        throw error;
+      }
     },
 
     deleteOrder: async (id) => {

@@ -8,6 +8,8 @@ interface CustomerActions {
   addCustomer: (customer: CreateCustomer) => Promise<Customer>;
   updateCustomer: (id: string, customer: UpdateCustomer) => Promise<Customer>;
   deleteCustomer: (id: string) => Promise<void>;
+  /** How many orders point at a customer. Used by the delete confirmation. */
+  countOrders: (id: string) => Promise<number>;
   reset: () => void;
 }
 
@@ -39,6 +41,14 @@ export const useCustomerStore = createListStore<Customer, CustomerActions>({
       emitDataChange('customers');
     },
 
+    /*
+     * Deliberately not routed through `setError`. A count that could not be
+     * fetched is not a page-level failure, and putting it there would replace the
+     * whole directory with an error view over a warning that is merely optional.
+     * The rejection is left to the caller, which treats it as "no warning".
+     */
+    countOrders: (id) => customersApi.orderCount(id).then((result) => result.orderCount),
+
     reset: () => {
       snapshot().resetList();
     },
@@ -60,6 +70,7 @@ export function useCustomers() {
       addCustomer: state.addCustomer,
       updateCustomer: state.updateCustomer,
       deleteCustomer: state.deleteCustomer,
+      countOrders: state.countOrders,
     })),
   );
 }

@@ -3,9 +3,10 @@ import { ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { Button, Input, Pagination } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
-import { ApiError } from '../../../shared/api/errors';
+import { ApiError, describeApiError } from '../../../shared/api/errors';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
@@ -34,6 +35,7 @@ export default function Orders() {
   const [dateTo, setDateTo] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [pendingOrderIds, setPendingOrderIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const filteredOrders = useOrderFilters(orders, {
     searchTerm,
@@ -42,6 +44,14 @@ export default function Orders() {
     dateTo,
   });
 
+  const markPending = (id: string, pending: boolean) =>
+    setPendingOrderIds((previous) => {
+      const next = new Set(previous);
+      if (pending) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+
   const updateOrderStatusByStep = async (order: Order, direction: -1 | 1) => {
     const currentIndex = workPhases.indexOf(order.status);
     if (currentIndex < 0) return;
@@ -49,6 +59,18 @@ export default function Orders() {
     if (nextIndex === currentIndex) return;
     const nextStatus = workPhases[nextIndex];
     if (!nextStatus) return;
+
+    /*
+     * The board applies this move the moment it is clicked, which makes a second
+     * click on the same row much more tempting than it was when the row sat
+     * unchanged until the server answered. A second click would send the same
+     * `updatedAt` version twice, so the server would refuse the second write and
+     * the board would report a conflict against the user's own first click.
+     * Dropping the repeat while one is in flight is what prevents that.
+     */
+    if (pendingOrderIds.has(order.id)) return;
+    markPending(order.id, true);
+
     try {
       // `order.updatedAt` is the version this board is showing. Sending it means
       // a phase change cannot land on top of an edit someone else made while
@@ -59,7 +81,9 @@ export default function Orders() {
       if (selectedOrder?.id === order.id) setSelectedOrder(refreshed);
     } catch (updateError) {
       // Worth saying out loud rather than only logging: the row the user clicked
-      // was out of date, so their change was not applied.
+      // was out of date, so their change was not applied — and now that the board
+      // moves optimistically, the card visibly springs back, which needs the
+      // reason attached to it.
       setStatusError(
         readOrderConflict(updateError)
           ? `Someone else changed ${order.customer}'s order first, so this move was not applied. The board has been refreshed — check the current phase and try again.`
@@ -69,6 +93,8 @@ export default function Orders() {
       );
       // Show the other person's version rather than leaving stale phases on screen.
       await refresh();
+    } finally {
+      markPending(order.id, false);
     }
   };
 
@@ -78,7 +104,9 @@ export default function Orders() {
       await deleteOrder(order.id);
       if (selectedOrder?.id === order.id) setSelectedOrder(null);
     } catch (deleteError) {
-      console.error('Unable to delete order:', deleteError);
+      // This used to go to the browser console, where nobody looks. A refused
+      // delete now says so on the page the user is actually on.
+      setStatusError(describeApiError(deleteError, 'The order could not be deleted.'));
     }
   };
 
@@ -91,21 +119,7 @@ export default function Orders() {
 
   return (
     <div className="space-y-5">
-      {statusError && (
-        <div
-          role="alert"
-          className="flex items-start justify-between gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[11px] font-semibold leading-relaxed text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300"
-        >
-          <span>{statusError}</span>
-          <button
-            type="button"
-            onClick={() => setStatusError(null)}
-            className="shrink-0 cursor-pointer text-[10px] font-bold uppercase tracking-[0.18em] underline decoration-dotted underline-offset-2"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
+      {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -175,6 +189,7 @@ export default function Orders() {
         onEditOrder={handleEditOrder}
         onDeleteOrder={handleDeleteOrder}
         onAdvancePhase={updateOrderStatusByStep}
+        pendingOrderIds={pendingOrderIds}
       />
       <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} className="mt-4" />
 

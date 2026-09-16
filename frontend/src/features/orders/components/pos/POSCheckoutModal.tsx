@@ -1,8 +1,10 @@
+import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, Banknote, CheckCircle2, CreditCard, Printer, ShieldCheck } from 'lucide-react';
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Button, Modal } from '../../../../shared/components/ui';
+import { InlineAlert, type InlineAlertTone } from '../../../../shared/components/feedback/InlineAlert';
 import { cn } from '../../../../shared/lib/cn';
 
 /**
@@ -24,6 +26,19 @@ export type ReconciliationOutcome =
   | { kind: 'unknown' };
 
 /**
+ * The outcomes that can reach this component as a **failure**.
+ *
+ * `committed` is excluded at the type level rather than handled at runtime. A
+ * committed attempt is a completed sale and the page presents it as one — with a
+ * receipt — so it has no business travelling down the error path. Leaving it in
+ * the union would let a future caller do exactly that, and the generic branch
+ * below would then render "The transaction could not be completed." in red over a
+ * sale the customer has already paid for. Making the state unrepresentable is
+ * cheaper than remembering not to create it.
+ */
+export type CheckoutFailureOutcome = Exclude<ReconciliationOutcome, { kind: 'committed' }>;
+
+/**
  * Why the last checkout attempt did not go through.
  *
  * `stock` is populated only for a short-stock rejection, which is the one
@@ -36,29 +51,25 @@ export type ReconciliationOutcome =
 export interface CheckoutError {
   message: string;
   stock: InsufficientStockDetails | null;
-  reconciliation?: ReconciliationOutcome | null;
+  reconciliation?: CheckoutFailureOutcome | null;
 }
 
 /**
  * How to present a reconciled checkout that did *not* commit.
  *
- * Keyed on the two outcomes that reach this panel — a `committed` attempt is not
- * a failure at all, so the page routes it down the success path and shows the
- * receipt instead of an alert.
- *
  * The wording carries the weight here. "Nothing was charged, safe to try again"
- * and "we could not confirm, do not ring it up again" are the same shape of
- * event to the code and completely different instructions to a cashier, so they
- * must not be allowed to collapse into one generic message.
+ * and "we could not confirm, do not ring it up again" are the same shape of event
+ * to the code and completely different instructions to a cashier, so they must
+ * not be allowed to collapse into one generic message — hence a distinct tone and
+ * heading for each rather than one shared "something went wrong" panel.
  */
 const RECONCILIATION_PANEL: Record<
-  Exclude<ReconciliationOutcome['kind'], 'committed'>,
-  { heading: string; panel: string; Icon: typeof AlertTriangle }
+  CheckoutFailureOutcome['kind'],
+  { heading: string; tone: InlineAlertTone; Icon: LucideIcon }
 > = {
   'not-committed': {
     heading: 'Nothing was charged — safe to try again',
-    panel:
-      'border-macos-red/20 bg-macos-red/10 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300',
+    tone: 'error',
     Icon: ShieldCheck,
   },
   unknown: {
@@ -67,8 +78,7 @@ const RECONCILIATION_PANEL: Record<
     // one that did not. Saying "check History first" would be overcautious and
     // would slow the till down for no benefit.
     heading: 'Could not confirm — retrying is safe',
-    panel:
-      'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/15 dark:text-amber-300',
+    tone: 'warning',
     Icon: AlertTriangle,
   },
 };
@@ -114,15 +124,9 @@ export function POSCheckoutModal({
 }: POSCheckoutModalProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
 
-  /**
-   * The panel to show for an unconfirmed checkout, or `null` for an ordinary
-   * failure. `committed` deliberately yields `null` — see `RECONCILIATION_PANEL`.
-   */
+  /** The panel to show for an unconfirmed checkout, or `null` for an ordinary failure. */
   const reconciliation = checkoutError?.reconciliation ?? null;
-  const panel = reconciliation && reconciliation.kind !== 'committed'
-    ? RECONCILIATION_PANEL[reconciliation.kind]
-    : null;
-  const PanelIcon = panel?.Icon;
+  const panel = reconciliation ? RECONCILIATION_PANEL[reconciliation.kind] : null;
 
   /**
    * The shortfall that applies to one cart line, or `null`.
@@ -165,27 +169,16 @@ export function POSCheckoutModal({
               behind this overlay, so a cashier whose sale was rejected used to see
               the button simply do nothing.
             */}
-            {checkoutError && (panel && PanelIcon ? (
-              <div
-                role="alert"
-                className={cn(
-                  'space-y-1.5 rounded-[var(--radius-card)] border px-3 py-2.5 text-[10px] font-semibold leading-relaxed',
-                  panel.panel,
-                )}
-              >
-                <div className="flex items-center gap-1.5 font-bold uppercase tracking-[0.18em]">
-                  <PanelIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  <span>{panel.heading}</span>
-                </div>
-                <p className="font-normal">{checkoutError.message}</p>
-              </div>
+            {checkoutError && (panel ? (
+              <InlineAlert
+                tone={panel.tone}
+                title={panel.heading}
+                icon={panel.Icon}
+                message={checkoutError.message}
+                className="text-[10px]"
+              />
             ) : (
-              <div
-                role="alert"
-                className="rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-semibold leading-relaxed text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300"
-              >
-                {checkoutError.message}
-              </div>
+              <InlineAlert message={checkoutError.message} className="text-[10px]" />
             ))}
 
             <div className="space-y-4">

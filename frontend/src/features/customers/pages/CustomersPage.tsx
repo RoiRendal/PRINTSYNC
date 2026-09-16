@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Mail, Phone, Plus, Search, Pencil, Trash2, Users } from 'lucide-react';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
   Button,
   Card,
@@ -21,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
+import { describeApiError } from '../../../shared/api/errors';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
 import type { Customer } from '../types';
 import { cn } from '../../../shared/lib/cn';
@@ -44,13 +46,25 @@ function initials(name: string) {
 }
 
 export default function CustomersPage() {
-  const { customers, total, page, limit, isLoading, error, refresh, goToPage, addCustomer, updateCustomer, deleteCustomer } = useCustomers();
+  const { customers, total, page, limit, isLoading, error, refresh, goToPage, addCustomer, updateCustomer, deleteCustomer, countOrders } = useCustomers();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  /**
+   * Why the last save or delete was refused. Both dialogs are mutually exclusive,
+   * so one slot is enough, and it is cleared whenever either opens or closes —
+   * a stale reason from a previous attempt would be worse than none.
+   */
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+  const [isCheckingOrders, setIsCheckingOrders] = useState(false);
+  /** Invalidates an in-flight order count so a late reply cannot land on a newer dialog. */
+  const orderCountRequestRef = useRef(0);
 
   const withPhone = customers.filter((c) => c.phone.trim()).length;
   const withEmail = customers.filter((c) => c.email.trim()).length;
@@ -69,6 +83,7 @@ export default function CustomersPage() {
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setActionError(null);
     setIsModalOpen(true);
   };
 
@@ -80,6 +95,7 @@ export default function CustomersPage() {
       email: customer.email,
       notes: customer.notes,
     });
+    setActionError(null);
     setIsModalOpen(true);
   };
 
@@ -87,30 +103,67 @@ export default function CustomersPage() {
     setIsModalOpen(false);
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setActionError(null);
   };
 
   const openDelete = (customer: Customer) => {
+    const requestId = ++orderCountRequestRef.current;
     setCustomerToDelete(customer);
+    setActionError(null);
+    setOrderCount(null);
     setIsDeleteModalOpen(true);
+    setIsCheckingOrders(true);
+
+    /*
+     * Ask how much history this customer has, so the warning can name a number
+     * instead of asking staff to accept an unquantified "this may affect orders".
+     *
+     * The foreign key is `on delete set null`, so the delete is never blocked —
+     * the count only informs the decision. A count we cannot fetch therefore must
+     * not block it either: refusing to delete because a warning could not be built
+     * would be worse than the warning's absence.
+     */
+    void countOrders(customer.id)
+      .then((count) => {
+        if (orderCountRequestRef.current === requestId) setOrderCount(count);
+      })
+      .catch(() => {
+        if (orderCountRequestRef.current === requestId) setOrderCount(null);
+      })
+      .finally(() => {
+        if (orderCountRequestRef.current === requestId) setIsCheckingOrders(false);
+      });
   };
 
   const closeDeleteModal = () => {
+    orderCountRequestRef.current += 1;
     setCustomerToDelete(null);
     setIsDeleteModalOpen(false);
+    setOrderCount(null);
+    setIsCheckingOrders(false);
+    setActionError(null);
   };
 
   const confirmDelete = async () => {
     if (!customerToDelete) return;
+    setActionError(null);
+    setIsDeleting(true);
     try {
       await deleteCustomer(customerToDelete.id);
       closeDeleteModal();
-    } catch {
-      return;
+    } catch (deleteError) {
+      // Stays open, and says why. This used to `return` in silence, so a refused
+      // delete looked exactly like a button that did nothing.
+      setActionError(describeApiError(deleteError, 'The customer could not be deleted.'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setActionError(null);
+    setIsSaving(true);
     try {
       if (editingId) {
         await updateCustomer(editingId, form);
@@ -118,8 +171,12 @@ export default function CustomersPage() {
         await addCustomer(form);
       }
       closeModal();
-    } catch {
-      return;
+    } catch (saveError) {
+      // Deliberately does not close: closing would discard everything typed, on
+      // top of hiding the reason it was rejected.
+      setActionError(describeApiError(saveError, 'The customer could not be saved.'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -233,6 +290,7 @@ export default function CustomersPage() {
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingId ? 'Edit Customer' : 'Add Customer'} maxWidth="max-w-lg">
         <form onSubmit={submitForm} className="space-y-4">
+          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input required value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Full name" />
             <Input type="tel" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} placeholder="Phone number" />
@@ -240,8 +298,8 @@ export default function CustomersPage() {
             <Input value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Notes" />
           </div>
           <div className="flex justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10">
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-            <Button type="submit">{editingId ? 'Save Changes' : 'Add Customer'}</Button>
+            <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>
+            <Button type="submit" isLoading={isSaving}>{editingId ? 'Save Changes' : 'Add Customer'}</Button>
           </div>
         </form>
       </Modal>
@@ -251,9 +309,31 @@ export default function CustomersPage() {
           <p className="text-sm text-macos-text-muted dark:text-zinc-400">
             Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{customerToDelete?.name}</strong>? This action cannot be undone.
           </p>
+
+          {isCheckingOrders && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-500">
+              Checking this customer's order history…
+            </p>
+          )}
+
+          {/*
+            The delete is never blocked by history — the foreign key is `on delete
+            set null`, so it succeeds and unlinks the orders. That is exactly why
+            the number has to be said out loud: the consequence is invisible
+            afterwards, and nobody notices until they try to find the order.
+          */}
+          {orderCount !== null && orderCount > 0 && (
+            <InlineAlert
+              tone="warning"
+              message={`This customer has ${orderCount} ${orderCount === 1 ? 'order' : 'orders'} on record. Those orders keep the customer's name, but will no longer be linked to this customer record.`}
+            />
+          )}
+
+          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
+
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth onClick={confirmDelete}>Delete Customer</Button>
+            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
+            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>Delete Customer</Button>
           </div>
         </div>
       </Modal>

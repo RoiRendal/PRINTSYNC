@@ -3,7 +3,14 @@ import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
-import { createCustomer, deleteCustomer, getCustomer, listCustomers, updateCustomer } from '../modules/customers/customers.service.js';
+import {
+  countOrdersForCustomer,
+  createCustomer,
+  deleteCustomer,
+  getCustomer,
+  listCustomers,
+  updateCustomer,
+} from '../modules/customers/customers.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
@@ -33,6 +40,19 @@ function getCustomerId(request: { params: Record<string, string | string[] | und
 
 customersRouter.get('/', authenticate, requirePermission('customers.read'), async (request, response) => {
   sendSuccess(response, await listCustomers(getSupabase(), parsePaginationQuery(request.query)));
+});
+
+/*
+ * Registered ahead of `/:id`, mirroring the `/transactions/by-key/:key` rule from
+ * the checkout reconciliation work: a route with a literal segment is kept clear
+ * of its parameterised sibling so a later change to `/:id` cannot swallow it.
+ *
+ * Gated on `customers.read` rather than `customers.manage` — it reports a count
+ * the orders list already exposes, and the delete dialog is the only caller.
+ */
+customersRouter.get('/:id/order-count', authenticate, requirePermission('customers.read'), async (request, response) => {
+  const orderCount = await countOrdersForCustomer(getSupabase(), getCustomerId(request));
+  sendSuccess(response, { orderCount });
 });
 
 customersRouter.get('/:id', authenticate, requirePermission('customers.read'), async (request, response) => {

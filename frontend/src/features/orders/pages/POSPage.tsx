@@ -13,7 +13,12 @@ import { paymentsApi, readInsufficientStock, type PaymentTransaction } from '../
 import { readOrderConflict } from '../api/ordersApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
-import { POSCheckoutModal, type CheckoutError, type ReconciliationOutcome } from '../components/pos/POSCheckoutModal';
+import {
+  POSCheckoutModal,
+  type CheckoutError,
+  type CheckoutFailureOutcome,
+  type ReconciliationOutcome,
+} from '../components/pos/POSCheckoutModal';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
@@ -47,10 +52,11 @@ interface ReceiptSnapshot {
 /**
  * What the cashier is told when a checkout's fate had to be investigated.
  *
- * `committed` has no entry: that is a completed sale, and it is presented as one
- * — success panel, receipt, done — rather than as a failure with a note attached.
+ * Keyed on `CheckoutFailureOutcome`, which excludes `committed` by type: that is
+ * a completed sale, presented as one — success panel, receipt, done — rather than
+ * as a failure with a note attached.
  */
-const RECONCILIATION_MESSAGE: Record<Exclude<ReconciliationOutcome['kind'], 'committed'>, string> = {
+const RECONCILIATION_MESSAGE: Record<CheckoutFailureOutcome['kind'], string> = {
   'not-committed':
     'The sale did not reach the server, so nothing was charged and no stock was taken. You can try again.',
   unknown:
@@ -579,22 +585,31 @@ export default function POS() {
        * all — they get told what happened.
        */
       const attemptKey = posMode === 'retail' ? peekAttempt() : null;
-      let reconciliation: ReconciliationOutcome | null = null;
+      let reconciliation: CheckoutFailureOutcome | null = null;
 
       if (attemptKey && !isServerRejection(error)) {
-        reconciliation = await reconcileAttempt(attemptKey);
-        if (reconciliation.kind === 'committed') {
+        const outcome = await reconcileAttempt(attemptKey);
+        if (outcome.kind === 'committed') {
           completeAttempt();
           setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName });
           saleCompleted = true;
           saleRecovered = true;
+        } else {
+          /*
+           * Narrowed by the branch above, so this is a failure outcome by
+           * construction. Keeping the two apart here is what lets
+           * RECONCILIATION_MESSAGE be indexed without a cast — the cast that used
+           * to sit below existed only because the variable was wide enough to
+           * hold `committed`.
+           */
+          reconciliation = outcome;
         }
       }
 
       if (!saleCompleted) {
         setCheckoutError({
           message: reconciliation
-            ? RECONCILIATION_MESSAGE[reconciliation.kind as 'not-committed' | 'unknown']
+            ? RECONCILIATION_MESSAGE[reconciliation.kind]
             : shortfall
               ? `Only ${shortfall.available} left in stock for "${shortfall.itemName}" — ${shortfall.requested} requested.`
               : conflict

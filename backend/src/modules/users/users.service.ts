@@ -26,6 +26,77 @@ interface UserInput {
   password?: string | undefined;
 }
 
+/**
+ * The slice of a Supabase `AuthError` this service reasons about.
+ *
+ * Read defensively instead of importing the provider's type: the error arrives
+ * through a promise rejection, so nothing guarantees its shape at runtime, and
+ * a wrong assumption here would replace a useful message with a crash.
+ */
+interface AuthFailure {
+  code: string | undefined;
+  status: number | undefined;
+  message: string | undefined;
+}
+
+function asAuthFailure(error: unknown): AuthFailure | null {
+  if (!error || typeof error !== 'object') return null;
+  const candidate = error as Record<string, unknown>;
+  return {
+    code: typeof candidate.code === 'string' ? candidate.code : undefined,
+    status: typeof candidate.status === 'number' ? candidate.status : undefined,
+    message: typeof candidate.message === 'string' ? candidate.message : undefined,
+  };
+}
+
+/**
+ * Supabase answers a duplicate email with `code: 'email_exists'`. The message
+ * text is checked as well, because that code has not been present across every
+ * provider version — and this is the single most likely way adding a staff
+ * member fails: a manager re-adding somebody who already has an account.
+ */
+function isDuplicateEmail(failure: AuthFailure): boolean {
+  if (failure.code === 'email_exists') return true;
+  return /already\s+(been\s+)?registered|already\s+exists/i.test(failure.message ?? '');
+}
+
+/**
+ * Turns a provider failure into something worth putting on screen.
+ *
+ * The distinction that matters: a 4xx is the provider judging the *request*, so
+ * the message can be definite. A 5xx — or an error carrying no status at all —
+ * is an outage, and reporting an outage as a bad request sends the manager
+ * hunting for a typo that is not there.
+ */
+function authFailureToAppError(error: unknown, context: 'create' | 'update'): AppError {
+  const failure = asAuthFailure(error);
+  const fallbackCode = context === 'create' ? 'USER_CREATION_FAILED' : 'USER_UPDATE_FAILED';
+  const fallbackVerb = context === 'create' ? 'created' : 'updated';
+
+  if (failure && isDuplicateEmail(failure)) {
+    return new AppError(409, 'EMAIL_ALREADY_REGISTERED', 'A user with this email address already exists.');
+  }
+
+  if (!failure || failure.status === undefined || failure.status >= 500) {
+    return new AppError(
+      503,
+      'AUTH_SERVICE_UNAVAILABLE',
+      `The user could not be ${fallbackVerb} because the authentication service is unavailable. Try again in a moment.`,
+    );
+  }
+
+  /*
+   * A 4xx from the provider. Its own wording is the most truthful thing
+   * available here — "Password should be at least 6 characters" tells the
+   * manager something a generic sentence cannot — so prefer it.
+   */
+  return new AppError(
+    400,
+    fallbackCode,
+    failure.message?.trim() || 'The user details were rejected by the authentication service.',
+  );
+}
+
 const permissionToPage: Record<string, string> = {
   'dashboard.read': 'dashboard',
   'orders.read': 'orders',
@@ -133,8 +204,13 @@ export async function createUser(supabase: SupabaseClient, input: UserInput): Pr
     email_confirm: true,
   });
 
+  /*
+   * Previously every possible cause collapsed into one sentence — "The user
+   * could not be created" — so a duplicate email, a rejected password and a
+   * provider outage were indistinguishable on screen.
+   */
   if (authError || !createdAuth.user) {
-    throw new AppError(400, 'USER_CREATION_FAILED', 'The user could not be created.');
+    throw authFailureToAppError(authError, 'create');
   }
 
   const { data: profile, error: profileError } = await supabase
@@ -164,7 +240,7 @@ export async function updateUser(supabase: SupabaseClient, id: string, input: Us
     email: input.email.toLowerCase(),
     ...(input.password ? { password: input.password } : {}),
   });
-  if (authError) throw new AppError(400, 'USER_UPDATE_FAILED', 'The user could not be updated.');
+  if (authError) throw authFailureToAppError(authError, 'update');
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
@@ -185,5 +261,20 @@ export async function updateUser(supabase: SupabaseClient, id: string, input: Us
 
 export async function deleteUser(supabase: SupabaseClient, id: string): Promise<void> {
   const { error } = await supabase.auth.admin.deleteUser(id);
-  if (error) throw new AppError(404, 'USER_NOT_FOUND', 'The user was not found.');
+  if (!error) return;
+
+  const failure = asAuthFailure(error);
+  /*
+   * A missing user is a verdict about the request. Anything else is the
+   * provider failing us, and reporting an outage as "the user was not found"
+   * sends staff hunting for somebody who is right there on the screen.
+   */
+  if (failure?.status === 404) {
+    throw new AppError(404, 'USER_NOT_FOUND', 'The user was not found.');
+  }
+  throw new AppError(
+    503,
+    'USER_DELETE_FAILED',
+    'The user could not be deleted because the authentication service is unavailable. Try again in a moment.',
+  );
 }

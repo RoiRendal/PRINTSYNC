@@ -24,7 +24,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { PaginatedResponse } from '@printsync/shared-types';
 import { ApiError } from '../api/errors';
-import { createListStore, DEFAULT_STALE_TIME_MS, type ListQuery } from './createListStore';
+import { createListStore, DEFAULT_STALE_TIME_MS, OPTIMISTIC_TTL_MS, type ListQuery } from './createListStore';
 
 interface Widget {
   id: string;
@@ -220,7 +220,7 @@ describe('createListStore — response ordering', () => {
 });
 
 describe('createListStore — local cache updates', () => {
-  it('a local mutation stamps freshness so its own event does not bounce back', async () => {
+  it('a local mutation stamps freshness, so time-based triggers leave it alone', async () => {
     vi.useFakeTimers();
     const { list, store } = setup();
 
@@ -229,8 +229,8 @@ describe('createListStore — local cache updates', () => {
     store.getState().mutateItems((items) => [...items, widget('beta')]);
     await store.getState().revalidate();
 
-    // The mutation's own response was fresh server data, so the domain event it
-    // emitted must not trigger an immediate refetch of what it just wrote.
+    // The mutation's own response was fresh server data, so a focus or poll
+    // trigger must not refetch what the app just wrote.
     expect(list).toHaveBeenCalledTimes(1);
     expect(store.getState().items.map((item) => item.name)).toEqual(['alpha', 'beta']);
   });
@@ -262,5 +262,136 @@ describe('createListStore — local cache updates', () => {
     expect(store.getState().items).toEqual([]);
     expect(store.getState().hasLoaded).toBe(false);
     expect(store.getState().lastFetchedAt).toBeNull();
+  });
+});
+
+/**
+ * Optimistic writes.
+ *
+ * The overlay exists for one specific race, and it is worth stating plainly
+ * because the code looks like it could be simplified away:
+ *
+ *   1. a mutation writes its result to the cache and shows it;
+ *   2. the same mutation emits a domain event;
+ *   3. that event reaches `forceRevalidate()`, which **skips the staleness check
+ *      by design** — so `markFresh()` cannot hold it off;
+ *   4. the refetch returns the row as the server still has it, and would overwrite
+ *      the change the user is looking at.
+ *
+ * The first test in this block is the one that fails if the overlay is removed.
+ */
+describe('createListStore — optimistic writes', () => {
+  it('shows the change immediately, before the server has answered', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+
+    expect(store.getState().items[0]?.name).toBe('alpha (edited)');
+  });
+
+  it('survives a refetch that lands while the write is still in flight', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+    // Stands in for the mutation's own domain event: forced, so it ignores the
+    // freshness stamp and returns the server's pre-edit row.
+    await store.getState().forceRevalidate();
+
+    expect(store.getState().items[0]?.name).toBe('alpha (edited)');
+  });
+
+  it('an ordinary mutation does NOT survive a forced revalidation', async () => {
+    // The counterpart to the test above, and the reason the overlay is needed at
+    // all: `mutateItems` only stamps `lastFetchedAt`, and `forceRevalidate()`
+    // does not consult it.
+    const { list, store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().mutateItems((items) => items.map((item) => ({ ...item, name: 'local edit' })));
+    await store.getState().forceRevalidate();
+
+    expect(list).toHaveBeenCalledTimes(2);
+    expect(store.getState().items[0]?.name).toBe('alpha');
+  });
+
+  it('commitOptimistic retires the overlay in favour of the server item', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+    store.getState().commitOptimistic('id-alpha', { id: 'id-alpha', name: 'alpha (saved)' });
+    await store.getState().forceRevalidate();
+
+    // Were the overlay still present, the fetched row would be overlaid with
+    // "alpha (edited)" and this would read that instead.
+    expect(store.getState().items[0]?.name).toBe('alpha');
+  });
+
+  it('rollbackOptimistic puts back what was on screen before the write', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+    store.getState().rollbackOptimistic('id-alpha');
+
+    // Deleting the overlay alone would not be enough — the optimistic value is
+    // already in `items`, which is why the previous row is remembered.
+    expect(store.getState().items[0]?.name).toBe('alpha');
+  });
+
+  it('a rollback leaves the cache stale, so the truth is fetched next time', async () => {
+    vi.useFakeTimers();
+    const { list, store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+    store.getState().rollbackOptimistic('id-alpha');
+    await store.getState().revalidate();
+
+    // The restored value is a memory of the screen, not a claim about the server,
+    // and the reason for the rollback was that the server disagreed.
+    expect(list).toHaveBeenCalledTimes(2);
+  });
+
+  it('drops a patch that never settled instead of showing it forever', async () => {
+    vi.useFakeTimers();
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+    vi.advanceTimersByTime(OPTIMISTIC_TTL_MS + 1);
+    await store.getState().forceRevalidate();
+
+    expect(store.getState().items[0]?.name).toBe('alpha');
+  });
+
+  it('ignores a write for a row the store does not hold', () => {
+    const { store } = setup();
+    store.getState().optimisticUpdate('id-missing', { name: 'ghost' });
+    expect(store.getState().items).toEqual([]);
+  });
+
+  it('never lets an undefined field blank a real value', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+
+    // A form's `Partial<T>` routinely carries an explicit `undefined` for fields
+    // it is not editing, and spreading that would wipe the value on screen.
+    store.getState().optimisticUpdate('id-alpha', { name: undefined });
+
+    expect(store.getState().items[0]?.name).toBe('alpha');
+  });
+
+  it('resetList clears pending patches along with the data', async () => {
+    const { store } = setup();
+    await store.getState().fetchList();
+    store.getState().optimisticUpdate('id-alpha', { name: 'alpha (edited)' });
+
+    store.getState().resetList();
+    await store.getState().fetchList();
+
+    expect(store.getState().items[0]?.name).toBe('alpha');
   });
 });

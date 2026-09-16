@@ -6,8 +6,8 @@
 | --- | --- |
 | **Reported by** | Operations (management) |
 | **Business requirement** | Data changed anywhere in the system must appear everywhere immediately. Staff must never need to reload a page to see current information. The system must hold up with several staff members working at the same time. |
-| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 **implemented and verified live** (§5). Tier 4 **implemented and verified live** (§6). |
-| **Verified by** | Backend unit suite **177/177 passing**; frontend unit suite **79/79 passing**; `tsc --noEmit` clean on frontend, backend and backend tests; `npm run build` succeeds on all three workspaces; **26/26** live end-to-end checks for Tier 3 (§5.4) and **15/15** for Tier 4 (§6.4) against the real Supabase project; both new migrations applied and in sync |
+| **Status** | Tier 1 **implemented and verified**. Tier 2 **implemented and verified live**. Tier 3 **implemented and verified live** (§5). Tier 4 **implemented and verified live** (§6). Tier 5 **implemented and verified live** (§7). |
+| **Verified by** | Backend unit suite **202/202 passing**; frontend unit suite **112/112 passing** across 8 files; `tsc --noEmit` clean on frontend, backend and backend tests; `npm run build` succeeds on all three workspaces; **26/26** live end-to-end checks for Tier 3 (§5.4), **15/15** for Tier 4 (§6.4) and **26/26** for Tier 5 (§7.8) against the real Supabase project; both new migrations applied and in sync |
 
 ---
 
@@ -354,7 +354,7 @@ frontend, matching how every other shared contract is used.
   receive every domain except `users`.
 - Backend unit suite: **170 tests, 170 passing.** Backend `tsc --noEmit` clean.
   Frontend unchanged at its 16 pre-existing errors *at the time* — since fixed in
-  Tier 3 (§7.1). `npm run build` succeeds on both workspaces.
+  Tier 3 (§8.1). `npm run build` succeeds on both workspaces.
 
 **Live**, against the real Supabase project with the API running:
 
@@ -614,7 +614,7 @@ and since both ways of getting it wrong are silent, every branch is asserted.
 
 Tooling: Vitest + Testing Library + jsdom, declared in `frontend/package.json`, with
 the `test` block added to the existing `vite.config.ts` so the runner cannot drift
-from the app's module aliases. `npm test` now runs in the CI frontend job (§7.2).
+from the app's module aliases. `npm test` now runs in the CI frontend job (§8.2).
 
 Pure-logic suites declare `// @vitest-environment node`; leaving them on jsdom cost
 about 25 of the suite's 26 seconds. It now runs in roughly 6.
@@ -701,7 +701,7 @@ saying so is the honest answer.
 
 | # | Item | Business value | Technical approach |
 | --- | --- | --- | --- |
-| 1 | **Optimistic UI** | Staff see their action land instantly instead of waiting on the network. Perceived speed on a slow connection. | Apply the change locally first, then reconcile; roll back and toast on failure. The store already exposes `mutateItems`/`replaceItem` for this. |
+| 1 | ~~**Optimistic UI**~~ — **done in Tier 5, scoped to the orders board** | Orders-board phase moves land instantly instead of waiting on the network. Every money and stock path stays pessimistic on purpose. | See §7.6. |
 | 2 | **Scheduled/paginated analytics caching** | Analytics issues 5 queries on every change event. Fine now; will need attention at volume. | A short server-side cache or a materialised view for the summary RPC. |
 | 3 | **Postgres `LISTEN`/`NOTIFY` for the event bus** | Removes the single-instance ceiling on realtime. Requires a new `DATABASE_URL` secret (direct connection, not the pooler). | See §4.4 — the call sites will not need to change. |
 | 4 | **Protect `macOS-UI-2`** | A red build currently cannot block a merge. | A branch-protection rule in GitHub settings. Not a code change. |
@@ -731,11 +731,199 @@ snapshot), `src/app/components/ConnectionStatus.tsx` (syncing state).
 
 ---
 
-## 7. Other findings from the scan
+## 7. Tier 5 — Telling staff when something fails (implemented and verified)
+
+### 7.1 The problem, in one sentence
+
+When a save or a delete failed, five screens said **nothing at all** — the dialog
+simply stayed open, so the only visible outcome was that the data had not changed.
+
+Confirmed by reading the handlers directly:
+
+| Where | Handler | Was |
+| --- | --- | --- |
+| `CustomersPage.tsx` | `confirmDelete` | `catch { return; }` |
+| `CustomersPage.tsx` | `submitForm` | `catch { return; }` |
+| `UserManagementPage.tsx` | `confirmDelete` | `catch { return; }` |
+| `UserManagementPage.tsx` | `submitForm` | `catch { return; }` |
+| `OrdersPage.tsx` | `handleDeleteOrder` | `console.error` only |
+
+The realistic triggers are a dropped connection, an expired session, or a server
+error. The likeliest case in daily use is a manager adding a staff account with an
+email that already has one.
+
+### 7.2 The second half of the problem — the server was not saying why
+
+Surfacing those messages alone would not have helped, because the backend threw the
+reason away. In `backend/src/modules/users/users.service.ts`:
+
+- `createUser` collapsed **every** cause to `400 USER_CREATION_FAILED` / "The user
+  could not be created." A duplicate email, a rejected password and a provider
+  outage were indistinguishable.
+- `deleteUser` collapsed everything to `404 USER_NOT_FOUND` — so a transient
+  provider outage sent staff looking for a user who was on the screen in front of
+  them.
+- `deleteCustomer` reported every failure as `400 CUSTOMER_DELETE_FAILED`.
+
+**Both halves had to change for the message to be worth showing.**
+
+### 7.3 What changed — backend
+
+A single rule now governs every failure message: **a 4xx is a verdict about the
+request; anything else is an outage.**
+
+- `createUser` / `updateUser` map a duplicate email to `409 EMAIL_ALREADY_REGISTERED`,
+  a provider 4xx to its own wording (the most truthful thing available — "Password
+  should be at least 6 characters" tells the manager something a generic sentence
+  cannot), and a 5xx or a statusless error to `503 AUTH_SERVICE_UNAVAILABLE`.
+- `deleteUser` distinguishes a genuine `404 USER_NOT_FOUND` from
+  `503 USER_DELETE_FAILED`.
+- `deleteCustomer` distinguishes `404 CUSTOMER_NOT_FOUND` from
+  `503 CUSTOMER_DELETE_FAILED`. It uses `.delete().select('id')` so the rows that
+  were actually removed come back — that is how "there was nothing to delete" is
+  told apart from "the database refused", with no extra round trip.
+- `createCustomer` / `updateCustomer` / `getCustomer` got the same split.
+
+### 7.4 What changed — frontend
+
+**`describeApiError(error, fallback)`** — new, in `shared/api/errors.ts`, beside the
+existing `isServerRejection()`. It encodes one rule: a 4xx is a **verdict**, so the
+server's own words are shown; a network drop, a timeout or a **5xx is an open
+question** and is described as one — *"The server could not confirm the change —
+refresh the page before trying again."* A staff member who believes a save failed
+will simply try it again.
+
+> **Deliberate deviation from the approved plan.** The plan proposed a
+> code→sentence lookup table in the frontend. It was dropped on purpose: every route
+> now reports a specific reason in plain language, so a second copy would only be
+> something else to keep in sync — and a stale copy is worse than none. The two
+> statuses that *do* get overridden are 401 and 403, because they describe the
+> *session* rather than the request, and no route can say that about itself.
+
+**`InlineAlert`** — new, in `shared/components/feedback/`. The same banner markup had
+been written out three times (twice in the checkout modal, once on the orders page)
+and this tier needed it in three more places. It renders `role="alert"` so the
+message is announced.
+
+**The five sites now keep the dialog open and say why.** Keeping it open is the
+important half: closing would discard everything typed, on top of hiding the reason.
+
+**Submit-in-flight states** were added to the customer and user dialogs — a message
+explaining a failure is not much use if the user has already clicked twice.
+
+### 7.5 Warn before deleting a customer with history
+
+The foreign key on `orders.customer_id` is **`on delete set null`**, not `restrict` —
+so deleting a customer with order history *succeeds* and silently unlinks their
+orders. There was no error to surface; the consequence is simply invisible.
+
+The delete dialog now asks `GET /customers/:id/order-count` (new route, gated on
+`customers.read`, so staff can see it) and names the number: *"This customer has 7
+orders on record. Those orders keep the customer's name, but will no longer be
+linked to this customer record."*
+
+Per the manager's decision, **nothing is blocked** — the count only informs the
+decision. A count that cannot be fetched does not block the delete either: refusing
+to delete because a warning could not be built would be worse than the warning's
+absence. It is a head-only exact count, so it transfers no rows and needed no
+migration.
+
+### 7.6 Instant phase moves on the orders board
+
+A phase move now appears immediately and is taken back if the server refuses.
+
+**This is the only optimistic write in the app, and it is deliberately the one that
+is safe.** A production phase is a label on a job, so showing it a moment early
+costs nothing. Everything that moves money or stock — POS checkout,
+`voidTransaction`, `recordPayment`, inventory adjustments — still waits for the
+server, because a wrong balance or a phantom stock movement is worse than a slow
+screen.
+
+**The race that had to be solved.** A mutation writes its result and then announces
+the change; the announcement reaches `forceRevalidate()`, which **skips the
+15-second freshness check by design**. The refetch that follows returns the row as
+the server still has it, and would overwrite the change the user is looking at.
+
+`markFresh()` cannot prevent this — and the comment claiming it did had been wrong
+since Tier 2 introduced `forceRevalidate()`. **That comment is corrected**, because a
+comment asserting a guarantee the code no longer provides is exactly how the next
+developer reintroduces the bug.
+
+The fix is an overlay in `createListStore.ts`: `optimisticUpdate` /
+`commitOptimistic` / `rollbackOptimistic`, applied *inside the fetch path* so a
+refetch cannot win over a pending write. It carries a 10-second expiry, so a
+mutation that never settles cannot show a guess indefinitely, and a rollback
+restores what was on screen and marks the cache stale so the truth is fetched next.
+
+**`updatedAt` is never part of an optimistic patch.** It is the compare-and-swap
+version token; a guessed value would corrupt the very check it exists to serve.
+
+**A second guard was needed.** Because the row now moves the instant it is clicked, a
+second click became far more likely — and it would send the same version token
+twice, so the server would refuse the second write and the board would report a
+conflict against the user's own first click. The row's phase buttons are disabled
+while its move is in flight, with a small spinner.
+
+### 7.7 The first component test
+
+Every one of the 79 tests Tier 4 added was pure logic — **nothing in the project had
+ever called `render()`**. That left the checkout JSX, where the wording that stops a
+cashier double-charging actually lives, entirely uncovered.
+
+`POSCheckoutModal` is now covered by 14 tests. It was chosen because it is
+props-driven — no stores, no router, no providers. `POSPage` wraps it in all three
+and should not be the next target without a reason.
+
+**Writing the suite found a real trap.** `CheckoutError.reconciliation` was typed to
+include `committed`, and the generic branch would then have rendered a **paid** sale
+as *"The transaction could not be completed."* in red. The page did guard against it,
+but only by convention. It is now excluded **at the type level**
+(`CheckoutFailureOutcome`), which also removed a cast at the call site that existed
+only because the type was too wide.
+
+### 7.8 Verification
+
+- Backend: **202 unit tests** (177 existing, 25 new); lint and test type-check clean.
+- Frontend: **112 tests across 8 files** (79 existing, 33 new); lint clean.
+- `tsc --noEmit` clean on frontend, backend and backend tests; all three builds pass.
+- **Live probe against the real Supabase project: 26/26 checks**, zero server errors,
+  **no net data change**. A duplicate email returns `409 EMAIL_ALREADY_REGISTERED`;
+  every customer's order count was cross-checked against the orders list and
+  disagreed nowhere; an unknown customer counts `0` rather than erroring; a stale
+  version token is refused with the order left untouched; a real phase move is
+  accepted and put back.
+
+### 7.9 Files touched
+
+**New:** `frontend/src/shared/components/feedback/InlineAlert.tsx`,
+`frontend/src/shared/api/errors.test.ts`, `frontend/src/test/fixtures.ts`,
+`frontend/src/features/orders/components/pos/POSCheckoutModal.test.tsx`,
+`backend/tests/unit/users.service.test.ts`,
+`backend/tests/unit/customers.service.test.ts`,
+`backend/tests/unit/helpers/fakeAuthAdmin.ts`.
+
+**Changed (backend):** `src/modules/users/users.service.ts`,
+`src/modules/customers/customers.service.ts`, `src/routes/customers.routes.ts`.
+
+**Changed (frontend):** `src/shared/api/errors.ts`,
+`src/shared/store/createListStore.ts` (+ its test), `src/app/stores/useOrderStore.ts`,
+`src/app/stores/useCustomerStore.ts`,
+`src/features/customers/api/customersApi.ts`,
+`src/features/customers/pages/CustomersPage.tsx`,
+`src/features/users/pages/UserManagementPage.tsx`,
+`src/features/orders/pages/OrdersPage.tsx`, `src/features/orders/pages/POSPage.tsx`,
+`src/features/orders/components/orders/OrdersTable.tsx`,
+`src/features/orders/components/pos/POSCheckoutModal.tsx`,
+`src/test/setup.ts` (a `matchMedia` stub — jsdom has none and the animation library
+asks for it).
+
+---
+
+## 8. Other findings from the scan
 
 These are outside the reported request but affect readiness for real operations.
 
-### 7.1 The frontend type-check — **fixed in Tier 3**
+### 8.1 The frontend type-check — **fixed in Tier 3**
 
 `npm run lint` in `frontend/` was failing with **16 errors across 8 files**. None
 were in the files changed by Tier 1 or 2, and `npm run build` still succeeded
@@ -760,7 +948,7 @@ so `variantClasses[variant]` resolved to `undefined` and the action badge render
 with **no styling at all**. It now uses the shared `BadgeVariant` type, with the
 mapping from action to variant written out explicitly.
 
-### 7.2 CI — **added in Tier 3, extended in Tier 4**
+### 8.2 CI — **added in Tier 3, extended in Tier 4**
 
 `.github/workflows/ci.yml` runs on every push and pull request:
 
@@ -784,7 +972,7 @@ a screen that quietly stops updating.
 **Still recommended:** protect `macOS-UI-2` so a red build cannot be merged. This
 is a GitHub settings change, not a code change (§6.6, item 4).
 
-### 7.3 Credentials that must never reach production
+### 8.3 Credentials that must never reach production
 
 - `0_never-push-this-dump-folder/postgre-supabase-data/0_profiles.txt` contains
   **plaintext account passwords** for the admin and two staff accounts. The
@@ -799,13 +987,13 @@ is a GitHub settings change, not a code change (§6.6, item 4).
   before deployment, and the key should be rotated at that point.
 - `frontend/.env` is clean — no secrets, only the API base URL. Good.
 
-### 7.4 Repository hygiene
+### 8.4 Repository hygiene
 
 `frontend/vercel.json`, `frontend/.vercel/`, `backend/.vercel/`, and the
 `.tmp-verify/` directories are leftovers from an earlier experiment. `README.md`
 already notes they are unused and safe to delete.
 
-### 7.5 No frontend tests — **fixed in Tier 4**
+### 8.5 No frontend tests — **fixed in Tier 4, extended to components in Tier 5**
 
 `backend/tests/integration/` existed, but the frontend had no test setup at all,
 and the revalidation behaviour is precisely the kind of cross-component timing
@@ -818,42 +1006,62 @@ leaving data intact) are all covered, along with the one that turned out to matt
 most and had no coverage at all: the idempotency-key lifetime that decides whether
 a retry double-charges.
 
+Tier 5 took the suite from 79 to **112 tests** and, more importantly, from *zero*
+component tests to the first one — see §7.7. All 79 of Tier 4's tests exercised pure
+logic, which left the checkout JSX uncovered: the exact place where the wording that
+stops a cashier double-charging lives. `POSCheckoutModal` is now rendered and
+asserted on directly. Writing it immediately surfaced a type-level trap that had
+been relying on convention to stay harmless.
+
 ---
 
-## 8. Summary for management
+## 9. Summary for management
 
-| | Before | After Tier 1 | After Tier 2 | After Tier 3 | After Tier 4 |
-| --- | --- | --- | --- | --- | --- |
-| Change made on the same page | Visible | Visible | Visible | Visible | Visible |
-| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate | Immediate | Immediate |
-| Change made by another staff member | Never visible | Within 60s | Under 2s | Under 2s | Under 2s |
-| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately | Corrected immediately | Corrected immediately |
-| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes | Self-refreshes, no wasted redials | Same |
-| Staff action requires a page reload | Always | Never | Never | Never | Never |
-| A double-click at checkout | Charges twice | Charges twice | Charges twice | **Charges once** | Charges once |
-| "Out of stock" at checkout | "Transaction failed" | "Transaction failed" | "Transaction failed" | **Names the item and how many are left** | Same |
-| Two staff editing one order | Second save silently wins | Same | Same | **Second save is refused; both are told** | Same |
-| A checkout whose response is lost | Cashier has to guess | Same | Same | Retrying is safe, but still a guess | **Till says whether it went through** |
-| Can staff tell the screen is current? | No | No | Connection chip only | Same | **Chip shows "Syncing" while fetching** |
-| Receipt printed after a sale | Printed empty | Same | Same | Same | **Prints the actual sale** |
-| A type error reaching the codebase | Undetected | Undetected | Undetected | **Blocked by CI** | Blocked by CI |
-| A silent regression in the timing logic | Undetected | Undetected | Undetected | Undetected | **Caught by 79 frontend tests in CI** |
+| | Before | After Tier 1 | After Tier 2 | After Tier 3 | After Tier 4 | After Tier 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Change made on the same page | Visible | Visible | Visible | Visible | Visible | Visible |
+| Change visible on other pages, same workstation | Only after reload | Immediate | Immediate | Immediate | Immediate | Immediate |
+| Change made by another staff member | Never visible | Within 60s | Under 2s | Under 2s | Under 2s | Under 2s |
+| Sold-out product in POS | Stays clickable | Corrected immediately | Corrected immediately | Corrected immediately | Corrected immediately | Corrected immediately |
+| Screen left open unattended | Frozen | Self-refreshes | Self-refreshes | Self-refreshes, no wasted redials | Same | Same |
+| Staff action requires a page reload | Always | Never | Never | Never | Never | Never |
+| A double-click at checkout | Charges twice | Charges twice | Charges twice | **Charges once** | Charges once | Charges once |
+| "Out of stock" at checkout | "Transaction failed" | "Transaction failed" | "Transaction failed" | **Names the item and how many are left** | Same | Same |
+| Two staff editing one order | Second save silently wins | Same | Same | **Second save is refused; both are told** | Same | Same |
+| A checkout whose response is lost | Cashier has to guess | Same | Same | Retrying is safe, but still a guess | **Till says whether it went through** | Same |
+| Can staff tell the screen is current? | No | No | Connection chip only | Same | **Chip shows "Syncing" while fetching** | Same |
+| Receipt printed after a sale | Printed empty | Same | Same | Same | **Prints the actual sale** | Same |
+| **A save or delete that fails** | **Nothing on screen at all** | Same | Same | Same | Same | **Says what went wrong, and keeps what was typed** |
+| **Adding a staff member whose email already exists** | "The user could not be created" | Same | Same | Same | Same | **"A user with this email address already exists"** |
+| **Deleting a customer who has order history** | Silently unlinks their orders | Same | Same | Same | Same | **Warns first, naming how many orders** |
+| **Moving a job to the next production phase** | Waits for the server | Same | Same | Same | Same | **Moves instantly; springs back with a reason if refused** |
+| A type error reaching the codebase | Undetected | Undetected | Undetected | **Blocked by CI** | Blocked by CI | Blocked by CI |
+| A silent regression in the timing logic | Undetected | Undetected | Undetected | Undetected | **Caught by 79 frontend tests in CI** | Caught by 112 |
+| **A regression in the checkout dialog itself** | Undetected | Undetected | Undetected | Undetected | **Still undetected — logic only** | **Caught by 14 component tests** |
 
-All four tiers are done and verified against the real system. Tier 1 made a change
+All five tiers are done and verified against the real system. Tier 1 made a change
 visible everywhere on the workstation; Tier 2 extended that to every workstation in
 under a second; Tier 3 hardened the parts that cost money or lose work when several
-people use the system at once; Tier 4 closed the last way to take money twice, and
-put a test suite in front of the logic that fails without announcing itself.
+people use the system at once; Tier 4 closed the last way to take money twice and put
+a test suite in front of the logic that fails without announcing itself; Tier 5 made
+the system **say when it refuses to do something**, and made the orders board feel
+instant without letting a single money path become optimistic.
 
 **The two items that matter most before release are unchanged, and neither is a
 code problem:**
 
-1. **Rotate the default development passwords** (§7.3). Predictable credentials on
-   a reachable URL are the highest-impact risk in the codebase.
+1. **Rotate the default development passwords** (§8.3). Predictable credentials on a
+   reachable URL are the highest-impact risk in the codebase.
 2. **Move `SUPABASE_SERVICE_ROLE_KEY` out of `backend/.env`** into the host's
-   secrets (§7.3), and rotate it at that point.
+   secrets (§8.3), and rotate it at that point.
 
-Beyond those, the highest-value next work is **§6.6**: optimistic UI so a slow
-connection does not feel slow, analytics caching before the volume grows, and the
-`LISTEN`/`NOTIFY` change that lifts the single-instance ceiling on realtime (§4.4)
-when the API is scaled beyond one process.
+Beyond those, the highest-value next work is what remains of §6.6: analytics caching
+before the volume grows, and the `LISTEN`/`NOTIFY` change that lifts the
+single-instance ceiling on realtime (§4.4) when the API is scaled beyond one process.
+Both are worth doing when they start to be felt, not before — neither is something a
+shopkeeper can notice today.
+
+One piece of housekeeping is worth doing sooner than either: the project's notes file
+`.workbuddy-ai/memory/MEMORY.md` had grown past the size the tooling loads, so it was
+consolidated in this tier. It is working notes, not product code, but a truncated
+notes file is how binding architectural rules get lost.

@@ -24,6 +24,17 @@ export const DEFAULT_PAGE_SIZE = 20;
  */
 export const DEFAULT_STALE_TIME_MS = 15_000;
 
+/**
+ * How long an optimistic patch may stand in for server data before it is dropped.
+ *
+ * A safety valve rather than a feature. If a mutation never settles — a promise
+ * that neither resolves nor rejects — the overlay would otherwise keep showing a
+ * value the server never accepted, for the rest of the session, with nothing on
+ * screen to say the number is a guess. Ten seconds is comfortably longer than any
+ * write this app performs.
+ */
+export const OPTIMISTIC_TTL_MS = 10_000;
+
 export interface ListQuery {
   page?: number;
   limit?: number;
@@ -84,6 +95,17 @@ export interface PaginatedListActions<TItem> {
   replaceItem: (id: string, item: TItem) => void;
   prependItem: (item: TItem) => void;
   removeItem: (id: string) => void;
+  /**
+   * Show `changes` for `id` immediately, before the server has answered.
+   *
+   * See `optimisticUpdate` in the factory for why the overlay exists rather than
+   * a fresh timestamp.
+   */
+  optimisticUpdate: (id: string, changes: Partial<TItem>) => void;
+  /** Replaces the optimistic entry with the server's authoritative item. */
+  commitOptimistic: (id: string, item: TItem) => void;
+  /** Drops the optimistic entry and restores what was on screen before it. */
+  rollbackOptimistic: (id: string) => void;
   resetList: () => void;
 }
 
@@ -106,6 +128,12 @@ export interface ListStoreContext<TItem extends Identifiable> {
   setError: (error: string | null) => void;
   /** Map an unknown rejection to a readable message using the store's fallback. */
   toMessage: (error: unknown) => string;
+  /** Show a change immediately, before the server has confirmed it. */
+  optimisticUpdate: (id: string, changes: Partial<TItem>) => void;
+  /** Replace the optimistic entry with the server's authoritative item. */
+  commitOptimistic: (id: string, item: TItem) => void;
+  /** Drop the optimistic entry and restore what was on screen before it. */
+  rollbackOptimistic: (id: string) => void;
 }
 
 export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
@@ -140,6 +168,15 @@ export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
  * screen and leaves `lastFetchedAt` untouched, so the next trigger retries.
  * Blanking a cashier's product grid because one poll timed out would be worse
  * than showing data that is a few seconds old.
+ *
+ * ### Optimistic writes
+ *
+ * `optimisticUpdate` / `commitOptimistic` / `rollbackOptimistic` let a mutation
+ * show its result before the server answers. The overlay they maintain is applied
+ * inside `runFetch`, and that is the whole point: a mutation emits a domain event,
+ * the event reaches `forceRevalidate()`, and the refetch it starts would otherwise
+ * overwrite the very change the user just made. Stamping `lastFetchedAt` cannot
+ * prevent that, because `forceRevalidate()` skips the staleness check by design.
  */
 export function createListStore<TItem extends Identifiable, TExtra extends object = Record<string, never>>(
   options: CreateListStoreOptions<TItem, TExtra>,
@@ -148,6 +185,36 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
   const staleTime = options.staleTime ?? DEFAULT_STALE_TIME_MS;
   /** Guards against out-of-order responses when pages are changed quickly. */
   let latestRequestId = 0;
+
+  /**
+   * Pending optimistic patches, keyed by item id. One map per store, shared by
+   * every action the store exposes.
+   *
+   * `previous` is kept so a rollback can put back what was actually on screen.
+   * Without it a rollback could only delete the overlay, and the optimistic value
+   * — already written into `items` — would stay there.
+   */
+  const optimistic = new Map<string, { changes: Partial<TItem>; previous: TItem; expiresAt: number }>();
+
+  /**
+   * Re-applies pending patches over freshly fetched rows, and drops expired ones.
+   *
+   * This is what makes an optimistic write survive a refetch. `now` is read once
+   * so every entry in a single pass is judged against the same instant.
+   */
+  const applyOptimistic = (items: TItem[]): TItem[] => {
+    if (optimistic.size === 0) return items;
+    const now = Date.now();
+    return items.map((item) => {
+      const entry = optimistic.get(item.id);
+      if (!entry) return item;
+      if (entry.expiresAt <= now) {
+        optimistic.delete(item.id);
+        return item;
+      }
+      return { ...item, ...entry.changes } as TItem;
+    });
+  };
 
   return create<PaginatedListStore<TItem> & TExtra>()((set, get) => {
     /*
@@ -187,7 +254,7 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
         const response = await options.list({ page: nextPage, limit: nextLimit });
         if (requestId !== latestRequestId) return;
         patch({
-          items: response.data,
+          items: applyOptimistic(response.data),
           total: response.total,
           page: response.page || nextPage,
           limit: response.limit || nextLimit,
@@ -209,9 +276,15 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
 
     /**
      * Every local mutation calls this: the mutation's own response *is* fresh
-     * server data, so the cache is authoritative as of now. Without it, the
-     * domain event a mutation emits would immediately bounce back and refetch
-     * the page it just updated.
+     * server data, so the cache is authoritative as of now, and the time-based
+     * triggers (focus, visibility, the fallback poll) should not refetch a page
+     * the app just updated.
+     *
+     * It does **not** hold off a domain event. Since the realtime work those go
+     * through `forceRevalidate()`, which skips the staleness check by design — so
+     * a mutation's own event does refetch the page it just wrote. That is exactly
+     * why an optimistic write needs the overlay above: stamping the cache cannot
+     * protect a value from a refetch that ignores the stamp.
      *
      * A function rather than a constant — the store factory runs once, so a
      * captured `Date.now()` would freeze the timestamp at store-creation time
@@ -286,7 +359,54 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
           ...markFresh(),
         })),
 
-      resetList: () =>
+      optimisticUpdate: (id, changes) => {
+        /*
+         * `undefined` values are dropped rather than spread. A caller passing
+         * `Partial<T>` from a form can easily carry an explicit `undefined` for a
+         * field it is not editing, and spreading that would blank a real value on
+         * screen — an optimistic write must only ever add information.
+         */
+        const defined = Object.fromEntries(
+          Object.entries(changes).filter(([, value]) => value !== undefined),
+        ) as Partial<TItem>;
+        if (Object.keys(defined).length === 0) return;
+
+        const previous = get().items.find((item) => item.id === id);
+        if (!previous) return;
+
+        optimistic.set(id, { changes: defined, previous, expiresAt: Date.now() + OPTIMISTIC_TTL_MS });
+        patch((state) => ({
+          items: state.items.map((item) => (item.id === id ? ({ ...item, ...defined } as TItem) : item)),
+        }));
+      },
+
+      commitOptimistic: (id, item) => {
+        optimistic.delete(id);
+        patch((state) => ({
+          items: state.items.map((current) => (current.id === id ? item : current)),
+          ...markFresh(),
+        }));
+      },
+
+      rollbackOptimistic: (id) => {
+        const entry = optimistic.get(id);
+        optimistic.delete(id);
+        if (!entry) return;
+        patch((state) => ({
+          items: state.items.map((current) => (current.id === id ? entry.previous : current)),
+          /*
+           * The restored value is a memory of what was on screen, not a claim
+           * about the server. Marking the cache stale means the next revalidation
+           * trigger replaces it with the truth even if the caller never asks for a
+           * refresh — which matters, because the reason for the rollback was that
+           * the server disagreed.
+           */
+          lastFetchedAt: null,
+        }));
+      },
+
+      resetList: () => {
+        optimistic.clear();
         patch({
           items: [],
           total: 0,
@@ -297,7 +417,8 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
           error: null,
           hasLoaded: false,
           lastFetchedAt: null,
-        }),
+        });
+      },
     };
 
     const extra = options.actions
@@ -308,6 +429,9 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
           mutateItems: listActions.mutateItems,
           setError: listActions.setListError,
           toMessage,
+          optimisticUpdate: listActions.optimisticUpdate,
+          commitOptimistic: listActions.commitOptimistic,
+          rollbackOptimistic: listActions.rollbackOptimistic,
         })
       : ({} as TExtra);
 

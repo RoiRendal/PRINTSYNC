@@ -4,6 +4,7 @@ import { KeyRound, Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'luci
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
   Badge,
   Button,
@@ -25,6 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
+import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
 import type { RbacRole, UserSummary } from '../types';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -66,6 +68,14 @@ export default function UserManagement() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [userToDelete, setUserToDelete] = useState<UserSummary | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  /**
+   * Why the last save or delete was refused. The two dialogs are mutually
+   * exclusive, so one slot is enough, and it is cleared whenever either opens or
+   * closes — a reason left over from an earlier attempt would be worse than none.
+   */
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const adminCount = users.filter((user) => user.role === 'admin').length;
   const staffCount = users.filter((user) => user.role === 'staff').length;
@@ -86,6 +96,7 @@ export default function UserManagement() {
   const openCreate = () => {
     setEditingUserId(null);
     setForm(EMPTY_FORM);
+    setActionError(null);
     setIsModalOpen(true);
   };
 
@@ -101,6 +112,7 @@ export default function UserManagement() {
       password: '',
       access: user.access,
     });
+    setActionError(null);
     setIsModalOpen(true);
   };
 
@@ -108,30 +120,42 @@ export default function UserManagement() {
     setIsModalOpen(false);
     setEditingUserId(null);
     setForm(EMPTY_FORM);
+    setActionError(null);
   };
 
   const openDelete = (user: UserSummary) => {
     setUserToDelete(user);
+    setActionError(null);
     setIsDeleteModalOpen(true);
   };
 
   const closeDeleteModal = () => {
     setUserToDelete(null);
     setIsDeleteModalOpen(false);
+    setActionError(null);
   };
 
   const confirmDelete = async () => {
     if (!userToDelete) return;
+    setActionError(null);
+    setIsDeleting(true);
     try {
       await deleteUser(userToDelete.id);
       closeDeleteModal();
-    } catch {
-      return;
+    } catch (deleteError) {
+      // Stays open, and says why. This used to `return` in silence, so a refused
+      // delete looked exactly like a button that did nothing — and the refusal a
+      // manager is most likely to hit here is deleting their own account.
+      setActionError(describeApiError(deleteError, 'The user could not be deleted.'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setActionError(null);
+    setIsSaving(true);
     try {
       if (editingUserId) {
         await updateUser(editingUserId, {
@@ -142,8 +166,16 @@ export default function UserManagement() {
         await createUser(form);
       }
       closeModal();
-    } catch {
-      return;
+    } catch (saveError) {
+      /*
+       * Deliberately does not close: closing would discard everything typed, on
+       * top of hiding the reason. The failure a manager meets most often is an
+       * email that already has an account, and that is worth saying plainly —
+       * "the user could not be created" would send them re-checking the password.
+       */
+      setActionError(describeApiError(saveError, 'The user could not be saved.'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -262,6 +294,7 @@ export default function UserManagement() {
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUserId ? 'Edit User' : 'Create User'} maxWidth="max-w-2xl">
         <form onSubmit={submitForm} className="space-y-4">
+          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <Input required value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} placeholder="Staff identity" />
             <Input required type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="Email" />
@@ -294,8 +327,8 @@ export default function UserManagement() {
           </GlassCard>
 
           <div className="flex justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10">
-            <Button type="button" variant="secondary" onClick={closeModal}>Cancel</Button>
-            <Button type="submit">{editingUserId ? 'Save Changes' : 'Create User'}</Button>
+            <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>
+            <Button type="submit" isLoading={isSaving}>{editingUserId ? 'Save Changes' : 'Create User'}</Button>
           </div>
         </form>
       </Modal>
@@ -305,9 +338,12 @@ export default function UserManagement() {
           <p className="text-sm text-macos-text-muted dark:text-zinc-400">
             Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{userToDelete?.name}</strong>? This action cannot be undone.
           </p>
+
+          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
+
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth onClick={confirmDelete}>Delete User</Button>
+            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
+            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>Delete User</Button>
           </div>
         </div>
       </Modal>
