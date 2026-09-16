@@ -12,6 +12,7 @@ Inventory · Orders · Production Tracking · Point of Sale · Analytics · Audi
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres%20%2B%20Auth-3FCF8E?logo=supabase&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-5-6E9F18?logo=vitest&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 </div>
@@ -30,6 +31,13 @@ production lifecycle, watch stock levels adjust automatically, and let the owner
 read profitability and demand trends off a live analytics dashboard. Every
 privileged action is written to an append-only audit log.
 
+The system is **live everywhere at once**. A change made at one workstation —
+a new inventory item, a stock movement, a new order — reaches every other open
+screen in about a second over a server-pushed event stream, with no page reload.
+A connection indicator in the header tells staff whether what they are looking at
+is current, and the system says so explicitly when an action fails rather than
+failing silently.
+
 The default installation is branded for **IC Printing Services**, but the
 business name and logo are configurable from **Settings** at runtime.
 
@@ -40,16 +48,17 @@ business name and logo are configurable from **Settings** at runtime.
 | Area | What it does |
 | --- | --- |
 | **Dashboard** | At-a-glance KPIs, recent activity, and low-stock signals on landing. |
-| **Orders** | Create custom or catalogue orders with line items, attach designs, set due dates, and move them through the production lifecycle. |
+| **Live updates** | Any change — inventory, orders, customers, designs, payments, settings — is pushed to every open screen in under a second. No reload, no polling wait. A connection chip reports the state of the stream and shows a "Syncing" state while a refresh is in flight. |
+| **Orders** | Create custom or catalogue orders with line items, attach designs, set due dates, and move them through the production lifecycle. Phase changes apply instantly and roll back with a reason if the server refuses. |
 | **Production lifecycle** | Orders track one of six statuses — `Pending`, `In Production`, `Designing`, `Ready for Pickup`, `Delivered`, `Completed` — rendered as a phase progress bar (`workPhases` in `PhaseProgress.tsx`). Partial payments are supported per order via `totalPaid` / `balanceDue`. |
-| **Point of Sale** | Walk-in checkout with a product catalogue, design picker, live cart totals, discount and VAT handling, payment method selection (Cash / Card / Custom Order), receipt modal, and transaction history with void support. |
-| **Inventory** | Items with stock levels, costs, and reorder thresholds. Stock movements are recorded explicitly rather than silently overwritten. |
-| **Design repository** | Store and reuse customer artwork; assets are uploaded to Supabase Storage and linked to orders and POS line items. |
-| **Customers** | Customer records with contact details and order history, selectable during order and POS creation. |
+| **Point of Sale** | Walk-in checkout with a product catalogue, design picker, live cart totals, discount and VAT handling, payment method selection (Cash / Card / Custom Order), receipt modal, and transaction history with void support. Every checkout carries an idempotency key, so a retry after a lost response cannot charge twice; an ambiguous failure is looked up and reported as committed / not committed / unknown. |
+| **Inventory** | Items with stock levels, costs, and reorder thresholds. Stock movements are recorded explicitly rather than silently overwritten, and a checkout that would oversell names the item and how many are left. |
+| **Design repository** | Store and reuse customer artwork; assets are uploaded to Supabase Storage and linked to orders and POS line items. Reached from within Orders and POS rather than from its own screen. |
+| **Customers** | Customer records with contact details and order history, selectable during order and POS creation. Deleting a customer who has order history warns first and reports how many orders are affected. |
 | **Analytics** | Server-computed metrics: summary KPIs, sales timeline, product trends, and inventory forecasting. |
 | **Users & roles** | Admin-managed user accounts with role-based access (`admin`, `staff`). |
 | **Audit log** | Append-only record of authentication events, user management, and order changes — admin-readable only. |
-| **Settings** | Business branding, VAT rate, and currency configuration. |
+| **Settings** | Business branding, logo upload, VAT rate, and currency configuration. |
 | **Export** | CSV export of orders, inventory, and transactions. |
 
 > **Backend-only modules.** `suppliers` and `expenses` are fully implemented in the
@@ -66,20 +75,50 @@ business name and logo are configurable from **Settings** at runtime.
 │  Vite + React 19 + TW4   │  JSON  │  routes/  → modules/     │  SDK   │  Postgres + RLS    │
 │  feature-sliced folders  │ ─────▶ │  services/ (auth, audit) │ ─────▶ │  Auth              │
 │  session via HttpOnly    │ ◀───── │  zod validation          │        │  Storage (designs) │
-│  cookies (credentials)   │        │  helmet, cors, rate-limit│        │                    │
+│  cookies (credentials)   │  SSE   │  helmet, cors, rate-limit│        │  RPCs (atomic      │
+│  domain-event cache      │ ◀═════ │  domainEventBus          │        │   money + stock)   │
 └──────────────────────────┘        └──────────────────────────┘        └────────────────────┘
-        :3000                                :4000  /api/v1                   managed
+        :3000                        :4000  /api/v1 + /events                 managed
 ```
 
 - **Frontend** is a Vite-built single-page app. It never talks to Supabase directly —
   all data access goes through the backend using `VITE_API_BASE_URL`.
 - **Backend** is layered: `routes/` declare HTTP + validation, `modules/*/` hold
   business logic and database access, `services/` handle cross-cutting concerns
-  (authentication context, audit logging). Shared types live in
+  (authentication context, audit logging, the domain event bus). Shared types live in
   `packages/shared-types`.
 - **Supabase** is the only persistence layer. Row Level Security protects browser
   clients; the backend uses the service-role key server-side and never exposes it
-  to the frontend.
+  to the frontend. Multi-table writes that must not half-apply — a sale and its stock
+  movements, an order and its line items — happen inside Postgres RPCs under row
+  locks rather than across several API calls.
+
+### Keeping every screen current
+
+Two mechanisms, deliberately separate:
+
+- **Freshness.** `shared/store/dataEvents.ts` is a pub/sub bus for "domain X
+  changed". `createListStore` tracks when each collection was last fetched and
+  exposes `isStale()` / `revalidate()` / `forceRevalidate()`. A real mutation or a
+  server push is authoritative and calls `forceRevalidate()`; time-based triggers
+  (focus, visibility, reconnect, a 60-second safety-net poll) call `revalidate()`,
+  which respects a 15-second freshness window so a background refresh cannot thrash.
+- **Transport.** `GET /api/v1/events` is a Server-Sent Events stream. The API
+  publishes a `data-change` frame after a write commits, filtered per domain by the
+  session's own capabilities, so a staff workstation is never prompted to refetch a
+  screen it cannot read. A named `heartbeat` frame every 25 seconds lets the client
+  detect a half-open connection.
+
+SSE was chosen over WebSockets because the traffic is one-directional, it reconnects
+on its own, and it rides on plain HTTP so the existing `HttpOnly` cookie session
+authenticates it with no new mechanism. Supabase Realtime was rejected on purpose:
+it would mean shipping an anon key to the browser and making RLS the security
+boundary, which contradicts the decision above.
+
+> **Single-instance caveat.** The event bus is in-process, so a change handled by
+> API instance A does not reach a browser connected to instance B. That is correct
+> for one shop on one server. Scaling the API horizontally requires moving the bus to
+> Postgres `LISTEN`/`NOTIFY`; the call sites will not need to change.
 
 ---
 
@@ -88,12 +127,15 @@ business name and logo are configurable from **Settings** at runtime.
 | Layer | Technology |
 | --- | --- |
 | UI | React 19, React Router 7, Tailwind CSS 4, Recharts, Lucide icons, Motion |
+| State | Zustand stores over a shared `createListStore` factory (freshness + optimistic overlay) |
 | Build | Vite 6, TypeScript 5.8 (strict) |
 | API | Express 5, TypeScript (ESM, `NodeNext`), Zod 4, Helmet, CORS, express-rate-limit |
+| Realtime | Server-Sent Events (`GET /api/v1/events`) over the existing cookie session |
 | Data | Supabase (Postgres + Auth + Storage), `@supabase/supabase-js` |
 | Auth | Supabase Auth, session tokens in `HttpOnly` cookies with refresh rotation |
 | Shared | `packages/shared-types` — compiled TypeScript contracts |
-| Tests | Node's built-in test runner via `tsx --test` (integration) |
+| Tests | Vitest 5 + Testing Library + jsdom (frontend); Node's built-in runner via `tsx --test` (backend unit + integration) |
+| CI | GitHub Actions — type-check, unit tests and build for all three workspaces |
 
 ---
 
@@ -106,26 +148,36 @@ PRINTSYNC/
 │   │   ├── app.ts              # createApp(): middleware + route mounting
 │   │   ├── server.ts           # Local entry point (app.listen)
 │   │   ├── config/env.ts       # Zod-validated environment
-│   │   ├── routes/             # HTTP layer, one file per resource
+│   │   ├── routes/             # HTTP layer, one file per resource (+ events, branding)
 │   │   ├── modules/            # Business logic per domain
-│   │   ├── services/           # authService, auditLogService, designAssetService
+│   │   ├── services/           # authService, auditLogService, asset services,
+│   │   │                       # domainEventBus, dataChangePermissions
 │   │   ├── middleware/         # authenticate, authorize, errorHandler, notFound
 │   │   ├── integrations/       # Supabase clients
 │   │   ├── shared/             # apiResponse, errors, authCookies, pagination, csv, logger
+│   │   ├── types/              # auth context + Express request augmentation
 │   │   └── scripts/            # provisionUser.ts — create/repair app users
-│   └── tests/integration/      # API integration tests
+│   └── tests/
+│       ├── unit/               # Fast, dependency-free (fakes for Supabase/Auth)
+│       └── integration/        # Drives the real API against a disposable project
 │
 ├── frontend/                   # React 19 SPA
 │   └── src/
-│       ├── app/                # Router, layout, providers
+│       ├── app/                # Router, layout, providers, stores, hooks
+│       │                       # (useDataRevalidation, useRealtimeStatus, useIsSyncing)
 │       ├── features/           # auth, orders (POS + orders), inventory, customers,
 │       │                       # designs, analytics, users, audit, settings, dashboard
-│       └── shared/             # api client, UI kit, constants, hooks
+│       ├── shared/             # api client + errors, UI kit, constants, hooks,
+│       │                       # store (createListStore, dataEvents), realtime (eventStream)
+│       └── test/               # Vitest setup + shared fixtures
 │
 ├── packages/shared-types/      # @printsync/shared-types
+│   └── src/                    # Contracts, incl. dataEvent.ts (realtime vocabulary)
 │
-└── supabase/
-    └── migrations/             # Timestamped SQL migrations
+├── supabase/
+│   └── migrations/             # Timestamped SQL migrations
+│
+└── .github/workflows/ci.yml    # Type-check + test + build, all three workspaces
 ```
 
 ---
@@ -216,6 +268,10 @@ cd frontend && npm run dev
 
 Open <http://localhost:3000> and sign in with the provisioned admin account.
 
+The header's connection chip should settle on **Live** within a second or two of
+signing in. If it does not, the event stream is not reaching the browser — see
+[Live updates](#live-updates-get-events).
+
 ---
 
 ## Environment variables
@@ -229,7 +285,7 @@ Open <http://localhost:3000> and sign in with the provisioned admin account.
 | `FRONTEND_ORIGIN` | Yes | `http://localhost:3000` | Allowed CORS origin. **Must** be set to the frontend URL in production. |
 | `SUPABASE_URL` | Yes | — | Supabase project URL. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | — | Service-role key. Server-side only — never expose to the browser. |
-| `LOG_LEVEL` | No | `info` | `debug` \| `info` \| `warn` \| `error`. |
+| `LOG_LEVEL` | No | `info` | `debug` \| `info` \| `warn` \| `error`. Use `debug` to see SSE connect/disconnect lines. |
 
 The config is validated by Zod at boot; an invalid value stops the process with a
 field-level error report.
@@ -252,7 +308,10 @@ field-level error report.
 | `npm run build` | Compile TypeScript to `dist/` |
 | `npm start` | Run the compiled server (`node dist/server.js`) |
 | `npm run lint` | Type-check without emitting (`tsc --noEmit`) |
-| `npm run test:integration` | Run integration tests against the API |
+| `npm run lint:tests` | Type-check the test suite separately |
+| `npm run test:unit` | Fast unit tests — no network, no credentials |
+| `npm run test:integration` | Integration tests against the running API |
+| `npm test` | Both suites, unit first |
 | `npm run provision:user` | Create or repair an application user |
 
 ### Frontend
@@ -264,6 +323,8 @@ field-level error report.
 | `npm run preview` | Preview the production build locally |
 | `npm run clean` | Remove `dist/` |
 | `npm run lint` | Type-check without emitting |
+| `npm test` | Run the Vitest suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
 
 ### Shared types
 
@@ -278,25 +339,57 @@ field-level error report.
 
 All routes are mounted under `/api/v1` and require an authenticated session
 unless noted. Every response is wrapped in `{ "data": ... }`; errors use
-`{ "error": { "code": ..., "message": ... } }`.
+`{ "error": { "code": ..., "message": ..., "details": ... } }` — `details` carries
+structured context, such as which inventory item ran short and how many are left.
 
 | Group | Endpoints |
 | --- | --- |
 | **Health** | `GET /health`, `GET /ready` — public, no auth |
+| **Branding** | `GET /branding` — public, no auth; the login screen's name and logo |
 | **Auth** | `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `GET /auth/session` |
+| **Events** | `GET /events` — Server-Sent Events stream (see below) |
 | **Orders** | `GET /orders`, `GET /orders/:id`, `POST /orders`, `PATCH /orders/:id`, `DELETE /orders/:id` |
-| **Payments** | `GET /payments/transactions`, `GET /payments/transactions/:id`, `POST /payments/transactions`, `POST /payments/transactions/:id/void` |
+| **Payments** | `GET /payments/transactions`, `GET /payments/transactions/:id`, `GET /payments/transactions/by-key/:key`, `POST /payments/transactions`, `POST /payments/transactions/:id/void` |
 | **Order payments** | `GET /order-payments/:orderId`, `POST /order-payments`, `DELETE /order-payments/:id` (partial payments against an order) |
 | **Inventory** | `GET /inventory`, `POST /inventory`, `PATCH /inventory/:id`, `DELETE /inventory/:id`, `POST /inventory/:id/movements` |
 | **Designs** | `GET /designs`, `POST /designs`, `PATCH /designs/:id`, `DELETE /designs/:id`, `POST /designs/assets` |
-| **Customers** | `GET /customers`, `GET /customers/:id`, `POST /customers`, `PATCH /customers/:id`, `DELETE /customers/:id` |
+| **Customers** | `GET /customers`, `GET /customers/:id`, `GET /customers/:id/order-count`, `POST /customers`, `PATCH /customers/:id`, `DELETE /customers/:id` |
 | **Suppliers** | `GET /suppliers`, `GET /suppliers/:id`, `POST /suppliers`, `PATCH /suppliers/:id`, `DELETE /suppliers/:id` |
 | **Expenses** | `GET /expenses`, `POST /expenses`, `PATCH /expenses/:id`, `DELETE /expenses/:id` |
 | **Analytics** | `GET /analytics/summary`, `GET /analytics/sales-timeline`, `GET /analytics/product-trends`, `GET /analytics/inventory-forecast` |
 | **Users** | `GET /users`, `POST /users`, `PATCH /users/:id`, `DELETE /users/:id` (`users.manage`) |
 | **Audit** | `GET /audit-logs` (`audit.read`) |
-| **Settings** | `GET /settings`, `PATCH /settings` |
+| **Settings** | `GET /settings`, `PATCH /settings`, `POST /settings/logo`, `DELETE /settings/logo` |
 | **Export** | `GET /export/orders`, `GET /export/inventory`, `GET /export/transactions` (CSV) |
+
+### Live updates (`GET /events`)
+
+A Server-Sent Events stream, authenticated by the same session cookie as every
+other route. It is gated by `authenticate` **only** — there is no single capability
+that describes "may watch for changes", so the filter is applied per event instead:
+each connection receives only the domains its own permissions allow.
+
+```
+event: connected
+data: {"domains":["orders","inventory","customers","designs","payments","settings"],"at":"..."}
+
+event: data-change
+data: {"domains":["inventory"],"at":"..."}
+
+event: heartbeat
+data: {"at":"..."}
+```
+
+| Frame | Meaning |
+| --- | --- |
+| `connected` | Sent immediately. Lists the domains this session will actually receive, so the UI can tell "connected" from "connected but nothing to watch". |
+| `data-change` | A write committed. The client marks those domains stale and refetches the ones it has loaded. |
+| `heartbeat` | Every 25 seconds. Named deliberately — `EventSource` never surfaces a `: ping` comment to script, so a comment-only keep-alive is invisible to the client's silence watchdog and a healthy stream gets redialled forever. |
+
+`GET /payments/transactions/by-key/:key` is the checkout reconciliation lookup: it
+returns the sale committed under an idempotency key, or `200` with `data: null`.
+It is deliberately **not** a `404` — "no sale under this key" is the ordinary answer,
+and making the client parse an error envelope to learn it would be the wrong shape.
 
 ### Authentication flow
 
@@ -323,7 +416,10 @@ Login is rate-limited to **10 attempts / 15 minutes per IP**; refresh to
 | Point of Sale | ✅ | ✅ |
 | Inventory | ✅ | ✅ |
 | Customers | ✅ | ✅ |
+| Designs | ✅ | ✅ |
 | Analytics | ✅ | — |
+| Suppliers | ✅ | — |
+| Expenses | ✅ | — |
 | Users | ✅ | — |
 | Audit log | ✅ | — |
 | Settings | ✅ | — |
@@ -353,17 +449,28 @@ The canonical capability catalogue is seeded in `supabase/migrations`:
 | Users | `users.read`, `users.manage` |
 
 **Admin** is granted every capability. **Staff** receives the operational subset:
-`orders.read`, `orders.create`, `orders.update`, `inventory.read`, `designs.read`,
-`customers.read`, `order_payments.read`, `order_payments.create`, and `pos.read`.
+`orders.read`, `orders.create`, `orders.update`, `pos.read`, `inventory.read`,
+`designs.read`, `customers.read`, `payments.read`, `payments.create`,
+`order_payments.read`, `order_payments.create`, and `settings.read`.
 
 Note that `order_payments.*` uses an underscore while every other capability uses
 a dot — this is intentional and matches the seeded keys.
+
+Two entries in the catalogue are currently **labels only**, with no route enforcing
+them: `dashboard.read` and `pos.read`. Both pages are gated client-side by
+`ADMIN_PAGE_ACCESS` / `STAFF_PAGE_ACCESS`, and the data behind them is protected by
+the capabilities on the underlying routes — a POS screen is only useful to a session
+holding `inventory.read`, `payments.create` and `customers.read`. They are retained
+because they describe a real page and are used to group capabilities in the admin UI,
+but revoking `pos.read` alone does not block the POS. `users.read` is in the same
+position: `usersRouter` is gated end-to-end by `users.manage`, so `users.read` is
+currently granted to admin only and enforced nowhere.
 
 ---
 
 ## Data model
 
-The schema is built by 24 ordered migrations in `supabase/migrations/`:
+The schema is built by 27 ordered migrations in `supabase/migrations/`:
 
 | Concern | Migrations |
 | --- | --- |
@@ -373,6 +480,8 @@ The schema is built by 24 ordered migrations in `supabase/migrations/`:
 | Transactional lifecycle & analytics (indexes, summary RPC) | `…001300` – `…001500` |
 | Business extensions (customers, order payments, inventory cost, suppliers, expenses, due dates, VAT/currency) | `…001600` – `…002200` |
 | Permissions & order update RPC | `…002300` – `…002400` |
+| Storage bucket for uploaded assets | `…15000000_storage_bucket` |
+| Idempotent sales, structured stock errors, optimistic order updates | `…16000000`, `…16000001` |
 
 **Key design decisions**
 
@@ -384,23 +493,53 @@ The schema is built by 24 ordered migrations in `supabase/migrations/`:
   deliberately using the service-role key for provisioning and privileged writes.
 - Inventory changes are recorded as **movements**, preserving an audit trail of
   stock changes rather than mutating a single quantity column.
+- **Money-moving writes are atomic in the database, not the API.** A sale and its
+  stock movements happen inside one `SECURITY DEFINER` RPC holding row locks, which
+  rejects an oversell explicitly and returns structured detail naming the item.
+- **Every checkout carries an idempotency key** (`sales_transactions.idempotency_key`,
+  partial unique index). The RPC's replay guard runs *before* validation, so a retry
+  of an attempt that already committed replays rather than charging again.
+- **Order edits are compare-and-swap on `updated_at`.** A save carries the version
+  it was based on; a stale one is refused with `409 ORDER_CONFLICT` instead of
+  silently overwriting another staff member's work.
 
 ---
 
 ## Testing
 
 ```bash
-cd backend
-cp .env.example .env        # point at a disposable Supabase project
+# Backend unit tests — fast, no network, no credentials required
+cd backend && npm run test:unit
+
+# Backend integration tests — drives the real API
+cd backend && cp .env.example .env   # point at a disposable Supabase project
 npm run test:integration
+
+# Frontend
+cd frontend && npm test
 ```
+
+The suites are aimed at the failures that are **silent** rather than loud — the ones
+where nothing visibly breaks and the damage is discovered later:
+
+| Suite | Covers |
+| --- | --- |
+| `backend/tests/unit` | The domain event bus and its permission filter (the push channel's security boundary), the sale and stock RPC wrappers, structured checkout errors, pagination, CSV, and the user/customer failure messages. Supabase and Supabase Auth are faked, so no credentials are needed. |
+| `backend/tests/integration` | Auth, orders, inventory, payments and branding end to end against a real project. |
+| `frontend/src/**/*.test.{ts,tsx}` | The store freshness rules (`revalidate()` vs `forceRevalidate()`, and that an ordinary refetch cannot overwrite a pending optimistic write), the realtime client including a regression guard for the heartbeat defect, the idempotency-key lifetime that decides whether a retry double-charges, the structured-error reader, and the checkout dialog itself. |
 
 Type-checking both workspaces before committing is recommended:
 
 ```bash
-cd backend  && npm run lint
+cd backend  && npm run lint && npm run lint:tests
 cd frontend && npm run lint
 ```
+
+**CI** (`.github/workflows/ci.yml`) runs on every push and pull request and gates
+type-check, unit tests and build for all three workspaces. `test:integration` is
+deliberately excluded — it needs live credentials, which must not be handed to CI.
+The frontend type-check is the gate that matters most: Vite transpiles without
+checking types, so a build can succeed with type errors in it.
 
 ---
 
@@ -418,6 +557,18 @@ similar) rather than a function-based platform. Whenever hosting is set up:
 3. Serve the SPA with a catch-all rewrite to `index.html` so client-side routing
    survives a page refresh.
 4. Run the API with `NODE_ENV=production` so session cookies get the `Secure` flag.
+5. **Do not let a proxy buffer `GET /events`.** The route already sends
+   `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`, but a proxy
+   that ignores them will hold the stream and the UI will look frozen. The 25-second
+   heartbeat is chosen to sit under nginx's 60-second default read timeout.
+6. **Keep the API at one instance.** The event bus is in-process, so a second
+   instance would serve changes it never hears about. Scale after moving the bus to
+   Postgres `LISTEN`/`NOTIFY`, which needs a `DATABASE_URL` holding the *direct*
+   connection string — the transaction pooler does not support `LISTEN`.
+7. If the frontend and API end up on **different registrable domains**, the session
+   cookie needs `SameSite=None; Secure`. The current `SameSite=Lax` works for
+   `localhost` and for same-site subdomains such as `app.example.com` +
+   `api.example.com`, and changing it affects both the API and the event stream.
 
 A leftover `frontend/vercel.json` (SPA rewrite) and empty `.vercel/` directories
 remain from an earlier experiment. They are unused and safe to delete.
@@ -433,8 +584,17 @@ remain from an earlier experiment. They are unused and safe to delete.
 - All request bodies are validated with Zod before reaching business logic.
 - Login and refresh endpoints are rate-limited.
 - Passwords and tokens are never written to the audit log.
+- The realtime stream is filtered **per capability, never per role** — a role-based
+  filter would drift out of step with the seeded grants, and drifting upward would
+  leak admin-only activity to every workstation.
+- A failed action distinguishes a **verdict** from an **outage**. A 4xx means the
+  server validated and refused, so nothing was written; a dropped connection, a
+  timeout or a 5xx does **not**, and is reported as unconfirmed rather than as a
+  failure. That distinction is what stops a cashier retrying a sale that went through.
 - Keep `.env` files, `supabase/.temp/`, and any database dumps out of version
   control. The provided `.gitignore` already covers these.
+- **Before release:** rotate any development passwords and move
+  `SUPABASE_SERVICE_ROLE_KEY` out of `backend/.env` into the host's secret store.
 
 ---
 
@@ -443,9 +603,13 @@ remain from an earlier experiment. They are unused and safe to delete.
 1. Branch off the working branch (current: `macOS-UI-2`).
 2. Keep changes inside the relevant workspace (`frontend/`, `backend/`,
    `packages/shared-types/`). Shared contracts belong in `packages/shared-types`.
-3. Run `npm run lint` in the workspaces you touched.
+3. Run `npm run lint` in the workspaces you touched, and the tests:
+   `npm run test:unit` in `backend/`, `npm test` in `frontend/`.
 4. Add a migration under `supabase/migrations/` for any schema change — never
    edit an existing migration that has already been pushed.
+5. Keep money and stock paths pessimistic. Optimistic UI is allowed for state that
+   is cheap to get wrong and trivially corrected; it is not allowed anywhere a
+   customer can be charged or stock can be misstated.
 
 ---
 
