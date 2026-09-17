@@ -1,0 +1,57 @@
+# Render Blueprint — one service, one address.
+#
+# Import this from the Render dashboard (New → Blueprint) and point it at the
+# repository. Render reads this file, builds the Dockerfile, and asks for the
+# three secret values marked `sync: false` once, during creation.
+#
+# Why a single service rather than a static site plus an API: the session cookie
+# is `SameSite=Lax`, and `onrender.com` is on the public suffix list, so
+# `printsync.onrender.com` and `printsync-api.onrender.com` are *different sites*
+# to the browser. Login would appear to succeed and then behave as if signed out,
+# and the server-sent event stream would fail with it. One origin avoids the
+# problem entirely — and there is no CORS to configure either.
+
+services:
+  - type: web
+    name: printsync
+    runtime: docker
+    # Both default to these values; stated so the layout is explicit.
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    # Closest region to the Philippines.
+    region: singapore
+    # All five tiers live on this branch, not on `main`.
+    branch: macOS-UI-2
+    autoDeployTrigger: commit
+    # Liveness only, deliberately not `/api/v1/ready`.
+    #
+    # `/ready` issues six queries against Supabase, so a transient Supabase blip
+    # would fail the check and make Render restart a container that is working
+    # perfectly well. `/health` answers from the process itself, which is what a
+    # restart decision should be based on.
+    healthCheckPath: /api/v1/health
+
+    envVars:
+      # Not a secret, so it is safe to keep here.
+      - key: NODE_ENV
+        value: production
+
+      # Render prompts for these during creation and stores them itself. They are
+      # never written to this file or to the repository.
+      #
+      #   SUPABASE_URL              — the project URL
+      #   SUPABASE_SERVICE_ROLE_KEY — the `sb_secret_…` key
+      #   FRONTEND_ORIGIN           — the public URL Render assigns, e.g.
+      #                               https://printsync.onrender.com
+      #
+      # FRONTEND_ORIGIN must match the address bar exactly: CORS allows a single
+      # explicit origin, not a wildcard, and no trailing slash.
+      #
+      # PORT is injected by Render; `config/env.ts` defaults to 4000.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FRONTEND_ORIGIN
+        sync: false

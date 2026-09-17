@@ -177,6 +177,10 @@ PRINTSYNC/
 ├── supabase/
 │   └── migrations/             # Timestamped SQL migrations
 │
+├── Dockerfile                  # Builds all three workspaces, ships the API runtime
+├── .dockerignore               # Keeps .env files and node_modules out of the image
+├── render.yaml                 # Render Blueprint: one Docker web service
+│
 └── .github/workflows/ci.yml    # Type-check + test + build, all three workspaces
 ```
 
@@ -286,6 +290,7 @@ signing in. If it does not, the event stream is not reaching the browser — see
 | `SUPABASE_URL` | Yes | — | Supabase project URL. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | — | Service-role key. Server-side only — never expose to the browser. |
 | `LOG_LEVEL` | No | `info` | `debug` \| `info` \| `warn` \| `error`. Use `debug` to see SSE connect/disconnect lines. |
+| `FRONTEND_DIST` | No | auto-detected | Absolute path to the built SPA when the API serves it. Only needed if the build sits somewhere unusual. |
 
 The config is validated by Zod at boot; an invalid value stops the process with a
 field-level error report.
@@ -545,30 +550,74 @@ checking types, so a build can succeed with type errors in it.
 
 ## Deployment
 
-**PRINTSYNC is not deployed anywhere yet.** It is developed and run locally.
+**Nothing is deployed yet.** The configuration to do it is in the repository:
+`Dockerfile`, `.dockerignore`, and `render.yaml` (a Render Blueprint that provisions a
+single Docker web service). The backend is a long-lived HTTP server — `src/server.ts`
+calls `app.listen()` — so it needs a container or server runtime rather than a
+function-based platform.
 
-The backend is a long-lived HTTP server — `src/server.ts` calls `app.listen()` —
-so it needs a container or server runtime (Render, Railway, Fly.io, a VPS, or
-similar) rather than a function-based platform. Whenever hosting is set up:
+### One address, not two
 
-1. Set `FRONTEND_ORIGIN` on the API to the frontend's exact origin — CORS allows a
-   single explicit origin, not a wildcard.
-2. Set `VITE_API_BASE_URL` on the frontend to the API's public `/api/v1` URL.
-3. Serve the SPA with a catch-all rewrite to `index.html` so client-side routing
-   survives a page refresh.
-4. Run the API with `NODE_ENV=production` so session cookies get the `Secure` flag.
-5. **Do not let a proxy buffer `GET /events`.** The route already sends
+The API serves the built SPA from the same origin. That removes the CORS question
+entirely, and — more importantly — keeps the session cookie on a single site.
+
+**Why that matters.** The session cookie is `SameSite=Lax`, and `Lax` cookies are not
+sent across sites. Same-site is decided by the **public suffix list**, and
+`vercel.app`, `onrender.com`, `netlify.app`, `fly.dev`, `up.railway.app` and
+`herokuapp.com` are all on it — so every subdomain of those is its own site. Deploying
+the SPA to `printsync.onrender.com` and the API to `printsync-api.onrender.com` looks
+correct and is not: login appears to succeed and then behaves as if signed out, and
+the live-update stream fails too. Two services on one **custom** domain
+(`app.example.com` + `api.example.com`) is fine — there the registrable domain is
+shared. Anything else needs `SameSite=None; Secure`, which affects both the API and
+the event stream.
+
+### Deploying on Render
+
+1. Push the branch `render.yaml` names (`macOS-UI-2`), then in the Render dashboard
+   choose **New → Blueprint** and connect the repository.
+2. Supply the three values marked `sync: false`: `SUPABASE_URL`,
+   `SUPABASE_SERVICE_ROLE_KEY`, and `FRONTEND_ORIGIN`.
+3. **Get the address first, then set `FRONTEND_ORIGIN`.** If the service name is
+   taken Render appends characters, so confirm the assigned URL on the service page
+   and match it exactly — `https://`, no trailing slash. Getting it wrong means every
+   request is refused by the browser.
+4. Wait for the first build. It installs three workspaces and runs three builds, so it
+   takes a few minutes; later deploys are faster.
+
+The free plan sleeps after ~15 minutes idle, so the next visit takes 30–60 seconds to
+wake. That is the plan, not the application.
+
+### What the deployment configuration handles
+
+1. **Workspace build order.** The backend reads `@printsync/shared-types` from its
+   *compiled* output, so the contracts build first. `Dockerfile` orders them
+   `shared-types` → `frontend` → `backend`.
+2. **No `.env` in the image.** `.dockerignore` excludes `backend/.env` — the
+   service-role key — and `frontend/.env`, which points at `http://localhost:4000` and
+   would otherwise be baked into the shipped bundle. `VITE_API_BASE_URL` is read at
+   **build** time, so the image sets it explicitly.
+3. **`NODE_ENV=production`** — set in the image, so the session cookie gets its
+   `Secure` flag and the content-security policy drops `upgrade-insecure-requests`.
+4. **Static serving with an SPA fallback.** `src/app.ts` serves `frontend/dist` when it
+   exists, rewrites unknown non-`/api/` GETs to `index.html`, and caches hashed assets
+   immutably while keeping `index.html` on `no-cache`.
+5. **Images survive the content-security policy.** Helmet's default
+   `img-src 'self' data:` would block every design asset and the business logo, since
+   those are public URLs on the Supabase Storage host. The policy names that origin
+   explicitly.
+6. **Keep the API at one instance.** The event bus is in-process, so a second instance
+   would serve changes it never hears about. Scale after moving the bus to Postgres
+   `LISTEN`/`NOTIFY`, which needs a `DATABASE_URL` holding the *direct* connection
+   string — the transaction pooler does not support `LISTEN`.
+7. **Do not let a proxy buffer `GET /events`.** The route already sends
    `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`, but a proxy
    that ignores them will hold the stream and the UI will look frozen. The 25-second
    heartbeat is chosen to sit under nginx's 60-second default read timeout.
-6. **Keep the API at one instance.** The event bus is in-process, so a second
-   instance would serve changes it never hears about. Scale after moving the bus to
-   Postgres `LISTEN`/`NOTIFY`, which needs a `DATABASE_URL` holding the *direct*
-   connection string — the transaction pooler does not support `LISTEN`.
-7. If the frontend and API end up on **different registrable domains**, the session
-   cookie needs `SameSite=None; Secure`. The current `SameSite=Lax` works for
-   `localhost` and for same-site subdomains such as `app.example.com` +
-   `api.example.com`, and changing it affects both the API and the event stream.
+
+`docs/CREDENTIAL-ROTATION-AND-DEPLOYMENT.md` has the step-by-step procedure for
+rotating the development passwords and moving the service-role key out of
+`backend/.env` before the first real deployment.
 
 A leftover `frontend/vercel.json` (SPA rewrite) and empty `.vercel/` directories
 remain from an earlier experiment. They are unused and safe to delete.
@@ -595,6 +644,10 @@ remain from an earlier experiment. They are unused and safe to delete.
   control. The provided `.gitignore` already covers these.
 - **Before release:** rotate any development passwords and move
   `SUPABASE_SERVICE_ROLE_KEY` out of `backend/.env` into the host's secret store.
+  `docs/CREDENTIAL-ROTATION-AND-DEPLOYMENT.md` is the step-by-step procedure, with a
+  checklist that can be worked through without reading code.
+- A container image is readable by anyone who can pull it, so `.dockerignore` must keep
+  `.env` files out of the build context. `backend/.env` holds the service-role key.
 
 ---
 

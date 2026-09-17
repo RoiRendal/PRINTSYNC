@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
@@ -33,11 +36,74 @@ const IMAGE_UPLOAD_PATHS = ['/api/v1/designs/assets', '/api/v1/settings/logo'];
 /** Covers a 5 MB image (≈6.7 MB base64) plus the JSON envelope. */
 const IMAGE_UPLOAD_JSON_LIMIT = '8mb';
 
+/**
+ * Where the built SPA lives, when this process is also serving it.
+ *
+ * ### Why the API serves the frontend at all
+ *
+ * PRINTSYNC authenticates with a cookie set to `SameSite=Lax`, which the browser
+ * only returns to the *same site* that set it. Almost every free hosting platform
+ * puts its default domain on the public suffix list, so two services such as
+ * `printsync.onrender.com` and `printsync-api.onrender.com` are treated as
+ * separate sites — login appears to succeed and then behaves as if signed out,
+ * and the event stream fails with it. Serving both from one origin removes the
+ * problem rather than working around it, and removes CORS along with it.
+ *
+ * ### Why it is optional
+ *
+ * In development the frontend runs on its own Vite dev server with a proxy, so
+ * this resolves to nothing and the API stays a pure JSON service. Nothing about
+ * local development changes.
+ *
+ * Returns `null` when there is no build to serve — the normal case in development
+ * and in the backend test suite.
+ */
+function resolveFrontendDir(): string | null {
+  // `backend/src/app.ts` in development, `backend/dist/app.js` once built — both
+  // sit two levels below the repository root, so one relative path covers both.
+  const defaultDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../frontend/dist');
+  const candidates = [env.FRONTEND_DIST, defaultDir].filter(
+    (candidate): candidate is string => typeof candidate === 'string' && candidate.length > 0,
+  );
+
+  // `index.html` is the marker rather than the directory itself: an empty or
+  // half-written `dist/` is not something to serve, and serving nothing while
+  // looking configured is how this turns into a confusing 404 report.
+  return candidates.find((candidate) => existsSync(path.join(candidate, 'index.html'))) ?? null;
+}
+
+/**
+ * Content Security Policy, merged over helmet's defaults.
+ *
+ * Only two defaults need changing once this process serves the SPA:
+ *
+ * - **`img-src`** defaults to `'self' data:`, which blocks every design asset and
+ *   the business logo. Those are public URLs on the Supabase Storage host (see
+ *   `getPublicUrl` in `services/imageAssetService.ts`), not paths on this origin.
+ *   The failure mode is quiet — the page renders and the images are simply blank.
+ * - **`upgrade-insecure-requests`** is only ever meaningful over plain HTTP, which
+ *   means local testing. In production Render terminates TLS, so there is nothing
+ *   to upgrade, and leaving it on locally makes the browser rewrite asset URLs to
+ *   `https://localhost` and fail.
+ *
+ * `connect-src` is deliberately left at its default of `'self'`. The frontend
+ * never calls Supabase directly — every read and write goes through this API — so
+ * no second origin is legitimate for XHR or for the event stream.
+ */
+function contentSecurityPolicyDirectives() {
+  const supabaseOrigin = env.SUPABASE_URL ? new URL(env.SUPABASE_URL).origin : null;
+
+  return {
+    imgSrc: ["'self'", 'data:', ...(supabaseOrigin ? [supabaseOrigin] : [])],
+    upgradeInsecureRequests: env.NODE_ENV === 'production' ? [] : null,
+  };
+}
+
 export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: { directives: contentSecurityPolicyDirectives() } }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
 
   // Image uploads arrive as a base64 data URL inside a JSON body, and base64 is
@@ -73,6 +139,56 @@ export function createApp() {
   app.use('/api/v1/suppliers', suppliersRouter);
   app.use('/api/v1/expenses', expensesRouter);
   app.use('/api/v1/export', exportRouter);
+
+  // Registered after every API route and before `notFound`, so a request is only
+  // treated as a page once it has failed to match an endpoint.
+  const frontendDir = resolveFrontendDir();
+  if (frontendDir) {
+    app.use(
+      express.static(frontendDir, {
+        // Do not let a request for `/` be answered from here. The fallback below
+        // handles it, and that is the one place the no-cache rule for the document
+        // is applied.
+        index: false,
+        setHeaders(response, filePath) {
+          if (filePath.endsWith('index.html')) {
+            // Never cache the document. It is the only file whose name does not
+            // change between releases, so a cached copy keeps loading the previous
+            // bundle after a deploy and the fix looks like it did not ship.
+            response.setHeader('Cache-Control', 'no-cache');
+            return;
+          }
+          // Everything Vite emits under `/assets` carries a content hash in its
+          // filename, so a given URL's bytes can never change.
+          response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        },
+      }),
+    );
+
+    app.use((request, response, next) => {
+      if (request.method !== 'GET' && request.method !== 'HEAD') return next();
+      // An unmatched `/api/...` path must fall through to `notFound` and answer
+      // with the JSON error envelope. Handing it `index.html` would make a client
+      // expecting JSON fail while parsing HTML, hiding the real 404 behind a
+      // syntax error.
+      if (request.path.startsWith('/api/')) return next();
+
+      // Set before `sendFile`, not after: `sendFile` only supplies its own
+      // `Cache-Control` when the header is absent, so setting it here is what
+      // makes the rule stick. Without it the document is served as
+      // `public, max-age=0` — harmless in practice, since the browser would
+      // revalidate, but it is not the guarantee this is meant to make.
+      response.setHeader('Cache-Control', 'no-cache');
+
+      response.sendFile(path.join(frontendDir, 'index.html'), (error) => {
+        if (!error) return;
+        // The file passed the `existsSync` check at startup but could have gone
+        // missing since. Fall through rather than half-sending a response.
+        if (!response.headersSent) next();
+      });
+    });
+  }
+
   app.use(notFound);
   app.use(errorHandler);
 

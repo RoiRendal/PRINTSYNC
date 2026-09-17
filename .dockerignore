@@ -1,0 +1,41 @@
+# Build context exclusions.
+#
+# This file exists mainly to keep three things out of the image:
+#
+#   * `**/.env` — backend/.env holds the Supabase service-role key. Without this
+#     rule a `docker build` from the repository root copies it into a layer, and
+#     layers are readable by anyone who can pull the image. The app would then
+#     also load it in preference to the platform's environment variables, because
+#     `config/env.ts` calls `dotenv.config({ override: true })`.
+#   * `0_never-push-this-dump-folder/` — the database schema and the original
+#     development passwords.
+#   * `frontend/.env` — Vite inlines `VITE_*` values at build time, so a stray
+#     local file would bake `http://localhost:4000` into the shipped bundle.
+#
+# Ignoring node_modules and dist also keeps the build fast and the image small:
+# both are produced inside the build stage from the lockfiles.
+
+**/.env
+**/.env.*
+!**/.env.example
+
+0_never-push-this-dump-folder/
+
+**/node_modules
+**/dist
+**/build
+**/coverage
+**/*.log
+
+**/.workbuddy-ai
+**/.codebuddy
+**/.tmp-verify
+**/.vercel
+
+.git
+.gitignore
+.github
+
+docs
+README.md
+LICENSE

@@ -223,17 +223,16 @@ readable and treat any change to the data since then as suspect.
 
 ---
 
-## Part 3 — Before the test run
+## Part 3 — Deploying it
 
-The two security steps above are necessary but not sufficient. Deployment also needs
-configuration the repository does not yet contain, and there is one decision to make
-first.
+The two security steps above are necessary but not sufficient. This part is the
+deployment itself.
 
-### The decision: one address, or two?
+### The decision that was made: one address
 
-PRINTSYNC logs users in with a **cookie**, and that cookie is currently set to
-`SameSite=Lax` (in `backend/src/shared/authCookies.ts`). In plain terms, a `Lax` cookie
-is only sent back to a site that is the *same site* as the one that set it.
+PRINTSYNC logs users in with a **cookie**, and that cookie is set to `SameSite=Lax`
+(in `backend/src/shared/authCookies.ts`). In plain terms, a `Lax` cookie is only sent
+back to a site that is the *same site* as the one that set it.
 
 The catch is what "same site" means. Browsers use the **public suffix list** to decide,
 and almost every free hosting platform puts its default domain on that list. We checked
@@ -255,52 +254,90 @@ it directly rather than assuming:
 | --- | --- |
 | Same address — the API serving the app | ✅ Yes |
 | `app.example.com` + `api.example.com`, a domain you own | ✅ Yes |
+| `printsync.onrender.com` + `printsync-api.onrender.com` | ❌ **No** |
 | `printsync.vercel.app` + `printsync-api.vercel.app` | ❌ **No** |
-| `frontend.onrender.com` + `backend.onrender.com` | ❌ **No** |
-| `printsync.netlify.app` + `printsync.fly.dev` | ❌ **No** |
 
-The bottom three rows are the trap, and they are the *default* outcome of the obvious
-approach — deploy the frontend to one service, the API to another. Login will appear to
-succeed and then immediately behave as if the user is signed out, and the live-update
-stream will fail as well. It looks like a broken application rather than a configuration
-mistake, and it is the kind of thing that costs an afternoon to diagnose.
+The bottom two rows are the trap, and they are the *default* outcome of the obvious
+approach — deploy the frontend to one service, the API to another. Login appears to
+succeed and then immediately behaves as if the user is signed out, and the live-update
+stream fails as well. It looks like a broken application rather than a configuration
+mistake.
 
-**Recommendation: serve the app and the API from one address.** The backend serves the
-built frontend as static files, so there is one deployment, one URL, no CORS to
-configure, and the cookie problem cannot arise. It is also the cheapest, and the easiest
-to tear down after the test run.
+**Decided: one address, on Render.** The API serves the built frontend from the same
+origin, so the cookie problem cannot arise — and there is no CORS to configure either.
 
-Two separate deployments are still possible, but one of these has to be true:
+### What was added to the repository
 
-- **You own a domain** and put the app and API on subdomains of it
-  (`app.yourdomain.com` + `api.yourdomain.com`). Requires a domain and HTTPS.
-- **The cookie is changed to `SameSite=None; Secure`** in
-  `backend/src/shared/authCookies.ts`. This is a code change, only works over HTTPS, and
-  relaxes a deliberate security setting — so it should be a considered decision, not a
-  workaround.
+| File | What it does |
+| --- | --- |
+| `Dockerfile` | Builds all three workspaces in the right order, then ships a runtime image with only what the API needs. |
+| `.dockerignore` | Keeps `backend/.env`, `frontend/.env`, the dump folder and `node_modules` **out** of the image. See the warning below. |
+| `render.yaml` | Render Blueprint: one Docker web service, free plan, Singapore region, health check, and the three secret values prompted for rather than stored. |
+| `backend/src/app.ts` | Serves `frontend/dist`, with an SPA fallback that deliberately does not swallow `/api/*`. |
+| `backend/src/config/env.ts` | Optional `FRONTEND_DIST` override, for hosts that place the build somewhere unusual. |
 
-### What the deployment must provide
+Nothing about local development changes. In development the frontend still runs on its
+own Vite dev server, and the API finds no build to serve.
 
-1. **A build that respects the workspace order.** The backend imports shared contracts
-   from `packages/shared-types`, and it reads the **compiled** output. So that package
-   must be built *before* the backend is type-checked or built. A platform that builds
-   `backend/` in isolation will fail. Either a Dockerfile built from the repository root,
-   or a documented three-step build command, is required.
-2. **`FRONTEND_ORIGIN` set to the exact public URL** of the app.
-3. **`NODE_ENV=production`**, so the session cookie gets its `Secure` flag. Without it,
-   the cookie is sent over plain HTTP and the browser may reject it on HTTPS.
-4. **A reverse proxy that does not buffer `GET /events`.** The route already sends
-   `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`; a proxy that
-   ignores them holds the stream and the interface looks frozen with no error. The
-   25-second heartbeat is chosen to sit under nginx's 60-second default.
+> **Why `.dockerignore` is not optional.** Without it, a `docker build` from the
+> repository root copies `backend/.env` — the master key — into an image layer, and
+> layers are readable by anyone who can pull the image. It would also bake
+> `frontend/.env`, which points at `http://localhost:4000`, into the shipped bundle.
+
+### How to deploy on Render
+
+1. **Push the branch.** Already done — everything is on `macOS-UI-2`, which is the
+   branch `render.yaml` names. Nothing is on `main`.
+2. In the Render dashboard, choose **New → Blueprint** and connect the PRINTSYNC
+   repository. Render reads `render.yaml` and shows the plan before creating anything.
+3. It prompts for the three values marked `sync: false`. Paste them from your local
+   `backend/.env`:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY` — the **new** key from Part 2
+   - `FRONTEND_ORIGIN` — see the next step
+4. **Get the address first, then set `FRONTEND_ORIGIN`.** The URL is normally
+   `https://<service-name>.onrender.com`, so `https://printsync.onrender.com` — but if
+   that name is taken Render appends characters, so confirm the actual address on the
+   service page. `FRONTEND_ORIGIN` must match it exactly: `https://`, no trailing slash.
+   If you set it wrong the app loads and then every request is refused by the browser.
+   Changing it triggers a redeploy.
+5. **Wait for the first build.** It installs three workspaces and runs three builds, so
+   the first one takes a few minutes. Later deploys are faster.
+6. **Verify** using the checklist in Part 4.
+
+Two things about Render's free plan, so neither looks like a fault:
+
+- **It sleeps after about 15 minutes of inactivity.** The next visit takes 30–60 seconds
+  to wake. That is the plan, not the application.
+- **It is 0.1 CPU / 512 MB.** Fine for a two-or-three-person trial, not for real trading.
+
+### What the configuration already handles
+
+For reference — these are the things that had to be true, and where each is handled:
+
+1. **Workspace build order.** The backend reads `@printsync/shared-types` from its
+   *compiled* output, so the contracts must be built first. `Dockerfile` does this in
+   order; a platform that built `backend/` in isolation would fail.
+2. **`FRONTEND_ORIGIN`** — the exact public URL. Set in step 4 above.
+3. **`NODE_ENV=production`** — set in the image, so the session cookie gets its `Secure`
+   flag and the SPA's content-security policy drops `upgrade-insecure-requests`.
+4. **The event stream must not be buffered.** The route already sends
+   `Cache-Control: no-cache, no-transform` and `X-Accel-Buffering: no`, and the
+   25-second heartbeat sits under nginx's 60-second default. Render's proxy passes
+   these through; if a different host is used later, check it.
 5. **Exactly one API instance.** The live-update bus is in-process, so a second instance
-   serves changes it never hears about. Scaling up comes later and needs a code change.
-6. **Do not ship `backend/.env`, `0_never-push-this-dump-folder/`, or `node_modules`.**
-   The dump folder contains the database schema and the old passwords.
+   serves changes it never hears about. `render.yaml` asks for one, on the free plan.
+6. **No `.env` in the image.** `.dockerignore` enforces it, and the runtime stage copies
+   only `backend/dist` and `frontend/dist`.
+7. **Images still load under the content-security policy.** Helmet's default
+   `img-src 'self' data:` blocks every design asset and the business logo, because those
+   are public URLs on the Supabase Storage host rather than paths on this origin. The
+   policy now names that origin explicitly. The failure would have been quiet — the page
+   renders and the images are simply blank.
 
 ### What a test run does *not* need
 
-- A custom domain. Subdomains of one platform domain are fine.
+- A custom domain.
 - A paid tier, for a two-or-three-person trial.
 - The `LISTEN`/`NOTIFY` work, analytics caching, or branch protection. Those are
   capacity and process improvements, not launch requirements.
@@ -329,16 +366,28 @@ Work down the list; each line is verifiable without reading code.
 - [ ] The old secret key has been **deleted** from the Supabase dashboard
 - [ ] The old key is not in git history, a chat, a screenshot, or a document
 
-**Deployment**
+**Deployment — the service itself**
 
-- [ ] App and API are reachable at **one** address
-- [ ] `FRONTEND_ORIGIN` matches that address exactly
+- [ ] Render shows the service as **Live** (the first build takes a few minutes)
+- [ ] Exactly **one** service exists — no separate static site was created for the frontend
+- [ ] The public address plus `/api/v1/health` returns `{"status":"ok"}`
+- [ ] The address bar shows **one** host; the API is not on a second one
+
+**Deployment — the app**
+
+- [ ] `FRONTEND_ORIGIN` matches the address bar exactly — `https://`, the host Render
+      actually assigned, no trailing slash
 - [ ] `NODE_ENV=production` is set
+- [ ] The app loads at the same address as the API
 - [ ] Signing in works, and survives a page refresh
+- [ ] Reloading a deep route directly (`/orders`) works rather than 404-ing
 - [ ] The connection indicator reads **Live**
 - [ ] A change made in one browser appears in a second browser within ~1 second
+- [ ] The indicator is **still** Live after five minutes untouched — that is the
+      heartbeat surviving the proxy, not just the first burst
 - [ ] A checkout completes, and the receipt prints the sale
-- [ ] The proxy is not buffering `GET /events`
+- [ ] Design previews and the business logo render — **not** blank boxes
+- [ ] Revisiting after 15 minutes idle takes 30–60 seconds (free-plan sleep, not a fault)
 
 ---
 
@@ -347,8 +396,14 @@ Work down the list; each line is verifiable without reading code.
 | Symptom | Most likely cause |
 | --- | --- |
 | Login succeeds, then the app behaves as if signed out | App and API are on different sites, so the `Lax` cookie is not sent. Put them on one address. |
-| Every request blocked, browser console mentions CORS | `FRONTEND_ORIGIN` does not match the address bar exactly. Check `https://`, the subdomain, and no trailing slash. |
+| Every request blocked, browser console mentions CORS | `FRONTEND_ORIGIN` does not match the address bar exactly. Check `https://`, the host Render assigned, and no trailing slash. |
 | Connection indicator never reaches "Live", but the app works | The proxy is buffering `GET /events`. The app falls back to polling, so it degrades quietly rather than failing. |
+| The indicator reaches "Live" and then drops, repeatedly | The stream is being held open but the heartbeat is not arriving. Confirm the deployed build has the named `heartbeat` event, not a comment frame. |
 | "Supabase has not been configured for this environment" | `SUPABASE_URL` or `SUPABASE_SERVICE_ROLE_KEY` missing **on the server** — or a stale `backend/.env` is overriding them. |
 | The provisioning script says the password was preserved | `PROVISION_RESET_PASSWORD=true` was not set. |
 | Data appears stale to some users but not others | More than one API instance is running. |
+| Design previews and the logo are blank, the rest of the page is fine | The content-security policy does not name the Supabase Storage origin, so the browser silently blocks the images. |
+| Reloading `/orders` directly says "Not found" | The SPA fallback is missing — the frontend is being served by something that does not rewrite unknown paths to `index.html`. |
+| The deployed site still calls `localhost:4000` | `frontend/.env` was baked into the build. `VITE_API_BASE_URL` is read at **build** time, so it must be set for the build, not at runtime. |
+| The first visit of the day takes 30–60 seconds | Render's free plan sleeps the service after ~15 minutes idle. Expected, not a fault. |
+| `docker build` is slow every time | `node_modules` is being sent to the daemon — `.dockerignore` is missing or not at the build context root. |
