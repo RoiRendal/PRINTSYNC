@@ -17,9 +17,28 @@ import type { Design } from '../../../designs/types';
 import type { InventoryItem } from '../../../inventory/types';
 import type { Order, OrderLineItem } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
+import { documentFromOrder, type PrintableDocument } from '../../types/printableDocument';
+import { ReceiptModal } from '../pos/ReceiptModal';
 import { PhaseProgress, workPhases } from './PhaseProgress';
 import { orderPaymentsApi, type OrderPayment } from '../../api/orderPaymentsApi';
 import { ApiError } from '../../../../shared/api/errors';
+
+/**
+ * Prints a document and names the saved file after it.
+ *
+ * Duplicated from `POSPage` deliberately rather than exported through a shared
+ * module: it is four lines of browser plumbing, and the alternative is a
+ * "print utils" file that exists to hold one function used in two places.
+ */
+function printDocument(document: PrintableDocument) {
+  const previousTitle = window.document.title;
+  window.document.title = `JobTicket-${document.reference.replace(/[^a-zA-Z0-9-]/g, '')}`;
+  try {
+    window.print();
+  } finally {
+    window.document.title = previousTitle;
+  }
+}
 
 function ImageFallback({ label }: { label: string }) {
   return (
@@ -61,6 +80,8 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card' | 'Other'>('Cash');
   const [paymentNotes, setPaymentNotes] = useState('');
+  /** The order whose job ticket is currently open, or `null`. */
+  const [ticketOrder, setTicketOrder] = useState<Order | null>(null);
 
   const getDesign = (id?: string): Design | undefined => designs.find((d) => d.id === id);
 
@@ -363,7 +384,13 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           </Card>
 
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" fullWidth leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}>
+            <Button
+              type="button"
+              variant="secondary"
+              fullWidth
+              leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}
+              onClick={() => order && setTicketOrder(order)}
+            >
               Print Job Ticket
             </Button>
             <Button type="button" fullWidth onClick={onClose}>
@@ -372,6 +399,21 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           </div>
         </div>
       )}
+
+      {/*
+        A separate dialog rather than a re-skin of this one. The job ticket is a
+        physical, printable sheet that travels to the shop floor; this modal is
+        an interactive console with payment forms. Printing is driven by
+        `#receipt-content` in `index.css`, so nesting a ticket inside the larger
+        modal would print the console around it.
+      */}
+      <ReceiptModal
+        isOpen={ticketOrder !== null}
+        onClose={() => setTicketOrder(null)}
+        document={ticketOrder ? documentFromOrder(ticketOrder) : null}
+        onPrint={() => ticketOrder && printDocument(documentFromOrder(ticketOrder))}
+        title="Job Ticket"
+      />
     </Modal>
   );
 }
