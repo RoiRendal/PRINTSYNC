@@ -22,3 +22,8 @@ supabase/.temp/
 
 # Temporary scratch / verification scratchpad (duplicates public assets)
 **/.tmp-verify/
+
+# Compiled output must never sit next to its TypeScript source. `shared-types`
+# compiles src -> dist; stale `src/*.js` files were committed once, and any tool
+# that prefers `.js` over `.ts` would silently resolve the stale build instead.
+packages/shared-types/src/**/*.js
