@@ -286,8 +286,8 @@ own Vite dev server, and the API finds no build to serve.
 
 ### How to deploy on Render
 
-1. **Push the branch.** Already done — everything is on `macOS-UI-2`, which is the
-   branch `render.yaml` names. Nothing is on `main`.
+1. **Push the branch.** Already done — `main` holds the full Tier 1–5 work, and
+   `render.yaml` deploys from it.
 2. In the Render dashboard, choose **New → Blueprint** and connect the PRINTSYNC
    repository. Render reads `render.yaml` and shows the plan before creating anything.
 3. It prompts for the three values marked `sync: false`. Paste them from your local

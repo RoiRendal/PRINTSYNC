@@ -574,7 +574,7 @@ the event stream.
 
 ### Deploying on Render
 
-1. Push the branch `render.yaml` names (`macOS-UI-2`), then in the Render dashboard
+1. Push `main` — the branch `render.yaml` names — then in the Render dashboard
    choose **New → Blueprint** and connect the repository.
 2. Supply the three values marked `sync: false`: `SUPABASE_URL`,
    `SUPABASE_SERVICE_ROLE_KEY`, and `FRONTEND_ORIGIN`.
@@ -653,7 +653,7 @@ remain from an earlier experiment. They are unused and safe to delete.
 
 ## Contributing
 
-1. Branch off the working branch (current: `macOS-UI-2`).
+1. Branch off `main`, and merge back into it once the change is verified.
 2. Keep changes inside the relevant workspace (`frontend/`, `backend/`,
    `packages/shared-types/`). Shared contracts belong in `packages/shared-types`.
 3. Run `npm run lint` in the workspaces you touched, and the tests:

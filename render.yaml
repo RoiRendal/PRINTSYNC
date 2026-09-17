@@ -21,8 +21,8 @@ services:
     plan: free
     # Closest region to the Philippines.
     region: singapore
-    # All five tiers live on this branch, not on `main`.
-    branch: macOS-UI-2
+    # `main` is the deployable branch; all five tiers live on it.
+    branch: main
     autoDeployTrigger: commit
     # Liveness only, deliberately not `/api/v1/ready`.
     #

@@ -704,7 +704,7 @@ saying so is the honest answer.
 | 1 | ~~**Optimistic UI**~~ — **done in Tier 5, scoped to the orders board** | Orders-board phase moves land instantly instead of waiting on the network. Every money and stock path stays pessimistic on purpose. | See §7.6. |
 | 2 | **Scheduled/paginated analytics caching** | Analytics issues 5 queries on every change event. Fine now; will need attention at volume. | A short server-side cache or a materialised view for the summary RPC. |
 | 3 | **Postgres `LISTEN`/`NOTIFY` for the event bus** | Removes the single-instance ceiling on realtime. Requires a new `DATABASE_URL` secret (direct connection, not the pooler). | See §4.4 — the call sites will not need to change. |
-| 4 | **Protect `macOS-UI-2`** | A red build currently cannot block a merge. | A branch-protection rule in GitHub settings. Not a code change. |
+| 4 | **Protect `main`** | A red build currently cannot block a merge. | A branch-protection rule in GitHub settings. Not a code change. |
 
 ### 6.7 Files touched
 
@@ -969,7 +969,7 @@ most in this file: every other job catches a change that is *visibly* wrong, whi
 this one catches the changes that are silently wrong — a retry that double-charges,
 a screen that quietly stops updating.
 
-**Still recommended:** protect `macOS-UI-2` so a red build cannot be merged. This
+**Still recommended:** protect `main` so a red build cannot be merged. This
 is a GitHub settings change, not a code change (§6.6, item 4).
 
 ### 8.3 Credentials that must never reach production
