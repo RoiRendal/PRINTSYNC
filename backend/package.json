@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "provision:user": "tsx src/scripts/provisionUser.ts",
+    "seed:demo": "tsx src/scripts/seedDemoData.ts",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:integration": "tsx --test tests/integration/*.test.ts",

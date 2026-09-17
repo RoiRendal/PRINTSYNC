@@ -114,6 +114,53 @@ html {
   }
 }
 
+/*
+ * Printing shows the document and nothing else.
+ *
+ * `#receipt-content` is the element `PrintableDocumentView` renders. Until this
+ * block existed, `window.print()` emitted the entire application — glass
+ * toolbars, sidebar, the lot — which is not what a customer takes home. The
+ * modal chrome is hidden by hiding every sibling of the document and then
+ * walking back up, so the document itself keeps its own spacing.
+ *
+ * The dialog is portalled into `document.body`, so the chain from `<body>` down
+ * to `#receipt-content` is the only path that stays visible.
+ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #receipt-content,
+  #receipt-content * {
+    visibility: visible;
+  }
+
+  #receipt-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 12mm;
+    border: 0;
+    box-shadow: none;
+    background: #fff;
+    color: #000;
+  }
+
+  /* Force the document to print on its own plain background regardless of the
+     app's dark-mode token that may be active on screen. */
+  #receipt-content * {
+    color: #000 !important;
+    background: transparent !important;
+  }
+
+  @page {
+    margin: 12mm;
+  }
+}
+
 @layer utilities {
   .glass-panel {
     background: var(--glass-bg);

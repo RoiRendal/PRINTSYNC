@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { History, ShoppingBag, Sparkles } from 'lucide-react';
+import { History, ReceiptText, ShoppingBag, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { ApiError, isServerRejection } from '../../../shared/api/errors';
@@ -22,31 +22,57 @@ import {
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
-import { useCartTotals, type CartTotals } from '../hooks/useCartTotals';
+import { useCartTotals } from '../hooks/useCartTotals';
 import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
+import {
+  documentFromSale,
+  documentFromTransaction,
+  type PrintableDocument,
+} from '../types/printableDocument';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
+
+/**
+ * Prints one document and restores the tab title afterwards.
+ *
+ * Two jobs in one place. `@media print` in `index.css` decides *what* is on the
+ * paper; this decides what the PDF is *called*. Without the rename, a cashier
+ * printing three receipts in a row saves three files called "PrintSync" and has
+ * to open each to find the right one.
+ */
+function printDocument(document: PrintableDocument) {
+  const previousTitle = window.document.title;
+  const safeRef = document.reference.replace(/[^a-zA-Z0-9-]/g, '');
+  window.document.title = `${document.kind === 'receipt' ? 'Receipt' : 'Order'}-${safeRef}`;
+  try {
+    window.print();
+  } finally {
+    // Restored synchronously: `window.print()` blocks until the dialog closes in
+    // every browser we support, so the title is correct for the print job and
+    // back to normal before the user sees the tab again.
+    window.document.title = previousTitle;
+  }
+}
 
 /** Coalesces a burst of payment events into a single refetch. */
 const HISTORY_RELOAD_DEBOUNCE_MS = 400;
 
 /**
- * Everything the receipt needs, frozen at the moment the sale completed.
+ * The sale just completed, so its paperwork can be reopened.
  *
- * Captured rather than read from live state, because the cart is cleared the
- * instant a sale succeeds — a receipt rendered from `cart` would print an empty
- * slip, which is exactly what it used to do.
+ * The receipt used to exist only inside the checkout dialog, which closes itself
+ * two seconds after a sale. A customer who wants their summary an hour later, or
+ * a cashier whose printer jammed, had no way to get it back — the document was
+ * gone. This is what makes it survive.
  */
-interface ReceiptSnapshot {
-  cart: CartItem[];
-  totals: CartTotals;
-  paymentMethod: 'Cash' | 'Card';
-  customerName: string;
-  orderId?: string;
+interface LastDocument {
+  document: PrintableDocument;
+  /** Shown on the terminal button so the cashier knows which sale it reopens. */
+  label: string;
 }
 
 /**
@@ -108,11 +134,18 @@ export default function POS() {
     return saved === 'Card' ? 'Card' : 'Cash';
   });
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
-  const [lastOrderId, setLastOrderId] = useState<string | undefined>(undefined);
   /** `true` when the success on screen came from reconciling a failed attempt. */
   const [checkoutRecovered, setCheckoutRecovered] = useState(false);
-  /** The sale to print, frozen at completion. See `ReceiptSnapshot`. */
-  const [receipt, setReceipt] = useState<ReceiptSnapshot | null>(null);
+  /**
+   * The document on screen in the receipt dialog.
+   *
+   * Frozen at the moment it is opened — for a live sale, before the cart is
+   * cleared. A document rendered from live cart state would print an empty slip,
+   * which is exactly what it used to do.
+   */
+  const [receipt, setReceipt] = useState<PrintableDocument | null>(null);
+  /** The last completed sale, which stays printable after the dialog closes. */
+  const [lastDocument, setLastDocument] = useState<LastDocument | null>(null);
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
@@ -461,6 +494,27 @@ export default function POS() {
     }
   };
 
+  /**
+   * Files a completed sale's paperwork.
+   *
+   * One call does three things that must never drift apart: stage the document
+   * for the receipt dialog, keep a copy on the terminal so it can be reopened
+   * after the dialog closes, and derive the button's label from the same
+   * document. The label is the last nine characters of the reference, matching
+   * how the history table abbreviates a sale — so the button and the row a
+   * cashier finds later read as the same thing.
+   */
+  const recordCompletedSale = (document: PrintableDocument, customerName?: string) => {
+    const shortRef = document.reference.replace('TRX-', '').slice(-8);
+    setReceipt(document);
+    setLastDocument({
+      document,
+      label: document.kind === 'receipt'
+        ? `#${shortRef}`
+        : `${customerName || 'Order'} · ${document.reference}`,
+    });
+  };
+
   const handleCheckout = () => {
     if (cart.length === 0) return;
     // Opening a checkout is a fresh look at the cart; a message from the previous
@@ -519,7 +573,7 @@ export default function POS() {
         // Both domains are announced so the POS catalogue, the dashboard's
         // stock alerts, and analytics all re-read without a page reload.
         emitDataChange('payments', 'inventory');
-        setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName });
+        recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
         saleCompleted = true;
       } else {
         const preparedOrder: CreateOrder = {
@@ -561,12 +615,10 @@ export default function POS() {
             // an edit someone else made while this cart was open.
             editingOrderVersion,
           );
-          setLastOrderId(updated.id);
-          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: updated.id });
+          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: updated.id }), customerName);
         } else {
           const created = await addOrder(preparedOrder);
-          setLastOrderId(created.id);
-          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: created.id });
+          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: created.id }), customerName);
         }
         saleCompleted = true;
       }
@@ -591,7 +643,7 @@ export default function POS() {
         const outcome = await reconcileAttempt(attemptKey);
         if (outcome.kind === 'committed') {
           completeAttempt();
-          setReceipt({ cart: saleCart, totals: saleTotals, paymentMethod, customerName });
+          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
           saleCompleted = true;
           saleRecovered = true;
         } else {
@@ -664,6 +716,29 @@ export default function POS() {
     }
   };
 
+  /**
+   * Reopens the paperwork for a row in the history table.
+   *
+   * Takes the `Transaction` the table already holds and maps it, rather than
+   * hunting for the matching row object: by the time a cashier clicks, the table
+   * has already normalised sales and custom orders into one shape, and going
+   * back to the raw order would be a second, lossier conversion of data that is
+   * sitting right there.
+   *
+   * The document is derived from the *record*, so a past custom order reprints
+   * as an order summary even while the terminal is set to Retail.
+   */
+  const openHistoricalReceipt = (transaction: Transaction) => {
+    setReceipt(documentFromTransaction(transaction));
+    setIsReceiptModalOpen(true);
+  };
+
+  const reopenLastDocument = () => {
+    if (!lastDocument) return;
+    setReceipt(lastDocument.document);
+    setIsReceiptModalOpen(true);
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {transactionError && (
@@ -705,9 +780,31 @@ export default function POS() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 px-2 text-[9px] font-mono uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
-          <Sparkles className="h-3 w-3 text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
-          Terminal ID: AIS-POS-01
+        <div className="flex items-center gap-2">
+          {/*
+            Stays on screen after a sale, not just during it. The checkout dialog
+            dismisses itself two seconds after confirming, so without this the
+            receipt was reachable only by whoever happened to click in time.
+          */}
+          {lastDocument && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={reopenLastDocument}
+              title={`Reopen the receipt for ${lastDocument.document.reference}`}
+              leftIcon={<ReceiptText className="h-3.5 w-3.5" aria-hidden="true" />}
+              className="max-w-[240px]"
+            >
+              <span className="truncate">
+                Last receipt · <span className="font-mono">{lastDocument.label}</span>
+              </span>
+            </Button>
+          )}
+          <div className="flex items-center gap-2 px-2 text-[9px] font-mono uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+            <Sparkles className="h-3 w-3 text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
+            Terminal ID: AIS-POS-01
+          </div>
         </div>
       </GlassCard>
 
@@ -759,6 +856,7 @@ export default function POS() {
           onSelectTransaction={setSelectedTransaction}
           onVoidTransaction={voidTransaction}
           onCloseTransactionDetail={() => setSelectedTransaction(null)}
+          onOpenReceipt={openHistoricalReceipt}
           orderToHistoryTransaction={orderToHistoryTransaction}
         />
       )}
@@ -792,19 +890,16 @@ export default function POS() {
       />
 
       {/*
-        The receipt reads from the snapshot rather than live state: the cart is
-        cleared the instant a sale completes, so a receipt built from `cart`
-        printed an empty slip.
+        Reads the frozen document, never live state: the cart is cleared the
+        instant a sale completes, and a historical record has no live state to
+        read at all. `onPrint` renames the tab first so the saved PDF is called
+        after the receipt rather than after the application.
       */}
       <ReceiptModal
         isOpen={isReceiptModalOpen}
         onClose={() => setIsReceiptModalOpen(false)}
-        posMode={posMode}
-        cart={receipt?.cart ?? []}
-        totals={receipt?.totals ?? totals}
-        paymentMethod={receipt?.paymentMethod ?? paymentMethod}
-        customerName={receipt?.customerName ?? customerName}
-        orderId={receipt?.orderId ?? lastOrderId}
+        document={receipt}
+        onPrint={() => receipt && printDocument(receipt)}
       />
     </div>
   );

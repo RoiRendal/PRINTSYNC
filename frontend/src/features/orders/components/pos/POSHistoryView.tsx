@@ -1,4 +1,4 @@
-import { Search, Trash2 } from 'lucide-react';
+import { Printer, Search, Trash2 } from 'lucide-react';
 import type { Transaction, Order } from '../../types';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Modal } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';
@@ -18,6 +18,8 @@ interface POSHistoryViewProps {
   onSelectTransaction: (transaction: Transaction) => void;
   onVoidTransaction: (id: string) => void;
   onCloseTransactionDetail: () => void;
+  /** Reopens the printable receipt or order summary for a recorded sale. */
+  onOpenReceipt: (transaction: Transaction) => void;
   orderToHistoryTransaction: (order: Order) => Transaction;
 }
 
@@ -29,6 +31,7 @@ export function POSHistoryView({
   onSelectTransaction,
   onVoidTransaction,
   onCloseTransactionDetail,
+  onOpenReceipt,
   orderToHistoryTransaction,
 }: POSHistoryViewProps) {
   return (
@@ -141,7 +144,24 @@ export function POSHistoryView({
               </div>
             </div>
 
-            <Button type="button" fullWidth onClick={onCloseTransactionDetail}>Done</Button>
+            <div className="flex gap-2">
+              {/*
+                The record is already saved, so reopening its paperwork is a
+                read — nothing here re-creates the sale. Available for a voided
+                transaction too: the customer is still holding the slip, and a
+                reprint is how the counter proves which sale was reversed.
+              */}
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}
+                onClick={() => { onOpenReceipt(selectedTransaction); onCloseTransactionDetail(); }}
+              >
+                {selectedTransaction.paymentMethod === 'Custom Order' ? 'View Order Summary' : 'View Receipt'}
+              </Button>
+              <Button type="button" fullWidth onClick={onCloseTransactionDetail}>Done</Button>
+            </div>
           </div>
         )}
       </Modal>
