@@ -78,4 +78,43 @@ describe('the printed receipt is self-contained', () => {
     expect(declarations).toMatch(/#receipt-content \*\s*\{[^}]*background:\s*transparent\s*!important/);
     expect(declarations).toMatch(/#receipt-content\s*\{[^}]*background:\s*#fff/);
   });
+
+  it('leaves no other theme token able to reach the paper', () => {
+    const declarations = printDeclarations();
+
+    // `--app-hairline` was the value that broke; the point is that *no* theme
+    // token belongs inside the printed slip, because a clerk printing a receipt
+    // should not be able to change what the paper looks like by switching theme.
+    expect(declarations).not.toMatch(/var\(--app-/);
+    expect(declarations).not.toMatch(/var\(--glass-/);
+  });
+});
+
+/**
+ * The slip's own colour utilities must not depend on the theme either.
+ *
+ * `--app-hairline` was the token that actually broke, but the same class of bug
+ * lurks in any utility that resolves through a token redefined under `.dark`.
+ * `text-zinc-500` and `text-macos-purple` are fixed palette values that are not
+ * redefined per theme, and the slip's own `dark:` variants are overridden by the
+ * print block's `!important` rules. This pins that reasoning: if someone later
+ * adds a `text-app-*`-style token to the slip, this fails on the way in rather
+ * than on the way out of the printer.
+ */
+describe('the slip does not inherit a theme-dependent colour utility', () => {
+  const view = readFileSync(resolve(here, 'PrintableDocumentView.tsx'), 'utf8');
+
+  it('uses no app-theme text or border token', () => {
+    // Global tokens, as opposed to Tailwind's fixed palette (`text-zinc-500`)
+    // and the app's fixed brand colours (`text-macos-purple`, a literal hex).
+    expect(view).not.toMatch(/text-app-/);
+    expect(view).not.toMatch(/border-app-/);
+    expect(view).not.toMatch(/bg-app-/);
+  });
+
+  it('keeps the load-bearing id the print block targets', () => {
+    // If this id changes, `@media print` silently matches nothing and the whole
+    // application goes to the printer again.
+    expect(view).toMatch(/id="receipt-content"/);
+  });
 });
