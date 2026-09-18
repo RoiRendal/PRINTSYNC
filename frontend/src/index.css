@@ -1,3 +1,13 @@
+/*
+ * The ambientcss light engine (Phase 2 — installed but inert).
+ *
+ * Must be imported BEFORE Tailwind: this is a plain stylesheet of custom
+ * properties and classes, and importing it first lets Tailwind's utilities and
+ * our own `@theme` block win wherever the two collide.
+ *
+ * Nothing carries an `.amb-*` class yet — see the light-source block in `:root`.
+ */
+@import "@ambientcss/css/ambient.css";
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
@@ -50,6 +60,37 @@
   --app-hairline: rgb(0 0 0 / 0.12);
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
+
+  /*
+   * ambientcss light source.
+   *
+   * One key light from the upper left plus a soft fill, calibrated by the
+   * package against Blender Cycles raytraces. Declared here but consumed by
+   * nothing yet: no element carries an `.amb-*` class until a later phase, so
+   * the app must look completely unchanged. That is the whole point of this
+   * phase — prove the engine is harmless before anything depends on it.
+   *
+   * `--amb-light-x` / `--amb-light-y` are UNITLESS DIRECTION COMPONENTS, not
+   * percentages: the package documents them as "-1 = left, 1 = right" and
+   * "-1 = up, 1 = down", and feeds them straight into `atan2()`, into
+   * `calc(x * 6.8px)` shadow offsets and into `max(-1, min(x, 1))`. A value
+   * with a `%` unit makes every one of those expressions invalid, so the
+   * bevel and drop shadows are dropped silently rather than failing loudly.
+   *
+   * These two are the design plan's "30% across, 12% down from the top"
+   * expressed on the -1..1 axis: x = 2(0.30) - 1, y = -(1 - 2(0.12)).
+   *
+   * Hue 40 at 6% saturation is a faint warm-neutral. Left at its default
+   * (234 / 15%) the light reads blue-white, which is exactly the "AI glass"
+   * cast we are moving away from.
+   */
+  --amb-light-x: -0.4;
+  --amb-light-y: -0.76;
+  --amb-key-light-intensity: 0.85;
+  --amb-fill-light-intensity: 0.35;
+  --amb-light-hue: 40;
+  --amb-light-saturation: 6%;
+  --amb-thickness: 2;
 }
 
 .dark {
@@ -65,6 +106,17 @@
   --app-hairline: rgb(255 255 255 / 0.1);
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
+
+  /*
+   * ambientcss has no built-in dark mode, and there is no separate "dark light
+   * source" concept. Dark is simply the same light, moved and dimmed, so the
+   * bevel reads as dark metal rather than lit white — a cooler hue and a much
+   * weaker fill so the shadow side does not wash out.
+   */
+  --amb-key-light-intensity: 0.55;
+  --amb-fill-light-intensity: 0.18;
+  --amb-light-hue: 220;
+  --amb-light-saturation: 8%;
 }
 
 html {
