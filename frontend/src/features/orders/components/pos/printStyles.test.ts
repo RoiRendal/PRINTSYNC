@@ -71,6 +71,41 @@ describe('the printed receipt is self-contained', () => {
     expect(declarations).toMatch(/#receipt-content\s*,\s*#receipt-content \*\s*\{[^}]*visibility:\s*visible/);
   });
 
+  it('un-crops the dialog so a long receipt is not cut off at one screenful', () => {
+    const declarations = printDeclarations();
+
+    /*
+     * The slip is rendered inside `Modal`, which caps its height and hides its
+     * overflow. Hiding the surrounding application is not enough on its own: the
+     * ancestors still clip, so the printer receives a fragment of the paper.
+     * Measured in Chromium with print media emulated, a 1095px receipt arrived as
+     * roughly 125px — the header and a sliver of the first line.
+     *
+     * Every property below was implicated in that crop. They are asserted
+     * individually because removing any one of them reintroduces a different
+     * failure, and the failures do not look alike.
+     */
+    expect(declarations).toMatch(/body \*\s*\{[^}]*overflow:\s*visible\s*!important/);
+    expect(declarations).toMatch(/body \*\s*\{[^}]*max-height:\s*none\s*!important/);
+
+    // A `backdrop-filter` on an ancestor makes it the containing block for the
+    // absolutely positioned slip, so `width: 100%` resolves to the dialog's width
+    // (446px, measured) rather than the page's. The slip prints narrow, and the
+    // text wraps differently from what the cashier saw on screen.
+    expect(declarations).toMatch(/body \*\s*\{[^}]*backdrop-filter:\s*none\s*!important/);
+
+    // Position matters for pagination, not just layout. While the slip sits inside
+    // a `position: fixed` root, that root contributes no height to the document,
+    // so the receipt renders as exactly one page however long it is — silently
+    // truncating everything past the first screenful. Measured: 1 page before,
+    // 2 pages for the same content after.
+    expect(declarations).toMatch(/body \*\s*\{[^}]*position:\s*static\s*!important/);
+
+    // ...which the slip must outrank, or it loses the absolute positioning that
+    // keeps it pinned to the top of the page.
+    expect(declarations).toMatch(/#receipt-content\s*\{[^}]*position:\s*absolute\s*!important/);
+  });
+
   it('forces black-on-white so a dark-theme screen prints readable paper', () => {
     const declarations = printDeclarations();
 
