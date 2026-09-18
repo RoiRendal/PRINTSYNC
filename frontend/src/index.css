@@ -156,6 +156,21 @@ html {
     background: transparent !important;
   }
 
+  /*
+   * Print the dividers as solid black rather than the app's hairline token.
+   *
+   * The global `* { border-color: var(--app-hairline) }` above is a light-mode
+   * grey — `#0000001f` on the light theme, and the *same* near-invisible value
+   * on the dark theme, where it was chosen to sit on a dark card. This slip is
+   * always white paper, so that token is the wrong colour for the one document
+   * that leaves the building. A cashier prints in whichever theme they happen to
+   * be using, so the receipt must not inherit it.
+   */
+  #receipt-content,
+  #receipt-content * {
+    border-color: #000 !important;
+  }
+
   @page {
     margin: 12mm;
   }
