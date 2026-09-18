@@ -119,6 +119,41 @@ class FakeQuery implements PromiseLike<FakeResult> {
     return this;
   }
 
+  /**
+   * Comparison filters.
+   *
+   * Recorded rather than evaluated: the fake returns whatever the test registered
+   * for the table, so these exist to let a query *shape* be asserted — a report
+   * built on the wrong date range is a bug the returned rows cannot reveal.
+   * `gte`/`lte` were missing until the analytics fallback needed them, which
+   * surfaced as `supabase.from(...).gte is not a function` rather than a wrong
+   * number, since the fake returns raw configured rows.
+   */
+  gte(column: string, value: unknown): this {
+    this.call.filters.push({ method: 'gte', args: [column, value] });
+    return this;
+  }
+
+  lte(column: string, value: unknown): this {
+    this.call.filters.push({ method: 'lte', args: [column, value] });
+    return this;
+  }
+
+  gt(column: string, value: unknown): this {
+    this.call.filters.push({ method: 'gt', args: [column, value] });
+    return this;
+  }
+
+  lt(column: string, value: unknown): this {
+    this.call.filters.push({ method: 'lt', args: [column, value] });
+    return this;
+  }
+
+  neq(column: string, value: unknown): this {
+    this.call.filters.push({ method: 'neq', args: [column, value] });
+    return this;
+  }
+
   in(column: string, values: readonly unknown[]): this {
     this.call.filters.push({ method: 'in', args: [column, [...values]] });
     return this;
