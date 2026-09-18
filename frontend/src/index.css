@@ -136,8 +136,52 @@ html {
     visibility: visible;
   }
 
+  /*
+   * Un-crop the dialog the slip is printed from.
+   *
+   * `PrintableDocumentView` is rendered inside `Modal`, which is a clipped,
+   * height-capped, blurred box. Measured in Chromium with print media emulated,
+   * a 1095px receipt was reaching the printer as roughly 125px of itself — the
+   * header and a sliver of the first line item. Three ancestors were cutting it:
+   * the dialog body (`overflow-y-auto`), the dialog panel
+   * (`max-h-[calc(100vh-2rem)]` + `overflow-hidden`) and the dialog root
+   * (`overflow-y-auto`).
+   *
+   * The panel also carries a `backdrop-filter`, which makes it the containing
+   * block for the absolutely positioned slip below. That is why the slip printed
+   * 446px wide — the width of the dialog — instead of the page: `width: 100%`
+   * was resolving against the panel, not the paper.
+   *
+   * Every one of these is a property that should never survive into print, so
+   * they are cleared wholesale rather than by naming the dialog's classes. That
+   * matters: the classes are being restyled, and a fix bound to `.glass-modal`
+   * would silently stop applying. Nothing clips on paper, and nothing needs to
+   * be a containing block, so clearing `body *` is both safe and durable.
+   *
+   * `position` is cleared too, so the hidden chrome stops being a positioned
+   * ancestor and the slip's containing block becomes the page itself. Without
+   * this the slip stays inside a `position: fixed` root, which contributes no
+   * height to the document: the receipt rendered as a single page regardless of
+   * how long it was, truncating everything past the first screenful.
+   *
+   * Only the unprefixed `backdrop-filter` is written here. Declaring the
+   * `-webkit-` form as well makes Lightning CSS collapse the pair and keep the
+   * prefixed one, which silently drops the reset in every engine that reads the
+   * standard property — measured, the ancestor still computed `blur(12px)`.
+   */
+  body * {
+    overflow: visible !important;
+    max-height: none !important;
+    backdrop-filter: none !important;
+    will-change: auto !important;
+    transform: none !important;
+    filter: none !important;
+    position: static !important;
+  }
+
   #receipt-content {
-    position: absolute;
+    /* Must outrank the `position: static` reset above, which is `!important`. */
+    position: absolute !important;
     top: 0;
     left: 0;
     width: 100%;
