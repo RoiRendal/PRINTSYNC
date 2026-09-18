@@ -12,7 +12,7 @@
  *      the runner exposes globals, and this project imports `describe`/`it`
  *      explicitly from `vitest` instead — so without this, a component rendered
  *      by one test stays mounted and is found by the next one's queries.
- *   3. Give jsdom the `matchMedia` the animation library asks for.
+ *   3. Give jsdom the `matchMedia` the theme provider asks for.
  */
 
 import '@testing-library/jest-dom/vitest';
@@ -24,14 +24,19 @@ afterEach(() => {
 });
 
 /*
- * jsdom implements no `matchMedia` at all, and `motion/react` calls it while
- * resolving `prefers-reduced-motion`. Without a stub, merely importing a
- * component that animates throws before a test can assert anything about it.
+ * jsdom implements no `matchMedia` at all.
+ *
+ * This stub originally existed for `motion/react`, which called `matchMedia`
+ * while resolving `prefers-reduced-motion`. The animation library has since
+ * been removed — but the stub is **still required**, and deleting it alongside
+ * the library would be a mistake: `ThemeProvider` calls
+ * `window.matchMedia('(prefers-color-scheme: dark)')` to resolve the `system`
+ * theme, and it would throw in jsdom without this.
  *
  * Reports "no preference" — what a browser with the setting untouched reports —
  * so components are exercised in their default presentation rather than an
- * accessibility variant. A test that wants the reduced-motion path can override
- * `matches` itself.
+ * accessibility variant. A test that wants the reduced-motion or dark-mode path
+ * can override `matches` itself.
  */
 if (typeof window !== 'undefined' && typeof window.matchMedia !== 'function') {
   window.matchMedia = ((query: string) => ({

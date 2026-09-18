@@ -131,8 +131,16 @@ export function OrdersTable({
                               write looks like nothing is happening.
                             */}
                             {isPending && (
-                              <span role="status" aria-label="Saving phase change" className="inline-flex">
+                              <span role="status" className="inline-flex">
                                 <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                                {/*
+                                  A live region announces its *text*; an `aria-label`
+                                  alone is not dependable across screen readers. The
+                                  spinner is also stopped outright under
+                                  `prefers-reduced-motion`, so this text is the only
+                                  signal that survives for those users.
+                                */}
+                                <span className="sr-only">Saving…</span>
                               </span>
                             )}
                           </div>

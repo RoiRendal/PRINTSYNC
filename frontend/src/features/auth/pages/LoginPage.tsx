@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, GlassCard, Input } from '../../../shared/components/ui';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -29,12 +28,7 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(90,200,250,0.28),transparent_26rem),radial-gradient(circle_at_84%_24%,rgba(175,82,222,0.18),transparent_28rem),radial-gradient(circle_at_50%_90%,rgba(0,122,255,0.14),transparent_34rem)]" />
       <div className="pointer-events-none absolute left-1/2 top-10 h-28 w-[34rem] -translate-x-1/2 rounded-full bg-white/35 blur-3xl dark:bg-white/5" />
 
-      <motion.section
-        className="relative w-full max-w-md"
-        initial={{ opacity: 0, y: 22, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-      >
+      <section className="relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-white/55 bg-white/70 shadow-[var(--shadow-glass)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/10">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
@@ -95,7 +89,7 @@ export default function LoginPage() {
             </Button>
           </form>
         </GlassCard>
-      </motion.section>
+      </section>
     </main>
   );
 }

@@ -55,6 +55,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         disabled={disabled || isLoading}
+        /*
+         * Announced so a loading button is distinguishable from a merely
+         * disabled one. The label is deliberately kept (below) rather than
+         * swapped for the spinner alone: `prefers-reduced-motion` stops the
+         * spin, and the text is then the only signal that work is in flight.
+         */
+        aria-busy={isLoading}
         className={cn(
           'inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold tracking-tight transition-all duration-200 ease-out',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue/55 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950',

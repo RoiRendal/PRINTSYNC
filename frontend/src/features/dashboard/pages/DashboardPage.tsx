@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Badge,
@@ -193,11 +192,9 @@ export default function Dashboard() {
                     <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-black/5 shadow-inner dark:bg-white/10">
-                    <motion.div
+                    <div
                       className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-gradient-to-r from-macos-blue to-macos-cyan')}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stockPercent}%` }}
-                      transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+                      style={{ width: `${stockPercent}%` }}
                     />
                   </div>
                 </div>

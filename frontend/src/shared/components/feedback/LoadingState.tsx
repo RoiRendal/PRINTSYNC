@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { LoaderCircle } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
@@ -7,17 +6,28 @@ interface LoadingStateProps {
   className?: string;
 }
 
+/**
+ * The app's only "something is happening" affordance.
+ *
+ * Accessibility note — this is deliberate, not incidental. The
+ * `prefers-reduced-motion` block in `index.css` sets every animation duration to
+ * 0.01ms, which stops `animate-spin` dead. For those users the rotating icon
+ * conveys nothing, so the visible `label` is the actual loading signal, and
+ * `role="status"` announces it. **Do not make the label decorative or hide it
+ * behind an icon-only variant** — that would leave reduced-motion users with no
+ * indication that the app is working.
+ *
+ * Every call site passes a specific label ("Loading orders", "Loading audit
+ * logs", …) rather than the default, so the announcement is meaningful.
+ */
 export function LoadingState({ label = 'Loading', className = '' }: LoadingStateProps) {
   return (
-    <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}>
+    <div
+      role="status"
+      className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}
+    >
       <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-white/55 bg-white/60 shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.1, ease: 'linear', repeat: Infinity }}
-          className="text-macos-blue dark:text-macos-cyan"
-        >
-          <LoaderCircle className="h-5 w-5" aria-hidden="true" />
-        </motion.div>
+        <LoaderCircle className="h-5 w-5 animate-spin text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
       </div>
       <span className="text-[10px] font-bold uppercase tracking-[0.24em]">{label}</span>
     </div>

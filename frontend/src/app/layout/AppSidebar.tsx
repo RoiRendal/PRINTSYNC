@@ -1,22 +1,26 @@
 import { NavLink } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
 
-export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
+/**
+ * Navigation rail.
+ *
+ * Always full width — the collapse control was removed deliberately, so there is
+ * no collapsed state to render. Visibility is the caller's concern: `AppLayout`
+ * hides this below `lg` unless the mobile drawer is open, which is why the width
+ * is fixed rather than animated.
+ */
+export const Sidebar = ({ className, onNavigate }: { className?: string; onNavigate?: () => void }) => {
   const { currentUser } = useAuth();
   const visibleItems = currentUser
     ? NAV_ITEMS.filter((item) => currentUser.access.includes(item.key))
     : [];
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: isCollapsed ? 0 : 196 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+    <aside
       className={cn(
-        'glass-panel flex shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
+        'glass-panel flex w-[196px] shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
         'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}
@@ -40,15 +44,9 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <motion.span
-                      layoutId="sidebar-active-pill"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    />
+                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]" />
                   )}
-                  <motion.span
-                    whileTap={{ scale: 0.96 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  <span
                     className={cn(
                       'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
                       isActive
@@ -57,7 +55,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                     )}
                   >
                     <item.icon className="h-4 w-4" />
-                  </motion.span>
+                  </span>
                   <span className="relative z-10 truncate whitespace-nowrap">
                     {item.label}
                   </span>
@@ -70,6 +68,6 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
           ))}
         </nav>
       </div>
-    </motion.aside>
+    </aside>
   );
 };

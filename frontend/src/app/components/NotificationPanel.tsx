@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Bell, Box, PackageSearch, X, CheckCheck, Trash2 } from 'lucide-react';
 import { useNotifications, type Notification } from '../providers/NotificationProvider';
 import { cn } from '../../shared/lib/cn';
@@ -26,6 +25,11 @@ function NotificationIcon({ type }: { type: Notification['type'] }) {
   }
 }
 
+/**
+ * Rendered conditionally by `AppLayout` rather than being animated in and out.
+ * The per-row `layout` / height animation is gone too — rows now appear and
+ * disappear at their natural size.
+ */
 export const NotificationPanel = React.forwardRef<
   HTMLDivElement,
   { onClose: () => void }
@@ -40,12 +44,8 @@ export const NotificationPanel = React.forwardRef<
   } = useNotifications();
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: -8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -8, scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       className="glass-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl shadow-[var(--shadow-modal)] sm:w-96"
       onClick={(e) => e.stopPropagation()}
     >
@@ -99,81 +99,71 @@ export const NotificationPanel = React.forwardRef<
 
       {/* List */}
       <div className="max-h-80 overflow-y-auto scrollbar-hide">
-        <AnimatePresence initial={false}>
-          {notifications.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center"
+        {notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+            <Bell className="h-8 w-8 text-macos-text-muted/40 dark:text-zinc-600" aria-hidden="true" />
+            <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
+            <p className="text-[10px] text-macos-text-muted/70 dark:text-zinc-600">Alerts for stock and orders appear here.</p>
+          </div>
+        ) : (
+          notifications.map((notification) => (
+            <div
+              key={notification.id}
+              className={cn(
+                'group relative flex gap-3 border-b border-black/5 px-4 py-3 transition-colors last:border-b-0 dark:border-white/5',
+                notification.read ? 'bg-transparent' : 'bg-macos-blue/5 dark:bg-white/5'
+              )}
             >
-              <Bell className="h-8 w-8 text-macos-text-muted/40 dark:text-zinc-600" aria-hidden="true" />
-              <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
-              <p className="text-[10px] text-macos-text-muted/70 dark:text-zinc-600">Alerts for stock and orders appear here.</p>
-            </motion.div>
-          ) : (
-            notifications.map((notification) => (
-              <motion.div
-                key={notification.id}
-                layout
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+              <div
                 className={cn(
-                  'group relative flex gap-3 border-b border-black/5 px-4 py-3 transition-colors last:border-b-0 dark:border-white/5',
-                  notification.read ? 'bg-transparent' : 'bg-macos-blue/5 dark:bg-white/5'
+                  'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold',
+                  notification.type === 'stock'
+                    ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400'
+                    : notification.type === 'order'
+                      ? 'border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400'
+                      : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400'
                 )}
               >
-                <div
-                  className={cn(
-                    'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold',
-                    notification.type === 'stock'
-                      ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400'
-                      : notification.type === 'order'
-                        ? 'border-blue-200 bg-blue-50 text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400'
-                        : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-500/30 dark:bg-gray-500/10 dark:text-gray-400'
-                  )}
-                >
-                  <NotificationIcon type={notification.type} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted dark:text-zinc-500' : 'text-macos-text dark:text-zinc-100')}>
-                      {notification.title}
-                    </p>
-                    <span className="shrink-0 text-[10px] text-macos-text-muted/70 dark:text-zinc-600">
-                      {formatTimeAgo(notification.createdAt)}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
-                    {notification.message}
+                <NotificationIcon type={notification.type} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted dark:text-zinc-500' : 'text-macos-text dark:text-zinc-100')}>
+                    {notification.title}
                   </p>
+                  <span className="shrink-0 text-[10px] text-macos-text-muted/70 dark:text-zinc-600">
+                    {formatTimeAgo(notification.createdAt)}
+                  </span>
                 </div>
-                <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  {!notification.read && (
-                    <button
-                      type="button"
-                      onClick={() => markAsRead(notification.id)}
-                      title="Mark as read"
-                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-zinc-100"
-                    >
-                      <CheckCheck className="h-3 w-3" aria-hidden="true" />
-                    </button>
-                  )}
+                <p className="mt-0.5 text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                  {notification.message}
+                </p>
+              </div>
+              <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                {!notification.read && (
                   <button
                     type="button"
-                    onClick={() => dismissNotification(notification.id)}
-                    title="Dismiss"
-                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-red-300"
+                    onClick={() => markAsRead(notification.id)}
+                    title="Mark as read"
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-zinc-100"
                   >
-                    <X className="h-3 w-3" aria-hidden="true" />
+                    <CheckCheck className="h-3 w-3" aria-hidden="true" />
                   </button>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </AnimatePresence>
+                )}
+                <button
+                  type="button"
+                  onClick={() => dismissNotification(notification.id)}
+                  title="Dismiss"
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-red-300"
+                >
+                  <X className="h-3 w-3" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
-    </motion.div>
+    </div>
   );
 });
 
