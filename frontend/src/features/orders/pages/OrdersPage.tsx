@@ -147,7 +147,7 @@ export default function Orders() {
                 className={cn(
                   'mat-focus cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] transition-colors',
                   isActive
-                    ? 'mat-sunk bg-macos-blue text-white'
+                    ? 'mat-selected-segment bg-segment-grey text-white'
                     : 'surface-well ambient amb-elevation-0 mat-press text-macos-text-muted hover:bg-[var(--app-chrome)] hover:text-macos-text dark:hover:text-zinc-200',
                 )}
                 aria-pressed={isActive}

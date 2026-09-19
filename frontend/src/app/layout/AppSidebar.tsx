@@ -37,6 +37,14 @@ export const Sidebar = ({ className, onNavigate }: { className?: string; onNavig
                * that lights up — the same `.mat-sunk` idiom the segmented
                * controls use, so "you are here" reads the same way everywhere.
                *
+               * It keeps `bg-macos-blue` where the segmented pills moved to
+               * `bg-segment-*` (task #41), and the asymmetry is deliberate. It
+               * is not the same surface: the sidebar is `.surface-panel`, so the
+               * row sits on `--app-surface-raised`, and there `#555558` with a
+               * white label measures 7.43:1 — it was never broken. The pills
+               * sit on the darker `surface-segmented` track instead, which is
+               * what made a light, saturated fill fail against it.
+               *
                * The material has to sit on the `NavLink` itself rather than on
                * a child. The previous version put a full-bleed gradient span at
                * `inset-0` behind the label and gave it a blue glow, but this

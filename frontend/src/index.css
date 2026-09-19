@@ -111,6 +111,68 @@
   --color-macos-red-deep: #d32f2f;
   --color-macos-red-deep-hover: #d02b2b;
 
+  /*
+   * Selected-segment fills (task #41).
+   *
+   * The segmented control's selected pill is the one control whose fill and
+   * whose label are both ours, and it had never been measured. It failed:
+   *
+   *   fill            white label    fill vs light track
+   *   #34c759 green       2.22:1     1.82:1
+   *   #ff9500 orange      2.20:1     1.80:1
+   *   #af52de purple      4.13:1     3.38:1
+   *   #ff3b30 red         3.55:1     2.90:1
+   *
+   * Three of the four also failed as *shapes*: the fill has to hold 3:1 against
+   * the track it sits on, and a light, saturated fill cannot. The label is the
+   * worse half — 2.20:1 is barely visible.
+   *
+   * Why one deep fill per colour, for both themes, with the label staying
+   * white. The alternative — a bright fill carrying dark ink — was measured and
+   * rejected, and the reason is geometric rather than aesthetic. A single fill
+   * shared by both themes has to sit in a luminance band that satisfies the
+   * label AND both tracks at once:
+   *
+   *   with white ink   L between 0.1533 and 0.1833   (slack 0.030)
+   *   with dark ink    L between 0.2307 and 0.2366   (slack 0.006)
+   *
+   * Dark ink squeezes the fill into a 2.5%-wide window. It is why green and
+   * orange could not be made to pass at all on the dark track, and why every
+   * dark-ink candidate ended up as mud. White ink has real headroom, so the
+   * pills stay deep and keep the white label they already had.
+   *
+   * Each fill is a darker shade of the *same hue* the app already used, so the
+   * control still reads as green/orange/purple/red rather than as four greys:
+   *
+   *   fill            white label   vs light track   vs dark track
+   *   #1f7a3d green       5.37:1     4.40:1     2.88:1
+   *   #a8551a orange      5.28:1     4.32:1     2.94:1
+   *   #8a3fb5 purple      6.07:1     4.97:1     2.55:1
+   *   #c62f2a red         5.47:1     4.48:1     2.83:1
+   *
+   * Every label now clears AA with margin. The one number still short of its
+   * floor is the last column: dark mode's *track* is #242426, which is lighter
+   * than the page (#1c1c1e), so a deep fill cannot separate from it by fill
+   * contrast alone. The bevel does not help — `--mat-press-shadow` is black
+   * *inset*, so it darkens the pill toward the track rather than away from it.
+   *
+   * Dark mode therefore gets a hairline outline instead, below. That is the
+   * boundary WCAG 1.4.11 asks for, and it is what macOS draws on a selected
+   * segmented item. It is scoped to dark: in light mode the fill already clears
+   * 4.32-4.97:1 unaided, and a light ring would be invisible on #e8e8ed.
+   */
+  --color-segment-green: #1f7a3d;
+  --color-segment-orange: #a8551a;
+  --color-segment-purple: #8a3fb5;
+  --color-segment-red: #c62f2a;
+  --color-segment-grey: #555558;
+  /* The dark-mode hairline: 15.49:1 against the track, and 5.3-7.4:1 against
+     every fill above, so it is visible as a boundary in both directions.
+     Light mode needs none — the fill separates on its own — so the default is
+     transparent and `.dark` swaps in the real value. */
+  --segment-ring-dark: rgb(255 255 255 / 0.42);
+  --segment-ring: transparent;
+
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
   --radius-modal: 1rem;
@@ -246,6 +308,23 @@
   --app-inset-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
   --shadow-elevated: 0 18px 50px rgb(0 0 0 / 0.55);
   --mat-press-shadow: inset 0 2px 5px rgb(0 0 0 / 0.6), inset 0 1px 2px rgb(0 0 0 / 0.45);
+
+  /*
+   * The selected segment's hairline, dark mode only (task #41).
+   *
+   * Dark mode's chrome is *lighter* than its page — #242426 against #1c1c1e —
+   * so the pill sits on the brightest surface of the three and cannot separate
+   * from it by fill contrast: every deep fill measured 2.55-2.94:1 against the
+   * track, under the 3:1 floor. The light source is inverted here too, so the
+   * inset bevel only darkens the pill toward the track.
+   *
+   * A hairline drawn on the *outside* of the pill is the boundary 1.4.11 asks
+   * for. 42% white over #242426 composites to #717172 — 3.18:1 against the
+   * track — and stays 5.3-7.4:1 against every fill, so it reads as a boundary
+   * from both sides. In light mode the fill already clears 4.32-4.97:1 unaided
+   * and a light ring would be invisible on #e8e8ed, so it is scoped to `.dark`.
+   */
+  --segment-ring: var(--segment-ring-dark);
 
   /*
    * ambientcss has no built-in dark mode, and there is no separate "dark light
@@ -689,6 +768,34 @@ html {
  */
 .mat-sunk {
   box-shadow: var(--mat-press-shadow);
+}
+
+/*
+ * The selected segment (task #41).
+ *
+ * `.mat-sunk` puts the pill into the track. This adds the one thing a sunk pill
+ * needs in dark mode and must never have in light mode: a hairline boundary,
+ * because dark mode's track (#242426) is lighter than its page (#1c1c1e) and a
+ * deep fill cannot clear 3:1 against it. `--segment-ring` is `transparent` in
+ * light and 42% white in `.dark`, so the light theme's appearance is unchanged
+ * apart from the fill token itself.
+ *
+ * The hairline is appended to the same `box-shadow` list rather than set
+ * separately, and that is load-bearing twice over:
+ *
+ *   - `.mat-sunk` sets `box-shadow` alone, so a second declaration here would
+ *     *replace* the bevel instead of adding to it.
+ *   - Tailwind's `ring-*` and `border-*` utilities cannot be used. `ring-*` is
+ *     also `box-shadow` and would collide with `.mat-sunk`; a `border` would
+ *     change the element's box and make the pill 2px taller than its unselected
+ *     neighbours, which visibly shifts the row.
+ *
+ * It must stay unlayered, for the reason every `.mat-*` rule here must: inside
+ * `@layer utilities` it would lose to `.ambient`, which is unlayered, and be
+ * silently dead.
+ */
+.mat-selected-segment {
+  box-shadow: var(--mat-press-shadow), 0 0 0 1px var(--segment-ring);
 }
 
 /*

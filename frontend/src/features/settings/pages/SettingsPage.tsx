@@ -325,7 +325,7 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('mat-focus h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors', theme === item ? 'mat-sunk bg-macos-blue text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
+                className={cn('mat-focus h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors', theme === item ? 'mat-selected-segment bg-segment-grey text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
                 aria-pressed={theme === item}
               >
                 {item}

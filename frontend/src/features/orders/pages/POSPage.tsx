@@ -780,7 +780,7 @@ export default function POS() {
             className={cn(
               'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
               posMode === 'retail'
-                ? 'mat-sunk bg-macos-blue text-white'
+                ? 'mat-selected-segment bg-segment-grey text-white'
                 : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100',
             )}
           >
@@ -795,7 +795,7 @@ export default function POS() {
             className={cn(
               'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
               posMode === 'custom'
-                ? 'mat-sunk bg-macos-purple text-white'
+                ? 'mat-selected-segment bg-segment-purple text-white'
                 : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100',
             )}
           >
