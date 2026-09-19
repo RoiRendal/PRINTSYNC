@@ -76,7 +76,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               className={cn(
                 'ambient mat-press mat-focus flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors',
                 page === p
-                  ? 'amb-elevation-1 border-macos-blue/30 bg-macos-blue text-white dark:border-macos-blue-dark/25 dark:bg-macos-blue-dark'
+                  ? 'amb-elevation-1 border-macos-blue/30 bg-macos-blue text-white dark:border-macos-blue-dark/25 dark:bg-macos-blue-dark dark:text-on-macos-blue-dark'
                   : 'amb-elevation-0 border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text hover:border-macos-blue/30 hover:bg-[var(--app-chrome)] dark:text-zinc-200 dark:hover:border-macos-blue-dark/25',
               )}
             >

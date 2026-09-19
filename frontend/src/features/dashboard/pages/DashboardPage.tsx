@@ -81,7 +81,7 @@ const statToneClasses: Record<StatTone, string> = {
  *     gesture the redesign removes: a key sinks inward, it does not get smaller.
  */
 const ctaClasses =
-  'ambient amb-elevation-1 mat-press mat-focus inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-colors duration-200 hover:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue';
+  'ambient amb-elevation-1 mat-press mat-focus inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-colors duration-200 hover:bg-macos-blue-hover active:bg-macos-blue-hover dark:bg-macos-blue-dark dark:text-on-macos-blue-dark dark:hover:bg-macos-blue-dark-hover dark:active:bg-macos-blue-dark-hover';
 
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
   return (

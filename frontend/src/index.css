@@ -41,6 +41,71 @@
    */
   --color-macos-text-muted: #555558;
 
+  /*
+   * The primary button's fill on hover, and the label that sits on its
+   * dark-mode fill. Plus a deeper red for the danger button.
+   *
+   * Why these exist, measured rather than argued. The primary recipe swapped
+   * between two greys and kept `text-white` on both:
+   *
+   *   bg-macos-blue      #555558   white on it = 7.43:1  (passes)
+   *   bg-macos-blue-dark #8e8e93   white on it = 3.26:1  (fails AA, 4.5:1)
+   *
+   * Because the same two greys are reused as the *hover* fill in the other
+   * theme, the defect was never a dark-mode-only problem — light-mode hover
+   * landed on #8e8e93 too, so it failed identically. Five of the six states
+   * failed at least one of the two thresholds: three on the label, and four on
+   * the fill against the page (2.99:1 in light, 2.29:1 in dark — the button
+   * very nearly disappeared on hover in dark).
+   *
+   * The fix is one rule: **hover moves the fill further away from the page.**
+   * Darker in light, lighter in dark, which keeps each theme's label working
+   * and raises the fill-vs-page contrast instead of lowering it.
+   *
+   *   light  rest  #555558 + white       7.43:1   (fill on page 6.82:1)
+   *   light  hover #3a3a3c + white      11.35:1   (fill on page 10.42:1)
+   *   dark   rest  #8e8e93 + #1d1d1f     5.16:1   (fill on page 5.22:1)
+   *   dark   hover #aeaeb2 + #1d1d1f     7.61:1   (fill on page 7.69:1)
+   *
+   * Every figure here is read back from Chromium against the built stylesheet,
+   * not derived on paper.
+   *
+   * The dark label is a *light-mode-looking* near-black on purpose: the dark
+   * button's fill is a light grey, so its ink has to be dark. That is an
+   * inverted primary button, which is the ordinary way a dark UI does this.
+   *
+   * `--color-macos-blue-dark` itself is unchanged at #8e8e93 — it has other
+   * consumers that were never broken.
+   *
+   * The danger variant gets the same treatment for the same reason: white on
+   * #ff3b30 is 3.55:1 and on its #fb2c36 hover 3.81:1, so both failed in both
+   * themes. Only the `active` red passed. The label stays white — dark ink on a
+   * saturated red is worse, not better — so the fills move instead.
+   *
+   * Red is awkward to place, and the first attempt got it wrong: I deepened the
+   * hover to #b91c1c, which measures 2.63:1 against the dark page and stepped
+   * straight out of the 3:1 non-text floor. Red has a narrow usable window —
+   * white needs the fill below luminance ~0.18, and the fill needs to stay above
+   * ~0.14 or it stops separating from #1c1c1e. Both values below were picked
+   * from a measured sweep of candidates rather than by arithmetic.
+   *
+   *   rest  #d32f2f   white 4.98:1   light page 4.57:1   dark page 3.42:1
+   *   hover #d02b2b   white 5.17:1   light page 4.75:1   dark page 3.29:1
+   *
+   * The hover step is deliberately small. Inside a window that narrow there is
+   * no room for a large shift that keeps every threshold, and for an
+   * accessibility fix a margin that survives the next token tweak is worth more
+   * than a more theatrical hover. `.mat-press` still carries the active state.
+   *
+   * `--color-macos-red` itself is unchanged at #ff3b30 — it has other consumers
+   * (badges, the low-stock bar, the alert text) that were never the problem.
+   */
+  --color-macos-blue-hover: #3a3a3c;
+  --color-macos-blue-dark-hover: #aeaeb2;
+  --color-on-macos-blue-dark: #1d1d1f;
+  --color-macos-red-deep: #d32f2f;
+  --color-macos-red-deep-hover: #d02b2b;
+
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
   --radius-modal: 1rem;

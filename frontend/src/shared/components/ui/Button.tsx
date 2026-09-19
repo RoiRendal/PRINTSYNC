@@ -46,14 +46,41 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   - `active:scale-[0.98]` is replaced by `.mat-press`, which sinks the surface
  *     inward instead of shrinking it. Nothing moves.
  */
+/*
+ * Phase 6b: the two filled variants were repainted for contrast.
+ *
+ * The recipe used to keep `text-white` while swapping between two greys:
+ * `bg-macos-blue` (#555558, white on it 7.43:1) and `bg-macos-blue-dark`
+ * (#8e8e93, white on it **3.26:1**). Since the same two greys were reused as
+ * the *hover* fill in the opposite theme, this was never only a dark-mode
+ * problem — light-mode hover failed identically. Measured across all six
+ * states, five failed the 4.5:1 label floor, and both hover fills also failed
+ * the 3:1 non-text floor against their own page (2.99:1 light, 2.29:1 dark —
+ * the button very nearly vanished on hover in dark).
+ *
+ * The rule now is that **hover moves the fill further from the page**: darker
+ * in light, lighter in dark. That keeps each theme's label legible and raises
+ * the fill-vs-page contrast rather than lowering it. The dark fill keeps
+ * `--color-macos-blue-dark` and takes a near-black label, which is the ordinary
+ * inverted-primary pattern for a dark UI.
+ *
+ * `danger` is here for the same reason, not as scope creep: white on #ff3b30 is
+ * 3.55:1 and on its #fb2c36 hover 3.81:1, so it failed in both themes too. Only
+ * its `active` red passed. Fills move one step deeper; the label stays white,
+ * because dark ink on a saturated red is worse, not better.
+ *
+ * `secondary` and `ghost` are untouched. Both already measure 12.7–16.8:1 on
+ * the label, which is the threshold that was broken.
+ */
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'ambient amb-elevation-1 mat-press bg-macos-blue text-white hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
+    'ambient amb-elevation-1 mat-press bg-macos-blue text-white hover:bg-macos-blue-hover active:bg-macos-blue-hover dark:bg-macos-blue-dark dark:text-on-macos-blue-dark dark:hover:bg-macos-blue-dark-hover dark:active:bg-macos-blue-dark-hover',
   secondary:
     'ambient amb-elevation-0 mat-press border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text hover:bg-[var(--app-chrome)] dark:text-zinc-100',
   ghost:
     'bg-transparent text-gray-700 hover:bg-black/5 active:bg-black/10 dark:text-zinc-200 dark:hover:bg-white/10 dark:active:bg-white/15',
-  danger: 'ambient amb-elevation-1 mat-press bg-macos-red text-white hover:bg-red-500 active:bg-red-600',
+  danger:
+    'ambient amb-elevation-1 mat-press bg-macos-red-deep text-white hover:bg-macos-red-deep-hover active:bg-macos-red-deep-hover',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
