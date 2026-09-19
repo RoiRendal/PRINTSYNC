@@ -75,7 +75,7 @@ export function POSCart({
               which is both untrue now and useless to a cashier. It says what the
               panel is *for* instead.
             */}
-            <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">
+            <p className="mt-1 text-[11px] text-macos-text-muted">
               {posMode === 'retail' ? 'Review and settle this sale' : 'Review and submit this order'}
             </p>
           </div>
@@ -121,7 +121,7 @@ export function POSCart({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <span className="truncate text-[10px] font-bold uppercase leading-tight text-macos-text dark:text-zinc-100">{item.name}</span>
-                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted transition-colors hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
+                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted transition-colors hover:text-macos-red dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>
@@ -150,17 +150,17 @@ export function POSCart({
 
       <div className="space-y-3 border-t border-[var(--app-hairline)] bg-[var(--app-chrome)] p-4">
         <div className="space-y-1.5">
-          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
-          <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">
+          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
+          <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted">
             <span className="shrink-0 font-bold">DISCOUNT ({currencySymbol})</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right font-mono text-[10px]" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
           </div>
-          {appliedDiscount > 0 && <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">AFTER DISCOUNT</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
-          <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">
+          {appliedDiscount > 0 && <div className="flex justify-between text-[10px] font-mono text-macos-text-muted"><span className="font-bold">AFTER DISCOUNT</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
+          <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted">
             <span className="shrink-0 font-bold">VAT RATE (%)</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right font-mono text-[10px]" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
           </div>
-          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
+          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
           <div className="mt-2 flex justify-between border-t border-black/5 pt-3 text-xl font-bold tracking-tight text-macos-text dark:border-white/10 dark:text-zinc-100">
             <span>{posMode === 'retail' ? 'TOTAL' : 'ORDER VAL'}</span>
             <span className={cn('font-mono', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-purple dark:text-purple-300')}>{currencySymbol}{total.toFixed(2)}</span>

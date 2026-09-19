@@ -52,7 +52,7 @@ export const NotificationPanel = React.forwardRef<
       {/* Header */}
       <div className="flex items-center justify-between border-b border-black/5 px-4 py-3 dark:border-white/10">
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <Bell className="h-4 w-4 text-macos-text-muted" aria-hidden="true" />
           <h3 className="text-sm font-bold text-macos-text dark:text-zinc-100">Notifications</h3>
           {unreadCount > 0 && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-macos-red px-1.5 text-[10px] font-bold text-white">
@@ -101,9 +101,9 @@ export const NotificationPanel = React.forwardRef<
       <div className="max-h-80 overflow-y-auto scrollbar-hide">
         {notifications.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
-            <Bell className="h-8 w-8 text-macos-text-muted/40 dark:text-zinc-600" aria-hidden="true" />
-            <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
-            <p className="text-[10px] text-macos-text-muted/70 dark:text-zinc-600">Alerts for stock and orders appear here.</p>
+            <Bell className="h-8 w-8 text-macos-text-muted/40" aria-hidden="true" />
+            <p className="text-xs font-semibold text-macos-text-muted">No notifications yet</p>
+            <p className="text-[10px] text-macos-text-muted/70 dark:text-zinc-400">Alerts for stock and orders appear here.</p>
           </div>
         ) : (
           notifications.map((notification) => (
@@ -128,10 +128,10 @@ export const NotificationPanel = React.forwardRef<
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
-                  <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted dark:text-zinc-500' : 'text-macos-text dark:text-zinc-100')}>
+                  <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted' : 'text-macos-text dark:text-zinc-100')}>
                     {notification.title}
                   </p>
-                  <span className="shrink-0 text-[10px] text-macos-text-muted/70 dark:text-zinc-600">
+                  <span className="shrink-0 text-[10px] text-macos-text-muted/70 dark:text-zinc-400">
                     {formatTimeAgo(notification.createdAt)}
                   </span>
                 </div>
@@ -145,7 +145,7 @@ export const NotificationPanel = React.forwardRef<
                     type="button"
                     onClick={() => markAsRead(notification.id)}
                     title="Mark as read"
-                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:hover:bg-white/10 dark:hover:text-zinc-100"
                   >
                     <CheckCheck className="h-3 w-3" aria-hidden="true" />
                   </button>
@@ -154,7 +154,7 @@ export const NotificationPanel = React.forwardRef<
                   type="button"
                   onClick={() => dismissNotification(notification.id)}
                   title="Dismiss"
-                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:text-zinc-500 dark:hover:bg-white/10 dark:hover:text-red-300"
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:hover:bg-white/10 dark:hover:text-red-300"
                 >
                   <X className="h-3 w-3" aria-hidden="true" />
                 </button>

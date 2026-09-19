@@ -26,7 +26,7 @@ export function POSDesignSelectorModal({ isOpen, designs, onSelect, onClose }: P
               </div>
               <div className="p-2">
                 <p className="truncate text-[10px] font-bold uppercase text-macos-text dark:text-zinc-100">{design.name}</p>
-                <p className="text-[8px] uppercase tracking-widest text-macos-text-muted dark:text-zinc-500">{design.category}</p>
+                <p className="text-[8px] uppercase tracking-widest text-macos-text-muted">{design.category}</p>
               </div>
             </button>
           ))}

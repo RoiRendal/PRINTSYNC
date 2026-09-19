@@ -157,7 +157,7 @@ export default function Orders() {
           })}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <Calendar className="h-3.5 w-3.5 text-macos-text-muted" aria-hidden="true" />
           <Input
             type="date"
             value={dateFrom}
@@ -165,7 +165,7 @@ export default function Orders() {
             className="h-8 w-auto text-[10px]"
             placeholder="From"
           />
-          <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">to</span>
+          <span className="text-[10px] text-macos-text-muted">to</span>
           <Input
             type="date"
             value={dateTo}

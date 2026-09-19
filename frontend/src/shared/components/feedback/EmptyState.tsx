@@ -18,7 +18,7 @@ export function EmptyState({
   className = '',
 }: EmptyStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center gap-3 text-center text-macos-text-muted dark:text-zinc-500', className)}>
+    <div className={cn('flex flex-col items-center justify-center gap-3 text-center text-macos-text-muted', className)}>
       <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
         {icon}
       </div>

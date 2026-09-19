@@ -140,7 +140,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <h1 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white">
                 {businessDisplayName}
               </h1>
-              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500 sm:block">
+              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted sm:block">
                 {APP_NAME} Workspace
               </p>
             </div>
@@ -209,7 +209,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
                     {currentUser?.name ?? 'Admin'}
                   </p>
-                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
+                  <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted">
                     {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                   </p>
                 </div>

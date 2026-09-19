@@ -24,7 +24,7 @@ export function LoadingState({ label = 'Loading', className = '' }: LoadingState
   return (
     <div
       role="status"
-      className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}
+      className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted', className)}
     >
       <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]">
         <LoaderCircle className="h-5 w-5 animate-spin text-macos-blue dark:text-macos-cyan" aria-hidden="true" />

@@ -180,7 +180,7 @@ export default function Settings() {
         <CardContent className="grid gap-6 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
             <label className="block space-y-1.5" htmlFor="company-display-name">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Company name</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Company name</span>
               <Input
                 id="company-display-name"
                 type="text"
@@ -253,7 +253,7 @@ export default function Settings() {
           <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
             <div className="space-y-5">
               <label className="block space-y-1.5" htmlFor="vat-rate">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Default VAT Rate (%)</span>
                 <Input
                   id="vat-rate"
                   type="number"
@@ -265,7 +265,7 @@ export default function Settings() {
                 />
               </label>
               <label className="block space-y-1.5" htmlFor="currency-symbol">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Currency Symbol</span>
                 <Select
                   id="currency-symbol"
                   value={currencyDraft}
@@ -288,7 +288,7 @@ export default function Settings() {
             </div>
 
             <GlassCard className="space-y-4 p-4">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">Current Defaults</h3>
               <div className="space-y-3 text-[10px]">
                 <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
                 <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
@@ -341,7 +341,7 @@ export default function Settings() {
               className="surface-well flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] p-3 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/30 hover:bg-[var(--app-chrome)] dark:hover:border-macos-blue-dark/25"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-[10px] text-macos-text-muted">CSV</span>
             </button>
             <button
               type="button"
@@ -349,7 +349,7 @@ export default function Settings() {
               className="surface-well flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] p-3 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/30 hover:bg-[var(--app-chrome)] dark:hover:border-macos-blue-dark/25"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-[10px] text-macos-text-muted">CSV</span>
             </button>
             <button
               type="button"
@@ -357,7 +357,7 @@ export default function Settings() {
               className="surface-well flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] p-3 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/30 hover:bg-[var(--app-chrome)] dark:hover:border-macos-blue-dark/25"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-[10px] text-macos-text-muted">CSV</span>
             </button>
           </CardContent>
         </Card>

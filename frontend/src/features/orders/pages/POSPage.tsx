@@ -801,7 +801,7 @@ export default function POS() {
               </span>
             </Button>
           )}
-          <div className="flex items-center gap-2 px-2 text-[9px] font-mono uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+          <div className="flex items-center gap-2 px-2 text-[9px] font-mono uppercase tracking-[0.2em] text-macos-text-muted">
             <Sparkles className="h-3 w-3 text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
             Terminal ID: AIS-POS-01
           </div>

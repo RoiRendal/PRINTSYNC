@@ -28,7 +28,17 @@
   --color-macos-bg: #f5f5f7;
   --color-macos-bg-dark: #1c1c1e;
   --color-macos-text: #1d1d1f;
-  /* Darkened from #86868b to improve light-mode readability while keeping a muted hierarchy. */
+  /*
+   * Darkened from #86868b to improve light-mode readability while keeping a
+   * muted hierarchy.
+   *
+   * The dark counterpart is declared in `.dark` below, which makes this token
+   * theme-aware: `text-macos-text-muted` is correct on its own in either theme,
+   * and call sites must not pair it with a `dark:text-*` override. They all did
+   * — 118 of them, every one reaching for zinc-500, which measures 3.52:1 on
+   * the dark page and 2.88:1 on a raised card and so failed AA everywhere it
+   * was used.
+   */
   --color-macos-text-muted: #555558;
 
   --radius-button: 0.5rem;
@@ -56,7 +66,6 @@
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
-  --app-text-muted: #555558;
   --app-hairline: rgb(0 0 0 / 0.12);
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
@@ -151,7 +160,26 @@
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
   --app-text: #f5f5f7;
-  --app-text-muted: #98989d;
+  /*
+   * The dark half of `--color-macos-text-muted`.
+   *
+   * That token is a Tailwind `@theme` entry, so its light value is emitted into
+   * `@layer theme`. This block is unlayered, which is what lets a plain
+   * `.dark { … }` override it with no specificity fight — the same mechanism
+   * the Phase 4 material layer relies on.
+   *
+   * It is declared rather than aliased to another custom property on purpose.
+   * An alias would be substituted once, on `:root`, and descendants would
+   * inherit the *already resolved* light value, so it would only be correct
+   * while `.dark` happens to sit on the root element.
+   *
+   * #a1a1aa is zinc-400 — the value 57 call sites had already hand-written as
+   * their dark muted tone. Measured in Chromium against the dark surfaces:
+   * 6.64:1 on the page (#1c1c1e), 5.44:1 on a raised card (#2c2c2e), 6.05:1 on
+   * chrome (#242426). All clear the 4.5:1 AA floor, where the #71717a it
+   * replaces measured 3.52:1 and 2.88:1 and failed it.
+   */
+  --color-macos-text-muted: #a1a1aa;
   --app-hairline: rgb(255 255 255 / 0.1);
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;

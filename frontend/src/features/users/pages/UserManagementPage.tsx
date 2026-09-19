@@ -230,7 +230,7 @@ export default function UserManagement() {
                 <CardDescription>{filteredUsers.length} matching users across administrators and staff.</CardDescription>
               </div>
               <div className="relative w-full md:max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
                 <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." />
               </div>
             </CardHeader>
@@ -263,7 +263,7 @@ export default function UserManagement() {
                         <TableCell className="font-mono text-[10px]">{user.phone}</TableCell>
                         <TableCell><Badge variant={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</Badge></TableCell>
                         <TableCell className="text-[10px] font-semibold uppercase text-macos-text dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell className="font-mono text-[10px] text-macos-text-muted">{user.createdAt}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1.5">
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
@@ -278,7 +278,7 @@ export default function UserManagement() {
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -309,7 +309,7 @@ export default function UserManagement() {
           </div>
 
           <GlassCard className="space-y-3 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted">
               {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

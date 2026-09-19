@@ -42,7 +42,7 @@ function printDocument(document: PrintableDocument) {
 
 function ImageFallback({ label }: { label: string }) {
   return (
-    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-black/10 bg-black/[0.03] text-macos-text-muted dark:border-white/10 dark:bg-white/5 dark:text-zinc-500">
+    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-black/10 bg-black/[0.03] text-macos-text-muted dark:border-white/10 dark:bg-white/5">
       <ImageIcon className="h-8 w-8 opacity-35" aria-hidden="true" />
       <p className="px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em]">{label}</p>
     </div>
@@ -155,16 +155,16 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
             <div>
               <Badge variant={getStatusBadgeVariant(order.status)} size="md" className="mb-2">{order.status}</Badge>
               <h3 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{order.customer}</h3>
-              <p className="font-mono text-xs text-macos-text-muted dark:text-zinc-500">#{order.id}</p>
+              <p className="font-mono text-xs text-macos-text-muted">#{order.id}</p>
             </div>
             <div className="flex flex-col gap-2 sm:text-right">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Order Date</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">Order Date</p>
                 <p className="text-sm font-bold text-macos-text dark:text-zinc-100">{order.date}</p>
               </div>
               {order.dueDate && (
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Due Date</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">Due Date</p>
                   <p className={cn(
                     'text-sm font-bold',
                     new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered'
@@ -181,12 +181,12 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
+                <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">
                   <ClipboardList className="h-3 w-3" aria-hidden="true" /> Job Specifications
                 </h4>
                 <Card variant="glass" padding="sm" className="divide-y divide-black/5 dark:divide-white/10">
                   <div className="flex items-start justify-between gap-4 py-2 text-xs">
-                    <span className="pt-1 text-macos-text-muted dark:text-zinc-500">Item</span>
+                    <span className="pt-1 text-macos-text-muted">Item</span>
                     <div className="space-y-1 text-right font-bold">
                       {selectedOrderLineItems.map((lineItem, index) => (
                         <button
@@ -204,25 +204,25 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                     </div>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="text-macos-text-muted dark:text-zinc-500">Quantity</span>
+                    <span className="text-macos-text-muted">Quantity</span>
                     <span className="font-bold">{order.quantity} Units</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="text-macos-text-muted dark:text-zinc-500">Unit Price</span>
+                    <span className="text-macos-text-muted">Unit Price</span>
                     <span className="font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Total Value</span>
+                    <span className="font-bold uppercase text-macos-text-muted">Total Value</span>
                     <span className="font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
                   </div>
                   {selectedOrderIsCustom && (
                     <>
                       <div className="flex justify-between py-2 text-xs">
-                        <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Total Paid</span>
+                        <span className="font-bold uppercase text-macos-text-muted">Total Paid</span>
                         <span className="font-mono font-bold text-macos-green dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between py-2 text-xs">
-                        <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Balance Due</span>
+                        <span className="font-bold uppercase text-macos-text-muted">Balance Due</span>
                         <span className={cn('font-mono font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
                           {currencySymbol}{balanceDue.toFixed(2)}
                         </span>
@@ -234,7 +234,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
 
               {order.notes && (
                 <section className="space-y-2">
-                  <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
+                  <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">
                     <MessageSquare className="h-3 w-3" aria-hidden="true" /> Production Notes
                   </h4>
                   <div className="surface-well rounded-[var(--radius-card)] p-3 text-xs italic text-macos-text dark:text-zinc-300">
@@ -246,13 +246,13 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
 
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
+                <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">
                   <ImageIcon className="h-3 w-3" aria-hidden="true" /> Visual Assets
                 </h4>
                 {selectedOrderIsCustom ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Product</p>
                       {activeLineInventoryItem?.imageUrl ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] surface-well">
                           <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -260,7 +260,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                       ) : <ImageFallback label="No product image" />}
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Custom design</p>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Custom design</p>
                       {activeLineItemDesign ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] surface-well">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
@@ -273,7 +273,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Product</p>
                     {activeLineInventoryItem?.imageUrl ? (
                       <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] surface-well">
                         <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -287,7 +287,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
 
           {selectedOrderIsCustom && (
             <Card variant="glass" padding="md" className="space-y-4">
-              <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
+              <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
               {paymentError && (
@@ -296,9 +296,9 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                 </div>
               )}
               {paymentsLoading ? (
-                <p className="text-xs text-macos-text-muted dark:text-zinc-500">Loading payments...</p>
+                <p className="text-xs text-macos-text-muted">Loading payments...</p>
               ) : payments.length === 0 ? (
-                <p className="text-xs text-macos-text-muted dark:text-zinc-500">No payments recorded yet.</p>
+                <p className="text-xs text-macos-text-muted">No payments recorded yet.</p>
               ) : (
                 <div className="space-y-2">
                   {payments.map((payment) => (
@@ -309,7 +309,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                         </span>
                         <div>
                           <p className="text-[10px] font-bold text-macos-text dark:text-zinc-100">{payment.method}</p>
-                          <p className="text-[9px] text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
+                          <p className="text-[9px] text-macos-text-muted">{payment.createdAt.slice(0, 10)}</p>
                         </div>
                       </div>
                       <span className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
@@ -319,7 +319,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
               )}
 
               <form onSubmit={handleRecordPayment} className="space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
-                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">Record Payment</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted">Record Payment</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-[11px]" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
                   <Select fieldSize="sm" className="text-[11px]" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'Cash' | 'Card' | 'Other')}>
@@ -349,7 +349,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           )}
 
           <Card variant="glass" padding="md">
-            <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Update Work Phase</h4>
+            <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted">Update Work Phase</h4>
             <div className="flex items-center gap-3">
               <Button
                 type="button"

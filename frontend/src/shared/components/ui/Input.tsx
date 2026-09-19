@@ -33,7 +33,7 @@ import { cn } from '../../lib/cn';
  * `box-shadow`, so it survives both the groove and the bevel.
  */
 const fieldBaseClasses =
-  'amb-groove mat-well mat-focus w-full rounded-[var(--radius-button)] border border-[var(--app-hairline)] px-3 text-sm text-macos-text transition-colors duration-200 ease-out placeholder:text-macos-text-muted/70 focus:border-macos-blue/55 dark:text-zinc-100 dark:placeholder:text-zinc-500';
+  'amb-groove mat-well mat-focus w-full rounded-[var(--radius-button)] border border-[var(--app-hairline)] px-3 text-sm text-macos-text transition-colors duration-200 ease-out placeholder:text-macos-text-muted/70 focus:border-macos-blue/55 dark:text-zinc-100 dark:placeholder:text-zinc-400';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   fieldSize?: 'sm' | 'md' | 'lg';

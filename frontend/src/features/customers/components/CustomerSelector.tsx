@@ -77,7 +77,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-macos-text-muted hover:text-macos-text dark:text-zinc-500 dark:hover:text-zinc-300"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-300"
             aria-label="Clear customer"
           >
             <X className="h-3 w-3" aria-hidden="true" />

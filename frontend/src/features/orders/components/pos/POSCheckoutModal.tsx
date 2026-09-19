@@ -186,7 +186,7 @@ export function POSCheckoutModal({
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Amount to Pay</span>
                 <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="space-y-1 border-b border-black/5 pb-3 font-mono text-[9px] text-macos-text-muted dark:border-white/10 dark:text-zinc-500">
+              <div className="space-y-1 border-b border-black/5 pb-3 font-mono text-[9px] text-macos-text-muted dark:border-white/10">
                 <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
                 {appliedDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>−{currencySymbol}{appliedDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between"><span>VAT ({totals.vatRatePercent}%)</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>

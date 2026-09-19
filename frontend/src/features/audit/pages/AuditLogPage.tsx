@@ -91,7 +91,7 @@ function ActionBadge({ action }: { action: string }) {
 function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
   const [expanded, setExpanded] = useState(false);
   const entries = Object.entries(metadata);
-  if (entries.length === 0) return <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>;
+  if (entries.length === 0) return <span className="text-[10px] text-macos-text-muted">—</span>;
 
   const preview = entries.slice(0, 2).map(([k, v]) => `${k}: ${String(v).slice(0, 20)}`).join(', ');
 
@@ -199,7 +199,7 @@ export default function AuditLogPage() {
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative w-full sm:max-w-xs">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
                   <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search events..." />
                 </div>
                 <div className="flex gap-2">
@@ -231,7 +231,7 @@ export default function AuditLogPage() {
                   <TableBody>
                     {filteredItems.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                        <TableCell className="font-mono text-[10px] text-macos-text-muted">
                           {formatTimestamp(log.createdAt)}
                         </TableCell>
                         <TableCell>
@@ -242,7 +242,7 @@ export default function AuditLogPage() {
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
-                            <span className="ml-1.5 font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                            <span className="ml-1.5 font-mono text-[10px] text-macos-text-muted">
                               {log.entityId.slice(0, 8)}...
                             </span>
                           )}
@@ -257,7 +257,7 @@ export default function AuditLogPage() {
                     ))}
                     {filteredItems.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={5} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">
+                        <TableCell colSpan={5} className="py-10 text-center text-sm text-macos-text-muted">
                           No audit events match your filters.
                         </TableCell>
                       </TableRow>
@@ -268,7 +268,7 @@ export default function AuditLogPage() {
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-between border-t border-black/5 px-4 py-3 dark:border-white/10">
-                  <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">
+                  <span className="text-[10px] text-macos-text-muted">
                     Showing {items.length} of {total} events
                   </span>
                   <div className="flex items-center gap-2">

@@ -48,7 +48,7 @@ export function InventoryTable({
         </div>
         <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
             <Input className="pl-9 text-xs" placeholder="Search SKU, material or category..." value={searchTerm} onChange={(e) => onSearchTermChange(e.target.value)} />
           </div>
           <Button type="button" onClick={onAddItem} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn">
@@ -75,7 +75,7 @@ export function InventoryTable({
                 const isLowStock = item.stock <= item.reorderLevel;
                 return (
                   <TableRow key={item.id}>
-                    <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
+                    <TableCell className="font-mono text-macos-text-muted">{item.sku}</TableCell>
                     <TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.name}</TableCell>
                     <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
                     <TableCell className="text-right font-mono font-bold">
@@ -112,7 +112,7 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PRINTSYNC CLOUD SECURE SYNCED</span>
       </div>

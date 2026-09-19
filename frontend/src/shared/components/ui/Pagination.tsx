@@ -48,7 +48,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
 
   return (
     <div className={cn('flex items-center justify-between gap-3', className)}>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-macos-text-muted dark:text-zinc-500">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-macos-text-muted">
         Page {page} of {totalPages} ({total} total)
       </span>
       <div className="flex items-center gap-1">
@@ -67,7 +67,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
         </button>
         {getVisiblePages().map((p, index) => (
           p === '...' ? (
-            <span key={`ellipsis-${index}`} className="px-1 text-[10px] text-macos-text-muted dark:text-zinc-500">...</span>
+            <span key={`ellipsis-${index}`} className="px-1 text-[10px] text-macos-text-muted">...</span>
           ) : (
             <button
               key={p}

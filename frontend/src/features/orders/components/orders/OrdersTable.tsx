@@ -60,7 +60,7 @@ export function OrdersTable({
           <CardDescription>Click any row to inspect assets, notes, and phase controls.</CardDescription>
         </div>
         <div className="relative w-full md:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
           <Input
             type="text"
             placeholder="Filter active orders / client data..."
@@ -99,7 +99,7 @@ export function OrdersTable({
                     <TableCell>
                       <div>
                         <h3 className="font-bold text-macos-text dark:text-zinc-100 md:text-sm">{order.customer}</h3>
-                        <p className="mt-0.5 max-w-xs truncate text-[10px] text-macos-text-muted dark:text-zinc-500 md:text-[11px]">{order.item} × {order.quantity} units</p>
+                        <p className="mt-0.5 max-w-xs truncate text-[10px] text-macos-text-muted md:text-[11px]">{order.item} × {order.quantity} units</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -132,7 +132,7 @@ export function OrdersTable({
                             */}
                             {isPending && (
                               <span role="status" className="inline-flex">
-                                <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                                <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted" aria-hidden="true" />
                                 {/*
                                   A live region announces its *text*; an `aria-label`
                                   alone is not dependable across screen readers. The
@@ -170,11 +170,11 @@ export function OrdersTable({
                               <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
-                            <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
+                            <span className="font-mono text-[10px] text-macos-text-muted">{order.dueDate}</span>
                           )}
                         </div>
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>
+                        <span className="font-mono text-[10px] text-macos-text-muted">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
@@ -185,7 +185,7 @@ export function OrdersTable({
                       {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
                         <Badge variant="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</Badge>
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                        <span className="font-mono text-[10px] text-macos-text-muted">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -227,7 +227,7 @@ export function OrdersTable({
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={9} className="py-12">
-                    <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
+                    <div className="text-center text-sm text-macos-text-muted">No matching orders found.</div>
                   </TableCell>
                 </TableRow>
               )}
@@ -236,7 +236,7 @@ export function OrdersTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted">
         End of Active Dispatch Queue
       </div>
     </Card>

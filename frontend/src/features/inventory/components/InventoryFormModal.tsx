@@ -75,12 +75,12 @@ export function InventoryFormModal({
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="space-y-3">
-            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Item Image</label>
+            <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Item Image</label>
             <div className="surface-well flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)]">
               {formData.imageUrl ? (
                 <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
               ) : (
-                <div className="flex flex-col items-center gap-2 p-6 text-center text-macos-text-muted dark:text-zinc-500">
+                <div className="flex flex-col items-center gap-2 p-6 text-center text-macos-text-muted">
                   <ImageIcon className="h-14 w-14 opacity-40" aria-hidden="true" />
                   <span className="text-[10px] font-bold uppercase tracking-widest">No image yet</span>
                 </div>
@@ -88,16 +88,16 @@ export function InventoryFormModal({
             </div>
             <Input type="file" accept="image/*" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-white" onChange={handleImageUpload} />
             {formData.imageUrl && <Button type="button" variant="danger" size="sm" fullWidth onClick={() => setFormData({ ...formData, imageUrl: '' })}>Remove Image</Button>}
-            {editingItem && <p className="text-[10px] leading-relaxed text-macos-text-muted dark:text-zinc-500">SKU <span className="font-mono font-bold text-macos-text dark:text-zinc-200">{editingItem.sku}</span> updates are saved when you submit this dialog.</p>}
+            {editingItem && <p className="text-[10px] leading-relaxed text-macos-text-muted">SKU <span className="font-mono font-bold text-macos-text dark:text-zinc-200">{editingItem.sku}</span> updates are saved when you submit this dialog.</p>}
           </div>
 
           <div className="space-y-4">
             <label className="block space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Material Name</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Material Name</span>
               <Input required type="text" placeholder="Premium Cotton T-shirt (Black)" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Category</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Category</span>
               <Select required value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}>
                 <option value="">Select Category</option>
                 {categories.map((category) => <option key={category} value={category}>{category}</option>)}
@@ -105,16 +105,16 @@ export function InventoryFormModal({
             </label>
             <div className="grid grid-cols-2 gap-4">
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Current Stock</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Current Stock</span>
                 <Input required type="number" min="0" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })} />
               </label>
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Reorder Level</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Reorder Level</span>
                 <Input required type="number" min="0" value={formData.reorderLevel} onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })} />
               </label>
             </div>
             <label className="block space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Unit Price (₱)</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Unit Price (₱)</span>
               <Input required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} />
             </label>
           </div>
