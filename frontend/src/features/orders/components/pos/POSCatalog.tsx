@@ -67,15 +67,14 @@ export function POSCatalog({
                    * make the chip float into place rather than snap. A key does
                    * not ease its way down.
                    *
-                   * The `shadow-[0_6px_16px_rgb(0_122_255/0.22)]` that used to sit
-                   * on the selected branch is gone. It was a *blue* glow, and
-                   * `--color-macos-blue` has been #555558 — a neutral grey — since
-                   * the palette was de-Apple'd, so it had been glowing the wrong
-                   * colour for two phases.
+                   * The blue drop-glow that used to sit on the selected branch is
+                   * gone. `--color-macos-blue` has been #555558 — a neutral grey
+                   * — since the palette was de-Apple'd, so it had been glowing
+                   * the wrong colour for two phases.
                    */
                   activeCategory === cat
                     ? 'mat-sunk border-macos-blue bg-macos-blue text-white'
-                    : 'ambient amb-elevation-0 mat-press border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan',
+                    : 'ambient amb-elevation-0 mat-press border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:hover:text-macos-cyan',
                 )}
               >
                 {cat}

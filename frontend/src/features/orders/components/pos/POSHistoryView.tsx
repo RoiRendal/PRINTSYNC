@@ -68,7 +68,7 @@ export function POSHistoryView({
                   return (
                     <TableRow key={key} className="cursor-pointer" onClick={() => onSelectTransaction(trx)}>
                       <TableCell className="font-mono text-macos-text-muted">{refDisplay}</TableCell>
-                      <TableCell className="font-mono text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
+                      <TableCell className="font-mono text-macos-text-muted">{trx.date}</TableCell>
                       <TableCell>
                         <span className="font-medium text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                         <div className="max-w-[240px] truncate text-[9px] text-macos-text-muted">

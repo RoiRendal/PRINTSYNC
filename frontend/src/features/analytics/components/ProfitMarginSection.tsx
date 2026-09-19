@@ -89,7 +89,7 @@ export function ProfitMarginSection({
       description={`Revenue vs COGS with margin trend across all ${periodLabel[profitPeriod].toLowerCase()} buckets.`}
       controls={<PeriodSelector value={profitPeriod} onChange={onProfitPeriodChange} prefix="profit" />}
     >
-      {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
+      {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-macos-text-muted">No transaction data available for this period.</p> : (
         <>
           <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -113,7 +113,7 @@ export function ProfitMarginSection({
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-macos-text-muted dark:text-zinc-400">
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-macos-text-muted">
             <Badge variant="green">Best: {profitMarginStats.bestPoint.label} ({profitMarginStats.bestPoint.margin.toFixed(1)}%)</Badge>
             <Badge variant="orange">Lowest: {profitMarginStats.lowestPoint.label} ({profitMarginStats.lowestPoint.margin.toFixed(1)}%)</Badge>
           </div>

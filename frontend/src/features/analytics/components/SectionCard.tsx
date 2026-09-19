@@ -19,12 +19,17 @@ export function SectionCard({ children, icon: Icon, title, description, controls
             * order summary tiles: a recess punched into the panel rather than a
             * chip resting on it.
             *
-            * The gradient and the ring are both gone. `bg-gradient-to-br
-            * from-macos-blue/18 to-white/40` was a lit dome and
-            * `ring-1 ring-macos-blue/20` was its outline — the two together are
-            * the glass badge this redesign is removing, and neither survives a
-            * recessed read: a tinted hole is not a hole. The blue is still here,
-            * on the glyph, which is the part that carries meaning.
+            * The gradient and the ring are both gone: a blue-tinted diagonal
+            * gradient was a lit dome, and a translucent blue ring was its
+            * outline — the two together are the glass badge this redesign is
+            * removing, and neither survives a recessed read: a tinted hole is not
+            * a hole. The blue is still here, on the glyph, which is the part that
+            * carries meaning.
+            *
+            * (The removed utilities are described rather than quoted on purpose.
+            * Tailwind scans comments as well as code, so naming a class in prose
+            * re-emits it into the stylesheet — measured, and it is why a search
+            * for the old gradient still returned hits after the sweep.)
             *
             * `mat-well` is what keeps the recess `--app-surface`; without it the
             * engine paints its own `--amb-albedo` and the well comes out grey in

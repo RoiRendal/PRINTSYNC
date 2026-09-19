@@ -83,7 +83,7 @@ export default function Inventory() {
         <div>
 
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Inventory Management</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+          <p className="mt-1 text-sm text-macos-text-muted">
             {viewMode === 'inventory' ? 'Manage raw materials, reorder thresholds, and stock valuation.' : 'Digital asset library for custom apparel designs.'}
           </p>
         </div>
@@ -92,14 +92,16 @@ export default function Inventory() {
           <button
             type="button"
             onClick={() => setViewMode('inventory')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'inventory' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn('mat-focus flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors', viewMode === 'inventory' ? 'mat-sunk bg-macos-blue text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
+            aria-pressed={viewMode === 'inventory'}
           >
             <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
             type="button"
             onClick={() => setViewMode('designs')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'designs' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn('mat-focus flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors', viewMode === 'designs' ? 'mat-sunk bg-macos-purple text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
+            aria-pressed={viewMode === 'designs'}
           >
             <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>

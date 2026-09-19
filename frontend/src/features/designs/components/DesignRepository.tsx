@@ -282,7 +282,7 @@ export function DesignRepository() {
       <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Deletion">
         <div className="space-y-4 py-2 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-macos-red/20 bg-macos-red/12 text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
-          <div className="space-y-1"><h3 className="text-sm font-bold uppercase tracking-wider text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted dark:text-zinc-400">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
+          <div className="space-y-1"><h3 className="text-sm font-bold uppercase tracking-wider text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
           <div className="flex gap-3 pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button type="button" variant="danger" fullWidth onClick={handleDelete}>Confirm Delete</Button></div>
         </div>
       </Modal>

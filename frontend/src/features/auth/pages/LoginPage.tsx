@@ -35,7 +35,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-macos-text dark:text-zinc-100">Welcome back</h1>
-          <p className="mt-2 max-w-sm text-sm leading-relaxed text-macos-text-muted dark:text-zinc-400">
+          <p className="mt-2 max-w-sm text-sm leading-relaxed text-macos-text-muted">
             Sign in to manage print jobs, inventory, point-of-sale activity, and production analytics.
           </p>
         </div>

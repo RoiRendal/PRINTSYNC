@@ -67,7 +67,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={markAllAsRead}
                 title="Mark all as read"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:hover:bg-white/10 dark:hover:text-zinc-100"
               >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -75,7 +75,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={clearAll}
                 title="Clear all"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-red-300"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:hover:bg-white/10 dark:hover:text-red-300"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -90,7 +90,7 @@ export const NotificationPanel = React.forwardRef<
             onClick={onClose}
             title="Close"
             aria-label="Close notifications"
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:hover:bg-white/10 dark:hover:text-zinc-100"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -135,7 +135,7 @@ export const NotificationPanel = React.forwardRef<
                     {formatTimeAgo(notification.createdAt)}
                   </span>
                 </div>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                <p className="mt-0.5 text-[11px] leading-relaxed text-macos-text-muted">
                   {notification.message}
                 </p>
               </div>

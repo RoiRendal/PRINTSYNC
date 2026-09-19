@@ -11,7 +11,7 @@ import { exportApi } from '../api/exportApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br from-macos-blue/18 to-white/40 text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-macos-blue/20 dark:from-macos-blue-dark/20 dark:to-white/5 dark:text-macos-cyan">
+    <div className="amb-groove mat-well flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] border border-[var(--app-hairline)] text-macos-blue dark:text-macos-cyan">
       {children}
     </div>
   );
@@ -26,8 +26,20 @@ function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: bo
       className="surface-well flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] p-3 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/25 hover:bg-[var(--app-chrome)] dark:hover:border-macos-blue-dark/25"
     >
       <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">{label}</span>
-      <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', enabled ? 'bg-macos-green' : 'bg-black/15 dark:bg-white/18')}>
-        <span className={cn('block h-4 w-4 rounded-full bg-white shadow transition-transform', enabled && 'translate-x-4')} />
+      {/*
+        The same switch as `InsightPanel`'s, down to the geometry (`h-5 w-9`
+        track, `p-0.5`, `h-4 w-4` cap, `translate-x-4`), so the app has one
+        switch rather than two that drift apart. That control is the reference;
+        the reasoning is written up there.
+
+        In short: the track becomes a channel and can no longer carry the state
+        colour, because `amb-groove.mat-well` is unlayered and paints its own
+        `background-color` — a Tailwind `bg-macos-green` on it is inert. The
+        colour moves to the cap, which is where a real switch keeps it. The
+        `bg-black/15 dark:bg-white/18` literal pair goes with it.
+      */}
+      <span className="amb-groove mat-well relative h-5 w-9 rounded-full p-0.5">
+        <span className={cn('ambient amb-elevation-0 block h-4 w-4 rounded-full border border-[var(--app-hairline)] transition-transform', enabled ? 'bg-macos-green' : 'bg-[var(--app-surface-raised)]')} />
       </span>
     </button>
   );
@@ -164,7 +176,7 @@ export default function Settings() {
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Settings</h1>
-        <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage business identity, defaults, appearance, and data export.</p>
+        <p className="mt-1 text-sm text-macos-text-muted">Manage business identity, defaults, appearance, and data export.</p>
       </div>
 
       <Card variant="elevated" padding="lg" className="overflow-hidden">
@@ -216,7 +228,7 @@ export default function Settings() {
                   <ImagePlus className="h-4 w-4 text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
                   <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Business logo</p>
                 </div>
-                <p className="text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                <p className="text-[11px] leading-relaxed text-macos-text-muted">
                   Stored in Supabase Storage, up to{' '}
                   <span className="font-mono text-[10px]">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
                   <span className="font-mono text-[10px]">{BRAND_LOGO_URL}</span> when unset.
@@ -313,7 +325,8 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+                className={cn('mat-focus h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors', theme === item ? 'mat-sunk bg-macos-blue text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
+                aria-pressed={theme === item}
               >
                 {item}
               </button>

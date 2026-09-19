@@ -82,7 +82,7 @@ export function SalesComparisonSection({
         description={`Compare two time periods by ${periodLabel[salesPeriod].toLowerCase()} sales using real transaction data.`}
         controls={<PeriodSelector value={salesPeriod} onChange={onSalesPeriodChange} prefix="sales" />}
       >
-        {isLoading ? <LoadingState label="Loading sales timeline" /> : error ? <ErrorState message={error} /> : salesBucketLabels.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
+        {isLoading ? <LoadingState label="Loading sales timeline" /> : error ? <ErrorState message={error} /> : salesBucketLabels.length === 0 ? <p className="text-xs text-macos-text-muted">No transaction data available for this period.</p> : (
           <>
             <div className="grid gap-3 md:grid-cols-2">
               <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted">Timeline A</span><Select value={safeSelectionA} onChange={(event) => setSelectionA(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>

@@ -38,11 +38,15 @@ interface StatCardProps {
 /*
  * Phase 6: the tone is now the icon's colour and nothing else.
  *
- * It used to be a three-part thing — `from-macos-green/20` tinted the chip's
- * gradient, `ring-macos-green/20` drew its outline and `text-green-700` coloured
- * the glyph. The tint and the ring are both gone, because the chip is no longer
- * a lit pill but a recessed well (see `StatCard` below), and a well that is
- * tinted is not a well — it is a coloured sticker sitting in a hole.
+ * It used to be a three-part thing — a translucent tint coloured the chip's
+ * gradient, a matching translucent ring drew its outline, and the glyph was
+ * tinted to match. The first two are gone, because the chip is no longer a lit
+ * pill but a recessed well (see `StatCard` below), and a well that is tinted is
+ * not a well — it is a coloured sticker sitting in a hole. The glyph's own
+ * colour survives, and is now the whole of the signal.
+ *
+ * The removed utilities are described rather than quoted: Tailwind scans
+ * comments, so naming one in prose re-emits it into the stylesheet.
  *
  * What is left is the part that was doing the work: four cards, four glyph
  * colours, one neutral recess. The signal a reader actually needs is "which
@@ -72,11 +76,10 @@ const statToneClasses: Record<StatTone, string> = {
  * Two classes it replaces are worth naming, because neither was doing what it
  * looked like it was doing:
  *
- *   - `shadow-[0_8px_22px_rgb(0_122_255/0.24)]` was a *blue* glow behind a
- *     button whose own colour is `--color-macos-blue`, which is grey
- *     (`#555558`). It had been the wrong colour since the palette was
- *     de-Apple'd — and `.ambient` is unlayered and owns `box-shadow`, so it was
- *     already inert anyway.
+ *   - A blue drop-glow sat behind a button whose own colour is
+ *     `--color-macos-blue`, which is grey (`#555558`). It had been the wrong
+ *     colour since the palette was de-Apple'd — and `.ambient` is unlayered and
+ *     owns `box-shadow`, so it was already inert anyway.
  *   - `active:scale-[0.98]` shrank the link when pressed. That is the glass
  *     gesture the redesign removes: a key sinks inward, it does not get smaller.
  */
@@ -101,9 +104,9 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
             * engine paint its own `--amb-albedo`, which would come out grey in
             * light and *lighter* than the card in dark.
             *
-            * The gradient is gone: `bg-gradient-to-br to-white/50` was a
-            * highlight pretending to be a lit dome, which is the single most
-            * recognisable glass artifact on this page.
+            * The gradient is gone: a diagonal wash towards white was a highlight
+            * pretending to be a lit dome, which is the single most recognisable
+            * glass artifact on this page.
             */}
           <div className={cn('amb-groove mat-well flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] border border-[var(--app-hairline)]', statToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />

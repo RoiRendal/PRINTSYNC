@@ -32,23 +32,32 @@ export const Sidebar = ({ className, onNavigate }: { className?: string; onNavig
               key={item.path}
               to={item.path}
               onClick={onNavigate}
+              /*
+               * The active item is a key that has been pushed in, not a pill
+               * that lights up — the same `.mat-sunk` idiom the segmented
+               * controls use, so "you are here" reads the same way everywhere.
+               *
+               * The material has to sit on the `NavLink` itself rather than on
+               * a child. The previous version put a full-bleed gradient span at
+               * `inset-0` behind the label and gave it a blue glow, but this
+               * element carries `overflow-hidden` to clip the truncating label,
+               * which clips a *descendant's* cast shadow. A raised child would
+               * have had its bevel silently cut off at the row's edges.
+               */
               className={({ isActive }) =>
                 cn(
                   'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
                   isActive
-                    ? 'text-white dark:text-white'
+                    ? 'mat-sunk bg-macos-blue text-white'
                     : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]" />
-                  )}
                   <span
                     className={cn(
-                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
                       isActive
                         ? 'border-white/20 bg-white/20 text-white'
                         : 'border-[var(--app-hairline)] bg-[var(--app-chrome)] text-macos-text-muted group-hover:bg-[var(--app-surface)] group-hover:text-macos-text dark:text-zinc-200 dark:group-hover:text-zinc-100',
@@ -56,11 +65,11 @@ export const Sidebar = ({ className, onNavigate }: { className?: string; onNavig
                   >
                     <item.icon className="h-4 w-4" />
                   </span>
-                  <span className="relative z-10 truncate whitespace-nowrap">
+                  <span className="truncate whitespace-nowrap">
                     {item.label}
                   </span>
                   {isActive && (
-                    <span className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_12px_rgb(255_255_255/0.8)]" />
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-white/85" />
                   )}
                 </>
               )}

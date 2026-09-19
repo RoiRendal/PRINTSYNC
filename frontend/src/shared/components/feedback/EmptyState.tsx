@@ -24,7 +24,7 @@ export function EmptyState({
       </div>
       <div className="space-y-1">
         <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-macos-text dark:text-zinc-100">{title}</p>
-        {message && <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{message}</p>}
+        {message && <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted">{message}</p>}
       </div>
       {action && <div className="pt-1">{action}</div>}
     </div>

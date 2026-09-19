@@ -22,7 +22,7 @@ export function ErrorState({
       </div>
       <div className="space-y-1">
         <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-macos-text dark:text-zinc-100">{title}</p>
-        <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{message}</p>
+        <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted">{message}</p>
       </div>
       {onRetry && (
         <Button type="button" variant="secondary" size="sm" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}>

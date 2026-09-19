@@ -88,7 +88,7 @@ CardTitle.displayName = 'CardTitle';
 
 export const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400', className)} {...props} />
+    <p ref={ref} className={cn('text-xs leading-relaxed text-macos-text-muted', className)} {...props} />
   ),
 );
 

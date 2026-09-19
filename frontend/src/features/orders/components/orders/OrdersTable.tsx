@@ -166,7 +166,7 @@ export function OrdersTable({
                         <div className="flex items-center justify-end gap-1.5">
                           {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                             <>
-                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red shadow-[0_0_6px_rgb(255_59_48/0.6)]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
                               <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
@@ -178,7 +178,7 @@ export function OrdersTable({
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
+                    <TableCell className="text-right font-mono text-[10px] text-macos-text-muted">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
                     </TableCell>
                     <TableCell className="text-right">

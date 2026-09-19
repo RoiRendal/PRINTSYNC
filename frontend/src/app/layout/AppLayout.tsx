@@ -120,12 +120,22 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
             title={APP_NAME}
           >
+            {/*
+              Both branches are the same raised chip in two colours, so they get
+              the same treatment — the fallback used to carry a blue glow while
+              the real logo sat on a flat Tailwind shadow, which made the chip
+              change depth depending on whether an image loaded.
+
+              The logo branch swaps `ring-1` for a real `border`: `.ambient`
+              owns `box-shadow` and is unlayered, so a Tailwind ring on the same
+              element is inert. A ring and a border are the same 1px line here.
+            */}
             {logoFailed ? (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)]">
+              <div className="ambient amb-elevation-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] ring-1 ring-[var(--app-hairline)]">
+              <span className="ambient amb-elevation-0 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border border-[var(--app-hairline)] bg-[var(--app-surface-raised)]">
                 <img
                   src={effectiveBusinessLogoUrl}
                   alt=""
@@ -155,7 +165,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={toggleTheme}
               title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
               aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
-              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="rounded-full text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100"
             >
               <ThemeIcon theme={theme} isDark={isDark} />
             </Button>
@@ -170,7 +180,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               variant="ghost"
               aria-label="Notifications"
               aria-expanded={isNotificationsOpen}
-              className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100"
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
@@ -187,12 +197,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             className="relative"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
+            {/*
+              The last `active:scale-[0.98]` in the app. A control that shrinks
+              when pressed is imitating glass; `.mat-press` sinks the surface
+              instead, which is what every other control here now does. It was
+              also carrying `shadow-sm`, which `.ambient` would have swallowed
+              anyway — so the depth comes from the material, not a Tailwind
+              shadow that was already inert.
+            */}
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-[var(--app-chrome)] active:scale-[0.98]"
+              className="ambient amb-elevation-0 mat-press flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] py-1 pl-1 pr-2 text-left transition-colors duration-200 hover:bg-[var(--app-chrome)]"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-macos-blue to-macos-cyan text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
@@ -240,7 +258,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             title={isSidebarOpen ? 'Hide navigation' : 'Show navigation'}
             aria-label={isSidebarOpen ? 'Hide navigation' : 'Show navigation'}
             aria-expanded={isSidebarOpen}
-            className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100 lg:hidden"
+            className="rounded-full text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100 lg:hidden"
           >
             <PanelLeft className="h-4 w-4" />
           </Button>

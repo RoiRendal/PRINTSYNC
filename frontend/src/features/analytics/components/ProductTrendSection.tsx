@@ -88,7 +88,7 @@ export function ProductTrendSection({
       description={`Per-product demand by ${periodLabel[trendPeriod].toLowerCase()} segment with total volume tracking.`}
       controls={<div className="space-y-2"><PeriodSelector value={trendPeriod} onChange={onTrendPeriodChange} prefix="trend" />{trendBucketLabels.length > 0 && <Select fieldSize="sm" value={safeTrendSelection} onChange={(event) => setTrendSelection(event.target.value)}>{trendBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select>}</div>}
     >
-      {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
+      {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-macos-text-muted">No product sales data available for this period.</p> : (
         <>
           <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">

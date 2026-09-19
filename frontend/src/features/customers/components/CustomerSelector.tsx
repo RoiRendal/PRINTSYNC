@@ -96,7 +96,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
             >
               <span className="font-bold text-macos-text dark:text-zinc-100">{customer.name}</span>
               {(customer.phone || customer.email) && (
-                <span className="text-[10px] text-macos-text-muted dark:text-zinc-400">
+                <span className="text-[10px] text-macos-text-muted">
                   {customer.phone}{customer.phone && customer.email ? ' · ' : ''}{customer.email}
                 </span>
               )}
@@ -106,7 +106,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {isOpen && query && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text-muted shadow-[var(--shadow-modal)] dark:text-zinc-400">
+        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text-muted shadow-[var(--shadow-modal)]">
           No matching customers. Type to create a new one.
         </div>
       )}

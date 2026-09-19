@@ -109,25 +109,14 @@
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
   --radius-modal: 1rem;
-  --radius-squircle: 1.25rem;
   --radius-pill: 9999px;
 
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.06);
-  --shadow-glass: 0 12px 40px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.32);
   --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
 :root {
   color-scheme: light;
-  /* Light-mode glass tokens: increased opacity and a subtle dark border so panels
-     remain distinct from the light page background while keeping the glass aesthetic. */
-  --glass-bg: rgb(255 255 255 / 0.82);
-  --glass-bg-strong: rgb(255 255 255 / 0.94);
-  --glass-border: rgb(0 0 0 / 0.10);
-  --glass-highlight: rgb(255 255 255 / 0.60);
-  --glass-blur-sidebar: 24px;
-  --glass-blur-toolbar: 20px;
-  --glass-blur-modal: 40px;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
@@ -218,10 +207,6 @@
 
 .dark {
   color-scheme: dark;
-  --glass-bg: rgb(28 28 30 / 0.72);
-  --glass-bg-strong: rgb(44 44 46 / 0.84);
-  --glass-border: rgb(255 255 255 / 0.12);
-  --glass-highlight: rgb(255 255 255 / 0.14);
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
   --app-text: #f5f5f7;
@@ -307,12 +292,38 @@ html {
   border-color: var(--app-hairline);
 }
 
+/*
+ * `prefers-reduced-motion` is not a preference we can half-honour. Two things
+ * this block has to get right, and only the first is obvious.
+ *
+ *   1. Duration. `animate-spin` on a loading spinner is the trap: Tailwind's
+ *      spinner is *only* motion, so once the duration collapses it conveys
+ *      nothing at all. Collapsing it is still correct — the fix belongs in the
+ *      component, not here. Every loading affordance therefore carries text:
+ *      `LoadingState` keeps its visible `label` and a `role="status"`, `Button`
+ *      keeps its text and sets `aria-busy`, and `OrdersTable` announces
+ *      "Saving…" in a live region. A live region announces *text*; an
+ *      `aria-label` on its own is not dependable.
+ *
+ *   2. Delay. Zeroing the duration is not sufficient on its own. A `delay-*`
+ *      utility, or any `animation-delay`, still makes the user *wait* before an
+ *      instant change lands — the same unpleasantness moved somewhere else.
+ *      Both delays are collapsed for that reason. This was the gap: the block
+ *      handled duration and iteration count but not delay, so a delayed
+ *      transition was still a timed event for exactly the users who asked for
+ *      no timed events.
+ *
+ * `scroll-behavior: auto` belongs here for the same reason as the delays — a
+ * smooth scroll is a long-running motion nobody opted into.
+ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -423,45 +434,24 @@ html {
 }
 
 @layer utilities {
-  .glass-panel {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    will-change: backdrop-filter;
-  }
-
-  .glass-toolbar {
-    background: color-mix(in srgb, var(--glass-bg) 88%, transparent);
-    border-bottom: 1px solid var(--glass-border);
-    box-shadow: 0 1px 0 var(--glass-highlight), 0 8px 30px rgb(0 0 0 / 0.06);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    will-change: backdrop-filter;
-  }
-
-  .glass-modal {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-modal);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    will-change: transform, opacity, backdrop-filter;
-  }
-
   /*
-   * Phase 3 — the opaque replacements for `.glass-*`.
+   * Phase 3 — the opaque replacements for the frosted `.glass-*` classes.
    *
    * Same shapes, same call sites, no `backdrop-filter` and no alpha. Everything
    * that used to be frosted points here now, so the whole app has exactly four
-   * definitions to restyle when the skeuomorphic materials land — and one place
-   * to look when something is the wrong shade.
+   * definitions to restyle — and one place to look when something is the wrong
+   * shade.
    *
    * A blur is the single strongest signal of the frosted-glass look we are
    * moving away from, and it also forces a compositing layer per surface, so
-   * none of these carry one. The `.glass-*` rules above are left in place
-   * until Phase 7 deletes them once nothing references them.
+   * none of these carry one.
+   *
+   * Phase 7 deleted the `.glass-panel` / `.glass-toolbar` / `.glass-modal`
+   * rules that used to sit directly above this comment, along with the
+   * `--glass-*` tokens and `--shadow-glass` they consumed. Nothing had
+   * referenced any of them since Phase 3 rewrote the call sites, so they were
+   * three dead surfaces whose only remaining effect was to make a search for
+   * "glass" return hits in a codebase that no longer contains any.
    *
    * Colours are tokens, never `rgb(255 255 255 / 0.8)`-style literals: the
    * literals were the reason dark mode needed a `dark:` override on every
@@ -507,10 +497,6 @@ html {
   .surface-well {
     background: var(--app-surface);
     border: 1px solid var(--app-hairline);
-  }
-
-  .macos-squircle {
-    border-radius: var(--radius-squircle);
   }
 
   .scrollbar-hide {

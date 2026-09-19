@@ -124,7 +124,7 @@ export default function Orders() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Orders</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+          <p className="mt-1 text-sm text-macos-text-muted">
             Track active jobs, phase movement, customer artwork, and production-ready details.
           </p>
         </div>
@@ -145,11 +145,12 @@ export default function Orders() {
                 type="button"
                 onClick={() => setStatusFilter(filter.value)}
                 className={cn(
-                  'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] transition-all',
+                  'mat-focus cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] transition-colors',
                   isActive
-                    ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]'
-                    : 'surface-well text-macos-text-muted hover:bg-[var(--app-chrome)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-200',
+                    ? 'mat-sunk bg-macos-blue text-white'
+                    : 'surface-well ambient amb-elevation-0 mat-press text-macos-text-muted hover:bg-[var(--app-chrome)] hover:text-macos-text dark:hover:text-zinc-200',
                 )}
+                aria-pressed={isActive}
               >
                 {filter.label}
               </button>

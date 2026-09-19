@@ -32,12 +32,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * Three of the old classes are worth calling out, because adding `.ambient`
  * does not merely restyle them — it breaks two of them outright:
  *
- *   - `shadow-[0_8px_22px_rgb(0_122_255/0.24)]` on primary, and its red twin on
- *     danger, are gone. They were a *blue* glow behind a button whose
- *     background is `--color-macos-blue`, which is now grey (`#555558`) — the
- *     glow had been the wrong colour for two phases. `.ambient` is unlayered
- *     and owns `box-shadow`, so they were also already inert the moment the
- *     material landed.
+ *   - The blue drop-glow on primary, and its red twin on danger, are gone. It
+ *     was a *blue* glow behind a button whose background is
+ *     `--color-macos-blue`, which is now grey (`#555558`) — the glow had been
+ *     the wrong colour for two phases. `.ambient` is unlayered and owns
+ *     `box-shadow`, so it was also already inert the moment the material
+ *     landed.
  *
  *   - `ring-1 ring-[var(--app-hairline)]` on secondary is now a real `border`.
  *     A Tailwind ring *is* a box-shadow, so `.ambient` would have swallowed it

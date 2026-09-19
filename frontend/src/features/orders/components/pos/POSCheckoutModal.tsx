@@ -149,7 +149,7 @@ export function POSCheckoutModal({
               <h4 className="text-lg font-bold text-macos-text dark:text-zinc-100">
                 {posMode === 'retail' ? 'Transaction Successful' : 'Order Created'}
               </h4>
-              <p className="text-xs text-macos-text-muted dark:text-zinc-400">
+              <p className="text-xs text-macos-text-muted">
                 {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
               </p>
               {recovered && (
@@ -182,7 +182,7 @@ export function POSCheckoutModal({
             ))}
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
+              <div className="flex items-center justify-between text-macos-text-muted">
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Amount to Pay</span>
                 <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
@@ -195,7 +195,7 @@ export function POSCheckoutModal({
 
             {posMode === 'retail' && (
               <div className="space-y-2">
-                <label className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-400">Payment Method</label>
+                <label className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted">Payment Method</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
                   <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>

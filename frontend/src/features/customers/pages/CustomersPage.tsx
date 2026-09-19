@@ -188,7 +188,7 @@ export default function CustomersPage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Customer Directory</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage customer records, contact details, and order history links.</p>
+          <p className="mt-1 text-sm text-macos-text-muted">Manage customer records, contact details, and order history links.</p>
         </div>
         <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
@@ -211,7 +211,7 @@ export default function CustomersPage() {
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>
@@ -250,7 +250,7 @@ export default function CustomersPage() {
                       <TableRow key={customer.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-gradient-to-br from-macos-blue/16 to-white/45 text-[10px] font-bold text-macos-blue ring-1 ring-macos-blue/15 dark:to-white/5 dark:text-macos-cyan">
+                            <div className="surface-well flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue dark:text-macos-cyan">
                               {initials(customer.name)}
                             </div>
                             <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
@@ -258,7 +258,7 @@ export default function CustomersPage() {
                         </TableCell>
                         <TableCell className="font-mono text-[10px]">{customer.phone || '—'}</TableCell>
                         <TableCell className="font-mono text-[10px]">{customer.email || '—'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate text-[10px] text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate text-[10px] text-macos-text-muted">{customer.notes || '—'}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted">{customer.createdAt.slice(0, 10)}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1.5">
@@ -306,7 +306,7 @@ export default function CustomersPage() {
 
       <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
         <div className="space-y-4">
-          <p className="text-sm text-macos-text-muted dark:text-zinc-400">
+          <p className="text-sm text-macos-text-muted">
             Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{customerToDelete?.name}</strong>? This action cannot be undone.
           </p>
 

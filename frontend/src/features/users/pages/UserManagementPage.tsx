@@ -190,7 +190,7 @@ export default function UserManagement() {
         <div>
 
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">User Management</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage staff profiles, RBAC roles, and default page access groups.</p>
+          <p className="mt-1 text-sm text-macos-text-muted">Manage staff profiles, RBAC roles, and default page access groups.</p>
         </div>
         <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
@@ -213,7 +213,7 @@ export default function UserManagement() {
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>
@@ -253,7 +253,7 @@ export default function UserManagement() {
                       <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-gradient-to-br from-macos-blue/16 to-white/45 text-[10px] font-bold text-macos-blue ring-1 ring-macos-blue/15 dark:to-white/5 dark:text-macos-cyan">
+                            <div className="surface-well flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
                             <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
@@ -335,7 +335,7 @@ export default function UserManagement() {
 
       <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
         <div className="space-y-4">
-          <p className="text-sm text-macos-text-muted dark:text-zinc-400">
+          <p className="text-sm text-macos-text-muted">
             Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{userToDelete?.name}</strong>? This action cannot be undone.
           </p>
 

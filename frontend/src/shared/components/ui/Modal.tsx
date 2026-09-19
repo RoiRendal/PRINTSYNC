@@ -41,11 +41,23 @@ export const Modal: React.FC<ModalProps> = ({
    * `position` on the whole ancestor chain. Changing these class names changes
    * what the printer receives — see `printStyles.test.ts`.
    *
-   * `backdrop-blur-md` on the overlay is the one blur Phase 3 deliberately kept.
+   * `backdrop-blur-md` on the overlay is the only blur left in the application.
+   * Phase 3 kept it deliberately; Phase 7's sweep confirmed nothing else
+   * survived, so this is now a single documented exception rather than the last
+   * of a set. The three frosted `.glass-*` surfaces and every `backdrop-filter`
+   * declaration in `index.css` are gone.
+   *
    * It is a scrim rather than a surface — it defocuses the page *behind* the
    * dialog instead of pretending to be frosted material, so it carries no
    * "glass panel" signal. It is also neutralised for print, so it cannot affect
    * the receipt either way.
+   *
+   * Worth being explicit about the judgement, since the plan said this audit
+   * should end at zero: dropping it is defensible and would leave the dialog
+   * sitting on a flat dark scrim, which is arguably the more physical result.
+   * It stays because the target was frosted *surfaces*, and a modal scrim is a
+   * depth cue rather than a material — it is the one place where a blur is
+   * doing a job that a flat colour does not do as well.
    *
    * Phase 4 adds `ambient amb-elevation-3` to the panel: a dialog is the
    * furthest thing from the page, so it takes the top of the elevation ladder.
@@ -93,7 +105,7 @@ export const Modal: React.FC<ModalProps> = ({
              * and a ring is a box-shadow, which the dialog's own material would
              * now compete with.
              */
-            className="mat-focus flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+            className="mat-focus flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:hover:bg-white/10 dark:hover:text-zinc-100"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" aria-hidden="true" />

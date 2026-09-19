@@ -781,7 +781,7 @@ export default function POS() {
               'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
               posMode === 'retail'
                 ? 'mat-sunk bg-macos-blue text-white'
-                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
+                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100',
             )}
           >
             Retail
@@ -796,7 +796,7 @@ export default function POS() {
               'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
               posMode === 'custom'
                 ? 'mat-sunk bg-macos-purple text-white'
-                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
+                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100',
             )}
           >
             Custom
