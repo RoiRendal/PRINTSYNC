@@ -39,28 +39,32 @@ const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
     label: 'Live',
     dot: 'bg-macos-green',
-    chip: 'border-macos-green/25 bg-macos-green/12 text-green-700 dark:text-green-300',
+    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
     pulse: true,
     hint: 'Updating automatically',
   },
   connecting: {
     label: 'Connecting',
     dot: 'bg-macos-gray',
-    chip: 'border-gray-200 bg-white/70 text-gray-500 dark:border-white/10 dark:bg-white/8 dark:text-zinc-400',
+    /* Gray tint rather than neutral: `text-gray-500` measures 4.47:1 on the
+       neutral tint — just under the floor — and the dark text has to take the
+       same step up the gray badge already took, because zinc-400 is only
+       4.23:1 on this fill. */
+    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-gray)] text-gray-500 dark:text-zinc-300',
     pulse: true,
     hint: 'Starting live updates',
   },
   reconnecting: {
     label: 'Reconnecting',
     dot: 'bg-macos-orange',
-    chip: 'border-macos-orange/25 bg-macos-orange/14 text-orange-700 dark:text-orange-300',
+    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
     pulse: true,
     hint: 'Restoring live updates',
   },
   offline: {
     label: 'Offline',
     dot: 'bg-macos-red',
-    chip: 'border-macos-red/25 bg-macos-red/12 text-red-700 dark:text-red-300',
+    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
     pulse: false,
     hint: 'May be out of date',
   },
@@ -88,7 +92,7 @@ const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
 const SYNCING_PRESENTATION: StatusPresentation = {
   label: 'Syncing',
   dot: 'bg-macos-blue',
-  chip: 'border-macos-blue/25 bg-macos-blue/12 text-blue-700 dark:text-blue-300',
+  chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-blue-700 dark:text-blue-300',
   pulse: true,
   hint: 'Fetching the latest data',
 };
