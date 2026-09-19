@@ -540,6 +540,38 @@ html {
 }
 
 /*
+ * The other half of that idiom: the resting state of a control that is *held
+ * down*.
+ *
+ * `.mat-press:active` is the instant a key is being pushed. This is the state
+ * it stays in once it has been pushed and has become the selected one. A
+ * segmented control built from the two reads as a row of keys where the live
+ * one is sunk into the track, rather than a row of pills where the live one is
+ * lit up — which is the difference between a switch panel and a web toggle.
+ *
+ * It cannot be `.amb-groove`, which is the engine's recessed idiom, for the
+ * reason the groove is unusable everywhere else in this app: it paints its own
+ * background out of `--amb-albedo`, and a selected segment has to keep its own
+ * colour. A chip that goes grey when you select it has stopped being a
+ * selection. So this sets the depth only and leaves the colour to the call
+ * site.
+ *
+ * Two rules apply at the call site, and they are the same two that govern
+ * `.mat-press`:
+ *
+ *   - It must be written here, outside `@layer utilities`. Inside it the rule
+ *     would be inert.
+ *   - A call site should not also carry `.ambient`. Both set `box-shadow` at
+ *     equal specificity, so only source order separates them (this file is
+ *     imported after ambientcss, so this rule wins) — and the two are
+ *     describing opposite things anyway: a key that is held down has no cast
+ *     shadow, because its bevel is inverted.
+ */
+.mat-sunk {
+  box-shadow: var(--mat-press-shadow);
+}
+
+/*
  * Focus.
  *
  * The indicator is an `outline`, not a ring. Tailwind's `ring-*` utilities are

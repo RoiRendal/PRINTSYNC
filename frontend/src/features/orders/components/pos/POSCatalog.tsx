@@ -54,10 +54,28 @@ export function POSCatalog({
                 type="button"
                 onClick={() => onCategoryChange(cat)}
                 className={cn(
-                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] transition-all',
+                  'mat-focus whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
+                  /*
+                   * Phase 5: a physical chip, where "selected" is the *held*
+                   * position rather than a raised one — a key that stays pressed
+                   * in while its category is the one on screen. It keeps its own
+                   * fill instead of becoming a groove, so the selection stays
+                   * exactly as loud as it was.
+                   *
+                   * `transition-colors`, not `transition-all`: the material
+                   * classes work by swapping `box-shadow`, and easing that would
+                   * make the chip float into place rather than snap. A key does
+                   * not ease its way down.
+                   *
+                   * The `shadow-[0_6px_16px_rgb(0_122_255/0.22)]` that used to sit
+                   * on the selected branch is gone. It was a *blue* glow, and
+                   * `--color-macos-blue` has been #555558 — a neutral grey — since
+                   * the palette was de-Apple'd, so it had been glowing the wrong
+                   * colour for two phases.
+                   */
                   activeCategory === cat
-                    ? 'border-macos-blue bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]'
-                    : 'border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan',
+                    ? 'mat-sunk border-macos-blue bg-macos-blue text-white'
+                    : 'ambient amb-elevation-0 mat-press border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >
                 {cat}
@@ -75,11 +93,36 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] p-2 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/35 dark:hover:border-macos-blue-dark/35',
+              /*
+               * Phase 5: the tile is a keycap. `--shadow-card` was a hand-written
+               * drop shadow from the glass era; `ambient amb-elevation-0` is the
+               * same depth expressed in the one physical scale the rest of the app
+               * now uses, so a tile sits at the same height as every other plate on
+               * the page instead of at a height of its own.
+               *
+               * `mat-press` is the deeper pressed state the plan asked for: holding
+               * a tile sinks it into the page rather than shrinking it. `mat-focus`
+               * gives it the keyboard indicator it never had — these are buttons,
+               * and until now tabbing to one showed nothing at all.
+               */
+              'ambient amb-elevation-0 mat-press mat-focus group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] p-2 text-left transition-colors hover:border-macos-blue/35 dark:hover:border-macos-blue-dark/35',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
-            <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border border-black/5 bg-black/[0.03] dark:border-white/10 dark:bg-white/5 xl:h-32">
+            {/*
+              The thumbnail frame becomes a well: `--app-surface` under a
+              `--app-surface-raised` tile, so it reads as recessed with no literal
+              needed. It replaces a hand-mixed `bg-black/[0.03] dark:bg-white/5`
+              pair, which is the same two-values-kept-in-step problem the rest of
+              this phase is removing.
+
+              The groove's inset shadow is painted under child content, so on a
+              tile that has a picture the image covers it and only the hairline and
+              the colour step show. That matches what the frame did before, and it
+              is the empty "No image" state — the one where the frame is the whole
+              visual — that gains the depth.
+            */}
+            <div className="amb-groove mat-well relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border border-[var(--app-hairline)] xl:h-32">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : (

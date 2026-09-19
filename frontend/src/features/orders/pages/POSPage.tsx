@@ -757,6 +757,19 @@ export default function POS() {
           </Button>
         </div>
 
+        {/*
+          Phase 5: the two mode switches are the same depressed/raised pair as the
+          catalog chips. The track was already `surface-segmented`, so what changes
+          is only what sits in it — the live mode is a key held down, the idle one
+          is a key standing proud, and neither is a translucent `hover:bg-black/5`
+          pair any more.
+
+          The blue and purple glows are gone. The blue one was wrong outright: it
+          was drawn behind `--color-macos-blue`, which is #555558, a neutral grey.
+          The purple one did match its own chip, but both were hand-written shadows
+          on a surface whose entire premise is that one light source decides every
+          shadow, so that is the material layer's job now.
+        */}
         <div className="surface-segmented flex items-center rounded-full p-1">
           <button
             type="button"
@@ -764,7 +777,12 @@ export default function POS() {
               setPosMode('retail');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'retail' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.25)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn(
+              'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
+              posMode === 'retail'
+                ? 'mat-sunk bg-macos-blue text-white'
+                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
+            )}
           >
             Retail
           </button>
@@ -774,7 +792,12 @@ export default function POS() {
               setPosMode('custom');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'custom' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn(
+              'mat-focus h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-colors',
+              posMode === 'custom'
+                ? 'mat-sunk bg-macos-purple text-white'
+                : 'ambient amb-elevation-0 mat-press bg-[var(--app-surface-raised)] text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100',
+            )}
           >
             Custom
           </button>

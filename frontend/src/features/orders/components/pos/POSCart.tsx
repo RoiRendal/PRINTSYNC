@@ -105,11 +105,18 @@ export function POSCart({
           </div>
         )}
 
+        {/*
+          Phase 5: each line becomes a tray rather than a small floating card.
+          It already sat one step below the panel in colour; what it gains is the
+          engine's recess, and what it loses is the hand-written
+          `--shadow-card` — a drop shadow on something that is meant to read as
+          sunk into the panel, not lifted off it.
+        */}
         {cart.length === 0 ? (
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface)] p-2.5 shadow-[var(--shadow-card)]">
+            <div key={`${item.id}-${idx}`} className="amb-groove mat-well rounded-[var(--radius-card)] border border-[var(--app-hairline)] p-2.5">
               <div className="flex gap-3">
                 <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-black/[0.04] dark:bg-white/8">
                   {item.designId ? (
@@ -121,15 +128,47 @@ export function POSCart({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <span className="truncate text-[10px] font-bold uppercase leading-tight text-macos-text dark:text-zinc-100">{item.name}</span>
-                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted transition-colors hover:text-macos-red dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
+                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="mat-focus cursor-pointer rounded text-macos-text-muted transition-colors hover:text-macos-red dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>
                   <div className="mt-2 flex items-end justify-between">
-                    <div className="flex overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
-                      <button type="button" onClick={() => onUpdateQty(idx, -1)} className="cursor-pointer p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label={`Decrease ${item.name}`}><Minus className="h-2.5 w-2.5" aria-hidden="true" /></button>
-                      <span className="w-7 select-none py-1.5 text-center font-mono text-[10px]">{item.qty}</span>
-                      <button type="button" onClick={() => onUpdateQty(idx, 1)} className="cursor-pointer p-1.5 hover:bg-black/5 dark:hover:bg-white/10" aria-label={`Increase ${item.name}`}><Plus className="h-2.5 w-2.5" aria-hidden="true" /></button>
+                    {/*
+                      The marquee control of this phase.
+
+                      The track was a hand-mixed translucent pair — `bg-black/5`
+                      in light, `bg-white/10` in dark — which is the pattern
+                      Phases 3 and 4 spent their time deleting, because it needs
+                      two values kept in step and one of them always drifts.
+                      `surface-segmented` is the app's single definition of "a
+                      track that buttons sit in" and is already recessed in both
+                      themes, so the track itself needs no new material.
+
+                      What sits in it is new: two raised keycaps and the count
+                      resting in the groove between them. The track padding is
+                      4px rather than 2px on purpose — at a 2px inset the 18px
+                      keycaps poke through the rounded ends of a 22px track, and
+                      the obvious alternative, `overflow-hidden`, would clip the
+                      bevel off the very things meant to look raised.
+                    */}
+                    <div className="surface-segmented flex items-center rounded-full p-1">
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQty(idx, -1)}
+                        className="ambient amb-elevation-0 mat-press mat-focus flex cursor-pointer items-center justify-center rounded-full bg-[var(--app-surface-raised)] p-1 text-macos-text-muted transition-colors hover:text-macos-text dark:hover:text-zinc-100"
+                        aria-label={`Decrease ${item.name}`}
+                      >
+                        <Minus className="h-2.5 w-2.5" aria-hidden="true" />
+                      </button>
+                      <span className="w-7 select-none text-center font-mono text-[10px] font-bold">{item.qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => onUpdateQty(idx, 1)}
+                        className="ambient amb-elevation-0 mat-press mat-focus flex cursor-pointer items-center justify-center rounded-full bg-[var(--app-surface-raised)] p-1 text-macos-text-muted transition-colors hover:text-macos-text dark:hover:text-zinc-100"
+                        aria-label={`Increase ${item.name}`}
+                      >
+                        <Plus className="h-2.5 w-2.5" aria-hidden="true" />
+                      </button>
                     </div>
                     <span className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
                   </div>
