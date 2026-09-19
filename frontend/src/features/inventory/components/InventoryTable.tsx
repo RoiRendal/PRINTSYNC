@@ -79,7 +79,7 @@ export function InventoryTable({
                     <TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.name}</TableCell>
                     <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
                     <TableCell className="text-right font-mono font-bold">
-                      <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
+                      <span className={isLowStock ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
                       <span className="ml-1 text-[9px] text-macos-text-muted">PCS</span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
@@ -91,7 +91,7 @@ export function InventoryTable({
                           </Button>
                         </Tooltip>
                         <Tooltip content="Delete Item">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => onDeleteItem(item)} className="h-8 w-8 text-macos-red hover:text-macos-red">
+                          <Button type="button" variant="ghost" size="icon" onClick={() => onDeleteItem(item)} className="h-8 w-8 text-red-700 hover:text-red-700">
                             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         </Tooltip>

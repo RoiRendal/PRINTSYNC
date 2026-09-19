@@ -269,7 +269,7 @@ export default function UserManagement() {
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
                               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(user)} disabled={user.id === firstAdminId} title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'} className="h-8 w-8 text-macos-red hover:text-macos-red">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(user)} disabled={user.id === firstAdminId} title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'} className="h-8 w-8 text-red-700 hover:text-red-700">
                               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
                           </div>

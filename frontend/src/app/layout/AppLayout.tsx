@@ -242,10 +242,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                   </p>
                 </div>
+                {/*
+                  The `dark:` partner is not decoration. This element is a plain
+                  button, so nothing else supplies its dark colour: without it the
+                  logout label keeps the light-mode red and lands at roughly 2.2:1
+                  on the dark menu. It was already failing before the colour moved
+                  — the Apple system red it used to carry measures about 3.9:1 on
+                  this surface, still under the 4.5:1 floor for text.
+                */}
                 <button
                   type="button"
                   onClick={logout}
-                  className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-macos-red transition-colors hover:bg-macos-red/10"
+                  className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-red-700 transition-colors hover:bg-macos-red/10 dark:text-red-300"
                 >
                   Logout
                 </button>

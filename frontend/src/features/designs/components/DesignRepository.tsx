@@ -217,7 +217,7 @@ export function DesignRepository() {
                         </div>
                         <div className="flex gap-1">
                           <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-macos-red hover:text-macos-red"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
+                          <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-red-700 hover:text-red-700"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1">
@@ -243,7 +243,7 @@ export function DesignRepository() {
           <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Category</span><Select required value={newDesign.category} onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
           <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Upload Image (Optional)</span><Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-white" onChange={(event) => handleAssetSelected(event.target.files?.[0])} />{selectedAsset && <p className="text-[10px] text-macos-text-muted">Selected: {selectedAsset.name}</p>}</label>
           <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Image URL (Optional)</span><Input type="text" placeholder="https://images.unsplash.com/..." value={newDesign.imageUrl} onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })} /></label>
-          {assetError && <p className="text-[11px] text-macos-red dark:text-red-300">{assetError}</p>}
+          {assetError && <p className="text-[11px] text-red-700 dark:text-red-300">{assetError}</p>}
           <div className="space-y-2">
             <span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Tags</span>
             <div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())} /><Button type="button" variant="secondary" onClick={handleAddTag}>Add</Button></div>
@@ -281,7 +281,14 @@ export function DesignRepository() {
 
       <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Deletion">
         <div className="space-y-4 py-2 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-macos-red/20 bg-macos-red/12 text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
+          {/*
+            The dark half of the danger chip is not optional here. This is a plain
+            div, so nothing else supplies a dark colour for it, and the light red
+            on a dark surface measures about 2.2:1 — under even the 3:1 floor for
+            an icon. The tint and border follow the red badge's recipe, which is
+            the app's established danger chip.
+          */}
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-macos-red/20 bg-macos-red/12 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
           <div className="space-y-1"><h3 className="text-sm font-bold uppercase tracking-wider text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
           <div className="flex gap-3 pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button type="button" variant="danger" fullWidth onClick={handleDelete}>Confirm Delete</Button></div>
         </div>

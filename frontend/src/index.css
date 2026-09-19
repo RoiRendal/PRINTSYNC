@@ -97,8 +97,13 @@
    * accessibility fix a margin that survives the next token tweak is worth more
    * than a more theatrical hover. `.mat-press` still carries the active state.
    *
-   * `--color-macos-red` itself is unchanged at #ff3b30 — it has other consumers
-   * (badges, the low-stock bar, the alert text) that were never the problem.
+   * `--color-macos-red` itself is unchanged at #ff3b30, because the surfaces
+   * built from it — the badge and low-stock tints, the tinted danger chips — were
+   * never the problem. **Its use as a text colour was**, and that part of the
+   * original reasoning here was wrong: #ff3b30 on a white card measures 3.55:1,
+   * under the 4.5:1 floor for text. The token stays for the tints; every site
+   * that used it to colour text or an icon now uses the red the rest of the app
+   * already used.
    */
   --color-macos-blue-hover: #3a3a3c;
   --color-macos-blue-dark-hover: #aeaeb2;

@@ -75,7 +75,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={clearAll}
                 title="Clear all"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:hover:bg-white/10 dark:hover:text-red-300"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-red-700 dark:hover:bg-white/10 dark:hover:text-red-300"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -154,7 +154,7 @@ export const NotificationPanel = React.forwardRef<
                   type="button"
                   onClick={() => dismissNotification(notification.id)}
                   title="Dismiss"
-                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-red dark:hover:bg-white/10 dark:hover:text-red-300"
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-red-700 dark:hover:bg-white/10 dark:hover:text-red-300"
                 >
                   <X className="h-3 w-3" aria-hidden="true" />
                 </button>

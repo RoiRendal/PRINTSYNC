@@ -80,7 +80,7 @@ export function POSHistoryView({
                       <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         {row.source === 'trx' ? (
-                          <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onVoidTransaction(row.trx!.id); }} title="Void" className="h-8 w-8 text-macos-red hover:text-macos-red">
+                          <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onVoidTransaction(row.trx!.id); }} title="Void" className="h-8 w-8 text-red-700 hover:text-red-700">
                             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
                         ) : <span className="px-1 text-[8px] font-bold uppercase text-macos-text-muted">—</span>}

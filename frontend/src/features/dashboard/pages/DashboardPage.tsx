@@ -279,7 +279,7 @@ export default function Dashboard() {
                 <div key={item.id} className="space-y-2">
                   <div className="flex items-center justify-between gap-3 text-[11px] font-semibold">
                     <span className="truncate text-macos-text dark:text-zinc-200">{item.name}</span>
-                    <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted')}>{item.stock}</span>
+                    <span className={cn('font-mono', isLow ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>{item.stock}</span>
                   </div>
                   {/*
                     * A channel with a slug in it, rather than a track with a

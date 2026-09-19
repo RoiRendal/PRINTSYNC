@@ -23,10 +23,14 @@ export function ErrorState({
         the full-screen error boundary's medallion — the two were a matching
         pair, so they are changed together or not at all.
 
-        `text-macos-red` was the previous colour here: #ff3b30 on the white card
-        behind it measures 3.55:1, under the 4.5:1 floor for text this size.
-        `red-700` is the value the dashboard and the order summary already use
-        for red, and it measures 6.42:1 on the same card.
+        The previous colour here was the Apple system red, #ff3b30. On the white
+        card behind it that measures 3.55:1, under the 4.5:1 floor for text this
+        size. The current value is the red the dashboard and the order summary
+        already use, and it measures 6.42:1 on the same card.
+
+        (The old utility is described rather than named on purpose: Tailwind
+        scans comments as class candidates, so naming it here would re-emit it
+        into the built stylesheet.)
       */}
       <div className="amb-groove mat-well flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-hairline)] text-red-700 dark:text-red-300">
         <AlertCircle className="h-6 w-6" aria-hidden="true" />

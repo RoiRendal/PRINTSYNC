@@ -167,7 +167,7 @@ export function OrdersTable({
                           {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                             <>
                               <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
-                              <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
+                              <span className="font-mono text-[10px] font-bold text-red-700 dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
                             <span className="font-mono text-[10px] text-macos-text-muted">{order.dueDate}</span>
@@ -212,7 +212,7 @@ export function OrdersTable({
                             onDeleteOrder(order);
                           }}
                           title="Delete order"
-                          className="h-8 w-8 text-macos-red hover:text-macos-red"
+                          className="h-8 w-8 text-red-700 hover:text-red-700"
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>

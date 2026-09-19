@@ -244,7 +244,7 @@ export default function Settings() {
                     </Button>
                   )}
                 </div>
-                {(logoUploadError || brandingError) && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{logoUploadError || brandingError}</p>}
+                {(logoUploadError || brandingError) && <p className="text-[11px] font-medium text-red-700 dark:text-red-300">{logoUploadError || brandingError}</p>}
               </div>
             </div>
           </GlassCard>
@@ -296,7 +296,7 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleSaveDefaults}>Save defaults</Button>
               </div>
-              {defaultsError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{defaultsError}</p>}
+              {defaultsError && <p className="text-[11px] font-medium text-red-700 dark:text-red-300">{defaultsError}</p>}
             </div>
 
             <GlassCard className="space-y-4 p-4">
@@ -347,7 +347,7 @@ export default function Settings() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
-            {exportError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{exportError}</p>}
+            {exportError && <p className="text-[11px] font-medium text-red-700 dark:text-red-300">{exportError}</p>}
             <button
               type="button"
               onClick={handleExportOrders}

@@ -265,7 +265,7 @@ export default function CustomersPage() {
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(customer)} className="h-8 w-8" title="Edit customer">
                               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(customer)} className="h-8 w-8 text-macos-red hover:text-macos-red" title="Delete customer">
+                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(customer)} className="h-8 w-8 text-red-700 hover:text-red-700" title="Delete customer">
                               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
                           </div>

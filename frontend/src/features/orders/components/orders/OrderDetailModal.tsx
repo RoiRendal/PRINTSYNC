@@ -168,7 +168,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   <p className={cn(
                     'text-sm font-bold',
                     new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered'
-                      ? 'text-macos-red dark:text-red-300'
+                      ? 'text-red-700 dark:text-red-300'
                       : 'text-macos-text dark:text-zinc-100',
                   )}>
                     {order.dueDate}
@@ -223,7 +223,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                       </div>
                       <div className="flex justify-between py-2 text-xs">
                         <span className="font-bold uppercase text-macos-text-muted">Balance Due</span>
-                        <span className={cn('font-mono font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
+                        <span className={cn('font-mono font-bold', balanceDue > 0 ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
                           {currencySymbol}{balanceDue.toFixed(2)}
                         </span>
                       </div>
