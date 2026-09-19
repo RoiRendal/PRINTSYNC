@@ -39,7 +39,15 @@ const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
     label: 'Live',
     dot: 'bg-macos-green',
-    chip: 'border-macos-green/25 bg-macos-green/12 text-green-700 dark:text-green-300',
+    /*
+     * `text-green-800`, not the `-700` its siblings use, because this chip is the
+     * worst case for it: it sits on the toolbar's darker surface rather than a
+     * white card, which takes green-700 on the green tint down to 3.73:1. The
+     * `offline` and `reconnecting` chips keep `-700` because red and orange both
+     * still clear 4.5:1 on their own tints (measured in Phase 10). This chip is
+     * on every screen, so it is the single highest-traffic instance.
+     */
+    chip: 'border-macos-green/25 bg-macos-green/12 text-green-800 dark:text-green-300',
     pulse: true,
     hint: 'Updating automatically',
   },

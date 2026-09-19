@@ -10,10 +10,26 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   size?: BadgeSize;
 }
 
+/*
+ * The green variant carries `text-green-800` where every other variant carries
+ * `-700`. The asymmetry is deliberate (Phase 11).
+ *
+ * All of these were tuned against a white card, where `text-green-700` measures
+ * 4.95:1 — a comfortable pass. But a badge's background is not white: the tint
+ * IS the background, and green's is the lightest of the set, so the same pair
+ * measures **4.47:1** on a card and **3.73:1** on the darker toolbar surface the
+ * connection chip sits on. Both are under the 4.5:1 floor for text, and
+ * `getStatusBadgeVariant` renders these at 9px.
+ *
+ * Green is the only variant that lands there — `red-700` on `bg-macos-red/12` and
+ * `orange-700` on `bg-macos-orange/14` both still clear 4.5:1, which the Phase 10
+ * audit verified by measuring every one of them. Deepening the text rather than
+ * weakening the tint leaves the badge's appearance and geometry untouched.
+ */
 const variantClasses: Record<BadgeVariant, string> = {
   neutral: 'border-gray-200 bg-gray-100/80 text-gray-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300',
   blue: 'border-macos-blue/20 bg-macos-blue/12 text-macos-blue dark:border-macos-blue-dark/30 dark:bg-macos-blue-dark/18 dark:text-macos-cyan',
-  green: 'border-macos-green/20 bg-macos-green/12 text-green-700 dark:border-macos-green/25 dark:bg-macos-green/16 dark:text-green-300',
+  green: 'border-macos-green/20 bg-macos-green/12 text-green-800 dark:border-macos-green/25 dark:bg-macos-green/16 dark:text-green-300',
   red: 'border-macos-red/20 bg-macos-red/12 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300',
   orange: 'border-macos-orange/25 bg-macos-orange/14 text-orange-700 dark:border-macos-orange/25 dark:bg-macos-orange/16 dark:text-orange-300',
   purple: 'border-macos-purple/25 bg-macos-purple/12 text-purple-700 dark:border-macos-purple/25 dark:bg-macos-purple/16 dark:text-purple-300',
