@@ -15,7 +15,8 @@ export function PeriodSelector({ value, onChange, prefix }: PeriodSelectorProps)
           key={`${prefix}-${item}`}
           type="button"
           onClick={() => onChange(item)}
-          className={cn('h-8 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.16em] transition-all', value === item ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+          className={cn('mat-focus h-8 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.16em] transition-colors', value === item ? 'mat-sunk bg-macos-blue text-white' : 'ambient amb-elevation-0 mat-press text-macos-text-muted hover:text-macos-text dark:hover:text-zinc-100')}
+          aria-pressed={value === item}
         >
           {periodLabel[item]}
         </button>

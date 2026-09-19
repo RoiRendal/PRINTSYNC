@@ -13,9 +13,34 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
   return (
     <GlassCard className="mt-4 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={onToggleAutoGenerate} className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-macos-text dark:text-zinc-200" aria-pressed={state.autoGenerate}>
-          <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', state.autoGenerate ? 'bg-macos-green' : 'bg-black/15 dark:bg-white/18')}>
-            <span className={cn('block h-4 w-4 rounded-full bg-white shadow transition-transform', state.autoGenerate && 'translate-x-4')} />
+        <button type="button" onClick={onToggleAutoGenerate} className="mat-focus inline-flex cursor-pointer items-center gap-2 rounded text-xs font-semibold text-macos-text dark:text-zinc-200" aria-pressed={state.autoGenerate}>
+          {/*
+            * The switch becomes a channel with a cap in it.
+            *
+            * The track cannot be tinted green in the on state any more, and it
+            * is worth being precise about why: `amb-groove.mat-well` is
+            * unlayered and sets `background-color`, so a Tailwind `bg-macos-green`
+            * on the same element is inert — the same trap that made the groove
+            * unusable for a selected chip. Rather than fight it, the colour
+            * moved to the cap, which is where a real switch carries it anyway:
+            * a white cap sitting in a neutral channel when off, a green one when
+            * on. The position does the rest.
+            *
+            * The cap keeps `transition-transform`, which is one of the few
+            * movements worth keeping — it is the difference between a control
+            * that changed state and one that was replaced. It is a CSS
+            * transition, so `prefers-reduced-motion` still governs it.
+            *
+            * Geometry is unchanged (`h-5 w-9` track, `p-0.5`, `h-4 w-4` cap,
+            * `translate-x-4`) and was re-checked rather than assumed: the cap
+            * travels from x=2..18 to x=18..34 inside a 36px track, so at the end
+            * of its travel it lands exactly on the track's 2px inset, and its
+            * circular cap stays inside the track's own rounded end at every
+            * point. `box-sizing: border-box` means the new hairline border does
+            * not grow the cap.
+            */}
+          <span className="amb-groove mat-well relative h-5 w-9 rounded-full p-0.5">
+            <span className={cn('ambient amb-elevation-0 block h-4 w-4 rounded-full border border-[var(--app-hairline)] transition-transform', state.autoGenerate ? 'bg-macos-green' : 'bg-[var(--app-surface-raised)]')} />
           </span>
           Auto-generate insights
         </button>
