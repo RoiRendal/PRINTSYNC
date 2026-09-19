@@ -757,14 +757,14 @@ export default function POS() {
           </Button>
         </div>
 
-        <div className="flex items-center rounded-full border bg-[var(--app-surface-raised)] p-1 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
+        <div className="flex items-center rounded-full border bg-[var(--app-surface-raised)] p-1 dark:bg-[#3d3d3f]">
           <button
             type="button"
             onClick={() => {
               setPosMode('retail');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'retail' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.25)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'retail' ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             Retail
           </button>
@@ -774,7 +774,7 @@ export default function POS() {
               setPosMode('custom');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'custom' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'custom' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             Custom
           </button>

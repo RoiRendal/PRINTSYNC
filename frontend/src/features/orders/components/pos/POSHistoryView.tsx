@@ -48,7 +48,7 @@ export function POSHistoryView({
           </div>
         </CardHeader>
         <CardContent>
-          <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+          <TableContainer className="rounded-none border-0 bg-transparent">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">

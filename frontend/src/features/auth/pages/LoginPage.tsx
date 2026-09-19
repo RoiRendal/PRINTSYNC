@@ -33,7 +33,7 @@ export default function LoginPage() {
         transition={{ type: 'spring', stiffness: 260, damping: 28 }}
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:bg-[#414143]">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border bg-[var(--app-surface-raised)] dark:bg-[#414143]">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
           </div>
 

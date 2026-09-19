@@ -26,9 +26,6 @@
   --radius-modal: 1rem;
   --radius-squircle: 1.25rem;
   --radius-pill: 9999px;
-
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.06);
-  --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
 :root {
@@ -259,13 +256,12 @@ html {
   /*
    * The old glass layer, now three flat surfaces. They were redefined in place so
    * that all eleven call sites inherited the change; the names were renamed once
-   * nothing else referenced them, which is Phase 6. The panel keeps a shadow
-   * because a solid fill has no blur left to separate it.
+   * nothing else referenced them, which is Phase 6. Separation comes from the
+   * hairline border above; no surface in the app casts elevation or a halo.
    */
   .surface-panel {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
-    box-shadow: var(--shadow-card);
   }
 
   .surface-toolbar {
@@ -276,7 +272,6 @@ html {
   .surface-modal {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
-    box-shadow: var(--shadow-modal);
     will-change: transform, opacity;
   }
 

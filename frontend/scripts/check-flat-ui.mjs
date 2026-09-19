@@ -3,8 +3,9 @@
  * Flat-UI verification gate — static half.
  *
  * This is the §5.1 gate from docs/flat-ui-plan.md. It checks the *source* for the
- * patterns that would re-introduce glass/translucency/gradients, so a regression
- * fails fast in CI rather than only at the next Playwright census run.
+ * patterns that would re-introduce glass/translucency/gradients — and now
+ * shadows and glows — so a regression fails fast in CI rather than only at the
+ * next Playwright census run.
  *
  * It does NOT check the rendered DOM (that's the Playwright census harness in
  * ~/.workbuddy-ai/scratch/flatui-baseline.mjs, run on demand or in CI as a
@@ -24,6 +25,9 @@ const ALLOW = [
   // The print block deliberately clears `backdrop-filter` to none so the
   // receipt prints on its own plain background. That's a print reset, not glass.
   'backdrop-filter: none !important',
+  // Same idea for the receipt: it must print on plain paper, so the print block
+  // sets `box-shadow: none`. A reset, not a shadow.
+  'box-shadow: none',
 ];
 
 // Banned patterns. Each is a (label, regex) pair; the regex matches anywhere in
@@ -50,6 +54,22 @@ const RULES = [
     'bg-white|black|zinc-*/NN',
     /\bbg-(?:white|black|zinc-\d+)\/\d{1,3}\b/,
   ],
+  // ---------------------------------------------------------------- shadows
+  // Elevation shadows, glows and inner shadows. Tailwind v4 paints `ring-*`
+  // through box-shadow too, but a ring layer is pure spread (0 blur, 0 offset) —
+  // a hairline border or a focus indicator, not a shadow — so `ring-*` is
+  // deliberately NOT banned here.
+  ['shadow-[...] arbitrary value', /\bshadow-\[[^\]]*\]/],
+  ['shadow-{sm,md,lg,xl,2xl,inner,none}', /\bshadow-(?:sm|md|lg|xl|2xl|inner|none)\b/],
+  // The bare `shadow` utility. Word-bounded so it cannot match `ring-shadow`,
+  // and it is checked after the allowlist so the print reset is exempt.
+  ['bare shadow utility', /\bshadow\b/],
+  ['shadow color modifier (shadow-*/NN)', /\bshadow-[a-z]+-\d+\/\d{1,3}\b/],
+  ['--shadow-* token definition', /--shadow-[a-z-]+\s*:/],
+  ['box-shadow (non-none)', /box-shadow\s*:\s+(?!none\b)/i],
+  ['text-shadow (non-none)', /text-shadow\s*:\s+(?!none\b)/i],
+  ['drop-shadow() / drop-shadow utility', /\bdrop-shadow\b/i],
+  ['boxShadow in a JS style object', /\bboxShadow\b/],
 ];
 
 const files = [];

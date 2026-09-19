@@ -11,7 +11,7 @@ import { exportApi } from '../api/exportApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
       {children}
     </div>
   );
@@ -23,11 +23,11 @@ function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: bo
       type="button"
       aria-pressed={enabled}
       onClick={onToggle}
-      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
     >
       <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">{label}</span>
       <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', enabled ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
-        <span className={cn('block h-4 w-4 rounded-full bg-white shadow transition-transform', enabled && 'translate-x-4')} />
+        <span className={cn('block h-4 w-4 rounded-full bg-white ring-1 ring-black/20 transition-transform', enabled && 'translate-x-4')} />
       </span>
     </button>
   );
@@ -208,7 +208,7 @@ export default function Settings() {
 
           <SurfaceCard className="p-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border bg-[var(--app-surface-raised)] p-3 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#3d3d3f]">
                 <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
               </div>
               <div className="min-w-0 flex-1 space-y-2">
@@ -307,13 +307,13 @@ export default function Settings() {
               </div>
             </div>
           </CardHeader>
-          <div className="flex rounded-full border bg-[var(--app-surface-raised)] p-1 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
+          <div className="flex rounded-full border bg-[var(--app-surface-raised)] p-1 dark:bg-[#3d3d3f]">
             {(['light', 'dark', 'system'] as const).map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>
@@ -338,7 +338,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportOrders}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -346,7 +346,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportInventory}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -354,7 +354,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportTransactions}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>

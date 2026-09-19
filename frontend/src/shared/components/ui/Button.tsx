@@ -17,13 +17,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-macos-blue text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
+    'bg-macos-blue text-white hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
   secondary:
-    'bg-[var(--app-surface-sub)] text-macos-text shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
+    'bg-[var(--app-surface-sub)] text-macos-text ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
   ghost:
     'bg-transparent text-gray-700 hover:bg-[var(--app-state-hover)] active:bg-[var(--app-state-hover-sub)] dark:text-zinc-200',
   danger:
-    'bg-macos-red text-white shadow-[0_8px_22px_rgb(255_59_48/0.22)] hover:bg-red-500 active:bg-red-600',
+    'bg-macos-red text-white hover:bg-red-500 active:bg-red-600',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -58,7 +58,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           'inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold tracking-tight transition-all duration-200 ease-out',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950',
-          'disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none',
+          'disabled:cursor-not-allowed disabled:opacity-55',
           'active:scale-[0.98]',
           variantClasses[variant],
           sizeClasses[size],

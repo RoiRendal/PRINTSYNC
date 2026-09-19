@@ -302,7 +302,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
               ) : (
                 <div className="space-y-2">
                   {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 shadow-[var(--shadow-card)] dark:bg-[#39393b]">
+                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 dark:bg-[#39393b]">
                       <div className="flex items-center gap-2">
                         <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-macos-green' : payment.method === 'Card' ? 'bg-[var(--app-tint-blue)] text-macos-blue' : 'bg-[var(--app-tint-purple)] text-macos-purple')}>
                           {payment.method[0]}

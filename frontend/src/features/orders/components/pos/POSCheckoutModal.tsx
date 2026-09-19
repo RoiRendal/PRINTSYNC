@@ -142,7 +142,7 @@ export function POSCheckoutModal({
       <div className="space-y-6">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-macos-green shadow-[var(--shadow-card)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-macos-green">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </div>
             <div>

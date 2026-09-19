@@ -12,10 +12,10 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const variantClasses: Record<CardVariant, string> = {
   solid:
-    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
+    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
   raised: 'surface-panel',
   elevated:
-    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:shadow-black/30',
+    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {

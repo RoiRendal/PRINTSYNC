@@ -121,11 +121,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             title={APP_NAME}
           >
             {logoFailed ? (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)]">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#f9f9fa] shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] dark:bg-[#4e4e50]">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#f9f9fa] ring-1 ring-[var(--app-border-hairline)] dark:bg-[#4e4e50]">
                 <img
                   src={effectiveBusinessLogoUrl}
                   alt=""
@@ -191,10 +191,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           >
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-[#f9f9fa] active:scale-[0.98]"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left transition-all duration-200 hover:bg-[#f9f9fa] active:scale-[0.98]"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
@@ -278,7 +278,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </AnimatePresence>
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
-            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] p-3 shadow-[var(--shadow-card)] dark:bg-[#0c0c0e] lg:p-4">
+            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] p-3 dark:bg-[#0c0c0e] lg:p-4">
               {children}
             </section>
           </div>

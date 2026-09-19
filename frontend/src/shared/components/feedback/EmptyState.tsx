@@ -19,7 +19,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3 text-center text-macos-text-muted dark:text-zinc-500', className)}>
-      <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
+      <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] text-macos-blue dark:text-macos-cyan">
         {icon}
       </div>
       <div className="space-y-1">

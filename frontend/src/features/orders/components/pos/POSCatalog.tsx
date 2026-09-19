@@ -56,7 +56,7 @@ export function POSCatalog({
                 className={cn(
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] transition-all',
                   activeCategory === cat
-                    ? 'border-macos-blue bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]'
+                    ? 'border-macos-blue bg-macos-blue text-white'
                     : 'bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-[var(--app-border-control)] hover:text-macos-blue dark:bg-[#3d3d3f] dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >
@@ -75,7 +75,7 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left shadow-[var(--shadow-card)] transition-colors hover:border-[var(--app-border-control)]dark:bg-[#19191c]',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left transition-colors hover:border-[var(--app-border-control)]dark:bg-[#19191c]',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >

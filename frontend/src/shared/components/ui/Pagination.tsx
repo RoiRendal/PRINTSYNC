@@ -39,7 +39,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page - 1)}
           disabled={!canGoPrevious}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text shadow-[var(--shadow-card)] transition-all dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text transition-all dark:text-zinc-200',
             !canGoPrevious && 'cursor-not-allowed opacity-40',
             canGoPrevious && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
           )}
@@ -56,7 +56,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               type="button"
               onClick={() => onPageChange(p as number)}
               className={cn(
-                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[var(--shadow-card)] transition-all',
+                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider transition-all',
                 page === p
                   ? 'border-macos-blue bg-macos-blue text-white dark:border-macos-blue-dark dark:bg-macos-blue-dark'
                   : 'border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text hover:border-macos-blue hover:bg-[var(--app-state-hover)] dark:text-zinc-200',
@@ -71,7 +71,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page + 1)}
           disabled={!canGoNext}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text shadow-[var(--shadow-card)] transition-all dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text transition-all dark:text-zinc-200',
             !canGoNext && 'cursor-not-allowed opacity-40',
             canGoNext && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
           )}

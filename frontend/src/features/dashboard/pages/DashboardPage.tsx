@@ -52,7 +52,7 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
             <p className="mt-2 truncate font-mono text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{value}</p>
           </div>
-          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[var(--app-surface-sub)] shadow-[var(--shadow-card)] ring-1', statToneClasses[tone])}>
+          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[var(--app-surface-sub)] ring-1', statToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function Dashboard() {
         </div>
         <Link
           to="/orders"
-          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
         >
           Open Pipeline
         </Link>
@@ -126,7 +126,7 @@ export default function Dashboard() {
             <Badge variant="blue" size="md">{productionQueue.length} active</Badge>
           </CardHeader>
           <CardContent>
-            <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+            <TableContainer className="rounded-none border-0 bg-transparent">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
@@ -175,7 +175,7 @@ export default function Dashboard() {
               <CardTitle>Stock Vitality</CardTitle>
               <CardDescription>Top materials by current availability.</CardDescription>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[var(--app-tint-blue)] text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan">
               <PackageSearch className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function Dashboard() {
                     <span className="truncate text-macos-text dark:text-zinc-200">{item.name}</span>
                     <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f2] shadow-inner dark:bg-[#414143]">
+                  <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f2] dark:bg-[#414143]">
                     <motion.div
                       className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-macos-blue')}
                       initial={{ width: 0 }}
@@ -210,7 +210,7 @@ export default function Dashboard() {
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"
-              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
             >
               Restock Now
             </Link>

@@ -10,7 +10,7 @@ interface LoadingStateProps {
 export function LoadingState({ label = 'Loading', className = '' }: LoadingStateProps) {
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}>
-      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] shadow-[var(--shadow-card)]">
+      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)]">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1.1, ease: 'linear', repeat: Infinity }}

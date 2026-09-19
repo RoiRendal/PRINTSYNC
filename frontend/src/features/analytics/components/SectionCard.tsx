@@ -14,7 +14,7 @@ export function SectionCard({ children, icon: Icon, title, description, controls
     <Card variant="elevated" padding="lg" className="overflow-hidden">
       <CardHeader className="gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>

@@ -86,7 +86,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       </div>
 
       {isOpen && filtered.length > 0 && (
-        <div className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:bg-[#1a1a1d]">
+        <div className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#1a1a1d]">
           {filtered.map((customer) => (
             <button
               key={customer.id}
@@ -106,7 +106,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {isOpen && query && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text-muted shadow-[var(--shadow-card)] dark:bg-[#1a1a1d] dark:text-zinc-400">
+        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text-muted dark:bg-[#1a1a1d] dark:text-zinc-400">
           No matching customers. Type to create a new one.
         </div>
       )}

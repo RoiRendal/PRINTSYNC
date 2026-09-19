@@ -102,7 +102,7 @@ export function POSCart({
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 shadow-[var(--shadow-card)] dark:bg-[#39393b]">
+            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 dark:bg-[#39393b]">
               <div className="flex gap-3">
                 <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-[#f5f5f5] dark:bg-[#3d3d3f]">
                   {item.designId ? (

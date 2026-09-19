@@ -30,7 +30,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-macos-text dark:text-zinc-100">
           <SurfaceCard className="relative w-full max-w-md p-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-macos-red shadow-[var(--shadow-card)] dark:text-red-300">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-macos-red dark:text-red-300">
               <AlertTriangle className="h-7 w-7" aria-hidden="true" />
             </div>
             <div className="mt-5 space-y-2">
