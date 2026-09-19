@@ -141,7 +141,7 @@ export function POSCart({
         )}
       </div>
 
-      <div className="space-y-3 border-t border-white/35 bg-white/38 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/6">
+      <div className="space-y-3 border-t border-white/35 bg-white/38 p-4 dark:border-white/10 dark:bg-white/6">
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
           <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">

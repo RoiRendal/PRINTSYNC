@@ -246,27 +246,19 @@ html {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-glass);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    will-change: backdrop-filter;
   }
 
   .glass-toolbar {
     background: color-mix(in srgb, var(--glass-bg) 88%, transparent);
     border-bottom: 1px solid var(--glass-border);
     box-shadow: 0 1px 0 var(--glass-highlight), 0 8px 30px rgb(0 0 0 / 0.06);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    will-change: backdrop-filter;
   }
 
   .glass-modal {
     background: var(--glass-bg-strong);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-modal);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    will-change: transform, opacity, backdrop-filter;
+    will-change: transform, opacity;
   }
 
   .macos-squircle {

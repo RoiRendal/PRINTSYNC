@@ -29,12 +29,11 @@ export const money = new Intl.NumberFormat('en-PH', {
 });
 
 export const chartTooltipStyle = {
-  border: '1px solid rgba(255,255,255,0.45)',
+  border: '1px solid var(--app-border-hairline)',
   borderRadius: '14px',
   boxShadow: '0 18px 50px rgba(0,0,0,0.14)',
   fontSize: '12px',
-  background: 'rgba(255,255,255,0.86)',
-  backdropFilter: 'blur(20px)',
+  background: 'var(--app-surface-raised)',
 };
 
 export type InsightFeature = 'sales' | 'profit' | 'trend' | 'forecast';

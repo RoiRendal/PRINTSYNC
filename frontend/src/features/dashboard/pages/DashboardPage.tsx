@@ -37,10 +37,10 @@ interface StatCardProps {
 }
 
 const statToneClasses: Record<StatTone, string> = {
-  green: 'from-macos-green/20 text-green-700 ring-macos-green/20 dark:text-green-300',
-  blue: 'from-macos-blue/20 text-macos-blue ring-macos-blue/20 dark:text-macos-cyan',
-  red: 'from-macos-red/20 text-red-700 ring-macos-red/20 dark:text-red-300',
-  purple: 'from-macos-purple/20 text-purple-700 ring-macos-purple/20 dark:text-purple-300',
+  green: 'text-green-700 ring-macos-green/20 dark:text-green-300',
+  blue: 'text-macos-blue ring-macos-blue/20 dark:text-macos-cyan',
+  red: 'text-red-700 ring-macos-red/20 dark:text-red-300',
+  purple: 'text-purple-700 ring-macos-purple/20 dark:text-purple-300',
 };
 
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
@@ -52,7 +52,7 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
             <p className="mt-2 truncate font-mono text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{value}</p>
           </div>
-          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br to-white/50 shadow-[var(--shadow-card)] ring-1 backdrop-blur-xl dark:to-white/5', statToneClasses[tone])}>
+          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[var(--app-surface-sub)] shadow-[var(--shadow-card)] ring-1', statToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
         </div>
@@ -194,7 +194,7 @@ export default function Dashboard() {
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-black/5 shadow-inner dark:bg-white/10">
                     <motion.div
-                      className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-gradient-to-r from-macos-blue to-macos-cyan')}
+                      className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-macos-blue')}
                       initial={{ width: 0 }}
                       animate={{ width: `${stockPercent}%` }}
                       transition={{ type: 'spring', stiffness: 180, damping: 26 }}
@@ -206,7 +206,7 @@ export default function Dashboard() {
             {inventorySnapshot.length === 0 && <EmptyState title="No inventory items" message="Add materials to start monitoring stock vitality." className="py-8" />}
           </div>
 
-          <div className="mt-6 rounded-[var(--radius-card)] border border-white/45 bg-white/45 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/6">
+          <div className="mt-6 rounded-[var(--radius-card)] border border-white/45 bg-white/45 p-4 dark:border-white/10 dark:bg-white/6">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"

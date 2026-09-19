@@ -199,7 +199,7 @@ export function DesignRepository() {
                   <GlassCard className="group overflow-hidden p-0">
                     <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-white/5">
                       <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[var(--app-scrim)] opacity-0 transition-opacity group-hover:opacity-100">
                         <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
                           <Eye className="h-4 w-4" aria-hidden="true" />
                         </Button>

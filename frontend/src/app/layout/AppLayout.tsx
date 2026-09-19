@@ -194,7 +194,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="flex cursor-pointer items-center gap-2 rounded-full border border-white/40 bg-white/42 py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-white/70 active:scale-[0.98] dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/14"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-macos-blue to-macos-cyan text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
@@ -271,14 +271,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-40 bg-black/35 backdrop-blur-[2px] lg:hidden"
+              className="absolute inset-0 z-40 bg-[var(--app-scrim)] lg:hidden"
               onClick={toggleCollapse}
             />
           )}
         </AnimatePresence>
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
-            <section className="min-h-full rounded-[1.5rem] border border-white/65 bg-white/86 p-3 shadow-[var(--shadow-card)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/82 lg:p-4">
+            <section className="min-h-full rounded-[1.5rem] border border-white/65 bg-white/86 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-950/82 lg:p-4">
               {children}
             </section>
           </div>

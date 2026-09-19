@@ -42,7 +42,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   {isActive && (
                     <motion.span
                       layoutId="sidebar-active-pill"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
+                      className="absolute inset-0 rounded-xl bg-macos-blue shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
                       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
                     />
                   )}

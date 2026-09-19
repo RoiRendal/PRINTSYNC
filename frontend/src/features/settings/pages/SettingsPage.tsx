@@ -11,7 +11,7 @@ import { exportApi } from '../api/exportApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br from-macos-blue/18 to-white/40 text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-macos-blue/20 dark:from-macos-blue-dark/20 dark:to-white/5 dark:text-macos-cyan">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-macos-blue/20 dark:text-macos-cyan">
       {children}
     </div>
   );
@@ -307,7 +307,7 @@ export default function Settings() {
               </div>
             </div>
           </CardHeader>
-          <div className="flex rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] backdrop-blur-xl dark:border-white/10 dark:bg-white/8">
+          <div className="flex rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/8">
             {(['light', 'dark', 'system'] as const).map((item) => (
               <button
                 key={item}

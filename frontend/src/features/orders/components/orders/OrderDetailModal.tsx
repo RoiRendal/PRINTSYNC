@@ -264,7 +264,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                       {activeLineItemDesign ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
-                          <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white backdrop-blur-md">
+                          <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white">
                             Ref: {activeLineItem?.designId || order.designId}
                           </div>
                         </div>

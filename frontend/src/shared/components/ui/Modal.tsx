@@ -42,7 +42,7 @@ export const Modal: React.FC<ModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-black/45 p-4 backdrop-blur-md sm:p-6 lg:p-10"
+          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[var(--app-scrim)] p-4 sm:p-6 lg:p-10"
           onClick={onClose}
           role="presentation"
           initial={disableAnimation ? false : { opacity: 0 }}
