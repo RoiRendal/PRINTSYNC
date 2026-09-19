@@ -261,6 +261,28 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/*
+ * The page background, defined once.
+ *
+ * This is the ONLY page-level background in the application. The app shell, the
+ * login screen and the error screen each used to paint their own: an opaque
+ * `--app-surface` plus a three-stop *coloured* wash (cyan, purple and blue) at
+ * three different strengths. Two consequences, both bad. The page had four
+ * competing backgrounds, so no single place owned "what the page looks like";
+ * and those three washes were the last thing in the bundle still speaking the
+ * old palette — the only remaining source of the old accent blue anywhere in
+ * the stylesheet.
+ *
+ * The replacement is deliberately colourless: a soft directional light from the
+ * top-left in neutral grey, so the page reads as a lit surface rather than a
+ * tinted one. That is the same division of labour the rest of the redesign uses
+ * — the light engine supplies *light*, our tokens supply *colour*. Dark needs a
+ * stronger wash, because the same grey over a near-black page is far weaker.
+ *
+ * Anything that wants the page behind it must therefore stay transparent.
+ * Painting `--app-surface` on a full-height wrapper hides this wash and silently
+ * returns the app to a flat page.
+ */
 :root body {
   margin: 0;
   min-width: 320px;

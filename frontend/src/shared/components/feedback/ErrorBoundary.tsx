@@ -27,15 +27,26 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render(): React.ReactNode {
     if (this.state.hasError) {
+      /*
+       * The page background comes from the body in `index.css`, so this screen
+       * stays transparent. It used to lay a red-and-blue wash over an opaque
+       * background of its own — an error page is the last place that should be
+       * competing with the alert it is trying to deliver, so the colour now
+       * comes from the icon alone.
+       *
+       * The medallion is the recessed-well recipe used by every other icon chip
+       * in the app. It was the only one left on a hand-written card shadow with
+       * a translucent red fill, which read as a chip that had been pressed from
+       * the opposite direction to all the others.
+       */
       return (
-        <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-macos-text dark:text-zinc-100">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,59,48,0.16),transparent_28rem),radial-gradient(circle_at_80%_80%,rgba(0,122,255,0.12),transparent_30rem)]" />
+        <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6 text-macos-text dark:text-zinc-100">
           <GlassCard className="relative w-full max-w-md p-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-macos-red/20 bg-macos-red/12 text-macos-red shadow-[var(--shadow-card)] dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300">
+            <div className="amb-groove mat-well mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-hairline)] text-red-700 dark:text-red-300">
               <AlertTriangle className="h-7 w-7" aria-hidden="true" />
             </div>
             <div className="mt-5 space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-macos-red dark:text-red-300">Application alert</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-red-700 dark:text-red-300">Application alert</p>
               <h1 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">Something went wrong</h1>
               <p className="text-sm leading-relaxed text-macos-text-muted">
                 An unexpected error occurred while rendering this page. Reloading will restore a clean application state.

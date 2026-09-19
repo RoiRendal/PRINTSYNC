@@ -109,9 +109,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     .slice(0, 2)
     .toUpperCase();
 
+  /*
+   * The page background is not painted here. It lives once, on the body, in
+   * `index.css` — a neutral two-point wash over the page surface.
+   *
+   * This shell used to lay a second, coloured wash on top of an opaque
+   * background of its own. That gave the page four competing backgrounds, and
+   * left the old palette's cyan, purple and blue as the last coloured
+   * decoration anywhere in the app. Both are gone.
+   *
+   * The wrapper must stay transparent for the one wash to show through: adding a
+   * background here hides it and quietly returns the whole app to a flat page.
+   */
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(90,200,250,0.18),transparent_30rem),radial-gradient(circle_at_85%_18%,rgba(175,82,222,0.13),transparent_28rem),radial-gradient(circle_at_55%_95%,rgba(0,122,255,0.10),transparent_34rem)]" />
+    <div className="relative flex h-screen w-full flex-col overflow-hidden text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
 
       {/* Global Top Header */}
       <header className="surface-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">

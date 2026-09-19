@@ -17,7 +17,18 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-center', className)}>
-      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-macos-red/20 bg-macos-red/12 text-macos-red shadow-[var(--shadow-card)] dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300">
+      {/*
+        Same recessed-well recipe as every other icon chip in the app, and the
+        same red as the rest of the app's red tone. This is the inline twin of
+        the full-screen error boundary's medallion — the two were a matching
+        pair, so they are changed together or not at all.
+
+        `text-macos-red` was the previous colour here: #ff3b30 on the white card
+        behind it measures 3.55:1, under the 4.5:1 floor for text this size.
+        `red-700` is the value the dashboard and the order summary already use
+        for red, and it measures 6.42:1 on the same card.
+      */}
+      <div className="amb-groove mat-well flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-hairline)] text-red-700 dark:text-red-300">
         <AlertCircle className="h-6 w-6" aria-hidden="true" />
       </div>
       <div className="space-y-1">

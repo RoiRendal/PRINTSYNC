@@ -23,14 +23,19 @@ export default function LoginPage() {
     }
   };
 
+  /*
+   * This screen used to carry the strongest of the three coloured washes, plus a
+   * soft white bloom laid across the top — two competing light sources on a
+   * screen whose entire content is one card. Both are gone.
+   *
+   * The page background now comes from the body in `index.css`, so this element
+   * stays transparent; the logo chip and the card are what carry the depth.
+   */
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] px-4 py-10 text-macos-text dark:text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(90,200,250,0.28),transparent_26rem),radial-gradient(circle_at_84%_24%,rgba(175,82,222,0.18),transparent_28rem),radial-gradient(circle_at_50%_90%,rgba(0,122,255,0.14),transparent_34rem)]" />
-      <div className="pointer-events-none absolute left-1/2 top-10 h-28 w-[34rem] -translate-x-1/2 rounded-full bg-white/35 blur-3xl dark:bg-white/5" />
-
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10 text-macos-text dark:text-zinc-100">
       <section className="relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-elevated)]">
+          <div className="ambient amb-elevation-2 mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)]">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
           </div>
 
