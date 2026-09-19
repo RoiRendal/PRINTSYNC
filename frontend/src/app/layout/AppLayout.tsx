@@ -113,8 +113,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(90,200,250,0.18),transparent_30rem),radial-gradient(circle_at_85%_18%,rgba(175,82,222,0.13),transparent_28rem),radial-gradient(circle_at_55%_95%,rgba(0,122,255,0.10),transparent_34rem)]" />
-
       {/* Global Top Header */}
       <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">

@@ -26,9 +26,6 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] px-4 py-10 text-macos-text dark:text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(90,200,250,0.28),transparent_26rem),radial-gradient(circle_at_84%_24%,rgba(175,82,222,0.18),transparent_28rem),radial-gradient(circle_at_50%_90%,rgba(0,122,255,0.14),transparent_34rem)]" />
-      <div className="pointer-events-none absolute left-1/2 top-10 h-28 w-[34rem] -translate-x-1/2 rounded-full bg-white/35 blur-3xl dark:bg-white/5" />
-
       <motion.section
         className="relative w-full max-w-md"
         initial={{ opacity: 0, y: 22, scale: 0.97 }}

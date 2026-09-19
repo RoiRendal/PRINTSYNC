@@ -50,6 +50,21 @@
   --app-hairline: rgb(0 0 0 / 0.12);
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
+
+  /* Flat surface ladder — replaces the glass fills, which measured only 1.03:1 to
+     1.09:1 against the page and so were never what separated a panel from it.
+     Once the fill is solid, the BORDER carries the separation: a card is 1.09:1
+     from the page no matter what it is filled with. Ratios below are measured. */
+  --app-surface-sub: #ececef;        /* toolbars, table headers, segmented tracks */
+  --app-surface-sunken: #e3e3e8;     /* inset wells */
+  --app-state-hover: #ececef;        /* 1.18:1 on raised — stronger than the 1.12:1 of the old 5%-black hover tint */
+  --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
+  --app-border-hairline: #d5d5da;    /* internal dividers */
+  --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
+  --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
+  --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
+  /* Theme-independent: the dialog dim is a focus cue, not a surface. */
+  --app-scrim: rgb(0 0 0 / 0.45);
 }
 
 .dark {
@@ -65,6 +80,19 @@
   --app-hairline: rgb(255 255 255 / 0.1);
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
+
+  /* Dark partners for the flat ladder. Note the muted-text steps: the default
+     --app-text-muted (#98989d) measures 3.95:1 on -sub and 3.18:1 on -sunken,
+     both below the 4.5:1 floor, so a muted label on those surfaces must use the
+     lighter step below rather than the default. */
+  --app-surface-sub: #3a3a3c;
+  --app-surface-sunken: #48484a;
+  --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
+  --app-state-hover-sub: #48484a;
+  --app-border-hairline: #48484a;
+  --app-border-control: #8e8e93;     /* 4.27:1 on raised */
+  --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
+  --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
 }
 
 html {
@@ -77,19 +105,12 @@ html {
 :root body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top left, rgb(142 142 147 / 0.10), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.06), transparent 32rem),
-    var(--app-surface);
+  /* Flat page. The two corner washes that used to sit here are gone: they were a
+     decorative radial gradient on the one surface every other surface sits on, and
+     they are the first half of the "no gradients" rule. */
+  background: var(--app-surface);
   color: var(--app-text);
   font-family: var(--font-sans);
-}
-
-.dark body {
-  background:
-    radial-gradient(circle at top left, rgb(142 142 147 / 0.18), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.12), transparent 32rem),
-    var(--app-surface);
 }
 
 #root {

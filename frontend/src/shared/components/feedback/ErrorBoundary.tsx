@@ -29,7 +29,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.state.hasError) {
       return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-macos-text dark:text-zinc-100">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(255,59,48,0.16),transparent_28rem),radial-gradient(circle_at_80%_80%,rgba(0,122,255,0.12),transparent_30rem)]" />
           <GlassCard className="relative w-full max-w-md p-6 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-macos-red/20 bg-macos-red/12 text-macos-red shadow-[var(--shadow-card)] dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300">
               <AlertTriangle className="h-7 w-7" aria-hidden="true" />
