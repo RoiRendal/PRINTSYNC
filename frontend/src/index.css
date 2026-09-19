@@ -355,6 +355,48 @@ html {
 }
 
 /*
+ * The charts are the one surface the token system never reached.
+ *
+ * Recharts paints its own text and its own series from values baked into props
+ * (`tick={{ fill: '#86868B' }}`, `stroke="#555558"`), so unlike everything else
+ * in the app the charts do not respond to the theme at all. Phase 10 measured
+ * what that costs: the axis labels scored 3.62:1 on a white card and 3.85:1 on a
+ * dark one — failing in *both* themes, for opposite reasons — and the legend
+ * text, which Recharts colours to match its series, scored 1.88:1 in dark mode,
+ * because a `#555558` series is still `#555558` on a `#2c2c2e` card.
+ *
+ * These two rules put chart text back on the same tokens as everything else, so
+ * it follows the theme with no JavaScript involved.
+ *
+ * Unlayered on purpose, like the `.mat-*` rules above: a layered rule would sit
+ * below Recharts' own inline styles and quietly do nothing.
+ *
+ * The tick rule needs no `!important` — `fill` arrives as an SVG *presentation
+ * attribute*, and any CSS rule outranks a presentation attribute. The legend
+ * rule does need one, because Recharts sets that colour as an inline `style`.
+ *
+ * The selector targets `-tick-value`, the class on the `<text>` itself. It must
+ * not be shortened to `.recharts-cartesian-axis-tick`: the wrapping group is
+ * `recharts-cartesian-axis-tick-label`, and a class selector matches whole
+ * tokens rather than substrings, so the shorter form matches **nothing at all**
+ * and fails silently. Left unnoticed, that is worse than no rule — the ticks
+ * fall back to Recharts' own `#666`, which clears 4.5:1 on a white card but
+ * scores 2.43:1 on the dark one, so light mode looks fixed while dark regresses.
+ *
+ * Not addressed here: the series colours themselves are still hardcoded, so the
+ * grey series remains hard to see against a dark card. That is a palette
+ * decision rather than a token swap, and is left open deliberately.
+ */
+.recharts-cartesian-axis-tick-value,
+.recharts-cartesian-axis-tick-value tspan {
+  fill: var(--color-macos-text-muted);
+}
+
+.recharts-legend-item-text {
+  color: var(--app-text) !important;
+}
+
+/*
  * Printing shows the document and nothing else.
  *
  * `#receipt-content` is the element `PrintableDocumentView` renders. Until this

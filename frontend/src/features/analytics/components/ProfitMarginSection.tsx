@@ -102,9 +102,9 @@ export function ProfitMarginSection({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={profitMarginData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(142,142,147,0.24)" strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="amount" tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                <YAxis yAxisId="amount" tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
                 <RechartsTooltip formatter={(value, name) => { const numericValue = Number(value ?? 0); const label = String(name); if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label]; return [money.format(numericValue), label]; }} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
                 <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#555558" radius={[8, 8, 0, 0]} animationDuration={700} />

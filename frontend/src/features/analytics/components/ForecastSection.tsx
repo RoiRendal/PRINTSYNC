@@ -114,8 +114,8 @@ export function ForecastSection({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={financialForecastChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(142,142,147,0.24)" strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="amount" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#86868B' }} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                <YAxis yAxisId="amount" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                 <RechartsTooltip formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
                 <Line yAxisId="amount" type="monotone" dataKey="actualSeries" name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} animationDuration={700} />
