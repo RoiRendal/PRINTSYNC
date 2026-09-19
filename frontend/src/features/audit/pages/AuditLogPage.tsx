@@ -165,7 +165,7 @@ export default function AuditLogPage() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Activity Overview</CardTitle>
               <CardDescription>Summary of tracked events.</CardDescription>

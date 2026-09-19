@@ -52,7 +52,7 @@ export const Modal: React.FC<ModalProps> = ({
         >
           <motion.div
             className={cn(
-              'glass-modal flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[var(--radius-modal)] sm:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-5rem)]',
+              'surface-modal flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[var(--radius-modal)] sm:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-5rem)]',
               maxWidth,
             )}
             onClick={(e) => e.stopPropagation()}
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
             exit={disableAnimation ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.97 }}
             transition={transition}
           >
-            <div className="glass-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-4 py-3">
+            <div className="surface-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <h3 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">
                   {title}

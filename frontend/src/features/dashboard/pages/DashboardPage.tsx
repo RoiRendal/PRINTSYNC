@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  GlassCard,
+  SurfaceCard,
   Table,
   TableBody,
   TableCell,
@@ -46,7 +46,7 @@ const statToneClasses: Record<StatTone, string> = {
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
   return (
     <div>
-      <GlassCard className="h-full p-4">
+      <SurfaceCard className="h-full p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
@@ -57,7 +57,7 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
           </div>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
-      </GlassCard>
+      </SurfaceCard>
     </div>
   );
 }
@@ -98,7 +98,7 @@ export default function Dashboard() {
 
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Dashboard</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
-            Monitor revenue, production flow, and material health from one Liquid Glass command center.
+            Monitor revenue, production flow, and material health from one command center.
           </p>
         </div>
         <Link
@@ -169,7 +169,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <GlassCard className="flex flex-col p-4 xl:p-5">
+        <SurfaceCard className="flex flex-col p-4 xl:p-5">
           <div className="mb-4 flex items-start justify-between gap-3 border-b pb-3">
             <div>
               <CardTitle>Stock Vitality</CardTitle>
@@ -215,7 +215,7 @@ export default function Dashboard() {
               Restock Now
             </Link>
           </div>
-        </GlassCard>
+        </SurfaceCard>
       </div>
     </div>
   );

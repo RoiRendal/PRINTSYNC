@@ -13,7 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  GlassCard,
+  SurfaceCard,
   Input,
   Modal,
   Pagination,
@@ -197,7 +197,7 @@ export default function UserManagement() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Station Overview</CardTitle>
               <CardDescription>Current account distribution.</CardDescription>
@@ -308,7 +308,7 @@ export default function UserManagement() {
             <Input className="md:col-span-2" required={!editingUserId} type="password" value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder="Password" />
           </div>
 
-          <GlassCard className="space-y-3 p-3">
+          <SurfaceCard className="space-y-3 p-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
               {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
@@ -324,7 +324,7 @@ export default function UserManagement() {
                 );
               })}
             </div>
-          </GlassCard>
+          </SurfaceCard>
 
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>

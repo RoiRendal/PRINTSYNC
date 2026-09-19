@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export type CardVariant = 'solid' | 'glass' | 'elevated';
+export type CardVariant = 'solid' | 'raised' | 'elevated';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -13,7 +13,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 const variantClasses: Record<CardVariant, string> = {
   solid:
     'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
-  glass: 'glass-panel',
+  raised: 'surface-panel',
   elevated:
     'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:shadow-black/30',
 };
@@ -37,11 +37,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = 'Card';
 
-export const GlassCard = forwardRef<HTMLDivElement, Omit<CardProps, 'variant'>>(
-  ({ className, ...props }, ref) => <Card ref={ref} variant="glass" className={className} {...props} />,
+export const SurfaceCard = forwardRef<HTMLDivElement, Omit<CardProps, 'variant'>>(
+  ({ className, ...props }, ref) => <Card ref={ref} variant="raised" className={className} {...props} />,
 );
 
-GlassCard.displayName = 'GlassCard';
+SurfaceCard.displayName = 'SurfaceCard';
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => <div ref={ref} className={cn('mb-4 flex flex-col gap-1.5', className)} {...props} />,

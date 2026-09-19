@@ -16,7 +16,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
       animate={{ width: isCollapsed ? 0 : 196 }}
       transition={{ type: 'spring', stiffness: 420, damping: 38 }}
       className={cn(
-        'glass-panel flex shrink-0 flex-col overflow-hidden border-r text-macos-text dark:text-zinc-100',
+        'surface-panel flex shrink-0 flex-col overflow-hidden border-r text-macos-text dark:text-zinc-100',
         'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}

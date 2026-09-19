@@ -3,7 +3,7 @@ import { History, ReceiptText, ShoppingBag, Sparkles } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { ApiError, isServerRejection } from '../../../shared/api/errors';
-import { Button, GlassCard } from '../../../shared/components/ui';
+import { Button, SurfaceCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { InventoryItem } from '../../inventory/types';
@@ -747,7 +747,7 @@ export default function POS() {
         </div>
       )}
 
-      <GlassCard className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+      <SurfaceCard className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <Button variant={view === 'pos' ? 'primary' : 'ghost'} size="sm" onClick={() => setView('pos')} leftIcon={<ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />}>
             Terminal
@@ -806,7 +806,7 @@ export default function POS() {
             Terminal ID: AIS-POS-01
           </div>
         </div>
-      </GlassCard>
+      </SurfaceCard>
 
       {view === 'pos' ? (
         <div className="flex flex-col gap-4 xl:flex-row">

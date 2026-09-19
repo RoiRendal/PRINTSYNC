@@ -5,7 +5,7 @@ import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Select } from '../../../shared/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
 
@@ -206,7 +206,7 @@ export default function Settings() {
             </div>
           </div>
 
-          <GlassCard className="p-4">
+          <SurfaceCard className="p-4">
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border bg-[var(--app-surface-raised)] p-3 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
                 <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
@@ -235,7 +235,7 @@ export default function Settings() {
                 {(logoUploadError || brandingError) && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{logoUploadError || brandingError}</p>}
               </div>
             </div>
-          </GlassCard>
+          </SurfaceCard>
         </CardContent>
       </Card>
 
@@ -287,17 +287,17 @@ export default function Settings() {
               {defaultsError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{defaultsError}</p>}
             </div>
 
-            <GlassCard className="space-y-4 p-4">
+            <SurfaceCard className="space-y-4 p-4">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
               <div className="space-y-3 text-[10px]">
                 <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
                 <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
               </div>
-            </GlassCard>
+            </SurfaceCard>
           </CardContent>
         </Card>
 
-        <Card variant="glass" padding="lg">
+        <Card variant="raised" padding="lg">
           <CardHeader>
             <div className="flex items-start gap-3">
               <SettingIcon><Palette className="h-5 w-5" aria-hidden="true" /></SettingIcon>
@@ -362,7 +362,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        <Card variant="glass" padding="lg">
+        <Card variant="raised" padding="lg">
           <CardHeader>
             <div className="flex items-start gap-3">
               <SettingIcon><Bell className="h-5 w-5" aria-hidden="true" /></SettingIcon>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CalendarRange } from 'lucide-react';
-import { GlassCard } from '../../../shared/components/ui';
+import { SurfaceCard } from '../../../shared/components/ui';
 import { AnalyticsSummary } from '../components/AnalyticsSummary';
 import { ForecastSection } from '../components/ForecastSection';
 import { PeriodSelector } from '../components/PeriodSelector';
@@ -54,12 +54,12 @@ export default function AnalyticsPage() {
         <div>
 
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Analytics</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Live performance, margin telemetry, demand ranking, and forecasting in one glass dashboard.</p>
+          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Live performance, margin telemetry, demand ranking, and forecasting in one dashboard.</p>
         </div>
-        <GlassCard className="flex flex-col gap-2 p-3 md:flex-row md:items-center">
+        <SurfaceCard className="flex flex-col gap-2 p-3 md:flex-row md:items-center">
           <div className="flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500"><CalendarRange className="h-3.5 w-3.5" aria-hidden="true" /> Global Sort</div>
           <PeriodSelector value={globalPeriod} onChange={applyGlobalPeriod} prefix="global" />
-        </GlassCard>
+        </SurfaceCard>
       </div>
 
       <AnalyticsSummary

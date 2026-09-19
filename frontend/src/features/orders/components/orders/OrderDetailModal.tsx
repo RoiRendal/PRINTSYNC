@@ -184,7 +184,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                 <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                   <ClipboardList className="h-3 w-3" aria-hidden="true" /> Job Specifications
                 </h4>
-                <Card variant="glass" padding="sm" className="divide-y">
+                <Card variant="raised" padding="sm" className="divide-y">
                   <div className="flex items-start justify-between gap-4 py-2 text-xs">
                     <span className="pt-1 text-macos-text-muted dark:text-zinc-500">Item</span>
                     <div className="space-y-1 text-right font-bold">
@@ -286,7 +286,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           </div>
 
           {selectedOrderIsCustom && (
-            <Card variant="glass" padding="md" className="space-y-4">
+            <Card variant="raised" padding="md" className="space-y-4">
               <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
@@ -348,7 +348,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
             </div>
           )}
 
-          <Card variant="glass" padding="md">
+          <Card variant="raised" padding="md">
             <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Update Work Phase</h4>
             <div className="flex items-center gap-3">
               <Button

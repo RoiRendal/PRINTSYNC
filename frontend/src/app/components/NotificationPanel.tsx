@@ -46,7 +46,7 @@ export const NotificationPanel = React.forwardRef<
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.96 }}
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-      className="glass-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl shadow-[var(--shadow-modal)] sm:w-96"
+      className="surface-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl shadow-[var(--shadow-modal)] sm:w-96"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

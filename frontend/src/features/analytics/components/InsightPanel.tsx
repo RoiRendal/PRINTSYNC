@@ -1,5 +1,5 @@
 import { Brain } from 'lucide-react';
-import { Badge, Button, GlassCard } from '../../../shared/components/ui';
+import { Badge, Button, SurfaceCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { formatInsightTime, type InsightState } from './analytics-types';
 
@@ -11,7 +11,7 @@ interface InsightPanelProps {
 
 export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: InsightPanelProps) {
   return (
-    <GlassCard className="mt-4 p-4">
+    <SurfaceCard className="mt-4 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button type="button" onClick={onToggleAutoGenerate} className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-macos-text dark:text-zinc-200" aria-pressed={state.autoGenerate}>
           <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', state.autoGenerate ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
@@ -41,6 +41,6 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
       ) : (
         <p className="mt-4 text-xs text-macos-text-muted dark:text-zinc-500">Generate insights to view a fixed mini-report.</p>
       )}
-    </GlassCard>
+    </SurfaceCard>
   );
 }

@@ -28,21 +28,11 @@
   --radius-pill: 9999px;
 
   --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.06);
-  --shadow-glass: 0 12px 40px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.32);
   --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
 :root {
   color-scheme: light;
-  /* Light-mode glass tokens: increased opacity and a subtle dark border so panels
-     remain distinct from the light page background while keeping the glass aesthetic. */
-  --glass-bg: rgb(255 255 255 / 0.82);
-  --glass-bg-strong: rgb(255 255 255 / 0.94);
-  --glass-border: rgb(0 0 0 / 0.10);
-  --glass-highlight: rgb(255 255 255 / 0.60);
-  --glass-blur-sidebar: 24px;
-  --glass-blur-toolbar: 20px;
-  --glass-blur-modal: 40px;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
@@ -85,10 +75,6 @@
 
 .dark {
   color-scheme: dark;
-  --glass-bg: rgb(28 28 30 / 0.72);
-  --glass-bg-strong: rgb(44 44 46 / 0.84);
-  --glass-border: rgb(255 255 255 / 0.12);
-  --glass-highlight: rgb(255 255 255 / 0.14);
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
   --app-text: #f5f5f7;
@@ -271,23 +257,23 @@ html {
 
 @layer utilities {
   /*
-   * These three are now flat. They were the glass layer; every one of the eleven
-   * call sites inherits the change rather than being edited, which is why the
-   * names still say glass — they are renamed once nothing else references them.
-   * The panel keeps a shadow because a solid fill has no blur left to separate it.
+   * The old glass layer, now three flat surfaces. They were redefined in place so
+   * that all eleven call sites inherited the change; the names were renamed once
+   * nothing else referenced them, which is Phase 6. The panel keeps a shadow
+   * because a solid fill has no blur left to separate it.
    */
-  .glass-panel {
+  .surface-panel {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
     box-shadow: var(--shadow-card);
   }
 
-  .glass-toolbar {
+  .surface-toolbar {
     background: var(--app-surface-sub);
     border-bottom: 1px solid var(--app-border-hairline);
   }
 
-  .glass-modal {
+  .surface-modal {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
     box-shadow: var(--shadow-modal);

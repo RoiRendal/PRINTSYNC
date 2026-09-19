@@ -2,7 +2,7 @@ import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, Sho
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
-import { Badge, Button, GlassCard, Input } from '../../../../shared/components/ui';
+import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { cn } from '../../../../shared/lib/cn';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
@@ -60,7 +60,7 @@ export function POSCart({
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
 
   return (
-    <GlassCard className="flex w-full flex-col overflow-hidden p-0 xl:sticky xl:top-4 xl:w-[23rem] xl:self-start">
+    <SurfaceCard className="flex w-full flex-col overflow-hidden p-0 xl:sticky xl:top-4 xl:w-[23rem] xl:self-start">
       <div className="relative p-4">
         <div className="pointer-events-none absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 p-8 opacity-[0.04]">
           <ShoppingBag className="h-48 w-48" aria-hidden="true" />
@@ -70,7 +70,7 @@ export function POSCart({
             <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text dark:text-zinc-100">
               {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
             </h2>
-            <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">Liquid Glass checkout panel</p>
+            <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">Checkout panel</p>
           </div>
           <Badge variant={posMode === 'retail' ? 'blue' : 'purple'}>{cart.length} items</Badge>
         </div>
@@ -173,6 +173,6 @@ export function POSCart({
           </div>
         )}
       </div>
-    </GlassCard>
+    </SurfaceCard>
   );
 }

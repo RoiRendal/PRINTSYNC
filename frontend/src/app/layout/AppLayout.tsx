@@ -114,7 +114,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
       {/* Global Top Header */}
-      <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
+      <header className="surface-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
@@ -209,7 +209,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                  className="glass-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
+                  className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="border-b px-4 py-3">
@@ -235,7 +235,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* Page Toolbar */}
-      <div className="glass-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
+      <div className="surface-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"

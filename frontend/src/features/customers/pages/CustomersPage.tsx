@@ -195,7 +195,7 @@ export default function CustomersPage() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Directory Overview</CardTitle>
               <CardDescription>Current customer database snapshot.</CardDescription>
