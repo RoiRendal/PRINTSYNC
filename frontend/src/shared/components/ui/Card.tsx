@@ -11,27 +11,40 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /*
- * Phase 3: `glass` is no longer glass.
+ * Phase 4: the card becomes a plate resting on the page.
  *
- * The variant name and the `GlassCard` export are kept — 9 call sites use
- * `variant="glass"` and 11 import `GlassCard`, and renaming the public surface
- * is a Phase 4 job. What matters here is that nothing frosts and nothing is
- * translucent.
+ * `glass` was already de-glassed in Phase 3; what it gains now is the same
+ * material as `solid`, so the two stay collapsed into one definition rather
+ * than two that happen to match. `GlassCard` remains as the public name — 11
+ * call sites import it — but it is a synonym for a raised surface.
  *
- * `solid` and `glass` deliberately resolve to the same treatment for now: they
- * were always the same idea spelled two ways ("a card on a raised surface"),
- * and collapsing them removes a choice that had no visual meaning. `elevated`
- * stays distinct because 14 call sites use it to mean "floating above the
- * page", which is a real difference in depth.
+ * `elevated` stays a genuinely different thing: 14 call sites use it to mean
+ * "floating above the page", which is now expressed as a higher elevation in
+ * the light engine instead of a second hand-written shadow.
  *
- * Every variant is token-driven, so none of them needs a `dark:` override.
+ * The material classes do the work and the tokens keep the colour:
+ *
+ *   ambient          — bevel plus cast shadow, from the one light source
+ *   amb-elevation-0  — resting on the surface (the plate idiom)
+ *   amb-elevation-2  — clearly lifted
+ *
+ * `shadow-[var(--shadow-card)]` and `shadow-[var(--shadow-elevated)]` are gone
+ * from this file because `.ambient` is unlayered and owns `box-shadow`, so
+ * leaving them would have been dead weight that still read as if it were doing
+ * something. Both tokens keep other consumers.
+ *
+ * The base `transition-colors` is kept deliberately, against the plan. Several
+ * call sites are clickable and pass their own `hover:` colours, and dropping
+ * the transition here would silently make those snap.
  */
+const raisedSurface =
+  'ambient amb-elevation-0 border border-[var(--app-hairline)] bg-[var(--app-surface-raised)]';
+
 const variantClasses: Record<CardVariant, string> = {
-  solid:
-    'border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
-  glass: 'surface-panel',
+  solid: raisedSurface,
+  glass: raisedSurface,
   elevated:
-    'border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-elevated)]',
+    'ambient amb-elevation-2 border border-[var(--app-hairline)] bg-[var(--app-surface-raised)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {

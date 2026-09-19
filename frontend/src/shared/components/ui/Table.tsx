@@ -6,11 +6,28 @@ export interface TableContainerProps extends HTMLAttributes<HTMLDivElement> {
   glassHeader?: boolean;
 }
 
+/*
+ * Phase 4: the table is deliberately NOT skeuomorphised.
+ *
+ * Every other primitive in this phase gains a bevel and a cast shadow. This one
+ * does not, on purpose: dense tabular data is the one place where physical depth
+ * costs legibility, and the instruction was explicit — tables stay flat.
+ *
+ * What it does get is the token sweep that Phase 3 left unfinished here. The
+ * container was still carrying `border-gray-200/80` and `dark:bg-zinc-900`,
+ * which meant a dark-mode table rendered *darker* than the raised cards around
+ * it. It now takes the same surface as everything else, so the `dark:` override
+ * is gone and the table reads as a card that happens to contain rows.
+ *
+ * `TableHeader` already sits on `.surface-toolbar` from Phase 3 — a flat chrome
+ * strip with a hairline bottom edge, which is the right treatment for a header
+ * row and needs no further change.
+ */
 export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({ className, glassHeader: _glassHeader, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      'overflow-hidden rounded-[var(--radius-card)] border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
+      'overflow-hidden rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
       className,
     )}
     {...props}

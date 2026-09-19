@@ -37,6 +37,16 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content }) => {
    * The portal and the coordinate tracking are the substance here; the entrance
    * animation that used to wrap the pill was decoration. Tracked coordinates are
    * what keep the pill attached to its trigger while the page scrolls.
+   *
+   * Phase 4 gives the pill `amb-elevation-2` — it floats well clear of the
+   * trigger, so it should be lit as something hovering. It previously borrowed
+   * `--shadow-modal`, which is a shadow for a panel that owns the whole screen:
+   * `0 24px 80px` on a 20px-tall pill is far more shadow than the object casting
+   * it. `.ambient` owns `box-shadow`, so that class is removed rather than left
+   * in place looking as though it still applies.
+   *
+   * The arrow is a separate rotated square and takes no material — at 10px it
+   * would show a bevel as a smudge, not as depth.
    */
   return (
     <div
@@ -58,7 +68,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content }) => {
               transform: 'translate(-50%, -100%) translateY(-10px)',
             }}
           >
-            <div className="relative whitespace-nowrap rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text shadow-[var(--shadow-modal)] dark:text-zinc-100">
+            <div className="ambient amb-elevation-2 relative whitespace-nowrap rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text dark:text-zinc-100">
               {content}
               <div className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-[var(--app-hairline)] bg-[var(--app-surface-raised)]" />
             </div>

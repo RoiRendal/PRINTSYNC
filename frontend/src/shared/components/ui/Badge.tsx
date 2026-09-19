@@ -25,11 +25,29 @@ const sizeClasses: Record<BadgeSize, string> = {
   md: 'px-2.5 py-1 text-[10px]',
 };
 
+/*
+ * Phase 4: the lightest possible material.
+ *
+ * A badge is about 17px tall, so it takes `amb-elevation-0` and nothing more —
+ * the shallowest setting on the ladder, which at this size reads as a small
+ * chip sitting on the surface rather than as a floating object. Anything higher
+ * would be a shadow larger than the thing casting it.
+ *
+ * There is no contrast risk here. `.ambient` sets `box-shadow` and nothing
+ * else, so the tinted background and the text on it are pixel-identical to
+ * before; only a soft edge appears around the chip. That matters because
+ * `getStatusBadgeVariant` output is read at 9px in table rows.
+ *
+ * Badges appear both inside the flat data tables and on dashboard and analytics
+ * cards. Embossing them does not make a table non-flat — the table's own
+ * surface stays plain — but this is the one decision in this phase worth a
+ * second look on screen, so it is flagged rather than assumed.
+ */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(({ className, variant = 'neutral', size = 'sm', ...props }, ref) => (
   <span
     ref={ref}
     className={cn(
-      'inline-flex items-center rounded-[var(--radius-pill)] border font-bold uppercase tracking-[0.12em]',
+      'ambient amb-elevation-0 inline-flex items-center rounded-[var(--radius-pill)] border font-bold uppercase tracking-[0.12em]',
       variantClasses[variant],
       sizeClasses[size],
       className,

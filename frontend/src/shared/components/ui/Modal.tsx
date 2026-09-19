@@ -46,6 +46,20 @@ export const Modal: React.FC<ModalProps> = ({
    * dialog instead of pretending to be frosted material, so it carries no
    * "glass panel" signal. It is also neutralised for print, so it cannot affect
    * the receipt either way.
+   *
+   * Phase 4 adds `ambient amb-elevation-3` to the panel: a dialog is the
+   * furthest thing from the page, so it takes the top of the elevation ladder.
+   *
+   * It is a plain `.ambient` and not one of the grained materials
+   * (`.amb-mat-brushed` / `-blasted`) on purpose. Those set `overflow: hidden`
+   * and `isolation: isolate`, which would create a stacking context around the
+   * whole dialog — and the receipt inside this subtree is absolutely positioned,
+   * as are several overlays in the dialogs that build on `Modal`. `.ambient`
+   * itself sets neither property, so it is safe here.
+   *
+   * `.surface-modal` is kept for its background and hairline border. Its
+   * `box-shadow` is now superseded by the material, which is unlayered and
+   * therefore wins.
    */
   return createPortal(
     <div
@@ -55,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={cn(
-          'surface-modal flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[var(--radius-modal)] sm:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-5rem)]',
+          'surface-modal ambient amb-elevation-3 flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[var(--radius-modal)] sm:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-5rem)]',
           maxWidth,
         )}
         onClick={(e) => e.stopPropagation()}
@@ -72,7 +86,14 @@ export const Modal: React.FC<ModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue/45 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+            /*
+             * `focus-visible:ring-*` is replaced by `.mat-focus`, which draws an
+             * `outline`. This button is the one control in the dialog that must
+             * never lose its focus indicator — it is the keyboard escape route —
+             * and a ring is a box-shadow, which the dialog's own material would
+             * now compete with.
+             */
+            className="mat-focus flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" aria-hidden="true" />
