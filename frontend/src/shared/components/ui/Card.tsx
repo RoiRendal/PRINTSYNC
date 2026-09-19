@@ -10,12 +10,28 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padding?: CardPadding;
 }
 
+/*
+ * Phase 3: `glass` is no longer glass.
+ *
+ * The variant name and the `GlassCard` export are kept — 9 call sites use
+ * `variant="glass"` and 11 import `GlassCard`, and renaming the public surface
+ * is a Phase 4 job. What matters here is that nothing frosts and nothing is
+ * translucent.
+ *
+ * `solid` and `glass` deliberately resolve to the same treatment for now: they
+ * were always the same idea spelled two ways ("a card on a raised surface"),
+ * and collapsing them removes a choice that had no visual meaning. `elevated`
+ * stays distinct because 14 call sites use it to mean "floating above the
+ * page", which is a real difference in depth.
+ *
+ * Every variant is token-driven, so none of them needs a `dark:` override.
+ */
 const variantClasses: Record<CardVariant, string> = {
   solid:
-    'border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
-  glass: 'glass-panel',
+    'border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
+  glass: 'surface-panel',
   elevated:
-    'border border-white/60 bg-white/92 shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:border-white/10 dark:bg-zinc-900/92 dark:shadow-black/30',
+    'border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-elevated)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {

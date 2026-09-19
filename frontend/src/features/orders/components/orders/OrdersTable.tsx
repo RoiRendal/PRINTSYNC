@@ -236,7 +236,7 @@ export function OrdersTable({
         </TableContainer>
       </CardContent>
 
-      <div className="glass-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
         End of Active Dispatch Queue
       </div>
     </Card>

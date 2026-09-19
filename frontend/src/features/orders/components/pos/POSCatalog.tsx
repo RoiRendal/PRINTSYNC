@@ -57,7 +57,7 @@ export function POSCatalog({
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] transition-all',
                   activeCategory === cat
                     ? 'border-macos-blue bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]'
-                    : 'border-white/50 bg-white/60 text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:border-white/10 dark:bg-white/8 dark:text-zinc-400 dark:hover:text-macos-cyan',
+                    : 'border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >
                 {cat}
@@ -75,7 +75,7 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-white/60 bg-white/82 p-2 text-left shadow-[var(--shadow-card)] backdrop-blur-xl transition-colors hover:border-macos-blue/35 dark:border-white/10 dark:bg-zinc-900/82 dark:hover:border-macos-blue-dark/35',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] p-2 text-left shadow-[var(--shadow-card)] transition-colors hover:border-macos-blue/35 dark:hover:border-macos-blue-dark/35',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
@@ -89,7 +89,7 @@ export function POSCatalog({
                 </div>
               )}
               <div className="absolute right-1.5 top-1.5">
-                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'blue'} className="bg-white/80 dark:bg-zinc-950/70">
+                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'blue'} className="bg-[var(--app-surface-raised)]">
                   {product.stock} stock
                 </Badge>
               </div>

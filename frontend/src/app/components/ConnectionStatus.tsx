@@ -46,7 +46,7 @@ const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   connecting: {
     label: 'Connecting',
     dot: 'bg-macos-gray',
-    chip: 'border-gray-200 bg-white/70 text-gray-500 dark:border-white/10 dark:bg-white/8 dark:text-zinc-400',
+    chip: 'border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-gray-500 dark:text-zinc-400',
     pulse: true,
     hint: 'Starting live updates',
   },
@@ -115,7 +115,7 @@ export function ConnectionStatus({ className }: { className?: string }) {
         aria-live="polite"
         aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
-          'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] backdrop-blur-md',
+          'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]',
           presentation.chip,
           className,
         )}

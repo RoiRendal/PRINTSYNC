@@ -176,7 +176,7 @@ export default function AuditLogPage() {
                 { label: 'Current Page', value: `${page} / ${totalPages || 1}`, tone: 'purple' as const },
                 { label: 'Shown', value: items.length, tone: 'green' as const },
               ].map(({ label, value, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="surface-well flex items-center justify-between rounded-[var(--radius-card)] p-3 shadow-[var(--shadow-card)]">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <ScrollText className="h-4 w-4" aria-hidden="true" />

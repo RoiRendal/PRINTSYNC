@@ -206,7 +206,7 @@ export default function CustomersPage() {
                 { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
                 { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="surface-well flex items-center justify-between rounded-[var(--radius-card)] p-3 shadow-[var(--shadow-card)]">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />

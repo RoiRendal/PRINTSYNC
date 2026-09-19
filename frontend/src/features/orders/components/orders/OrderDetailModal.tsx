@@ -237,7 +237,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                     <MessageSquare className="h-3 w-3" aria-hidden="true" /> Production Notes
                   </h4>
-                  <div className="rounded-[var(--radius-card)] border border-white/45 bg-white/50 p-3 text-xs italic text-macos-text dark:border-white/10 dark:bg-white/6 dark:text-zinc-300">
+                  <div className="surface-well rounded-[var(--radius-card)] p-3 text-xs italic text-macos-text dark:text-zinc-300">
                     &ldquo;{order.notes}&rdquo;
                   </div>
                 </section>
@@ -254,7 +254,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                     <div className="space-y-1.5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
                       {activeLineInventoryItem?.imageUrl ? (
-                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] surface-well">
                           <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
                         </div>
                       ) : <ImageFallback label="No product image" />}
@@ -262,9 +262,9 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                     <div className="space-y-1.5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Custom design</p>
                       {activeLineItemDesign ? (
-                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] surface-well">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
-                          <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white backdrop-blur-md">
+                          <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white">
                             Ref: {activeLineItem?.designId || order.designId}
                           </div>
                         </div>
@@ -275,7 +275,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   <div className="space-y-1.5">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
                     {activeLineInventoryItem?.imageUrl ? (
-                      <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                      <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] surface-well">
                         <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
                       </div>
                     ) : <ImageFallback label="No product image" />}
@@ -302,7 +302,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
               ) : (
                 <div className="space-y-2">
                   {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-2.5 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                    <div key={payment.id} className="surface-well flex items-center justify-between rounded-[var(--radius-card)] p-2.5 shadow-[var(--shadow-card)]">
                       <div className="flex items-center gap-2">
                         <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-macos-green/14 text-macos-green' : payment.method === 'Card' ? 'bg-macos-blue/14 text-macos-blue' : 'bg-macos-purple/14 text-macos-purple')}>
                           {payment.method[0]}

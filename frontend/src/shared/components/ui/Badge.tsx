@@ -17,7 +17,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   red: 'border-macos-red/20 bg-macos-red/12 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300',
   orange: 'border-macos-orange/25 bg-macos-orange/14 text-orange-700 dark:border-macos-orange/25 dark:bg-macos-orange/16 dark:text-orange-300',
   purple: 'border-macos-purple/25 bg-macos-purple/12 text-purple-700 dark:border-macos-purple/25 dark:bg-macos-purple/16 dark:text-purple-300',
-  gray: 'border-gray-200 bg-white/70 text-gray-500 dark:border-white/10 dark:bg-white/8 dark:text-zinc-400',
+  gray: 'border-[var(--app-hairline)] bg-[var(--app-surface-raised)] text-gray-500 dark:text-zinc-400',
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
@@ -29,7 +29,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(({ className, varia
   <span
     ref={ref}
     className={cn(
-      'inline-flex items-center rounded-[var(--radius-pill)] border font-bold uppercase tracking-[0.12em] backdrop-blur-md',
+      'inline-flex items-center rounded-[var(--radius-pill)] border font-bold uppercase tracking-[0.12em]',
       variantClasses[variant],
       sizeClasses[size],
       className,

@@ -20,7 +20,7 @@ export const Sidebar = ({ className, onNavigate }: { className?: string; onNavig
   return (
     <aside
       className={cn(
-        'glass-panel flex w-[196px] shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
+        'surface-panel flex w-[196px] shrink-0 flex-col overflow-hidden border-r border-[var(--app-hairline)] text-macos-text dark:text-zinc-100',
         'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}
@@ -51,7 +51,7 @@ export const Sidebar = ({ className, onNavigate }: { className?: string; onNavig
                       'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
                       isActive
                         ? 'border-white/20 bg-white/20 text-white'
-                        : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/20 dark:bg-white/22 dark:text-zinc-200 dark:group-hover:bg-white/30 dark:group-hover:text-zinc-100',
+                        : 'border-[var(--app-hairline)] bg-[var(--app-chrome)] text-macos-text-muted group-hover:bg-[var(--app-surface)] group-hover:text-macos-text dark:text-zinc-200 dark:group-hover:text-zinc-100',
                     )}
                   >
                     <item.icon className="h-4 w-4" />

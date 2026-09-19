@@ -58,9 +58,9 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content }) => {
               transform: 'translate(-50%, -100%) translateY(-10px)',
             }}
           >
-            <div className="relative whitespace-nowrap rounded-full border border-white/35 bg-white/72 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text shadow-[var(--shadow-glass)] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/78 dark:text-zinc-100">
+            <div className="relative whitespace-nowrap rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text shadow-[var(--shadow-modal)] dark:text-zinc-100">
               {content}
-              <div className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-white/35 bg-white/72 backdrop-blur-xl dark:border-white/10 dark:bg-zinc-900/78" />
+              <div className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-[var(--app-hairline)] bg-[var(--app-surface-raised)]" />
             </div>
           </div>
         ),

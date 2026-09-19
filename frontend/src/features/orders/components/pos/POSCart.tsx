@@ -65,12 +65,19 @@ export function POSCart({
         <div className="pointer-events-none absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 p-8 opacity-[0.04]">
           <ShoppingBag className="h-48 w-48" aria-hidden="true" />
         </div>
-        <div className="relative flex items-center justify-between gap-3 border-b border-white/35 pb-3 dark:border-white/10">
+        <div className="relative flex items-center justify-between gap-3 border-b border-[var(--app-hairline)] pb-3">
           <div>
             <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text dark:text-zinc-100">
               {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
             </h2>
-            <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">Liquid Glass checkout panel</p>
+            {/*
+              Was "Liquid Glass checkout panel" — a description of the styling,
+              which is both untrue now and useless to a cashier. It says what the
+              panel is *for* instead.
+            */}
+            <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">
+              {posMode === 'retail' ? 'Review and settle this sale' : 'Review and submit this order'}
+            </p>
           </div>
           <Badge variant={posMode === 'retail' ? 'blue' : 'purple'}>{cart.length} items</Badge>
         </div>
@@ -102,7 +109,7 @@ export function POSCart({
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-2.5 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border border-[var(--app-hairline)] bg-[var(--app-surface)] p-2.5 shadow-[var(--shadow-card)]">
               <div className="flex gap-3">
                 <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-black/[0.04] dark:bg-white/8">
                   {item.designId ? (
@@ -129,7 +136,7 @@ export function POSCart({
                 </div>
               </div>
               {posMode === 'custom' && (
-                <div className="mt-2 flex gap-2 border-t border-white/35 pt-2 dark:border-white/10">
+                <div className="mt-2 flex gap-2 border-t border-[var(--app-hairline)] pt-2">
                   <Button type="button" variant={item.designId ? 'primary' : 'secondary'} size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
@@ -141,7 +148,7 @@ export function POSCart({
         )}
       </div>
 
-      <div className="space-y-3 border-t border-white/35 bg-white/38 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/6">
+      <div className="space-y-3 border-t border-[var(--app-hairline)] bg-[var(--app-chrome)] p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
           <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">

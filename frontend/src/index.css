@@ -62,6 +62,27 @@
   --app-selection-text: #3a3a3c;
 
   /*
+   * Phase 3 — the opaque surface tokens.
+   *
+   * `--app-surface` is the page, `--app-chrome` is the app's own furniture
+   * (toolbars, the recessed track of a segmented control) and
+   * `--app-surface-raised` is content sitting on top of either. Three levels is
+   * enough to read as a hierarchy with no translucency at all, which is what
+   * replaces the glass. The values are deliberately close together: the
+   * hierarchy should be felt, not announced.
+   */
+  --app-chrome: #e8e8ed;
+  --app-inset-shadow: inset 0 1px 2px rgb(0 0 0 / 0.07);
+
+  /*
+   * A card lifted off the page. Softer and tighter than `--shadow-modal`,
+   * which is a shadow for something that owns the whole screen; using the modal
+   * shadow on a card repeated fourteen times made every panel glow. Dark needs
+   * a stronger value because a black shadow on a near-black page is invisible.
+   */
+  --shadow-elevated: 0 18px 50px rgb(0 0 0 / 0.14);
+
+  /*
    * ambientcss light source.
    *
    * One key light from the upper left plus a soft fill, calibrated by the
@@ -106,6 +127,13 @@
   --app-hairline: rgb(255 255 255 / 0.1);
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
+
+  /* Dark inverts the light-mode ladder: chrome is *lighter* than the page and
+     content is lighter still, so elevation still reads as "closer to the
+     viewer". A pure-black inset would be invisible, so it is strengthened. */
+  --app-chrome: #242426;
+  --app-inset-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-elevated: 0 18px 50px rgb(0 0 0 / 0.55);
 
   /*
    * ambientcss has no built-in dark mode, and there is no separate "dark light
@@ -298,6 +326,65 @@ html {
     backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
     -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
     will-change: transform, opacity, backdrop-filter;
+  }
+
+  /*
+   * Phase 3 — the opaque replacements for `.glass-*`.
+   *
+   * Same shapes, same call sites, no `backdrop-filter` and no alpha. Everything
+   * that used to be frosted points here now, so the whole app has exactly four
+   * definitions to restyle when the skeuomorphic materials land — and one place
+   * to look when something is the wrong shade.
+   *
+   * A blur is the single strongest signal of the frosted-glass look we are
+   * moving away from, and it also forces a compositing layer per surface, so
+   * none of these carry one. The `.glass-*` rules above are left in place
+   * until Phase 7 deletes them once nothing references them.
+   *
+   * Colours are tokens, never `rgb(255 255 255 / 0.8)`-style literals: the
+   * literals were the reason dark mode needed a `dark:` override on every
+   * single one of them.
+   */
+  .surface-panel {
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-hairline);
+    box-shadow: var(--shadow-card);
+  }
+
+  .surface-toolbar {
+    background: var(--app-chrome);
+    border-bottom: 1px solid var(--app-hairline);
+  }
+
+  .surface-modal {
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-hairline);
+    box-shadow: var(--shadow-modal);
+  }
+
+  /*
+   * The segmented period/metric switcher. The same literal used to be
+   * copy-pasted into five files (analytics, inventory, settings, POS, forecast);
+   * they all point here now, so the control has one definition instead of five
+   * that could drift. Recessed rather than raised — it is a track the buttons
+   * sit *in*, which is why it takes the inset shadow.
+   */
+  .surface-segmented {
+    background: var(--app-chrome);
+    border: 1px solid var(--app-hairline);
+    box-shadow: var(--app-inset-shadow);
+  }
+
+  /*
+   * A recessed area *inside* a raised surface — a summary row in a report card,
+   * a thumbnail frame, an image well. It sits one level below
+   * `.surface-panel`, which is why it takes `--app-surface` rather than
+   * `--app-surface-raised`; on a white card the difference is what makes the
+   * row read as inset rather than as another card.
+   */
+  .surface-well {
+    background: var(--app-surface);
+    border: 1px solid var(--app-hairline);
   }
 
   .macos-squircle {

@@ -208,7 +208,7 @@ export default function UserManagement() {
                 { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="surface-well flex items-center justify-between rounded-[var(--radius-card)] p-3 shadow-[var(--shadow-card)]">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -317,7 +317,7 @@ export default function UserManagement() {
                 const item = NAV_ITEMS.find((nav) => nav.key === key);
                 if (!item) return null;
                 return (
-                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border border-white/40 bg-white/40 px-3 py-2 text-[11px] text-macos-text dark:border-white/10 dark:bg-white/6 dark:text-zinc-300">
+                  <label key={key} className="surface-well inline-flex items-center gap-2 rounded-[var(--radius-button)] px-3 py-2 text-[11px] text-macos-text dark:text-zinc-300">
                     <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border border-black/15 accent-macos-blue dark:border-white/20" />
                     {item.label}
                   </label>

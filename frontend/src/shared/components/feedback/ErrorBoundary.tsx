@@ -42,7 +42,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               </p>
             </div>
             {this.state.error && (
-              <p className="mt-4 rounded-xl border border-black/5 bg-white/45 px-3 py-2 text-left font-mono text-[11px] text-macos-text-muted dark:border-white/10 dark:bg-white/8 dark:text-zinc-500">
+              <p className="surface-well mt-4 rounded-xl px-3 py-2 text-left font-mono text-[11px] text-macos-text-muted dark:text-zinc-500">
                 {this.state.error.message}
               </p>
             )}

@@ -114,7 +114,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(90,200,250,0.18),transparent_30rem),radial-gradient(circle_at_85%_18%,rgba(175,82,222,0.13),transparent_28rem),radial-gradient(circle_at_55%_95%,rgba(0,122,255,0.10),transparent_34rem)]" />
 
       {/* Global Top Header */}
-      <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
+      <header className="surface-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
@@ -125,7 +125,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-[var(--shadow-card)] ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] ring-1 ring-[var(--app-hairline)]">
                 <img
                   src={effectiveBusinessLogoUrl}
                   alt=""
@@ -189,7 +189,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           >
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-white/40 bg-white/42 py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-white/70 active:scale-[0.98] dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/14"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-[var(--app-chrome)] active:scale-[0.98]"
               aria-expanded={isProfileOpen}
             >
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-macos-blue to-macos-cyan text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
@@ -202,7 +202,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
             {isProfileOpen && (
               <div
-                className="glass-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
+                className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="border-b border-black/5 px-4 py-3 dark:border-white/10">
@@ -227,7 +227,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* Page Toolbar */}
-      <div className="glass-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
+      <div className="surface-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
           {/*
             Mobile only. The desktop collapse control is gone by design — from
@@ -268,13 +268,21 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         */}
         {isSidebarOpen && (
           <div
-            className="absolute inset-0 z-40 bg-black/35 backdrop-blur-[2px] lg:hidden"
+            className="absolute inset-0 z-40 bg-black/40 lg:hidden"
             onClick={closeSidebar}
           />
         )}
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent transition-colors duration-300">
           <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
-            <section className="min-h-full rounded-[1.5rem] border border-white/65 bg-white/86 p-3 shadow-[var(--shadow-card)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/82 lg:p-4">
+            {/*
+              The page surface. Until Phase 3 this was the single strongest
+              signal of the frosted-glass look — a translucent white panel with
+              a blur wrapped *every* route, so no amount of restyling inside a
+              page could change what the app felt like. It is now one opaque,
+              token-driven surface, and it is the same markup in both themes
+              because the tokens carry the theme rather than a `dark:` override.
+            */}
+            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-hairline)] bg-[var(--app-surface-raised)] p-3 shadow-[var(--shadow-card)] lg:p-4">
               {children}
             </section>
           </div>

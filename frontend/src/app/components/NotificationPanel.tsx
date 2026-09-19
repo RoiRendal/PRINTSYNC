@@ -46,7 +46,7 @@ export const NotificationPanel = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="glass-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl shadow-[var(--shadow-modal)] sm:w-96"
+      className="surface-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl shadow-[var(--shadow-modal)] sm:w-96"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

@@ -199,7 +199,7 @@ export function DesignRepository() {
                   <GlassCard className="group overflow-hidden p-0">
                     <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-white/5">
                       <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
                         <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
                           <Eye className="h-4 w-4" aria-hidden="true" />
                         </Button>
@@ -256,7 +256,7 @@ export function DesignRepository() {
       <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={selectedDesign?.name || 'Design View'} maxWidth="max-w-2xl">
         {selectedDesign && (
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border border-white/45 bg-white/50 dark:border-white/10 dark:bg-white/6"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
+            <div className="surface-well aspect-square overflow-hidden rounded-[var(--radius-card)]"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
               <div><h4 className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="purple" className="mt-2">{selectedDesign.category}</Badge></div>
               <GlassCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Reference ID</p><p className="font-mono text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></GlassCard>

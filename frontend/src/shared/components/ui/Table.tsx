@@ -28,7 +28,7 @@ export const Table = forwardRef<HTMLTableElement, TableHTMLAttributes<HTMLTableE
 Table.displayName = 'Table';
 
 export const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('glass-toolbar text-macos-text-muted dark:text-zinc-400', className)} {...props} />
+  <thead ref={ref} className={cn('surface-toolbar text-macos-text-muted dark:text-zinc-400', className)} {...props} />
 ));
 
 TableHeader.displayName = 'TableHeader';
