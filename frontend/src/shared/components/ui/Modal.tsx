@@ -73,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue/45 dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] dark:text-zinc-400 dark:hover:text-zinc-100"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" aria-hidden="true" />

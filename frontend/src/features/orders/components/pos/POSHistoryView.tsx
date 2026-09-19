@@ -37,7 +37,7 @@ export function POSHistoryView({
   return (
     <>
       <Card variant="elevated" padding="none" className="overflow-hidden">
-        <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle>POS &amp; Order History</CardTitle>
             <CardDescription>Retail transactions and custom orders in one audit trail.</CardDescription>
@@ -104,7 +104,7 @@ export function POSHistoryView({
       <Modal isOpen={!!selectedTransaction} onClose={onCloseTransactionDetail} title="Transaction Details" maxWidth="max-w-sm">
         {selectedTransaction && (
           <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1 scrollbar-hide">
-            <div className="flex items-start justify-between border-b border-black/5 pb-3 dark:border-white/10">
+            <div className="flex items-start justify-between border-b pb-3">
               <div className="space-y-0.5">
                 <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Reference ID</p>
                 <p className="font-mono text-[10px] font-bold">#{selectedTransaction.id}</p>
@@ -119,7 +119,7 @@ export function POSHistoryView({
               <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Items Purchased</p>
               <div className="max-h-36 space-y-1 overflow-y-auto pr-1 scrollbar-hide">
                 {selectedTransaction.items.map((item, idx) => (
-                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border border-white/35 bg-white/45 p-2 text-[9px] dark:border-white/10 dark:bg-white/6">
+                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border bg-[var(--app-surface-raised)] p-2 text-[9px] dark:bg-[#39393b]">
                     <div className="min-w-0 flex-1 pr-2">
                       <p className="truncate font-bold text-macos-text dark:text-zinc-100">{item.name}</p>
                       <p className="text-[7px] text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
@@ -130,15 +130,15 @@ export function POSHistoryView({
               </div>
             </div>
 
-            <div className="space-y-1 border-t border-black/5 pt-3 text-[9px] text-macos-text-muted dark:border-white/10">
+            <div className="space-y-1 border-t pt-3 text-[9px] text-macos-text-muted">
               <div className="flex justify-between"><span>Subtotal</span><span className="font-mono">₱{selectedTransaction.subtotal.toFixed(2)}</span></div>
               {(selectedTransaction.discount ?? 0) > 0 && <div className="flex justify-between"><span>Discount</span><span className="font-mono">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span></div>}
               <div className="flex justify-between"><span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span><span className="font-mono">₱{selectedTransaction.tax.toFixed(2)}</span></div>
-              <div className="mt-2 flex items-center justify-between border-t border-black/5 pt-2 dark:border-white/10">
+              <div className="mt-2 flex items-center justify-between border-t pt-2">
                 <span className="text-[9px] font-bold uppercase tracking-widest text-macos-text dark:text-zinc-100">Total Amount</span>
                 <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
-              <div className="mt-2 flex items-center justify-between rounded-xl bg-black/5 p-2 dark:bg-white/8">
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
                 <span className="text-[8px] font-bold uppercase tracking-widest text-macos-text dark:text-zinc-100">Payment</span>
                 <Badge variant="blue">{selectedTransaction.paymentMethod}</Badge>
               </div>

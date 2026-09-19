@@ -34,7 +34,7 @@ export const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HT
 TableHeader.displayName = 'TableHeader';
 
 export const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('divide-y divide-gray-100 dark:divide-white/10', className)} {...props} />
+  <tbody ref={ref} className={cn('divide-y', className)} {...props} />
 ));
 
 TableBody.displayName = 'TableBody';

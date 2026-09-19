@@ -11,7 +11,7 @@ import { exportApi } from '../api/exportApi';
 
 function SettingIcon({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-macos-blue/20 dark:text-macos-cyan">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] text-macos-blue shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
       {children}
     </div>
   );
@@ -23,10 +23,10 @@ function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: bo
       type="button"
       aria-pressed={enabled}
       onClick={onToggle}
-      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/54 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/25 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
     >
       <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">{label}</span>
-      <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', enabled ? 'bg-macos-green' : 'bg-black/15 dark:bg-white/18')}>
+      <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', enabled ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
         <span className={cn('block h-4 w-4 rounded-full bg-white shadow transition-transform', enabled && 'translate-x-4')} />
       </span>
     </button>
@@ -168,7 +168,7 @@ export default function Settings() {
       </div>
 
       <Card variant="elevated" padding="lg" className="overflow-hidden">
-        <CardHeader className="border-b border-black/5 pb-4 dark:border-white/10">
+        <CardHeader className="border-b pb-4">
           <div className="flex items-start gap-3">
             <SettingIcon><Building2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
             <div>
@@ -208,7 +208,7 @@ export default function Settings() {
 
           <GlassCard className="p-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border border-white/50 bg-white/60 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/8">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border bg-[var(--app-surface-raised)] p-3 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
                 <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
               </div>
               <div className="min-w-0 flex-1 space-y-2">
@@ -241,7 +241,7 @@ export default function Settings() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <Card variant="elevated" padding="lg" className="overflow-hidden">
-          <CardHeader className="border-b border-black/5 pb-4 dark:border-white/10">
+          <CardHeader className="border-b pb-4">
             <div className="flex items-start gap-3">
               <SettingIcon><Settings2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
               <div>
@@ -307,13 +307,13 @@ export default function Settings() {
               </div>
             </div>
           </CardHeader>
-          <div className="flex rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/8">
+          <div className="flex rounded-full border bg-[var(--app-surface-raised)] p-1 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
             {(['light', 'dark', 'system'] as const).map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white shadow-[0_8px_18px_rgb(0_122_255/0.22)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>
@@ -324,7 +324,7 @@ export default function Settings() {
 
       <div className="grid gap-5 md:grid-cols-2">
         <Card variant="elevated" padding="lg" className="overflow-hidden">
-          <CardHeader className="border-b border-black/5 pb-4 dark:border-white/10">
+          <CardHeader className="border-b pb-4">
             <div className="flex items-start gap-3">
               <SettingIcon><Download className="h-5 w-5" aria-hidden="true" /></SettingIcon>
               <div>
@@ -338,7 +338,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportOrders}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -346,7 +346,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportInventory}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -354,7 +354,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportTransactions}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/58 p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-macos-blue/30 hover:bg-white/72 dark:border-white/10 dark:bg-white/6 dark:hover:border-macos-blue-dark/25 dark:hover:bg-white/10"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left shadow-[var(--shadow-card)] transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>

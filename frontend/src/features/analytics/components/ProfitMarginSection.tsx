@@ -118,7 +118,7 @@ export function ProfitMarginSection({
             <Badge variant="orange">Lowest: {profitMarginStats.lowestPoint.label} ({profitMarginStats.lowestPoint.margin.toFixed(1)}%)</Badge>
           </div>
           <TableContainer className="mt-4">
-            <div className="flex items-center justify-between border-b border-black/5 p-3 dark:border-white/10">
+            <div className="flex items-center justify-between border-b p-3">
               <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Margin Ranking Table</p>
               <Select fieldSize="sm" className="w-44" value={marginSortOrder} onChange={(event) => setMarginSortOrder(event.target.value as 'desc' | 'asc')}>
                 <option value="desc">Highest to Lowest</option>

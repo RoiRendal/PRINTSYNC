@@ -33,7 +33,7 @@ export default function LoginPage() {
         transition={{ type: 'spring', stiffness: 260, damping: 28 }}
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border border-white/55 bg-white/70 shadow-[var(--shadow-glass)] dark:border-white/10 dark:bg-white/10">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border bg-[var(--app-surface-raised)] shadow-[var(--shadow-glass)] dark:bg-[#414143]">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
           </div>
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
             </div>
 
             {authError && (
-              <div className="rounded-xl border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+              <div className="rounded-xl border bg-[var(--app-tint-red)] px-3 py-2 text-xs font-medium text-red-700 dark:text-red-300">
                 {authError}
               </div>
             )}

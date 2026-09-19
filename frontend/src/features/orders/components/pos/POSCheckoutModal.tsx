@@ -142,7 +142,7 @@ export function POSCheckoutModal({
       <div className="space-y-6">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border border-macos-green/20 bg-macos-green/12 text-macos-green shadow-[var(--shadow-card)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-macos-green shadow-[var(--shadow-card)]">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </div>
             <div>
@@ -153,7 +153,7 @@ export function POSCheckoutModal({
                 {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
               </p>
               {recovered && (
-                <p className="mt-3 rounded-[var(--radius-card)] border border-macos-blue/25 bg-macos-blue/10 px-3 py-2 text-[10px] font-semibold leading-relaxed text-macos-blue dark:border-macos-blue/30 dark:text-macos-cyan">
+                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-[10px] font-semibold leading-relaxed text-macos-blue dark:text-macos-cyan">
                   This sale had already been saved — the earlier attempt did go through. Do not ring it up again.
                 </p>
               )}
@@ -186,7 +186,7 @@ export function POSCheckoutModal({
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Amount to Pay</span>
                 <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="space-y-1 border-b border-black/5 pb-3 font-mono text-[9px] text-macos-text-muted dark:border-white/10 dark:text-zinc-500">
+              <div className="space-y-1 border-b pb-3 font-mono text-[9px] text-macos-text-muted dark:text-zinc-500">
                 <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
                 {appliedDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>−{currencySymbol}{appliedDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between"><span>VAT ({totals.vatRatePercent}%)</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>
@@ -203,7 +203,7 @@ export function POSCheckoutModal({
               </div>
             )}
 
-            <div className="max-h-40 space-y-2 overflow-y-auto border-t border-black/5 pt-4 pr-2 dark:border-white/10">
+            <div className="max-h-40 space-y-2 overflow-y-auto border-t pt-4 pr-2">
               {cart.map((item, idx) => {
                 const shortfall = shortfallFor(item.id);
                 return (

@@ -14,10 +14,10 @@ interface SummaryCardProps {
 }
 
 const summaryToneClasses: Record<SummaryTone, string> = {
-  purple: 'text-purple-700 ring-macos-purple/25 dark:text-purple-300',
-  blue: 'text-macos-blue ring-macos-blue/25 dark:text-macos-cyan',
-  green: 'text-green-700 ring-macos-green/25 dark:text-green-300',
-  orange: 'text-orange-700 ring-macos-orange/25 dark:text-orange-300',
+  purple: 'text-purple-700 ring-[var(--app-border-hairline)] dark:text-purple-300',
+  blue: 'text-macos-blue ring-[var(--app-border-hairline)] dark:text-macos-cyan',
+  green: 'text-green-700 ring-[var(--app-border-hairline)] dark:text-green-300',
+  orange: 'text-orange-700 ring-[var(--app-border-hairline)] dark:text-orange-300',
 };
 
 function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {

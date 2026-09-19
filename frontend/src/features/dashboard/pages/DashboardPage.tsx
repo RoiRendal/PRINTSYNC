@@ -37,10 +37,10 @@ interface StatCardProps {
 }
 
 const statToneClasses: Record<StatTone, string> = {
-  green: 'text-green-700 ring-macos-green/20 dark:text-green-300',
-  blue: 'text-macos-blue ring-macos-blue/20 dark:text-macos-cyan',
-  red: 'text-red-700 ring-macos-red/20 dark:text-red-300',
-  purple: 'text-purple-700 ring-macos-purple/20 dark:text-purple-300',
+  green: 'text-green-700 ring-[var(--app-border-hairline)] dark:text-green-300',
+  blue: 'text-macos-blue ring-[var(--app-border-hairline)] dark:text-macos-cyan',
+  red: 'text-red-700 ring-[var(--app-border-hairline)] dark:text-red-300',
+  purple: 'text-purple-700 ring-[var(--app-border-hairline)] dark:text-purple-300',
 };
 
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
@@ -118,7 +118,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 xl:gap-5">
         <Card className="xl:col-span-3" padding="none" variant="elevated">
-          <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b border-black/5 p-4 dark:border-white/10">
+          <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b p-4">
             <div>
               <CardTitle>Production Pipeline</CardTitle>
               <CardDescription>Current print jobs awaiting completion or delivery.</CardDescription>
@@ -170,12 +170,12 @@ export default function Dashboard() {
         </Card>
 
         <GlassCard className="flex flex-col p-4 xl:p-5">
-          <div className="mb-4 flex items-start justify-between gap-3 border-b border-white/35 pb-3 dark:border-white/10">
+          <div className="mb-4 flex items-start justify-between gap-3 border-b pb-3">
             <div>
               <CardTitle>Stock Vitality</CardTitle>
               <CardDescription>Top materials by current availability.</CardDescription>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-macos-blue/12 text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[var(--app-tint-blue)] text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
               <PackageSearch className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
@@ -192,7 +192,7 @@ export default function Dashboard() {
                     <span className="truncate text-macos-text dark:text-zinc-200">{item.name}</span>
                     <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5 shadow-inner dark:bg-white/10">
+                  <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f2] shadow-inner dark:bg-[#414143]">
                     <motion.div
                       className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-macos-blue')}
                       initial={{ width: 0 }}
@@ -206,7 +206,7 @@ export default function Dashboard() {
             {inventorySnapshot.length === 0 && <EmptyState title="No inventory items" message="Add materials to start monitoring stock vitality." className="py-8" />}
           </div>
 
-          <div className="mt-6 rounded-[var(--radius-card)] border border-white/45 bg-white/45 p-4 dark:border-white/10 dark:bg-white/6">
+          <div className="mt-6 rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-4 dark:bg-[#39393b]">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"

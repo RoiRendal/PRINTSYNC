@@ -742,7 +742,7 @@ export default function POS() {
   return (
     <div className="flex flex-col gap-5">
       {transactionError && (
-        <div className="rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:text-red-300">
           {transactionError}
         </div>
       )}
@@ -757,14 +757,14 @@ export default function POS() {
           </Button>
         </div>
 
-        <div className="flex items-center rounded-full border border-white/50 bg-white/55 p-1 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/8">
+        <div className="flex items-center rounded-full border bg-[var(--app-surface-raised)] p-1 shadow-[var(--shadow-card)] dark:bg-[#3d3d3f]">
           <button
             type="button"
             onClick={() => {
               setPosMode('retail');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'retail' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.25)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'retail' ? 'bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.25)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             Retail
           </button>
@@ -774,7 +774,7 @@ export default function POS() {
               setPosMode('custom');
               resetSaleState();
             }}
-            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'custom' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-black/5 dark:text-zinc-400 dark:hover:bg-white/10')}
+            className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em] transition-all', posMode === 'custom' ? 'bg-macos-purple text-white shadow-[0_6px_16px_rgb(175_82_222/0.24)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             Custom
           </button>

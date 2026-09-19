@@ -14,7 +14,7 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
     <GlassCard className="mt-4 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button type="button" onClick={onToggleAutoGenerate} className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-macos-text dark:text-zinc-200" aria-pressed={state.autoGenerate}>
-          <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', state.autoGenerate ? 'bg-macos-green' : 'bg-black/15 dark:bg-white/18')}>
+          <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', state.autoGenerate ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
             <span className={cn('block h-4 w-4 rounded-full bg-white shadow transition-transform', state.autoGenerate && 'translate-x-4')} />
           </span>
           Auto-generate insights
