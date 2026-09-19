@@ -19,9 +19,9 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'bg-macos-blue text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
   secondary:
-    'bg-white/72 text-macos-text shadow-[var(--shadow-card)] ring-1 ring-black/5 hover:bg-white dark:bg-white/10 dark:text-zinc-100 dark:ring-white/10 dark:hover:bg-white/14',
+    'bg-[var(--app-surface-sub)] text-macos-text shadow-[var(--shadow-card)] ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
   ghost:
-    'bg-transparent text-gray-700 hover:bg-black/5 active:bg-black/10 dark:text-zinc-200 dark:hover:bg-white/10 dark:active:bg-white/15',
+    'bg-transparent text-gray-700 hover:bg-[var(--app-state-hover)] active:bg-[var(--app-state-hover-sub)] dark:text-zinc-200',
   danger:
     'bg-macos-red text-white shadow-[0_8px_22px_rgb(255_59_48/0.22)] hover:bg-red-500 active:bg-red-600',
 };

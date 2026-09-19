@@ -47,7 +47,10 @@
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
-  --app-hairline: rgb(0 0 0 / 0.12);
+  /* The default border colour for every element, so it is the largest single source
+     of translucency in the app — every divider inherits it. Solid now, and the same
+     value as the explicit hairline token. */
+  --app-hairline: #d5d5da;
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
 
@@ -63,6 +66,19 @@
   --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
   --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
   --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
+
+  /* Solid badge tints. Each is the flat composite of the translucent tint it
+     replaces — the old 12%-opacity fills resolved to almost exactly these over a
+     white card, so the badges look the same and stop being translucent. Every
+     pairing with its badge text was measured; all clear 4.5:1. */
+  --app-tint-neutral: #f5f6f8;
+  --app-tint-blue: #ebebeb;
+  --app-tint-green: #e7f8eb;
+  --app-tint-red: #ffe7e6;
+  --app-tint-orange: #fff0db;
+  --app-tint-purple: #f5eafb;
+  --app-tint-gray: #fcfcfd;
+  --app-tint-amber: #fef5e7;
   /* Theme-independent: the dialog dim is a focus cue, not a surface. */
   --app-scrim: rgb(0 0 0 / 0.45);
 }
@@ -77,7 +93,7 @@
   --app-surface-raised: #2c2c2e;
   --app-text: #f5f5f7;
   --app-text-muted: #98989d;
-  --app-hairline: rgb(255 255 255 / 0.1);
+  --app-hairline: #48484a;
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
 
@@ -93,6 +109,18 @@
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
   --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
   --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
+
+  /* Dark badge tints, composited over the raised surface. The gray one is the
+     reason the gray badge's dark text had to move up a step: the old text measured
+     4.23:1 on this fill, under the 4.5:1 floor for 9px type. */
+  --app-tint-neutral: #414143;
+  --app-tint-blue: #3e3e40;
+  --app-tint-green: #2d4535;
+  --app-tint-red: #4e2e2e;
+  --app-tint-orange: #4e3d27;
+  --app-tint-purple: #41324a;
+  --app-tint-gray: #3d3d3f;
+  --app-tint-amber: #4b422c;
 }
 
 html {
@@ -242,21 +270,26 @@ html {
 }
 
 @layer utilities {
+  /*
+   * These three are now flat. They were the glass layer; every one of the eleven
+   * call sites inherits the change rather than being edited, which is why the
+   * names still say glass — they are renamed once nothing else references them.
+   * The panel keeps a shadow because a solid fill has no blur left to separate it.
+   */
   .glass-panel {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-border-hairline);
+    box-shadow: var(--shadow-card);
   }
 
   .glass-toolbar {
-    background: color-mix(in srgb, var(--glass-bg) 88%, transparent);
-    border-bottom: 1px solid var(--glass-border);
-    box-shadow: 0 1px 0 var(--glass-highlight), 0 8px 30px rgb(0 0 0 / 0.06);
+    background: var(--app-surface-sub);
+    border-bottom: 1px solid var(--app-border-hairline);
   }
 
   .glass-modal {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-border-hairline);
     box-shadow: var(--shadow-modal);
     will-change: transform, opacity;
   }

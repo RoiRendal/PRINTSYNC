@@ -10,7 +10,7 @@ export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({
   <div
     ref={ref}
     className={cn(
-      'overflow-hidden rounded-[var(--radius-card)] border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
+      'overflow-hidden rounded-[var(--radius-card)] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
       className,
     )}
     {...props}
@@ -40,13 +40,13 @@ export const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTML
 TableBody.displayName = 'TableBody';
 
 export const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <tfoot ref={ref} className={cn('border-t border-gray-100 bg-gray-50/70 dark:border-white/10 dark:bg-white/5', className)} {...props} />
+  <tfoot ref={ref} className={cn('border-t border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)]', className)} {...props} />
 ));
 
 TableFooter.displayName = 'TableFooter';
 
 export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(({ className, ...props }, ref) => (
-  <tr ref={ref} className={cn('transition-colors duration-150 hover:bg-macos-blue/5 dark:hover:bg-macos-blue-dark/10', className)} {...props} />
+  <tr ref={ref} className={cn('transition-colors duration-150 hover:bg-[var(--app-state-hover)]', className)} {...props} />
 ));
 
 TableRow.displayName = 'TableRow';

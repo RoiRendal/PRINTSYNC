@@ -61,9 +61,9 @@ export const Tooltip: React.FC<TooltipProps> = ({ children, content }) => {
                 exit={{ opacity: 0, y: 4, scale: 0.94 }}
                 transition={{ type: 'spring', stiffness: 520, damping: 34 }}
               >
-                <div className="relative whitespace-nowrap rounded-full border border-white/35 bg-white/72 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text shadow-[var(--shadow-glass)] dark:border-white/10 dark:bg-zinc-900/78 dark:text-zinc-100">
+                <div className="relative whitespace-nowrap rounded-full border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text shadow-[var(--shadow-card)] dark:text-zinc-100">
                   {content}
-                  <div className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-white/35 bg-white/72 dark:border-white/10 dark:bg-zinc-900/78" />
+                  <div className="absolute left-1/2 top-full h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rotate-45 border-b border-r border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]" />
                 </div>
               </motion.div>
             </div>

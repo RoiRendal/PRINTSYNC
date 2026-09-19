@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
             exit={disableAnimation ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.97 }}
             transition={transition}
           >
-            <div className="glass-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-white/35 px-4 py-3 dark:border-white/10">
+            <div className="glass-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
                 <h3 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">
                   {title}
@@ -73,7 +73,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-black/5 hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue/45 dark:text-zinc-400 dark:hover:bg-white/10 dark:hover:text-zinc-100"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue/45 dark:text-zinc-400 dark:hover:text-zinc-100"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" aria-hidden="true" />

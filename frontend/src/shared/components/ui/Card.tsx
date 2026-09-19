@@ -12,10 +12,10 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const variantClasses: Record<CardVariant, string> = {
   solid:
-    'border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
+    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)]',
   glass: 'glass-panel',
   elevated:
-    'border border-white/60 bg-white/92 shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:border-white/10 dark:bg-zinc-900/92 dark:shadow-black/30',
+    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:shadow-black/30',
 };
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -73,7 +73,7 @@ CardContent.displayName = 'CardContent';
 
 export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10', className)} {...props} />
+    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-[var(--app-border-hairline)] pt-4', className)} {...props} />
   ),
 );
 

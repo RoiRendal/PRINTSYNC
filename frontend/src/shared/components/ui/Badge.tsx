@@ -11,13 +11,15 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  neutral: 'border-gray-200 bg-gray-100/80 text-gray-700 dark:border-white/10 dark:bg-white/10 dark:text-zinc-300',
-  blue: 'border-macos-blue/20 bg-macos-blue/12 text-macos-blue dark:border-macos-blue-dark/30 dark:bg-macos-blue-dark/18 dark:text-macos-cyan',
-  green: 'border-macos-green/20 bg-macos-green/12 text-green-700 dark:border-macos-green/25 dark:bg-macos-green/16 dark:text-green-300',
-  red: 'border-macos-red/20 bg-macos-red/12 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/16 dark:text-red-300',
-  orange: 'border-macos-orange/25 bg-macos-orange/14 text-orange-700 dark:border-macos-orange/25 dark:bg-macos-orange/16 dark:text-orange-300',
-  purple: 'border-macos-purple/25 bg-macos-purple/12 text-purple-700 dark:border-macos-purple/25 dark:bg-macos-purple/16 dark:text-purple-300',
-  gray: 'border-gray-200 bg-white/70 text-gray-500 dark:border-white/10 dark:bg-white/8 dark:text-zinc-400',
+  neutral: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-neutral)] text-gray-700 dark:text-zinc-300',
+  blue: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan',
+  green: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
+  red: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
+  orange: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
+  purple: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-purple)] text-purple-700 dark:text-purple-300',
+  /* The dark text is a step lighter than the other gray text in the app: the old
+     value measured 4.23:1 on this fill, under the floor for 9px type. */
+  gray: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-gray)] text-gray-500 dark:text-zinc-300',
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
