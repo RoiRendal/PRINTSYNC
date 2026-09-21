@@ -63,8 +63,10 @@ ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (
 ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (request, response) => {
   const parsed = orderSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_ORDER_REQUEST', 'The order details are invalid.');
+  // `order.created` is audited by `create_order_with_items`, inside the same
+  // transaction as the order and its stock reservation. Auditing here as well
+  // would write the row twice.
   const order = await createOrder(getSupabase(), parsed.data, request.auth.user.id);
-  await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order.created', entityType: 'order', entityId: order.id, metadata: { amount: order.amount, isCustom: order.isCustom } });
   // `create_order_with_items` reserves stock, so the inventory pages are stale too.
   publishDataChange('orders', 'inventory');
   response.status(201).json({ data: order });
@@ -78,7 +80,18 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
   // payload the service writes.
   const { expectedUpdatedAt, ...updates } = parsed.data;
   const order = await updateOrder(getSupabase(), orderId, updates, request.auth.user.id, expectedUpdatedAt);
-  await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.updated', entityType: 'order', entityId: order.id, metadata: { status: order.status } });
+  /*
+   * Only one of the two update paths has an RPC, and only an RPC can audit
+   * atomically. A line-item change goes through `replace_order_with_items`, which
+   * writes `order.updated` itself; a status/notes-only change is a plain
+   * compare-and-swap, so its audit row is still written here, after the fact.
+   *
+   * Keeping the two apart matters: auditing both would double the row, and
+   * auditing neither would lose it.
+   */
+  if (updates.lineItems === undefined) {
+    await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order.updated', entityType: 'order', entityId: order.id, metadata: { status: order.status } });
+  }
   // Only a line-item change re-reserves stock (`replace_order_with_items`); a
   // status/notes-only update leaves inventory untouched, so we do not wake the
   // inventory pages for it.
@@ -90,8 +103,8 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
 ordersRouter.delete('/:id', authenticate, requirePermission('orders.delete'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const orderId = getOrderId(request);
+  // Audited by `delete_order_with_items`, in the same transaction as the delete.
   await deleteOrder(getSupabase(), orderId, request.auth.user.id);
-  await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'order.deleted', entityType: 'order', entityId: orderId });
   // `delete_order_with_items` releases the reserved stock back to inventory.
   publishDataChange('orders', 'inventory');
   response.status(204).send();

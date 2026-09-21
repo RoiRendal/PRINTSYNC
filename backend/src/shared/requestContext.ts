@@ -65,3 +65,30 @@ export function currentRequestContext(): RequestContext | undefined {
 export function currentRequestId(): string | null {
   return storage.getStore()?.requestId ?? null;
 }
+
+/**
+ * The trailing arguments the money RPCs take so they can write their own audit
+ * row: `create_transaction_with_payment`, `void_transaction`,
+ * `create_order_with_items`, `replace_order_with_items` and
+ * `delete_order_with_items` all end with these three.
+ *
+ * One function rather than three reads at each call site, because the argument
+ * names have to match the SQL exactly and a typo in one of five copies would
+ * surface as a *missing argument* error at runtime rather than a compile error.
+ *
+ * Returning `null`s outside a request is deliberate and correct: the row is still
+ * written, with no request to attribute it to. See `provisionUser` and the
+ * seeder, which run without one.
+ */
+export function auditRpcArguments(): {
+  p_audit_request_id: string | null;
+  p_audit_ip_address: string | null;
+  p_audit_user_agent: string | null;
+} {
+  const context = currentRequestContext();
+  return {
+    p_audit_request_id: context?.requestId ?? null,
+    p_audit_ip_address: context?.ipAddress ?? null,
+    p_audit_user_agent: context?.userAgent ?? null,
+  };
+}

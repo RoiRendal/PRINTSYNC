@@ -3,6 +3,7 @@ import type { InsufficientStockDetails, PaginationParams, PaginatedResponse } fr
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
+import { auditRpcArguments } from '../../shared/requestContext.js';
 
 export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
 export type TransactionStatus = 'completed' | 'voided';
@@ -212,13 +213,21 @@ export async function createTransaction(supabase: SupabaseClient, input: Transac
     p_created_by: actorId,
     p_items: input.items,
     p_idempotency_key: input.idempotencyKey,
+    // The RPC writes the `transaction.created` audit row inside the same
+    // transaction, so a sale can no longer commit with its audit row lost. A
+    // replayed key writes none: nothing moved, and the original attempt has one.
+    ...auditRpcArguments(),
   });
   if (error || !data) throw mapCreateFailure(error);
   return getTransaction(supabase, String((data as Record<string, unknown>).id));
 }
 
 export async function voidTransaction(supabase: SupabaseClient, id: string, actorId: string): Promise<TransactionRecord> {
-  const { data, error } = await supabase.rpc('void_transaction', { p_transaction_id: id, p_voided_by: actorId });
+  const { data, error } = await supabase.rpc('void_transaction', {
+    p_transaction_id: id,
+    p_voided_by: actorId,
+    ...auditRpcArguments(),
+  });
   if (error || !data) throw new AppError(400, 'TRANSACTION_VOID_FAILED', error?.message ?? 'The transaction could not be voided.');
   return getTransaction(supabase, String((data as Record<string, unknown>).id));
 }

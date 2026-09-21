@@ -6,7 +6,6 @@ import { requirePermission } from '../middleware/authorize.js';
 import { createTransaction, findTransactionByIdempotencyKey, getTransaction, listTransactions, voidTransaction } from '../modules/payments/payments.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
-import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
@@ -80,8 +79,10 @@ paymentsRouter.get('/transactions/:id', authenticate, requirePermission('payment
 paymentsRouter.post('/transactions', authenticate, requirePermission('payments.create'), async (request, response) => {
   const parsed = transactionSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_TRANSACTION_REQUEST', 'The transaction details are invalid.');
+  // `transaction.created` is audited by `create_transaction_with_payment`, inside
+  // the same transaction as the sale, its stock deduction and its payment row. A
+  // replayed idempotency key writes no second row, because no second sale exists.
   const transaction = await createTransaction(getSupabase(), parsed.data, request.auth.user.id);
-  await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'transaction.created', entityType: 'sales_transaction', entityId: transaction.id, metadata: { total: transaction.total, paymentMethod: transaction.paymentMethod } });
   // A retail sale writes a payment *and* decrements stock in one RPC.
   publishDataChange('payments', 'inventory');
   response.status(201).json({ data: transaction });
@@ -90,8 +91,9 @@ paymentsRouter.post('/transactions', authenticate, requirePermission('payments.c
 paymentsRouter.post('/transactions/:id/void', authenticate, requirePermission('payments.void'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const transactionId = getTransactionId(request);
+  // `transaction.voided` is audited by `void_transaction`, in the same transaction
+  // as the reversal of the sale, its stock and its payment.
   const transaction = await voidTransaction(getSupabase(), transactionId, request.auth.user.id);
-  await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'transaction.voided', entityType: 'sales_transaction', entityId: transaction.id });
   // Voiding restores the deducted stock and voids the payment.
   publishDataChange('payments', 'inventory');
   sendSuccess(response, transaction);

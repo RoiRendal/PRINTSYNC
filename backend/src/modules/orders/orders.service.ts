@@ -3,6 +3,7 @@ import type { OrderConflictDetails, PaginationParams, PaginatedResponse } from '
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
+import { auditRpcArguments } from '../../shared/requestContext.js';
 
 /**
  * The structured context the RPC attaches when a save loses a race with another
@@ -187,6 +188,9 @@ export async function createOrder(supabase: SupabaseClient, input: OrderInput, a
     p_items: input.lineItems,
     p_customer_id: input.customerId ?? null,
     p_due_date: input.dueDate ?? null,
+    // The RPC writes the `order.created` audit row itself, inside its own
+    // transaction, so the row cannot be lost while the order survives.
+    ...auditRpcArguments(),
   });
   if (error || !data) throw new AppError(400, 'ORDER_CREATE_FAILED', error?.message ?? 'The order could not be created.');
   return getOrder(supabase, String((data as Record<string, unknown>).id));
@@ -253,6 +257,10 @@ export async function updateOrder(
       p_customer_id: input.customerId ?? existing.customerId ?? null,
       p_due_date: input.dueDate ?? existing.dueDate ?? null,
       p_expected_updated_at: expectedUpdatedAt,
+      // `order.updated` is audited here, inside the transaction. The status-only
+      // path below has no RPC, so it still audits from the route — see
+      // `orders.routes.ts`, which has to tell the two apart.
+      ...auditRpcArguments(),
     });
     if (error || !data) throw mapUpdateFailure(error);
     return getOrder(supabase, id);
@@ -303,7 +311,13 @@ export async function updateOrder(
 }
 
 export async function deleteOrder(supabase: SupabaseClient, id: string, actorId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_order_with_items', { p_order_id: id, p_actor_id: actorId });
+  const { error } = await supabase.rpc('delete_order_with_items', {
+    p_order_id: id,
+    p_actor_id: actorId,
+    // This is the one that matters most. After it returns the order row is gone,
+    // and the audit row is the only remaining evidence that it existed.
+    ...auditRpcArguments(),
+  });
   if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', error.message || 'The order could not be deleted.');
 }
 
