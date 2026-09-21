@@ -8,6 +8,7 @@ import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
 import { requestId } from './middleware/requestId.js';
+import { apiRateLimit } from './middleware/apiRateLimit.js';
 import { authRouter } from './routes/auth.routes.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { brandingRouter } from './routes/branding.routes.js';
@@ -144,6 +145,19 @@ export function createApp() {
 
   app.use(helmet({ contentSecurityPolicy: { directives: contentSecurityPolicyDirectives() } }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
+
+  /**
+   * The API-wide ceiling, registered before the body parsers.
+   *
+   * Before them on purpose: the point of a limit is to stop work rather than to
+   * do it and then decline, and a refused request should not have had a body read
+   * into memory first. An image upload is the case that matters — refusing one
+   * after parsing 8 MB would be the opposite of protection.
+   *
+   * `/api/v1/events`, `/api/v1/health` and `/api/v1/ready` are exempt; see
+   * `middleware/apiRateLimit.ts` for why each one has to be.
+   */
+  app.use('/api/v1', apiRateLimit);
 
   // Image uploads arrive as a base64 data URL inside a JSON body, and base64 is
   // roughly a third larger than the bytes it encodes. A 5 MB design asset is
