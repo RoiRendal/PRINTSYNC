@@ -46,16 +46,13 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   <span
                     className={cn(
                       'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
-                      /* Tile fills are the flat composites of the translucent
-                         whites they replace, over whatever each one actually sat
-                         on: the inactive light tile was on the white sidebar and
-                         so was already white, while the dark tiles and the active
-                         tile (which sits on the solid accent pill) were not. */
-                      /* The tile outline was removed at the Boss's request, so the
-                         tiles now read as fills alone against the sidebar. */
+                      /* The tiles are bare now: the outline went first, then the
+                         fill, so the icon is the only thing painted. The colour
+                         pairing is all that is left to say which item is active —
+                         white on the accent pill, muted on the plain sidebar. */
                       isActive
-                        ? 'bg-[#78787a] text-white'
-                        : 'bg-[var(--app-surface-raised)] text-macos-text-muted group-hover:text-macos-text dark:bg-[#5a5a5c] dark:text-zinc-200 dark:group-hover:bg-[#6b6b6d] dark:group-hover:text-zinc-100',
+                        ? 'text-white'
+                        : 'text-macos-text-muted group-hover:text-macos-text dark:text-zinc-200 dark:group-hover:text-zinc-100',
                     )}
                   >
                     <item.icon className="h-4 w-4" />
