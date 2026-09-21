@@ -273,9 +273,13 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
           {/* The left and top insets are deliberately smaller than the other two:
               the sidebar column and the page body read as one unit under the
-              toolbar, so those two gaps are seams rather than frame margins — and
-              both are the same 8px as the gap above the toolbar. */}
-          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pl-3 lg:pt-2 xl:p-6 xl:pl-3 xl:pt-2">
+              toolbar, so those two gaps are seams rather than frame margins.
+              Top is 8px — the same 8px that sits above the toolbar. Left is 4px,
+              and the sidebar nav's own 4px makes the visible channel from a tab
+              highlight to this card's border 8px as well: one number on both
+              axes. Raising this back toward 12px is the first thing to try if the
+              two columns ever read as cramped rather than joined. */}
+          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pl-1 lg:pt-2 xl:p-6 xl:pl-1 xl:pt-2">
             <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>
