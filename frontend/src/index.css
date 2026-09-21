@@ -96,7 +96,7 @@
   --app-state-hover-sub: #48484a;
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
-  --app-border-frame: #66666a;       /* 2.98:1 on the page — matched to the light step */
+  --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */
   --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
   --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
 
