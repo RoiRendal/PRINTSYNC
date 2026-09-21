@@ -295,9 +295,10 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 `[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
 
 > **Status, updated 2026-09-21.** Every fix in Tiers 0, 1 and 2 is **done, verified and pushed** to
-> `origin/flat-ui` (HEAD `39422de`). Tier 3 maintainability is **done except 3.1** — 3.2–3.7 are
-> committed and pushed; only the `POSPage.tsx` decomposition (3.1) remains open. Read the sections
-> below as the original findings, not as outstanding work — the plan is complete apart from 3.1.
+> `origin/flat-ui` (HEAD `39422de`). Tier 3 maintainability is **done** — 3.1 is committed and pushed
+> on top of `39422de`, decomposing `POSPage.tsx` from 902 to 294 lines across eight hooks/components
+> plus a real `usePaymentStore` (see `7797a8d`). Read the sections below as the original findings —
+> the plan is complete.
 >
 > | Tier | State | Commits |
 > | --- | --- | --- |
@@ -316,7 +317,7 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 3 — 3.4 | done, pushed — `playwright` → devDependencies | `5be4e2d` |
 > | 3 — 3.5, 3.6 | done, pushed — drop dup index + index twelve FKs | `c2a4006` |
 > | 3 — 3.7 | done, pushed — dead exports/UI + `purchase_orders` reserved | `39422de` |
-> | 3 — 3.1 | **OPEN** — decompose `POSPage.tsx` (902 lines) | — |
+> | 3 — 3.1 | done, pushed — decompose `POSPage.tsx` (902 → 294) into 8 hooks/components + `usePaymentStore` | `7797a8d` |
 >
 > Three items were found while doing the work and are not in the lists below:
 > `OrderPayment.createdBy` was missing from the contract (same class as R7, fixed in `8cf0f34`); the
