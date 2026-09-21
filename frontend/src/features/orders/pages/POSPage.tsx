@@ -26,9 +26,10 @@ import { useCartTotals } from '../hooks/useCartTotals';
 import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { printDocument, usePOSReceipts } from '../hooks/usePOSReceipts';
+import { usePOSCart, type PosMode } from '../hooks/usePOSCart';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
-import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
+import type { CartItem, CreateOrder, Order, Transaction } from '../types';
 import { documentFromSale } from '../types/printableDocument';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
@@ -60,36 +61,38 @@ export default function POS() {
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [cart, setCart] = useState<CartItem[]>([]);
+  /**
+   * The basket, and everything typed into it.
+   *
+   * `editingOrderVersion` lives here rather than in the page: it is captured when
+   * the cart is hydrated from an order and must never be re-read from the store,
+   * which is a rule about the cart, not about the screen.
+   */
+  const basket = usePOSCart({ inventory, vatRate });
+  const {
+    cart,
+    cartDiscount,
+    vatRatePercent,
+    customerName,
+    customerId,
+    orderNotes,
+    editingOrderId,
+    editingOrderVersion,
+    hydrateFromOrder,
+  } = basket;
+
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'pos' | 'history'>('pos');
-  const [posMode, setPosMode] = useState<'retail' | 'custom'>('retail');
+  const [posMode, setPosMode] = useState<PosMode>('retail');
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
-  const [customerName, setCustomerName] = useState('');
-  const [orderNotes, setOrderNotes] = useState('');
-  const [isDesignModalOpen, setIsDesignModalOpen] = useState(false);
-  const [currentItemToDesign, setCurrentItemToDesign] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkoutError, setCheckoutError] = useState<CheckoutError | null>(null);
-  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
-  /**
-   * The edited order's `updatedAt` as it was when this cart was hydrated.
-   *
-   * Captured here rather than read from the store at save time on purpose: a
-   * background refresh can replace the store's copy with a newer one, and saving
-   * against *that* version would let this form overwrite the change it was
-   * supposed to be protected from.
-   */
-  const [editingOrderVersion, setEditingOrderVersion] = useState<string | null>(null);
-  const [cartDiscount, setCartDiscount] = useState(0);
-  const [vatRatePercent, setVatRatePercent] = useState(vatRate);
-  const [customerId, setCustomerId] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_PAYMENT_METHOD_KEY) : null;
     return saved === 'Card' ? 'Card' : 'Cash';
@@ -293,59 +296,17 @@ export default function POS() {
     const orderToEdit = orders.find((order) => order.id === editOrderId);
     if (!orderToEdit) return;
 
-    const sourceLineItems: OrderLineItem[] =
-      orderToEdit.lineItems && orderToEdit.lineItems.length > 0
-        ? orderToEdit.lineItems
-        : orderToEdit.item
-            .split(',')
-            .map((name) => name.trim())
-            .filter(Boolean)
-            .map((name) => ({
-              name,
-              quantity: orderToEdit.quantity,
-              designId: orderToEdit.designId,
-            }));
-
-    const hydratedCart: CartItem[] = sourceLineItems
-      .map((lineItem): CartItem | null => {
-        const inventoryItem =
-          (lineItem.itemId ? inventory.find((item) => item.id === lineItem.itemId) : undefined) ??
-          inventory.find((item) => item.name.toLowerCase() === lineItem.name.toLowerCase());
-
-        if (!inventoryItem) return null;
-        return {
-          ...inventoryItem,
-          qty: lineItem.quantity,
-          isCustom: true,
-          designId: lineItem.designId,
-          notes: orderToEdit.notes,
-        };
-      })
-      .filter((item): item is CartItem => item !== null);
-
     setView('pos');
     setPosMode('custom');
-    setCustomerName(orderToEdit.customer);
-    setCustomerId(orderToEdit.customerId ?? null);
-    setOrderNotes(orderToEdit.notes || '');
-    setCart(hydratedCart);
-    setEditingOrderId(orderToEdit.id);
-    setEditingOrderVersion(orderToEdit.updatedAt);
+    // The version is captured here, from the order as it was found — never from
+    // a later re-read of the store.
+    hydrateFromOrder(orderToEdit, inventory);
     navigate('/pos', { replace: true });
-  }, [inventory, location.state, navigate, orders]);
-
-  useEffect(() => {
-    const s = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-    setCartDiscount((d) => Math.min(Math.max(0, d), s));
-  }, [cart]);
-
-  useEffect(() => {
-    setVatRatePercent(vatRate);
-  }, [vatRate]);
+  }, [hydrateFromOrder, inventory, location.state, navigate, orders]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (isCheckoutModalOpen || isDesignModalOpen) return;
+      if (isCheckoutModalOpen || basket.isDesignModalOpen) return;
       const target = event.target as HTMLElement;
       const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
 
@@ -360,67 +321,7 @@ export default function POS() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCheckoutModalOpen, isDesignModalOpen, cart.length, view]);
-
-  const resetSaleState = () => {
-    setCart([]);
-    setEditingOrderId(null);
-    setEditingOrderVersion(null);
-    setCartDiscount(0);
-    setVatRatePercent(vatRate);
-    setCustomerId(null);
-  };
-
-  const addToCart = (product: InventoryItem) => {
-    if (product.stock <= 0) return;
-
-    const existing = cart.find(item => item.id === product.id && !item.isCustom);
-    if (existing && posMode === 'retail') {
-      if (existing.qty >= product.stock) return;
-      setCart(cart.map(item => (item.id === product.id && !item.isCustom) ? { ...item, qty: item.qty + 1 } : item));
-    } else {
-      setCart([...cart, { ...product, qty: 1, isCustom: posMode === 'custom' }]);
-    }
-  };
-
-  const removeFromCart = (cartIndex: number) => {
-    setCart(cart.filter((_, idx) => idx !== cartIndex));
-  };
-
-  const updateQty = (cartIndex: number, delta: number) => {
-    const item = cart[cartIndex];
-    if (!item) return;
-
-    if (item.qty === 1 && delta === -1) {
-      removeFromCart(cartIndex);
-      return;
-    }
-
-    setCart(cart.map((i, idx) => {
-      if (idx === cartIndex) {
-        const product = inventory.find(inv => inv.id === i.id);
-        if (!product) return i;
-
-        const newQty = Math.max(1, Math.min(i.qty + delta, product.stock));
-        return { ...i, qty: newQty };
-      }
-      return i;
-    }));
-  };
-
-  const openDesignSelector = (cartIndex: number) => {
-    setCurrentItemToDesign(cartIndex.toString());
-    setIsDesignModalOpen(true);
-  };
-
-  const selectDesignForItem = (designId: string) => {
-    if (currentItemToDesign !== null) {
-      const idx = parseInt(currentItemToDesign);
-      setCart(cart.map((item, i) => i === idx ? { ...item, designId } : item));
-      setIsDesignModalOpen(false);
-      setCurrentItemToDesign(null);
-    }
-  };
+  }, [basket.isDesignModalOpen, isCheckoutModalOpen, cart.length, view]);
 
   /**
    * Asks the server whether the attempt that just failed actually committed.
@@ -614,12 +515,7 @@ export default function POS() {
 
     setCheckoutSuccess(true);
     setCheckoutRecovered(saleRecovered);
-    setCart([]);
-    setCustomerName('');
-    setCustomerId(null);
-    setOrderNotes('');
-    setEditingOrderId(null);
-    setEditingOrderVersion(null);
+    basket.clearAfterSale();
 
     setTimeout(() => {
       setIsCheckoutModalOpen(false);
@@ -670,7 +566,7 @@ export default function POS() {
             type="button"
             onClick={() => {
               setPosMode('retail');
-              resetSaleState();
+              basket.resetForModeSwitch();
             }}
             className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em]', posMode === 'retail' ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
@@ -680,7 +576,7 @@ export default function POS() {
             type="button"
             onClick={() => {
               setPosMode('custom');
-              resetSaleState();
+              basket.resetForModeSwitch();
             }}
             className={cn('h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em]', posMode === 'custom' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
@@ -724,7 +620,7 @@ export default function POS() {
             searchRef={searchInputRef}
             onSearchChange={setSearchTerm}
             onCategoryChange={setActiveCategory}
-            onAddToCart={addToCart}
+            onAddToCart={(product) => basket.addToCart(product, posMode)}
           />
           <POSCart
             cart={cart}
@@ -739,15 +635,15 @@ export default function POS() {
             vatRatePercent={vatRatePercent}
             totals={totals}
             currencySymbol={currencySymbol}
-            onCustomerNameChange={setCustomerName}
-            onCustomerIdChange={setCustomerId}
-            onOrderNotesChange={setOrderNotes}
-            onCartDiscountChange={setCartDiscount}
-            onVatRatePercentChange={setVatRatePercent}
-            onUpdateQty={updateQty}
-            onRemoveFromCart={removeFromCart}
-            onOpenDesignSelector={openDesignSelector}
-            onReset={() => { setCart([]); setCartDiscount(0); setVatRatePercent(vatRate); setCustomerId(null); }}
+            onCustomerNameChange={basket.setCustomerName}
+            onCustomerIdChange={basket.setCustomerId}
+            onOrderNotesChange={basket.setOrderNotes}
+            onCartDiscountChange={basket.setCartDiscount}
+            onVatRatePercentChange={basket.setVatRatePercent}
+            onUpdateQty={basket.updateQty}
+            onRemoveFromCart={basket.removeFromCart}
+            onOpenDesignSelector={basket.openDesignSelector}
+            onReset={basket.resetCart}
             onCheckout={handleCheckout}
           />
         </div>
@@ -766,10 +662,10 @@ export default function POS() {
       )}
 
       <POSDesignSelectorModal
-        isOpen={isDesignModalOpen}
+        isOpen={basket.isDesignModalOpen}
         designs={designs}
-        onSelect={selectDesignForItem}
-        onClose={() => setIsDesignModalOpen(false)}
+        onSelect={basket.selectDesignForItem}
+        onClose={basket.closeDesignSelector}
       />
 
       <POSCheckoutModal
