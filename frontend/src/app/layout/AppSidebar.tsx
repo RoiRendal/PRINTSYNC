@@ -18,12 +18,16 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
       style={{ width: isCollapsed ? 0 : 196 }}
       className={cn(
         'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface)] text-macos-text dark:text-zinc-100',
-        'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
+        'rounded-none lg:mb-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}
     >
       <div className="flex h-full min-w-[196px] flex-col">
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 py-3 scrollbar-hide">
+        {/* The top padding is the sidebar's entire gap to the toolbar — the aside
+            itself carries no top margin — so it has to match the 8px above the
+            toolbar. It also has to clear the panel's corner curve: much below 8px
+            and the first tab's corner starts getting clipped by it. */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-3 pt-2 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}

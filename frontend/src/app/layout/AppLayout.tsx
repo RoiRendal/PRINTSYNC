@@ -231,8 +231,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           fully outlined — it shares one fill with the header, so the outline is
           the only thing that makes it read as a bar of its own. The corner is one
           step smaller than the sidebar's: at this height that radius would round
-          the ends into a capsule instead of a corner. */}
-      <div className="relative z-[40] mx-3 mt-3 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:px-3">
+          the ends into a capsule instead of a corner. The 8px above it is the same
+          8px the sidebar and the body sit below it — one rhythm, three sections,
+          so these three values have to move together. */}
+      <div className="relative z-[40] mx-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:px-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
@@ -269,10 +271,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           />
         )}
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
-          {/* The left inset is deliberately smaller than the other three: the
-              sidebar column and the page body read as one unit, so the gap
-              between them is a seam rather than a frame margin. */}
-          <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 lg:pl-3 xl:p-6 xl:pl-3">
+          {/* The left and top insets are deliberately smaller than the other two:
+              the sidebar column and the page body read as one unit under the
+              toolbar, so those two gaps are seams rather than frame margins — and
+              both are the same 8px as the gap above the toolbar. */}
+          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pl-3 lg:pt-2 xl:p-6 xl:pl-3 xl:pt-2">
             <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>
