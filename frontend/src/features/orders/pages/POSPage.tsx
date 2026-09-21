@@ -27,6 +27,8 @@ import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { printDocument, usePOSReceipts } from '../hooks/usePOSReceipts';
 import { usePOSCart, type PosMode } from '../hooks/usePOSCart';
 import { usePOSHistory } from '../hooks/usePOSHistory';
+import { usePOSKeyboardShortcuts } from '../hooks/usePOSKeyboardShortcuts';
+import { useOrderEditHydration } from '../hooks/useOrderEditHydration';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
 import type { CartItem, CreateOrder, Transaction } from '../types';
@@ -196,40 +198,17 @@ export default function POS() {
   /** Sales and custom orders merged into one searchable timeline. */
   const history = usePOSHistory({ transactions, orders, inventory });
 
-  useEffect(() => {
-    const state = location.state as { editOrderId?: string } | null;
-    const editOrderId = state?.editOrderId;
-    if (!editOrderId) return;
+  const editOrderId = (location.state as { editOrderId?: string } | null)?.editOrderId ?? null;
 
-    const orderToEdit = orders.find((order) => order.id === editOrderId);
-    if (!orderToEdit) return;
-
-    setView('pos');
-    setPosMode('custom');
-    // The version is captured here, from the order as it was found — never from
-    // a later re-read of the store.
-    hydrateFromOrder(orderToEdit, inventory);
-    navigate('/pos', { replace: true });
-  }, [hydrateFromOrder, inventory, location.state, navigate, orders]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (isCheckoutModalOpen || basket.isDesignModalOpen) return;
-      const target = event.target as HTMLElement;
-      const isTyping = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
-
-      if (event.key === '/' && !isTyping) {
-        event.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      if (event.key === 'Enter' && !isTyping && cart.length > 0 && view === 'pos') {
-        event.preventDefault();
-        handleCheckout();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [basket.isDesignModalOpen, isCheckoutModalOpen, cart.length, view]);
+  useOrderEditHydration({
+    editOrderId,
+    orders,
+    inventory,
+    navigate,
+    setView,
+    setPosMode,
+    hydrateFromOrder,
+  });
 
   /**
    * Asks the server whether the attempt that just failed actually committed.
@@ -263,6 +242,13 @@ export default function POS() {
     setCheckoutRecovered(false);
     setIsCheckoutModalOpen(true);
   };
+
+  usePOSKeyboardShortcuts({
+    searchRef: searchInputRef,
+    enabled: !isCheckoutModalOpen && !basket.isDesignModalOpen,
+    canCheckout: cart.length > 0 && view === 'pos',
+    onCheckout: handleCheckout,
+  });
 
   const finalizeTransaction = async () => {
     if (cart.length === 0) return;
