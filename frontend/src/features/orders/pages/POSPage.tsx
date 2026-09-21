@@ -6,7 +6,6 @@ import { ApiError, isServerRejection } from '../../../shared/api/errors';
 import { Button, SurfaceCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { useDesigns } from '../../../app/stores/useDesignStore';
-import type { InventoryItem } from '../../inventory/types';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
 import { paymentsApi, readInsufficientStock, type PaymentTransaction } from '../api/paymentsApi';
@@ -21,15 +20,16 @@ import {
 } from '../components/pos/POSCheckoutModal';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
-import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHistoryView';
+import { POSHistoryView } from '../components/pos/POSHistoryView';
 import { useCartTotals } from '../hooks/useCartTotals';
 import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { printDocument, usePOSReceipts } from '../hooks/usePOSReceipts';
 import { usePOSCart, type PosMode } from '../hooks/usePOSCart';
+import { usePOSHistory } from '../hooks/usePOSHistory';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
-import type { CartItem, CreateOrder, Order, Transaction } from '../types';
+import type { CartItem, CreateOrder, Transaction } from '../types';
 import { documentFromSale } from '../types/printableDocument';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
@@ -86,8 +86,6 @@ export default function POS() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'pos' | 'history'>('pos');
   const [posMode, setPosMode] = useState<PosMode>('retail');
-  const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
@@ -195,98 +193,8 @@ export default function POS() {
     };
   }, [loadTransactions]);
 
-  const orderToHistoryTransaction = useCallback(
-    (order: Order): Transaction => {
-      const items: CartItem[] =
-        order.lineItems && order.lineItems.length > 0
-          ? order.lineItems.map((li) => {
-              const inv =
-                (li.itemId ? inventory.find((i) => i.id === li.itemId) : undefined) ??
-                inventory.find((i) => i.name === li.name);
-              const base: InventoryItem =
-                inv ??
-                ({
-                  id: li.itemId ?? 'unknown',
-                  sku: 'unknown',
-                  name: li.name,
-                  category: '—',
-                  stock: 0,
-                  reorderLevel: 0,
-                  price: order.amount / Math.max(1, order.quantity),
-                  createdAt: order.date,
-                  updatedAt: order.date,
-                } as InventoryItem);
-              return {
-                ...base,
-                qty: li.quantity,
-                designId: li.designId,
-                isCustom: true,
-                notes: order.notes,
-              };
-            })
-          : order.item
-              .split(',')
-              .map((name) => name.trim())
-              .filter(Boolean)
-              .map((name) => {
-                const inv = inventory.find((i) => i.name === name);
-                const base: InventoryItem =
-                  inv ??
-                  ({
-                    id: 'unknown',
-                    sku: 'unknown',
-                    name,
-                    category: '—',
-                    stock: 0,
-                    reorderLevel: 0,
-                    price: order.amount / Math.max(1, order.quantity),
-                    createdAt: order.date,
-                    updatedAt: order.date,
-                  } as InventoryItem);
-                const n = Math.max(1, order.item.split(',').map((s) => s.trim()).filter(Boolean).length);
-                return { ...base, qty: Math.max(1, Math.floor(order.quantity / n)), isCustom: order.isCustom };
-              });
-
-      return {
-        id: order.id,
-        date: order.date,
-        items,
-        subtotal: order.amount,
-        discount: undefined,
-        vatRatePercent: 0,
-        tax: 0,
-        total: order.amount,
-        paymentMethod: 'Custom Order',
-      };
-    },
-    [inventory],
-  );
-
-  const combinedHistoryRows = useMemo((): CombinedHistoryRow[] => {
-    const rows: CombinedHistoryRow[] = [
-      ...transactions.map((trx) => ({ source: 'trx' as const, trx })),
-      ...orders.map((order) => ({ source: 'order' as const, order })),
-    ];
-    rows.sort((a, b) => {
-      const da = a.source === 'trx' ? a.trx!.date : a.order!.date;
-      const db = b.source === 'trx' ? b.trx!.date : b.order!.date;
-      return db.localeCompare(da);
-    });
-    return rows;
-  }, [transactions, orders]);
-
-  const filteredHistoryRows = useMemo(() => {
-    const q = historySearchTerm.toLowerCase().trim();
-    if (!q) return combinedHistoryRows;
-    return combinedHistoryRows.filter((row) => {
-      if (row.source === 'trx') {
-        const t = row.trx!;
-        return t.id.toLowerCase().includes(q) || t.items.some((i) => i.name.toLowerCase().includes(q));
-      }
-      const o = row.order!;
-      return o.id.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.item.toLowerCase().includes(q);
-    });
-  }, [combinedHistoryRows, historySearchTerm]);
+  /** Sales and custom orders merged into one searchable timeline. */
+  const history = usePOSHistory({ transactions, orders, inventory });
 
   useEffect(() => {
     const state = location.state as { editOrderId?: string } | null;
@@ -649,15 +557,15 @@ export default function POS() {
         </div>
       ) : (
         <POSHistoryView
-          filteredHistoryRows={filteredHistoryRows}
-          historySearchTerm={historySearchTerm}
-          selectedTransaction={selectedTransaction}
-          onHistorySearchChange={setHistorySearchTerm}
-          onSelectTransaction={setSelectedTransaction}
+          filteredHistoryRows={history.filteredRows}
+          historySearchTerm={history.historySearchTerm}
+          selectedTransaction={history.selectedTransaction}
+          onHistorySearchChange={history.setHistorySearchTerm}
+          onSelectTransaction={history.selectTransaction}
           onVoidTransaction={voidTransaction}
-          onCloseTransactionDetail={() => setSelectedTransaction(null)}
+          onCloseTransactionDetail={() => history.selectTransaction(null)}
           onOpenReceipt={receipts.openHistoricalReceipt}
-          orderToHistoryTransaction={orderToHistoryTransaction}
+          orderToHistoryTransaction={history.orderToHistoryTransaction}
         />
       )}
 

@@ -3,12 +3,7 @@ import type { Transaction, Order } from '../../types';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Modal } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
-
-export interface CombinedHistoryRow {
-  source: 'trx' | 'order';
-  trx?: Transaction;
-  order?: Order;
-}
+import type { CombinedHistoryRow } from '../../hooks/usePOSHistory';
 
 interface POSHistoryViewProps {
   filteredHistoryRows: CombinedHistoryRow[];
