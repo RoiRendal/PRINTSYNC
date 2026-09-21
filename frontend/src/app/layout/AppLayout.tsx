@@ -227,8 +227,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      {/* Page Toolbar */}
-      <div className="relative z-[40] flex h-11 shrink-0 items-center justify-between border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-4">
+      {/* Page Toolbar. The gap above and the side outlines are what stop this
+          reading as a continuation of the header — the two share one fill, so
+          without them the header's own bottom edge is the only separation. */}
+      <div className="relative z-[40] mt-3 flex h-11 shrink-0 items-center justify-between border-x border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
