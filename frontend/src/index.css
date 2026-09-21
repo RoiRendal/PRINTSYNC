@@ -49,6 +49,11 @@
   --app-surface-sunken: #e3e3e8;     /* inset wells */
   --app-state-hover: #ececef;        /* 1.18:1 on raised — stronger than the 1.12:1 of the old 5%-black hover tint */
   --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
+  /* The selected nav row. Deliberately not the accent colour: the row's own fill
+     is the only thing that changes when an item is selected, so the icon and the
+     label keep one colour in both states. A light grey here, a dark one in dark
+     mode — same role, opposite steps, and deliberately not the same value. */
+  --app-state-selected: #e3e3e8;     /* light step */
   --app-border-hairline: #d5d5da;    /* internal dividers */
   --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
   /* The shell's structural outline — the divider under the header and the page
@@ -94,6 +99,7 @@
   --app-surface-sunken: #48484a;
   --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
   --app-state-hover-sub: #48484a;
+  --app-state-selected: #48484a;     /* dark step — one step up from the surface, never the light value */
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
   --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */

@@ -31,30 +31,24 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-1.5 text-[13px] font-semibold',
-                  isActive
-                    ? 'text-white dark:text-white'
-                    : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
+                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 py-1.5 text-[13px] font-semibold',
+                  /* One colour for both states, and the icon inherits it, so
+                     selecting an item never recolours anything — only the row's
+                     own fill moves. Hover is a fill for the same reason: there is
+                     no colour left to change. */
+                  'text-[var(--app-text)]',
+                  !isActive && 'hover:bg-[var(--app-state-hover)]',
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-macos-blue" />
+                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected)]" />
                   )}
-                  <span
-                    className={cn(
-                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg',
-                      /* The tiles are bare now: the outline went first, then the
-                         fill, so the icon is the only thing painted. The colour
-                         pairing is all that is left to say which item is active —
-                         white on the accent pill, muted on the plain sidebar. */
-                      isActive
-                        ? 'text-white'
-                        : 'text-macos-text-muted group-hover:text-macos-text dark:text-zinc-200 dark:group-hover:text-zinc-100',
-                    )}
-                  >
+                  {/* An alignment box only. It paints nothing and takes its colour
+                      from the row, so the icon and the label can never drift apart. */}
+                  <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center">
                     <item.icon className="h-4 w-4" />
                   </span>
                   <span className="relative z-10 truncate whitespace-nowrap">
