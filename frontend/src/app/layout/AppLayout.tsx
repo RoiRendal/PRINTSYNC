@@ -229,8 +229,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Page Toolbar. Inset from the window like the sidebar and the body, and
           fully outlined — it shares one fill with the header, so the outline is
-          the only thing that makes it read as a bar of its own. */}
-      <div className="relative z-[40] mx-3 mt-3 flex h-11 shrink-0 items-center justify-between border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-4">
+          the only thing that makes it read as a bar of its own. The corner is one
+          step smaller than the sidebar's: at this height that radius would round
+          the ends into a capsule instead of a corner. */}
+      <div className="relative z-[40] mx-3 mt-3 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:px-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
@@ -238,16 +240,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             onClick={toggleCollapse}
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="h-8 w-8 rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
           >
-            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </Button>
           <div className="min-w-0">
-            <span className="block truncate text-base font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
+            <span className="block truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
 
           </div>
         </div>
-        <ConnectionStatus className="shrink-0" />
+        <ConnectionStatus className="shrink-0 px-2 py-0.5 text-[9px]" />
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}
