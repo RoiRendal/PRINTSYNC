@@ -115,6 +115,15 @@ jobs:
         run: npm run lint
         working-directory: frontend
 
+      # The flat-UI refactor removed glass, gradients, shadows and animation from
+      # 113 source files. Nothing else in this pipeline would notice them coming
+      # back — the app would look wrong and every other check would stay green.
+      # Static text scan, no build and no network, so it is cheap enough to sit
+      # this early.
+      - name: Flat-UI gate
+        run: npm run check:flat-ui
+        working-directory: frontend
+
       # The suite covers the parts that fail silently rather than loudly: the
       # store freshness rules, the idempotency-key lifetime that decides whether
       # a retry double-charges, the structured-error contract, and the realtime

@@ -1,0 +1,96 @@
+name: E2E
+
+# Non-blocking, on purpose. Read this before pointing it anywhere.
+#
+# These tests drive a real PRINTSYNC against a real database: a sale rung up here
+# is a real row in the shop's books and it moves the day's revenue figure. That is
+# what makes them worth running — the guarantees they check only exist across a
+# real client, a real API and a real Postgres — and it is also why this workflow:
+#
+#   * never gates a merge (`continue-on-error`, and it is not in `ci.yml`),
+#   * skips cleanly and exits 0 when its secrets are absent, so an unconfigured
+#     repo gets a notice rather than a permanent red X that people learn to ignore,
+#   * takes its target from an explicit input or secret, never a default.
+#
+# `ci.yml` deliberately withholds live credentials. This workflow is where they go,
+# and pointing it at the live shop is a decision somebody makes on purpose.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Target to test (a staging or scratch deploy). Not production unless you mean it.'
+        required: true
+        type: string
+  schedule:
+    # 18:00 UTC — 02:00 Manila, well outside trading hours.
+    - cron: '0 18 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    # Whatever it reports, it must not block a merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+        working-directory: frontend
+
+      # `--with-deps` pulls the OS libraries Chromium needs. Without it the browser
+      # fails to launch on a bare runner, which looks like a test failure.
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      # An unset secret is a configuration gap, not a defect. Say so once and pass.
+      - name: Check configuration
+        id: config
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url || secrets.E2E_BASE_URL }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: |
+          missing=""
+          [ -z "$E2E_BASE_URL" ] && missing="$missing E2E_BASE_URL"
+          [ -z "$E2E_EMAIL" ] && missing="$missing E2E_EMAIL"
+          [ -z "$E2E_PASSWORD" ] && missing="$missing E2E_PASSWORD"
+          if [ -n "$missing" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::E2E skipped — not configured:$missing"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run
+        if: steps.config.outputs.configured == 'true'
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url || secrets.E2E_BASE_URL }}
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: npm run test:e2e
+
+      # A failed E2E run is the one you actually need to read.
+      - name: Upload report
+        if: always() && steps.config.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
