@@ -35,13 +35,21 @@ export function resetDataStores(): void {
 /**
  * Loads the collections the app needs once a session exists. Each store is a
  * no-op when it already holds data, so this is safe to run on every auth change.
+ *
+ * @param canSeeUsers whether the session may open the Users page. The caller
+ *                    passes the page key (`access.includes('users')`), which is
+ *                    satisfied by either `users.read` or `users.manage` — so this
+ *                    is a *visibility* check, not a capability check. It was named
+ *                    `canManageUsers`, which suggested the narrower thing and would
+ *                    have made the user store look like it should stop loading for
+ *                    a read-only role.
  */
-export function loadDataStores(canManageUsers: boolean): void {
+export function loadDataStores(canSeeUsers: boolean): void {
   void useCustomerStore.getState().ensureLoaded();
   void useInventoryStore.getState().ensureLoaded();
   void useDesignStore.getState().ensureLoaded();
   void useOrderStore.getState().ensureLoaded();
-  if (canManageUsers) {
+  if (canSeeUsers) {
     void useUserStore.getState().ensureLoaded();
   }
 }
