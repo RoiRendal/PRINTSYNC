@@ -102,6 +102,30 @@ function contentSecurityPolicyDirectives() {
 export function createApp() {
   const app = express();
 
+  /**
+   * Trust exactly one proxy hop — Render's load balancer, which is the only thing
+   * that ever sits in front of this process (see `render.yaml`: one service, one
+   * address).
+   *
+   * Without this, `request.ip` is the *proxy's* address for every request, so two
+   * things silently stop working:
+   *
+   *   - `audit_logs.ip_address` records the load balancer for every actor, which
+   *     makes the one field that could attribute an action to a person useless.
+   *   - `express-rate-limit` counts every login attempt in the world against a
+   *     single bucket, so ten wrong passwords anywhere lock out everyone.
+   *
+   * The value is the number `1`, not `true`. `true` trusts the whole
+   * `X-Forwarded-For` chain, which lets a client prepend its own entry and choose
+   * the address the limiter and the audit log see; `express-rate-limit` rejects
+   * `true` outright as a permissive setting. One hop means Express reads exactly
+   * the address Render appended and ignores anything the client sent.
+   *
+   * Consequence worth stating: this process must never be exposed directly. With
+   * no proxy in front, a client could set the header itself and forge the address.
+   */
+  app.set('trust proxy', 1);
+
   app.disable('x-powered-by');
   app.use(helmet({ contentSecurityPolicy: { directives: contentSecurityPolicyDirectives() } }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
