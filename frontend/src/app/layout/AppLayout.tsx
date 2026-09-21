@@ -215,7 +215,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <button
                     type="button"
                     onClick={logout}
-                    className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-macos-red hover:bg-[var(--app-tint-red)]"
+                    /* `text-macos-red` (#ff3b30) measured 3.55:1 at rest on the
+                       raised panel and 3.01:1 on the red hover tint — and 3.93 /
+                       3.37 in dark. This label is 12px, so it needs the full
+                       4.5:1, not the 3:1 large-text allowance. red-700 / red-300
+                       measure 6.42 / 5.45 and 7.26 / 6.24 (browser-resolved). */
+                    className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-red-700 hover:bg-[var(--app-tint-red)] dark:text-red-300"
                   >
                     Logout
                   </button>

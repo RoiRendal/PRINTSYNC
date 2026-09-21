@@ -75,7 +75,7 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left hover:border-[var(--app-border-control)]dark:bg-[#19191c]',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left hover:border-[var(--app-border-control)] dark:bg-[#19191c]',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >

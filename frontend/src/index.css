@@ -133,8 +133,20 @@ html {
   color: var(--app-selection-text);
 }
 
-* {
-  border-color: var(--app-hairline);
+/*
+ * The default border colour for every element, so it is the largest single source
+ * of borders in the app — every divider inherits it.
+ *
+ * It MUST sit inside `@layer base`. An unlayered rule outranks every layer, so
+ * outside one it silently beat every Tailwind `border-*` utility: inputs and
+ * buttons asking for `--app-border-control` (3.26:1, the WCAG 1.4.11 floor for
+ * control edges) were painted with this near-invisible hairline instead. Inside
+ * `base`, utilities win again and control edges actually appear.
+ */
+@layer base {
+  * {
+    border-color: var(--app-hairline);
+  }
 }
 
 /*
