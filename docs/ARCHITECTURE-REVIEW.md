@@ -1,0 +1,523 @@
+# PRINTSYNC — Architecture Review
+
+**Date:** 2026-09-21
+**Branch reviewed:** `flat-ui` (working tree, clean)
+**Scope:** `backend/src`, `frontend/src`, `supabase/migrations`, `packages/shared-types`, deploy config
+**Status:** findings + prioritized fix list
+
+---
+
+## What this is, and how to read it
+
+A read-only health check of the three surfaces, done **before** we add or adjust features. Nothing in
+the repository was modified to produce it.
+
+**Method.** Three independent sweeps — backend, frontend, database/contract/deploy — plus
+verification of the highest-stakes findings by hand. Every claim below cites a file and line. Where
+something could not be confirmed from the repository, it is marked **UNVERIFIED** rather than guessed.
+
+**Not covered:** the live Supabase project's actual contents, the GitHub ruleset itself, and any
+behaviour that only appears at runtime. These are listed in §6.
+
+**Sections 1–3 are the findings.** Section 4 is the ranked fix list, and it is the disposable half —
+if you want to write the plan yourself, keep 1–3 and throw 4 away.
+
+---
+
+## 1. The system as it stands
+
+### Size, measured
+
+| Surface | Files | Lines | Shape |
+| --- | ---: | ---: | --- |
+| `backend/src` | 57 | 10,522 (with tests) | 18 route files · 12 module services · 4 middleware · 7 cross-cutting services |
+| `frontend/src` | 124 | 14,758 | 10 pages · ~40 components · 7 stores · 14 API modules · 11 test files |
+| `packages/shared-types/src` | 13 | 349 | types only, plus 3 runtime constants |
+| `supabase/migrations` | 28 `.sql` | — | 19 tables · 27 capability keys · 11 functions (9 names) |
+
+Tests: **256 backend cases / 18 files**, **152 frontend cases / 11 files**. No end-to-end suite.
+
+### How a request flows
+
+```
+Browser (React 19 + Vite)
+  │   zustand list stores ← one factory (createListStore): 15s staleTime, optimistic writes
+  │   all HTTP through ONE module (shared/api/client.ts)
+  ▼  cookie JWT (HttpOnly, SameSite=Lax)
+Express  (routes → capability middleware → module service)
+  │   the ONLY authorization boundary: requirePermission() per route
+  ▼  service-role key  ← bypasses RLS entirely
+Postgres (Supabase)
+      multi-table writes only inside SECURITY DEFINER RPCs with FOR UPDATE locks
+      structured errors: raise exception … using detail = json_build_object(…)
+
+Realtime: SSE  GET /api/v1/events  ← published from the route layer AFTER the write commits
+          in-process event bus  →  single-instance only
+```
+
+### What is genuinely strong
+
+This is a well-built system, and the review should not read as if it isn't. Specifically:
+
+- **The boundaries hold.** The frontend contains **zero** Supabase imports and no Supabase
+  dependency. The service-role key never leaves the server. This is the convention most projects
+  break; this one didn't.
+- **Atomicity is in the right place.** Every multi-table write is a `SECURITY DEFINER` RPC with row
+  locks and explicit insufficient-stock rejection. The API layer never fakes a transaction.
+- **The money-safety design is genuinely good**, not just present: an idempotency key with a partial
+  unique index, a replay guard that runs *before* validation, compare-and-swap on `updated_at` for
+  order edits, a first-class `unknown` checkout outcome, and a reconciliation endpoint that returns
+  `200 {data: null}` rather than `404` when nothing committed. That last detail is the kind of thing
+  most teams get wrong for months.
+- **Zero `TODO`, `FIXME`, `HACK`, `@ts-ignore`, `as any`, or stray `console.log`** anywhere in
+  application code. The debt here is structural, not "we'll fix it later" litter.
+- **The freshness model is coherent** — one event bus for cross-domain invalidation, a 15s
+  stale-time, and an explicit rule that only an authoritative signal forces a revalidate.
+
+So the findings below are about a system that got the hard parts right and has specific, fixable
+gaps — not a system in trouble.
+
+---
+
+## 2. Risk register
+
+Severity: **Blocker** = cannot provision an environment · **High** = can produce wrong money, wrong
+records, or wrong access · **Medium** = will bite · **Low** = hygiene.
+
+| # | Risk | Lens | Severity |
+| --- | --- | --- | --- |
+| R1 | Database cannot be rebuilt from scratch — duplicate index name aborts the migration set | Deployability | **Blocker** |
+| R2 | Two stale database functions are still live; a call can land on an old body | Correctness | **High** |
+| R3 | All dates are UTC, not shop-local — daily sales and order dates are wrong for the first 8 hours of every day | Correctness | **High** |
+| R4 | `trust proxy` never set — audit log records the proxy's IP, rate limiter keys on it | Security / Ops | **High** |
+| R5 | Anyone who can record an order payment can also delete one | Security | **High** |
+| R6 | `users.read` enforced by no route; HTTP and realtime disagree about reading users | Security | Med-High |
+| R7 | `Order.updatedAt` missing from the shared contract; 7 frontend files hand-copy types | Correctness | Medium |
+| R8 | Audit writes are best-effort — a money action can commit with no audit row | Correctness | Medium |
+| R9 | No server timeouts — a stalled client holds a socket indefinitely | Ops | Medium |
+| R10 | No global rate limit — only login and refresh are throttled | Security | Medium |
+| R11 | `POSPage.tsx` is 902 lines and bypasses the store layer | Maintainability | Medium |
+| R12 | No E2E suite; the flat-UI gate exists but nothing runs it | Process | Medium |
+| R13 | Analytics computed twice, with a silent fallback that already hid a broken query | Correctness | Medium |
+| R14 | No request IDs — a failed checkout cannot be traced through the logs | Ops | Low-Med |
+| R15 | Dead schema and unused code (`purchase_orders`, unused exports, redundant indexes, unindexed FKs) | Maintainability | Low |
+
+### Two architectural facts that are not bugs, but that you should know
+
+- **The route layer is the only lock on the door.** All 19 tables have row-level security enabled,
+  but the API connects with the service-role key, which bypasses RLS completely. RLS is latent
+  defence-in-depth for a client path that does not exist. Practically: **one route that forgets
+  `requirePermission` is fully exposed.** Nothing else catches it.
+- **The system is single-instance by design.** The realtime bus is in-process and the auth context is
+  cached for 30 seconds in memory. That matches the one-instance deploy we have, and it is the right
+  call at this scale — but it means "add a second server" is not a scale-out option without moving
+  the bus out, and a permission change takes up to 30s to take effect.
+
+---
+
+## 3. Findings in detail
+
+### A. Correctness and data
+
+**R1 — The database cannot be rebuilt from scratch. (Blocker)**
+
+`orders_customer_idx` is created twice with the same name:
+
+- `supabase/migrations/20260910001000_orders.sql:24` — a GIN text-search index
+- `supabase/migrations/20260910002100_order_due_date.sql:4` — a btree on `customer_id`
+
+There is **no `drop index` anywhere** in the 28 migrations. On a fresh `supabase db push` the second
+statement aborts, and because Supabase runs each migration in one transaction, that migration's
+`customer_id` and `due_date` columns roll back with it — which would then break the order functions
+that depend on them.
+
+**Business impact:** we have exactly one working database and no proven way to create a second. No
+staging environment, no safe way to recover if the Supabase project is ever lost, and a new developer
+cannot stand the system up. This is the single most important item in the review.
+
+**UNVERIFIED:** the live database plainly *does* have `customer_id` (the order functions use it and
+work), so the live state cannot match the migration files. Only a query against the live project can
+settle which index currently owns the name. The fix in §4 is deliberately written to converge from
+either state.
+
+**R2 — Two stale database functions are still live. (High)**
+
+`create_order_with_items` exists as **both** 7-argument and 9-argument; `replace_order_with_items`
+exists as **both** 8-argument and 11-argument. The wider versions add `customer_id`/`due_date` and —
+for `replace` — the conflict check. Only two `drop function` statements exist in the entire migration
+set, so the old arities were never removed.
+
+**Business impact:** the code today always calls the wide version, so nothing is broken *right now*.
+But an older call shape resolves to the old function body, which silently drops the customer and due
+date and skips the "has this order changed underneath me?" check. That is a latent landmine for the
+next person who writes a caller.
+
+**R3 — All dates are UTC, not shop-local. (High)**
+
+Three places derive a calendar date by slicing a UTC timestamp:
+
+- `backend/src/modules/orders/orders.service.ts:87` — `date: String(row.created_at).slice(0, 10)`
+- `backend/src/modules/analytics/analytics.service.ts:102` — `toDateKey()` returns `value.slice(0, 10)`
+- `backend/src/modules/expenses/expenses.service.ts:60` — `new Date().toISOString().slice(0, 10)`
+
+and the analytics RPC groups by `to_char(created_at, 'YYYY-MM-DD')`
+(`supabase/migrations/20260917000000_fix_analytics_summary_rpc.sql:56,61`), which uses the session
+time zone — UTC on Supabase.
+
+**Business impact:** the Philippines is UTC+8, so **every sale made before 08:00 local time is filed
+under the previous day.** The daily revenue series, the order's displayed date, and the default
+expense date are all off by one day for the first eight hours of every shift. For a shop that does a
+daily closing, "yesterday's sales" is simply wrong in the morning. This is the finding most likely to
+be noticed by staff, and it is cheap to fix.
+
+The two analytics implementations agreeing today is an accident of both being UTC — change one and
+they silently diverge (see R13).
+
+**R7 — The order contract has drifted, and the token that protects edits is missing. (Medium)**
+
+`packages/shared-types/src/order.ts:17-33` has **no `updatedAt`** — yet `updatedAt` is required by
+the backend (`orders.service.ts:40,88`) and by the frontend (`features/orders/types.ts:37`), and it is
+the compare-and-swap token that stops two people overwriting each other's order edits.
+
+Seven frontend files hand-copy shared types instead of re-exporting them
+(`features/{inventory,designs,orders,users,audit}/types.ts`, `orders/api/paymentsApi.ts`,
+`orders/api/orderPaymentsApi.ts`). Only `features/customers/types.ts` does it correctly. The copies
+have already diverged — `InventoryItem` is missing `costPrice`, `Order` makes fields optional that the
+API always returns, `Design` makes fields optional that the database always fills.
+
+**Business impact:** the shared contract is meant to be the single description of the domain. It
+isn't. A future re-copy can quietly drop the version token, and the lost-update protection on order
+edits stops working without any test failing.
+
+**R8 — Audit writes are best-effort, not atomic. (Medium)**
+
+`backend/src/services/auditLogService.ts:25-33` swallows a failed audit write (logs a warning,
+returns `false`) and every caller ignores the return value — including the money routes
+(`orders.routes.ts:67,81,94`) and login (`auth.routes.ts:49,67,133`).
+
+**Business impact:** an action can succeed while its audit row is silently lost. The audit log is the
+only record that a hard delete happened, since there is no soft delete anywhere in the schema — so a
+lost audit row can mean an unrecoverable, unrecorded deletion.
+
+**R13 — Analytics is implemented twice, with a fallback that hides failures. (Medium)**
+
+`analytics.service.ts:117-121` calls the `get_analytics_summary` RPC; lines `123-199` silently fall
+back to client-side aggregation when it fails, logging only a warning. The RPC's own repair migration
+notes that this fallback is why a broken query stayed invisible
+(`20260917000000_fix_analytics_summary_rpc.sql:17-21`).
+
+**Business impact:** the dashboard can show numbers computed by a different code path from the one we
+think is authoritative — and if the two ever disagree, nothing tells anyone. A silent fallback on a
+money figure is worse than an error.
+
+### B. Security and access control
+
+**R4 — `trust proxy` is never set. (High)**
+
+Grep of `backend/src` returns no match for `trust proxy`. Production runs behind Render's proxy.
+Consequences: `request.ip` — written into `audit_logs.ip_address` at `auth.routes.ts:53,72,138` —
+records the proxy, not the staff member; and the login/refresh rate limiters (`auth.routes.ts:14-28`)
+key on the proxy address.
+
+**Business impact:** the audit trail cannot answer "who logged in from where". Worse, if every client
+shares one rate-limit bucket, one person can lock out the whole shop — or the limiter does nothing at
+all.
+
+**UNVERIFIED:** whether `express-rate-limit@8` errors or merely warns in this configuration. The
+setting is confirmed absent; the runtime effect was not executed.
+
+**R5 — Anyone who can record an order payment can also delete one. (High)**
+
+`orderPayments.routes.ts:43` gates `DELETE /order-payments/:id` on `order_payments.create`, because no
+`order_payments.delete` capability exists — only `.read` and `.create` are seeded
+(`20260910002300_permissions.sql:5-6`). Compare `payments.void`, which is correctly admin-only.
+
+**Business impact:** deleting a payment changes what a customer owes. Today, the staff ability to
+record a payment carries the ability to erase one, with no separate permission to grant or withhold.
+
+**R6 — `users.read` is a dead capability, and the two layers disagree. (Medium-High)**
+
+`users.routes.ts:32` gates the *entire* users router — including `GET /users` — on `users.manage`.
+Meanwhile `services/dataChangePermissions.ts:27` gates the realtime `users` domain on `users.read`,
+and no route enforces `users.read` at all.
+
+**Business impact:** limited today (both permissions are admin-only, so nobody gains access), but the
+two layers disagree about what "may see users" means, and the read permission that exists on paper
+does nothing. It becomes a real hole the moment a read-only role is introduced.
+
+**Also worth noting, lower severity:** `GET /api/v1/ready` is unauthenticated and reports dependency
+readiness for six internal tables to anonymous callers. Low risk, but it is unthrottled and
+unnecessary in public.
+
+**R10 — No global rate limit. (Medium)** Only login (10/15min) and refresh (20/15min) are throttled.
+Every other endpoint, including image upload, is unthrottled.
+
+### C. Maintainability and velocity
+
+**R11 — `POSPage.tsx` is 902 lines. (Medium)**
+
+`frontend/src/features/orders/pages/POSPage.tsx` owns the cart, checkout orchestration,
+reconciliation, transaction history, receipt state, order-edit hydration, keyboard shortcuts and
+printing — and it calls `paymentsApi` directly instead of going through the store layer. It is the
+only component in the frontend that does so (three other files call an API directly, all for
+legitimate reasons: a blob download, branding, and a modal's payment list).
+
+**Business impact:** the till is the one screen where a mistake costs money, and it is the hardest
+file in the codebase to change safely. Any new POS feature carries avoidable risk.
+
+**R12 — No E2E coverage, and the flat-UI gate is not wired into CI. (Medium)**
+
+`frontend/scripts/check-flat-ui.mjs` exists and passes (`pass, scanned 113 files`), but
+`.github/workflows/ci.yml` never invokes it — so the entire flat-UI effort is unprotected against
+regression. There is no Playwright or Cypress config anywhere in the repo; the `playwright` dependency
+in `frontend/package.json` is unused by the app.
+
+**Business impact:** nothing automated catches "the screen looks wrong", and nothing automated proves
+a checkout works end to end. A human's eyes on `npm run dev` remain a required step.
+
+**R14 — No request IDs. (Low-Med)** Log lines cannot be tied to a single request, so a failed
+checkout cannot be traced across the log stream.
+
+**R15 — Dead code and schema hygiene. (Low)** `purchase_orders` has no API surface at all (written
+only by the demo seeder). Four dead exports (`designImagePublicUrl`, `usersApi.refresh`,
+`orderPaymentsApi.remove`, `customersApi.get`). `TableContainer`'s `raisedHeader` prop is accepted and
+ignored; `CardVariant`'s `solid` and `elevated` render identical classes. Two indexes on
+`sales_transaction_items(transaction_id)` are exact duplicates. Twelve foreign keys have no index.
+`playwright` sits in runtime dependencies while being unused. And the "AI insights" panel
+(`analytics-types.ts:62-163`) is a client-side template generator presented as analysis — worth a
+deliberate decision on whether to keep it, label it, or remove it before release.
+
+---
+
+## 4. Prioritized fix list
+
+Ordered by what must happen first. Each item names the files, the change, and how to prove it worked.
+`[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
+
+### Tier 0 — Restore the ability to provision an environment
+
+**0.1 — Fix the duplicate index name (R1). Blocker.**
+
+- **Files:** NEW `supabase/migrations/20260921000000_fix_orders_customer_index.sql`;
+  EDIT `20260910002100_order_due_date.sql:4`; EDIT `20260910001000_orders.sql:24`.
+- **Change:** new migration drops the ambiguous name and recreates both indexes unambiguously
+  (`orders_customer_id_idx` btree, `orders_customer_fts_idx` GIN). The two old files get the new names
+  plus `if not exists`.
+- **Convention conflict — an explicit exception to "never edit a pushed migration."** Justification: a
+  forward-only migration cannot stop an *earlier* migration from aborting, so replay-ability is
+  impossible without editing. The edit is purely defensive — on any database where it already applied
+  it produces an identical schema, so it cannot change live state. Record it as an intentional
+  exception in the commit message.
+- **Verify:** `[LIVE]` `select indexname, indexdef from pg_indexes where schemaname='public' and
+  tablename='orders' order by 1;` → both new names present, old name gone.
+  `[LOCAL]` `supabase db reset` completes with no error — **fails today, passes after.**
+- **Risk:** low. The GIN index is referenced by no query (orders list by `created_at`), so recreating
+  it is inert.
+- **Ordering:** must be first.
+
+**0.2 — Drop the stale function overloads (R2). High.**
+
+- **Files:** NEW `supabase/migrations/20260921000100_drop_stale_order_rpc_overloads.sql`.
+- **Change:** `drop function if exists public.create_order_with_items(text, text, numeric, text,
+  boolean, uuid, jsonb);` and `drop function if exists public.replace_order_with_items(uuid, text,
+  text, numeric, text, boolean, jsonb, uuid);`
+- **Verify:** `[LIVE]` `select p.proname, pg_get_function_identity_arguments(p.oid) from pg_proc p join
+  pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in
+  ('create_order_with_items','replace_order_with_items');` → **4 rows today, 2 rows after.**
+- **Risk:** low. The backend already calls the widest arity; after the drop, an old call shape
+  resolves to the wide version via its defaults, which is the desired behaviour.
+- **Ordering:** after 0.1.
+
+### Tier 1 — Money and access correctness
+
+**1.1 — Make dates shop-local (R3). High.**
+
+- **Files:** `backend/src/modules/orders/orders.service.ts:87`;
+  `backend/src/modules/analytics/analytics.service.ts:102` (`toDateKey`);
+  `backend/src/modules/expenses/expenses.service.ts:60`; and the grouping in
+  `20260917000000_fix_analytics_summary_rpc.sql:56,61`.
+- **Change:** add a `time_zone` column to `business_settings` (default `Asia/Manila`) and derive every
+  calendar date through it — in Node with `Intl.DateTimeFormat('en-CA', { timeZone })` (yields
+  `YYYY-MM-DD`), and in SQL with `(created_at at time zone <shop tz>)::date`. **Never slice a UTC ISO
+  string.**
+- **Verify:** `[LOCAL]` a unit test with a fixed instant of `2026-09-21T17:30:00Z` (01:30 Manila on
+  the 22nd) asserts the date is `2026-09-22` — **fails today (returns the 21st), passes after.**
+  `[LIVE]` compare the analytics daily series before and after over a range covering a morning sale.
+- **Risk:** medium blast radius, low technical risk — it changes displayed dates and the daily series
+  grouping, which is the point. Do it as its own commit so the before/after numbers can be compared.
+
+**1.2 — Set `trust proxy` (R4). High.**
+
+- **File:** `backend/src/app.ts`, immediately after `const app = express();` (~line 103).
+- **Change:** `app.set('trust proxy', 1);` — a **number**, not `true`; `express-rate-limit` rejects
+  `true` as permissive.
+- **Verify:** `[LOCAL]` a test sending `X-Forwarded-For: 203.0.113.7` asserts the audit row's
+  `ipAddress` is that address — **fails today.** `[LIVE]` after a few logins, group
+  `audit_logs.ip_address` by count → distinct client IPs instead of one proxy IP.
+- **Risk:** low on Render (exactly one proxy hop). Document that the process must not be exposed
+  without a proxy, or the header can be spoofed.
+
+**1.3 — Give payment deletion its own capability (R5). High.**
+
+- **Files:** NEW `supabase/migrations/20260921000200_order_payments_delete_permission.sql`;
+  `backend/src/routes/orderPayments.routes.ts:43`.
+- **Change:** seed `order_payments.delete` and grant it to `admin` only, mirroring `payments.void`;
+  switch the route to `requirePermission('order_payments.delete')`.
+- **Verify:** `[LIVE]` the grant query returns only `admin`. `[LOCAL]` a staff token gets 403 on
+  DELETE; an admin token gets 204.
+- **Risk:** low, and it deliberately removes a power staff have today. The frontend never calls
+  `orderPaymentsApi.remove`, so no UI change is needed.
+- **Ordering:** the migration must land **before** the route change, or every delete 403s.
+
+**1.4 — Make `users.read` real (R6). Medium-High.**
+
+- **File:** `backend/src/routes/users.routes.ts` — remove the router-wide guard at line 32; gate
+  `GET /` on `users.read` and the write routes on `users.manage`.
+- **Why this side moves:** `users.read` is already seeded and already used by the realtime filter and
+  the page map. Moving the realtime filter instead would permanently stop a read-only role from ever
+  receiving user events.
+- **Verify:** `[LOCAL]` a token with `users.read` but not `users.manage` gets 200 on `GET /users` and
+  403 on `POST /users`.
+- **Risk:** low — no visibility change today (both keys are admin-only). Flag: the frontend derives
+  `role` from `users.manage` (`useAuthStore.ts:29`) and preloads the user store only when
+  `canManageUsers` (`app/stores/index.ts:39-47`); update both in the same PR or track it.
+
+**1.5 — Repair the order contract and stop future drift (R7). Medium.**
+
+- **Files:** `packages/shared-types/src/order.ts:17-33` (add `updatedAt: string` with a comment
+  explaining it is the version token); `frontend/src/features/orders/types.ts` and the other six
+  hand-copied files → convert to `export type { … } from '@printsync/shared-types'`, following
+  `features/customers/types.ts`; NEW compile-time guard
+  `frontend/src/shared/contracts/contract-guard.ts` asserting the local and shared types are mutually
+  assignable, plus `frontend/scripts/check-shared-types.mjs` failing when a feature file re-declares a
+  name the package exports.
+- **Verify:** `[LOCAL]` remove `updatedAt` from the shared type → `cd frontend && npm run lint`
+  **fails** (proving the guard bites); restore → passes. Then `npm run lint && npm test` in both
+  workspaces.
+- **Risk:** medium — reconciling the optionality differences will surface real mismatches. That is the
+  intended outcome; fix them deliberately rather than silencing them. Type-only imports keep the "not
+  aliased in Vite" rule intact.
+- **Ordering:** shared package first (CI builds it before the backend).
+
+### Tier 2 — Operational robustness
+
+**2.1 — Make audit writes atomic for money actions (R8). Medium.**
+Extend the money RPCs to insert their own audit row before returning, so it commits or rolls back with
+the action. Adding a parameter means the old arity must be dropped first — the same pattern as
+`20260916000000:39`. Short term, escalate the swallowed warning in `auditLogService.ts:25-33` to an
+error. Verify by forcing the audit insert to fail in a scratch database and asserting the sale rolls
+back. **Ordering: after 0.2.** Highest-touch item in the list — it edits the money RPC.
+
+**2.2 — Add request IDs (R14). Low-Med.**
+NEW `backend/src/middleware/requestId.ts` accepting `x-request-id` or minting a UUID, echoing it in
+the response header and into every log line and audit `metadata`. Register early in `app.ts`. Verify
+with `curl -i` and by matching a log line to the response header. **Do this before 2.1** so the ID is
+available to it.
+
+**2.3 — Add server timeouts (R9). Medium.**
+`server.requestTimeout = 30_000`, `headersTimeout = 35_000`, `keepAliveTimeout = 65_000` in
+`server.ts`. **The SSE stream must be exempted** — call `request.setTimeout(0)` after `flushHeaders()`
+in `events.routes.ts`, or the 30s timeout kills realtime for everyone. Verify with `curl -N` holding
+the stream open past 30s. **The exemption ships in the same change.**
+
+**2.4 — Add a global rate limit (R10). Medium.**
+A limiter on `/api/v1` with a generous ceiling, skipping `/api/v1/events`. Keep the existing
+login/refresh limiters. **Ordering: after 1.2**, or every client shares the proxy's bucket.
+
+### Tier 3 — Maintainability
+
+**3.1 — Decompose `POSPage.tsx` (R11). Medium. Behaviour-preserving only.**
+Extract, one commit at a time: `hooks/usePOSCart.ts`, `usePOSTransactions.ts`, `usePOSHistory.ts`,
+`useOrderEditHydration.ts`, `usePOSKeyboardShortcuts.ts`, `usePOSCheckout.ts`, `usePOSReceipts.ts`, and
+`components/pos/POSToolbar.tsx`; plus a new `app/stores/usePaymentStore.ts` wrapping `paymentsApi`
+(registered in `app/stores/index.ts`, with a real `payments` revalidator replacing the current no-op).
+**Must stay in the page:** the idempotency-key lifetime semantics, the `editingOrderVersion` captured
+at hydration, freezing the cart before send, and the reconcile-only-on-non-4xx ordering. **Verify:** the
+five existing money tests stay green, plus a characterisation test per hook written *before* the move,
+plus a before/after screenshot of `/pos`. **Do this last**, after 1.5's guard and 3.2's CI gate exist.
+
+**3.2 — Wire the flat-UI gate into CI; scope E2E (R12). Medium.**
+Add `npm run check:flat-ui` to the frontend job in `.github/workflows/ci.yml` — it passes today, so it
+is free to add. For E2E: recommended **not** as a blocking gate yet, since CI deliberately withholds
+live credentials. Add a separate non-blocking workflow covering login → POS sale (including an
+idempotent retry) → receipt, and an order-edit conflict across two sessions. **Ordering: before 3.1.**
+
+**3.3 — One analytics implementation (R13). Low-Med.**
+Delete the fallback at `analytics.service.ts:123-199`; on RPC failure throw
+`503 ANALYTICS_LOOKUP_FAILED`. A money figure should error rather than quietly come from a different
+code path. Verify with a test stubbing the RPC to fail, and by comparing numbers over a range before
+and after. **Ordering: after confirming the repaired RPC is live.**
+
+**3.4 — `playwright` → `devDependencies` (R15). Low.** `frontend/package.json:21`. Verify with
+`npm ls playwright --omit=dev` → empty, and a clean build.
+
+**3.5 — Drop the duplicate `sales_transaction_items` index (R15). Low.** NEW migration dropping
+`sales_transaction_items_transaction_created_idx`; keep the other. Verify via `pg_indexes`.
+
+**3.6 — Index the foreign keys (R15). Low.** NEW migration adding `if not exists` indexes for the
+twelve unindexed FKs. Verify by querying `pg_constraint` for FK columns whose leading column is not
+indexed → empty.
+
+**3.7 — Decide on `purchase_orders` and the dead exports (R15). Low.** Either drop the table (and edit
+`seedDemoData.ts:46,53,452`) or mark it reserved with a `comment on table` and remove it from the
+seeder. Also remove the four dead exports and the two dead UI props/variants. Last.
+
+### Ordered summary
+
+| # | Item | Severity | Blocks |
+| --- | --- | --- | --- |
+| 0.1 | Duplicate `orders_customer_idx` | Blocker | every new environment |
+| 0.2 | Stale RPC overloads | High | safe future callers |
+| 1.1 | Shop-local dates | High | correct daily figures |
+| 1.2 | `trust proxy` | High | audit IP + rate limiting |
+| 1.3 | `order_payments.delete` | High | who can erase money |
+| 1.4 | `users.read` gating | Med-High | read/manage consistency |
+| 1.5 | Contract repair + drift guard | Medium | lost-update protection |
+| 2.1 | Audit atomicity | Medium | audit completeness |
+| 2.2 | Request IDs | Low-Med | traceability |
+| 2.3 | Server timeouts + SSE exemption | Medium | slow-client resistance |
+| 2.4 | Global rate limit | Medium | abuse resistance |
+| 3.1 | POS decomposition | Medium | maintainability |
+| 3.2 | CI gate + E2E scope | Medium | UI regression gate |
+| 3.3 | Single analytics path | Low-Med | number correctness |
+| 3.4–3.7 | Dependency, index and dead-code hygiene | Low | clarity |
+
+---
+
+## 5. Suggested commit boundaries
+
+Each of these is independently reviewable and revertible:
+
+1. `fix(db): give the duplicated orders_customer_idx a unique name` (0.1)
+2. `fix(db): drop superseded order RPC overloads` (0.2)
+3. `fix(dates): derive calendar dates in the shop time zone` (1.1)
+4. `fix(api): trust the Render proxy for client IPs` (1.2)
+5. `feat(authz): add order_payments.delete capability` (1.3)
+6. `fix(authz): enforce users.read on the users router` (1.4)
+7. `fix(types): restore updatedAt to the Order contract + drift guard` (1.5)
+8. `feat(obs): request ids` (2.2) → `fix(audit): atomic audit writes` (2.1)
+9. `fix(server): request/header timeouts with an SSE exemption` (2.3) → `feat(api): global rate limit` (2.4)
+10. `ci: run the flat-ui gate` (3.2) → `refactor(pos): extract hooks and a payment store` (3.1)
+11. Hygiene batch (3.3–3.7)
+
+---
+
+## 6. What was not verified
+
+Stated plainly so nobody treats an inference as a measurement:
+
+- **The live database's actual index and column state.** The migration files contradict what the
+  running system implies. Only `pg_indexes` / `information_schema.columns` queries against the live
+  project settle it. Fix 0.1 is written to converge from either state.
+- **The `main` branch protection ruleset.** Not stored in the repository and `gh` is not installed.
+  Only the CI job names could be confirmed as consistent with the convention.
+- **Runtime behaviour of `express-rate-limit` without `trust proxy`** — the setting is confirmed
+  absent; whether it throws or merely warns was not executed.
+- **`backend/dist` and `packages/shared-types/dist`** were excluded, so built output was not compared
+  against source.
+- **Nothing was run.** No server was started, no test suite executed, no database queried. Every
+  finding is a static read of the working tree. The verification steps in §4 are designed to convert
+  each finding into a measurement.
+- **Branch note:** this review covers the `flat-ui` working tree. `main` is behind it (`main` at
+  `ccbe44a3`, `flat-ui` at `556d98a`) and still carries `motion@12`, so R11–R12 and the flat-UI items
+  describe `flat-ui`, not `main`.
