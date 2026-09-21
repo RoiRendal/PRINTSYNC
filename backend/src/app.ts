@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
+import { requestId } from './middleware/requestId.js';
 import { authRouter } from './routes/auth.routes.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { brandingRouter } from './routes/branding.routes.js';
@@ -127,6 +128,20 @@ export function createApp() {
   app.set('trust proxy', 1);
 
   app.disable('x-powered-by');
+
+  /**
+   * First, before anything that could log or start a response.
+   *
+   * This mints (or adopts) the request id and puts it, the client address and the
+   * user agent into the request context — which is what makes the id appear on
+   * every log line for this request without a single call site mentioning it, and
+   * what lets an audit row record where the action came from.
+   *
+   * It must run after `trust proxy` above, or `request.ip` would be the load
+   * balancer's address and every audit row would name the proxy.
+   */
+  app.use(requestId);
+
   app.use(helmet({ contentSecurityPolicy: { directives: contentSecurityPolicyDirectives() } }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
 
