@@ -56,7 +56,7 @@
      filled with the same colour, this line is the only thing separating one from
      the next, so it is deliberately stronger than the hairline it sits beside
      (2.94:1 on the page, against the hairline's 1.34:1). */
-  --app-border-frame: #8e8e93;
+  --app-border-frame: #bbbbbb;
   --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
   --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
 
