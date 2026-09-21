@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { InsufficientStockDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 
 export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
 export type TransactionStatus = 'completed' | 'voided';
@@ -81,7 +82,11 @@ async function loadPaymentAmounts(supabase: SupabaseClient, transactionIds: stri
 
 async function mapTransactions(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<TransactionRecord[]> {
   const ids = rows.map((row) => String(row.id));
-  const [items, payments] = await Promise.all([loadItems(supabase, ids), loadPaymentAmounts(supabase, ids)]);
+  const [items, payments, timeZone] = await Promise.all([
+    loadItems(supabase, ids),
+    loadPaymentAmounts(supabase, ids),
+    getShopTimeZone(supabase),
+  ]);
   return rows.map((row) => ({
     id: String(row.id),
     status: String(row.status) as TransactionStatus,
@@ -92,7 +97,9 @@ async function mapTransactions(supabase: SupabaseClient, rows: Record<string, un
     total: Number(row.total),
     paymentMethod: String(row.payment_method) as PaymentMethod,
     paymentAmount: payments.get(String(row.id)) ?? 0,
-    date: String(row.created_at).slice(0, 10),
+    // The shop's calendar day. A sale rung up at 07:00 local is stored as the
+    // previous day in UTC and used to read back as one.
+    date: toShopDateKey(String(row.created_at), timeZone),
   }));
 }
 

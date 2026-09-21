@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { OrderConflictDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 
 /**
  * The structured context the RPC attaches when a save loses a race with another
@@ -74,6 +75,7 @@ function toRecord(
   row: Record<string, unknown>,
   items: OrderLineItem[],
   totalPaid: number,
+  timeZone: string,
 ): OrderRecord {
   return {
     id: String(row.id),
@@ -84,7 +86,9 @@ function toRecord(
     lineItems: items,
     quantity: items.reduce((total, item) => total + item.quantity, 0),
     status: String(row.status) as OrderStatus,
-    date: String(row.created_at).slice(0, 10),
+    // The shop's calendar day, not the UTC one. Slicing the UTC ISO string put
+    // every order taken before 08:00 local on the previous day.
+    date: toShopDateKey(String(row.created_at), timeZone),
     updatedAt: String(row.updated_at),
     amount: Number(row.amount),
     totalPaid,
@@ -133,10 +137,21 @@ async function loadPayments(supabase: SupabaseClient, orderIds: string[]): Promi
   return result;
 }
 
+/**
+ * The one place rows become `OrderRecord`s, so the shop's time zone is resolved
+ * once per call rather than threaded through every caller. `getShopTimeZone` is
+ * cached, so this is not a settings query per order.
+ */
 async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<OrderRecord[]> {
   const ids = rows.map((row) => String(row.id));
-  const [itemMap, paymentMap] = await Promise.all([loadItems(supabase, ids), loadPayments(supabase, ids)]);
-  return rows.map((row) => toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0));
+  const [itemMap, paymentMap, timeZone] = await Promise.all([
+    loadItems(supabase, ids),
+    loadPayments(supabase, ids),
+    getShopTimeZone(supabase),
+  ]);
+  return rows.map((row) =>
+    toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0, timeZone),
+  );
 }
 
 export async function listOrders(

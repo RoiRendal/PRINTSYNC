@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../../shared/errors.js';
 import { logger } from '../../shared/logger.js';
+import { getShopTimeZone, shopDateParts, shopDayEnd, shopDayStart, toShopDateKey } from '../../shared/shopClock.js';
 
 export interface AnalyticsRange {
   from: string;
@@ -98,13 +99,18 @@ interface InventoryItemRow {
   cost_price: number;
 }
 
-function toDateKey(value: string): string {
-  return value.slice(0, 10);
-}
-
-function normalizeRange(range: AnalyticsRange): AnalyticsRange {
-  const from = new Date(`${range.from}T00:00:00.000Z`);
-  const to = new Date(`${range.to}T23:59:59.999Z`);
+/**
+ * Widens `YYYY-MM-DD` endpoints to whole days **in the shop's zone**.
+ *
+ * Previously the boundaries were UTC (`T00:00:00.000Z` / `T23:59:59.999Z`). For a
+ * UTC+8 shop that is an eight-hour error at each end: the range
+ * `2026-09-01..2026-09-30` started eight hours into the 1st and ended eight hours
+ * before the end of the 30th, so a morning sale on the 1st fell outside the window
+ * entirely and a late-evening sale on the 30th was counted a day early.
+ */
+function normalizeRange(range: AnalyticsRange, timeZone: string): AnalyticsRange {
+  const from = shopDayStart(range.from, timeZone);
+  const to = shopDayEnd(range.to, timeZone);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from > to) {
     throw new AppError(400, 'INVALID_ANALYTICS_RANGE', 'The analytics date range is invalid.');
   }
@@ -112,7 +118,8 @@ function normalizeRange(range: AnalyticsRange): AnalyticsRange {
 }
 
 export async function getAnalyticsSummary(supabase: SupabaseClient, range: AnalyticsRange): Promise<AnalyticsSummary> {
-  const normalizedRange = normalizeRange(range);
+  const timeZone = await getShopTimeZone(supabase);
+  const normalizedRange = normalizeRange(range, timeZone);
 
   const { data: rpcData, error: rpcError } = await supabase
     .rpc('get_analytics_summary', {
@@ -156,7 +163,9 @@ export async function getAnalyticsSummary(supabase: SupabaseClient, range: Analy
     const transactions = transactionsResult.data as TransactionRow[];
     const daily = new Map<string, { revenue: number; transactions: number }>();
     for (const transaction of transactions) {
-      const date = toDateKey(transaction.created_at);
+      // The shop's calendar day, so the fallback and the RPC agree on which bucket
+      // a morning sale belongs to.
+      const date = toShopDateKey(transaction.created_at, timeZone);
       const current = daily.get(date) ?? { revenue: 0, transactions: 0 };
       current.revenue += Number(transaction.total);
       current.transactions += 1;
@@ -232,37 +241,45 @@ export async function getAnalyticsSummary(supabase: SupabaseClient, range: Analy
  * profit, and margin for each bucket.
  * ------------------------------------------------------------------------ */
 
-function bucketLabel(date: Date, bucket: AnalyticsBucket): string {
+/**
+ * The bucket an instant belongs to, in the shop's zone.
+ *
+ * This replaces a `bucketKey` / `bucketLabel` pair whose bodies were identical for
+ * all three buckets — the day key and the day label were the same string, and the
+ * other two just delegated. Two names for one answer is how they drift, so there
+ * is one function now.
+ *
+ * The calendar parts come from the shop's zone rather than `getUTC*`. That matters
+ * most for `day`: bucketing a 07:00 Manila sale under the previous UTC date split
+ * one business morning across two points on the chart.
+ */
+function bucketKey(value: string | Date, bucket: AnalyticsBucket, timeZone: string): string {
+  const { year, month, day } = shopDateParts(value, timeZone);
+  const paddedYear = String(year).padStart(4, '0');
+
   if (bucket === 'day') {
-    return date.toISOString().slice(0, 10);
+    return `${paddedYear}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   }
   if (bucket === 'week') {
-    const year = date.getUTCFullYear();
-    const weekOfYear = isoWeek(date);
-    return `${year} W${String(weekOfYear).padStart(2, '0')}`;
+    return `${paddedYear} W${String(isoWeek(year, month, day)).padStart(2, '0')}`;
   }
-  // quarter
-  const year = date.getUTCFullYear();
-  const quarter = Math.floor(date.getUTCMonth() / 3) + 1;
-  return `${year} Q${quarter}`;
+  return `${paddedYear} Q${Math.floor((month - 1) / 3) + 1}`;
 }
 
-function isoWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+/**
+ * ISO-8601 week number for a calendar date.
+ *
+ * Takes the shop-local year/month/day rather than reading them off a `Date` with
+ * `getUTC*`: the week a sale belongs to is a property of the local calendar date,
+ * so the local date has to be the input. The arithmetic is the standard
+ * "move to the Thursday of this week, then count from January 1".
+ */
+function isoWeek(year: number, month: number, day: number): number {
+  const d = new Date(Date.UTC(year, month - 1, day));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86_400_000 + 1) / 7);
-}
-
-function bucketKey(date: Date, bucket: AnalyticsBucket): string {
-  if (bucket === 'day') {
-    return date.toISOString().slice(0, 10);
-  }
-  if (bucket === 'week') {
-    return bucketLabel(date, 'week');
-  }
-  return bucketLabel(date, 'quarter');
 }
 
 export async function getSalesTimeline(
@@ -270,7 +287,8 @@ export async function getSalesTimeline(
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
 ): Promise<SalesTimeline> {
-  const normalizedRange = normalizeRange(range);
+  const timeZone = await getShopTimeZone(supabase);
+  const normalizedRange = normalizeRange(range, timeZone);
   const [transactionsResult, itemsResult, inventoryResult] = await Promise.all([
     supabase
       .from('sales_transactions')
@@ -299,7 +317,7 @@ export async function getSalesTimeline(
   const revenueByBucket = new Map<string, { revenue: number; transactionCount: number; firstDate: Date }>();
   for (const txn of transactions) {
     const date = new Date(txn.created_at);
-    const key = bucketKey(date, bucket);
+    const key = bucketKey(date, bucket, timeZone);
     const current = revenueByBucket.get(key) ?? { revenue: 0, transactionCount: 0, firstDate: date };
     current.revenue += Number(txn.total);
     current.transactionCount += 1;
@@ -311,7 +329,7 @@ export async function getSalesTimeline(
   for (const item of items) {
     if (!item.transaction) continue;
     const date = new Date(item.transaction.created_at);
-    const key = bucketKey(date, bucket);
+    const key = bucketKey(date, bucket, timeZone);
     const costPrice = item.inventory_item_id ? (costMap.get(item.inventory_item_id) ?? 0) : 0;
     cogsByBucket.set(key, (cogsByBucket.get(key) ?? 0) + Number(item.quantity) * costPrice);
   }
@@ -328,7 +346,7 @@ export async function getSalesTimeline(
     const grossProfit = entry.revenue - cogs;
     const margin = entry.revenue === 0 ? 0 : (grossProfit / entry.revenue) * 100;
     return {
-      label: bucketLabel(entry.firstDate, bucket),
+      label: bucketKey(entry.firstDate, bucket, timeZone),
       revenue: Math.round(entry.revenue * 100) / 100,
       cogs: Math.round(cogs * 100) / 100,
       grossProfit: Math.round(grossProfit * 100) / 100,
@@ -352,7 +370,8 @@ export async function getProductTrends(
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
 ): Promise<ProductTrends> {
-  const normalizedRange = normalizeRange(range);
+  const timeZone = await getShopTimeZone(supabase);
+  const normalizedRange = normalizeRange(range, timeZone);
   const itemsResult = await supabase
     .from('sales_transaction_items')
     .select('name, quantity, transaction:sales_transactions!inner(total, created_at)')
@@ -371,7 +390,7 @@ export async function getProductTrends(
   for (const item of items) {
     if (!item.transaction) continue;
     const date = new Date(item.transaction.created_at);
-    const key = bucketKey(date, bucket);
+    const key = bucketKey(date, bucket, timeZone);
     let entry = bucketMap.get(key);
     if (!entry) {
       entry = { firstDate: date, items: new Map() };
@@ -390,7 +409,7 @@ export async function getProductTrends(
   const resultBuckets: ProductTrendBucket[] = sortedKeys.map((key) => {
     const entry = bucketMap.get(key)!;
     return {
-      label: bucketLabel(entry.firstDate, bucket),
+      label: bucketKey(entry.firstDate, bucket, timeZone),
       items: [...entry.items.entries()]
         .map(([name, quantity]) => ({ name, quantity: Number(quantity) }))
         .sort((a, b) => b.quantity - a.quantity),
@@ -413,7 +432,8 @@ export async function getInventoryForecast(
   range: AnalyticsRange,
   horizonDays: number,
 ): Promise<InventoryForecast> {
-  const normalizedRange = normalizeRange(range);
+  const timeZone = await getShopTimeZone(supabase);
+  const normalizedRange = normalizeRange(range, timeZone);
 
   const from = new Date(normalizedRange.from);
   const to = new Date(normalizedRange.to);

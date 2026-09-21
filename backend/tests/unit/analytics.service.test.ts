@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { beforeEach, describe, it } from 'node:test';
 
 import { getAnalyticsSummary } from '../../src/modules/analytics/analytics.service.js';
+import { resetShopTimeZoneCache } from '../../src/shared/shopClock.js';
 import { createFakeSupabase } from './helpers/fakeSupabase.js';
 
 /**
@@ -40,6 +41,12 @@ const RPC_PAYLOAD = {
 const RANGE = { from: '2026-09-01', to: '2026-09-30' };
 
 describe('analytics summary prefers the database function', () => {
+  beforeEach(() => {
+    // `getShopTimeZone` caches the resolved zone in the module, so without this a
+    // case would inherit whatever the previous one configured.
+    resetShopTimeZoneCache();
+  });
+
   it('uses the RPC result and never touches the fallback tables', async () => {
     const supabase = createFakeSupabase().onRpc('get_analytics_summary', { data: RPC_PAYLOAD });
 
@@ -61,7 +68,7 @@ describe('analytics summary prefers the database function', () => {
     assert.equal(supabase.callsFor('get_analytics_summary', 'rpc').length, 1);
   });
 
-  it('passes the normalised range to the function as ISO timestamps', async () => {
+  it('sends the range as whole days in the shop time zone', async () => {
     const supabase = createFakeSupabase().onRpc('get_analytics_summary', { data: RPC_PAYLOAD });
 
     await getAnalyticsSummary(supabase as never, RANGE);
@@ -70,10 +77,47 @@ describe('analytics summary prefers the database function', () => {
     assert.ok(call, 'the analysis function should have been called');
     const args = call.payload as { p_from: string; p_to: string };
 
-    // Endpoints are widened to cover the whole day: a range that stopped at
+    // Endpoints are still widened to cover the whole day — a range that stopped at
     // 00:00:00 would silently exclude every sale made on the final day.
+    //
+    // What changed is *whose* day. These are 00:00 on the 1st and the last
+    // millisecond of the 30th in Asia/Manila (UTC+8), not in UTC. The previous
+    // expectations were the UTC boundaries, which started eight hours into the 1st
+    // and ended eight hours before the end of the 30th: the whole morning of the
+    // first day fell outside the window, and the last evening of the last day was
+    // reported a day early.
+    assert.equal(args.p_from, '2026-08-31T16:00:00.000Z');
+    assert.equal(args.p_to, '2026-09-30T15:59:59.999Z');
+  });
+
+  it('moves the range when the shop time zone changes', async () => {
+    // The decisive test for the *setting* rather than the constant: a fixed
+    // `Asia/Manila` in the code would pass the assertion above and fail this one.
+    const supabase = createFakeSupabase()
+      .onRpc('get_analytics_summary', { data: RPC_PAYLOAD })
+      .onTable('business_settings', { data: { time_zone: 'UTC' } });
+
+    await getAnalyticsSummary(supabase as never, RANGE);
+
+    const args = supabase.lastCall('get_analytics_summary', 'rpc')?.payload as { p_from: string; p_to: string };
     assert.equal(args.p_from, '2026-09-01T00:00:00.000Z');
     assert.equal(args.p_to, '2026-09-30T23:59:59.999Z');
+  });
+
+  it('buckets the fallback daily series by the shop day, not the UTC day', async () => {
+    // 2026-09-01T17:30Z is 01:30 on the 2nd in Manila. Grouped by the UTC slice
+    // this sale was reported on the 1st, which is the bug the RPC grouping had too.
+    const supabase = createFakeSupabase()
+      .onRpc('get_analytics_summary', { data: null, error: { message: 'function unavailable' } })
+      .onTable('sales_transactions', { data: [{ total: 750, created_at: '2026-09-01T17:30:00.000Z' }] })
+      .onTable('orders', { data: [] })
+      .onTable('sales_transaction_items', { data: [] })
+      .onTable('inventory_items', { data: [] });
+
+    const summary = await getAnalyticsSummary(supabase as never, RANGE);
+
+    assert.equal(summary.salesByDay.length, 1);
+    assert.equal(summary.salesByDay[0]?.date, '2026-09-02');
   });
 
   it('falls back when the function is genuinely unavailable', async () => {

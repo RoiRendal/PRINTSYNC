@@ -7,6 +7,7 @@ import { exportInventory } from '../modules/inventory/inventory.service.js';
 import { exportTransactions } from '../modules/payments/payments.service.js';
 import { AppError } from '../shared/errors.js';
 import { formatCsvHeaders, formatCsvRow } from '../shared/csv.js';
+import { getShopTimeZone, shopToday } from '../shared/shopClock.js';
 
 export const exportRouter = Router();
 
@@ -22,8 +23,11 @@ function setCsvHeaders(response: Response, filename: string) {
 }
 
 exportRouter.get('/orders', authenticate, requirePermission('orders.read'), async (_request, response) => {
-  const orders = await exportOrders(getSupabase());
-  const date = new Date().toISOString().slice(0, 10);
+  const supabase = getSupabase();
+  const orders = await exportOrders(supabase);
+  // Named for the shop's date, so a file exported at 07:00 local is not stamped
+  // with yesterday.
+  const date = shopToday(await getShopTimeZone(supabase));
   setCsvHeaders(response, `orders_${date}.csv`);
   response.write(formatCsvHeaders(['ID', 'Customer', 'Item', 'Quantity', 'Status', 'Date', 'Amount', 'Total Paid', 'Balance Due', 'Due Date', 'Is Custom']));
   for (const order of orders) {
@@ -45,8 +49,9 @@ exportRouter.get('/orders', authenticate, requirePermission('orders.read'), asyn
 });
 
 exportRouter.get('/inventory', authenticate, requirePermission('inventory.read'), async (_request, response) => {
-  const items = await exportInventory(getSupabase());
-  const date = new Date().toISOString().slice(0, 10);
+  const supabase = getSupabase();
+  const items = await exportInventory(supabase);
+  const date = shopToday(await getShopTimeZone(supabase));
   setCsvHeaders(response, `inventory_${date}.csv`);
   response.write(formatCsvHeaders(['ID', 'SKU', 'Name', 'Category', 'Stock', 'Reorder Level', 'Price', 'Cost Price', 'Image URL', 'Created At', 'Updated At']));
   for (const item of items) {
@@ -68,8 +73,9 @@ exportRouter.get('/inventory', authenticate, requirePermission('inventory.read')
 });
 
 exportRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (_request, response) => {
-  const transactions = await exportTransactions(getSupabase());
-  const date = new Date().toISOString().slice(0, 10);
+  const supabase = getSupabase();
+  const transactions = await exportTransactions(supabase);
+  const date = shopToday(await getShopTimeZone(supabase));
   setCsvHeaders(response, `transactions_${date}.csv`);
   response.write(formatCsvHeaders(['ID', 'Date', 'Status', 'Payment Method', 'Subtotal', 'Discount', 'Tax', 'Total', 'Payment Amount', 'Items']));
   for (const transaction of transactions) {

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, shopToday } from '../../shared/shopClock.js';
 
 export interface Expense {
   id: string;
@@ -51,13 +52,16 @@ export async function createExpense(
   input: ExpenseInput,
   actorId: string,
 ): Promise<Expense> {
+  // A defaulted expense date is "today at the shop", not "today in UTC". Logging a
+  // receipt at 07:00 local used to file it under yesterday's books.
+  const timeZone = await getShopTimeZone(supabase);
   const { data, error } = await supabase
     .from('operating_expenses')
     .insert({
       category: input.category.trim(),
       description: input.description?.trim() ?? '',
       amount: input.amount,
-      expense_date: input.expenseDate ?? new Date().toISOString().slice(0, 10),
+      expense_date: input.expenseDate ?? shopToday(timeZone),
       created_by: actorId,
     })
     .select('*')
