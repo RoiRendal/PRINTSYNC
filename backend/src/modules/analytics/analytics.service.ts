@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AppError } from '../../shared/errors.js';
 import { logger } from '../../shared/logger.js';
-import { getShopTimeZone, shopDateParts, shopDayEnd, shopDayStart, toShopDateKey } from '../../shared/shopClock.js';
+import { getShopTimeZone, shopDateParts, shopDayEnd, shopDayStart } from '../../shared/shopClock.js';
 
 export interface AnalyticsRange {
   from: string;
@@ -127,84 +127,32 @@ export async function getAnalyticsSummary(supabase: SupabaseClient, range: Analy
       p_to: normalizedRange.to,
     });
 
+  /*
+   * One implementation, or an error. There is deliberately no fallback here.
+   *
+   * There used to be one: on RPC failure the service re-aggregated the same
+   * numbers from four table reads. It looked harmless, and it was the opposite.
+   *
+   * The deployed function raised `42803 aggregate function calls cannot be
+   * nested`. The service logged a warning nobody read and the dashboard kept
+   * drawing charts — from the fallback — so a broken function was
+   * indistinguishable from a working one at every vantage point a person has.
+   * That is how it survived long enough to be found by an audit rather than by
+   * somebody using the system.
+   *
+   * The two paths could also disagree: they grouped days differently, computed
+   * `topItems` differently, and read different columns. So which revenue figure
+   * appeared depended on whether an error nobody was told about had happened.
+   * For a money number that is worse than having no number at all — a figure
+   * quietly produced by a second implementation is one nobody knows to distrust.
+   *
+   * So it fails loudly instead. The caller gets a 503, the operator gets the
+   * function's own error message in the log, and these numbers come from exactly
+   * one place.
+   */
   if (rpcError || !rpcData) {
-    logger.warn('Analytics summary RPC failed, falling back to client-side aggregation', {
-      error: rpcError?.message,
-    });
-
-    // Fallback to client-side aggregation if RPC is not available
-    const [transactionsResult, orderResult, itemsResult, inventoryResult] = await Promise.all([
-      supabase
-        .from('sales_transactions')
-        .select('total, created_at')
-        .eq('status', 'completed')
-        .gte('created_at', normalizedRange.from)
-        .lte('created_at', normalizedRange.to),
-      supabase
-        .from('orders')
-        .select('status')
-        .gte('created_at', normalizedRange.from)
-        .lte('created_at', normalizedRange.to),
-      supabase
-        .from('sales_transaction_items')
-        .select('name, quantity, unit_price, transaction:sales_transactions!inner(total, created_at)')
-        .eq('transaction.status', 'completed')
-        .gte('transaction.created_at', normalizedRange.from)
-        .lte('transaction.created_at', normalizedRange.to),
-      supabase
-        .from('inventory_items')
-        .select('stock, reorder_level'),
-    ]);
-
-    if (transactionsResult.error || orderResult.error || itemsResult.error || inventoryResult.error) {
-      throw new AppError(503, 'ANALYTICS_LOOKUP_FAILED', 'Analytics could not be generated.');
-    }
-
-    const transactions = transactionsResult.data as TransactionRow[];
-    const daily = new Map<string, { revenue: number; transactions: number }>();
-    for (const transaction of transactions) {
-      // The shop's calendar day, so the fallback and the RPC agree on which bucket
-      // a morning sale belongs to.
-      const date = toShopDateKey(transaction.created_at, timeZone);
-      const current = daily.get(date) ?? { revenue: 0, transactions: 0 };
-      current.revenue += Number(transaction.total);
-      current.transactions += 1;
-      daily.set(date, current);
-    }
-
-    const statusCounts = new Map<string, number>();
-    for (const order of orderResult.data) {
-      const status = String(order.status);
-      statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
-    }
-
-    const itemTotals = new Map<string, { quantity: number; revenue: number }>();
-    for (const item of itemsResult.data as unknown as TransactionItemRow[]) {
-      const current = itemTotals.get(item.name) ?? { quantity: 0, revenue: 0 };
-      current.quantity += Number(item.quantity);
-      current.revenue += Number(item.quantity) * Number(item.unit_price);
-      itemTotals.set(item.name, current);
-    }
-
-    const revenue = transactions.reduce((total, transaction) => total + Number(transaction.total), 0);
-    return {
-      range,
-      revenue,
-      transactionCount: transactions.length,
-      orderCount: orderResult.data.length,
-      averageTransactionValue: transactions.length === 0 ? 0 : revenue / transactions.length,
-      salesByDay: [...daily.entries()]
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([date, values]) => ({ date, ...values })),
-      ordersByStatus: [...statusCounts.entries()]
-        .sort(([left], [right]) => left.localeCompare(right))
-        .map(([status, count]) => ({ status, count })),
-      topItems: [...itemTotals.entries()]
-        .sort(([, left], [, right]) => right.revenue - left.revenue)
-        .slice(0, 10)
-        .map(([name, values]) => ({ name, ...values })),
-      inventoryAlerts: inventoryResult.data.filter((item) => Number(item.stock) <= Number(item.reorder_level)).length,
-    };
+    logger.error('Analytics summary RPC failed', { error: rpcError?.message });
+    throw new AppError(503, 'ANALYTICS_LOOKUP_FAILED', 'Analytics could not be generated.');
   }
 
   const summary = rpcData as {

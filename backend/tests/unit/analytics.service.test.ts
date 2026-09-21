@@ -8,19 +8,21 @@ import { createFakeSupabase } from './helpers/fakeSupabase.js';
 /**
  * Which code path produces the analytics numbers.
  *
- * `getAnalyticsSummary` prefers the `get_analytics_summary` RPC and silently
- * falls back to aggregating in JavaScript when the RPC fails. That fallback is
- * deliberate — it keeps the dashboard alive if the function is missing — but it
- * is also dangerous, because a *persistently broken* function looks identical to
- * a working one from the outside: both return a plausible summary and HTTP 200.
+ * `getAnalyticsSummary` reads the `get_analytics_summary` RPC and nothing else.
+ * There used to be a client-side fallback here that re-aggregated the same figures
+ * from four table reads whenever the RPC failed; it was removed on 2026-09-21, and
+ * the service carries the reasoning.
  *
- * That is exactly what happened. The deployed function raised
+ * Why it was dangerous is why these tests exist. The deployed function raised
  * `42803 aggregate function calls cannot be nested`, the service logged a warning
- * nobody read, and the dashboard kept drawing charts from the fallback. The
- * defect was invisible precisely because the fallback worked.
+ * nobody read, and the dashboard kept drawing charts from the fallback — so a
+ * *persistently broken* function looked identical to a working one from the
+ * outside: a plausible summary and HTTP 200 either way.
  *
- * These tests pin the *branch*, not just the output: the RPC must be used when it
- * responds, and a response must never be assembled from two different sources.
+ * These tests pin the *branch*, not just the output. The RPC must be used when it
+ * responds, a failure must surface as a 503 rather than a number, and the old
+ * fallback's tables must never be read — that last one is what proves the second
+ * implementation is gone rather than merely unreachable.
  */
 
 /** A minimal but complete RPC payload, with values no fallback could invent. */
@@ -104,39 +106,48 @@ describe('analytics summary prefers the database function', () => {
     assert.equal(args.p_to, '2026-09-30T23:59:59.999Z');
   });
 
-  it('buckets the fallback daily series by the shop day, not the UTC day', async () => {
-    // 2026-09-01T17:30Z is 01:30 on the 2nd in Manila. Grouped by the UTC slice
-    // this sale was reported on the 1st, which is the bug the RPC grouping had too.
-    const supabase = createFakeSupabase()
-      .onRpc('get_analytics_summary', { data: null, error: { message: 'function unavailable' } })
-      .onTable('sales_transactions', { data: [{ total: 750, created_at: '2026-09-01T17:30:00.000Z' }] })
-      .onTable('orders', { data: [] })
-      .onTable('sales_transaction_items', { data: [] })
-      .onTable('inventory_items', { data: [] });
-
-    const summary = await getAnalyticsSummary(supabase as never, RANGE);
-
-    assert.equal(summary.salesByDay.length, 1);
-    assert.equal(summary.salesByDay[0]?.date, '2026-09-02');
-  });
-
-  it('falls back when the function is genuinely unavailable', async () => {
+  it('fails loudly when the function is unavailable, instead of re-aggregating', async () => {
+    // Every table the old fallback read is configured here, and would have
+    // produced a plausible summary. That is deliberate: it means the assertions
+    // below cannot pass merely because a fixture was missing.
     const supabase = createFakeSupabase()
       .onRpc('get_analytics_summary', { data: null, error: { message: 'aggregate function calls cannot be nested' } })
-      .onTable('sales_transactions', {
-        data: [{ total: 500, created_at: '2026-09-02T10:00:00.000Z' }],
-      })
+      .onTable('sales_transactions', { data: [{ total: 500, created_at: '2026-09-02T10:00:00.000Z' }] })
       .onTable('orders', { data: [{ status: 'Completed' }] })
       .onTable('sales_transaction_items', { data: [] })
       .onTable('inventory_items', { data: [] });
 
-    const summary = await getAnalyticsSummary(supabase as never, RANGE);
+    await assert.rejects(
+      () => getAnalyticsSummary(supabase as never, RANGE),
+      (error: unknown) => {
+        const appError = error as { statusCode?: number; code?: string };
+        assert.equal(appError.statusCode, 503);
+        assert.equal(appError.code, 'ANALYTICS_LOOKUP_FAILED');
+        return true;
+      },
+    );
 
-    // The fallback is load-bearing and must keep working — it is what kept the
-    // dashboard alive while the function was broken.
-    assert.equal(summary.revenue, 500);
-    assert.equal(summary.transactionCount, 1);
-    assert.equal(summary.orderCount, 1);
-    assert.equal(supabase.callsFor('sales_transactions').length, 1);
+    // The decisive assertion. Those four tables were read *only* by the fallback,
+    // so zero calls is what proves the second implementation is gone rather than
+    // merely unreachable from here.
+    assert.equal(supabase.callsFor('sales_transactions').length, 0);
+    assert.equal(supabase.callsFor('orders').length, 0);
+    assert.equal(supabase.callsFor('sales_transaction_items').length, 0);
+    assert.equal(supabase.callsFor('inventory_items').length, 0);
+  });
+
+  it('fails the same way when the function returns nothing at all', async () => {
+    // `data: null` with no error is the shape a missing function can take. It must
+    // not be read as "no sales in this range" — that is a real number to a person
+    // reading a chart, and it would be a lie.
+    const supabase = createFakeSupabase().onRpc('get_analytics_summary', { data: null });
+
+    await assert.rejects(
+      () => getAnalyticsSummary(supabase as never, RANGE),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, 'ANALYTICS_LOOKUP_FAILED');
+        return true;
+      },
+    );
   });
 });
