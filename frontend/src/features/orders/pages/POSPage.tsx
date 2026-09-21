@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { History, ReceiptText, ShoppingBag } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
@@ -8,7 +8,7 @@ import { cn } from '../../../shared/lib/cn';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
-import { paymentsApi, readInsufficientStock, type PaymentTransaction } from '../api/paymentsApi';
+import { paymentsApi, readInsufficientStock } from '../api/paymentsApi';
 import { readOrderConflict } from '../api/ordersApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
@@ -29,15 +29,13 @@ import { usePOSCart, type PosMode } from '../hooks/usePOSCart';
 import { usePOSHistory } from '../hooks/usePOSHistory';
 import { usePOSKeyboardShortcuts } from '../hooks/usePOSKeyboardShortcuts';
 import { useOrderEditHydration } from '../hooks/useOrderEditHydration';
+import { usePOSTransactions } from '../hooks/usePOSTransactions';
 import { useOrders } from '../../../app/stores/useOrderStore';
-import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
-import type { CartItem, CreateOrder, Transaction } from '../types';
+import { emitDataChange } from '../../../shared/store/dataEvents';
+import type { CreateOrder } from '../types';
 import { documentFromSale } from '../types/printableDocument';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
-
-/** Coalesces a burst of payment events into a single refetch. */
-const HISTORY_RELOAD_DEBOUNCE_MS = 400;
 
 /**
  * What the cashier is told when a checkout's fate had to be investigated.
@@ -83,12 +81,22 @@ export default function POS() {
     hydrateFromOrder,
   } = basket;
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  /**
+   * The till's transaction history. Reads from the payment store (R11) so the
+   * page no longer reaches past the store layer; voiding and the just-recorded
+   * sale are pushed through here too.
+   */
+  const {
+    transactions,
+    error: transactionError,
+    voidTransaction,
+    recordCommitted,
+    recordReconciled,
+  } = usePOSTransactions({ inventory });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'pos' | 'history'>('pos');
   const [posMode, setPosMode] = useState<PosMode>('retail');
-  const [transactionError, setTransactionError] = useState<string | null>(null);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -124,77 +132,6 @@ export default function POS() {
    */
   const { beginAttempt, peekAttempt, completeAttempt } = useCheckoutAttemptKey(cartSignature);
 
-  const mapPaymentTransaction = useCallback((transaction: PaymentTransaction): Transaction => ({
-    id: transaction.id,
-    date: transaction.date,
-    items: transaction.items.map((item) => {
-      const inventoryItem = inventory.find((candidate) => candidate.id === item.itemId);
-      return inventoryItem
-        ? { ...inventoryItem, qty: item.quantity }
-        : ({
-            id: item.itemId ?? `transaction-${item.name}`,
-            sku: item.itemId ?? `transaction-${item.name}`,
-            name: item.name,
-            category: '',
-            stock: 0,
-            reorderLevel: 0,
-            price: item.unitPrice,
-            imageUrl: undefined,
-            createdAt: transaction.date,
-            updatedAt: transaction.date,
-            qty: item.quantity,
-          } as CartItem);
-    }),
-    subtotal: transaction.subtotal,
-    discount: transaction.discount > 0 ? transaction.discount : undefined,
-    vatRatePercent: transaction.subtotal > transaction.discount ? (transaction.tax / (transaction.subtotal - transaction.discount)) * 100 : 0,
-    tax: transaction.tax,
-    total: transaction.total,
-    paymentMethod: transaction.paymentMethod,
-    status: transaction.status,
-  }), [inventory]);
-
-  const loadTransactions = useCallback(async () => {
-    try {
-      const response = await paymentsApi.list();
-      setTransactions(response.data.map(mapPaymentTransaction));
-      setTransactionError(null);
-    } catch (error: unknown) {
-      setTransactionError(error instanceof ApiError ? error.message : 'Transactions could not be loaded.');
-    }
-  }, [mapPaymentTransaction]);
-
-  useEffect(() => {
-    void loadTransactions();
-  }, [loadTransactions]);
-
-  /*
-   * The transaction history is a bespoke endpoint rather than a list store, so
-   * it subscribes to the bus directly. Without this, a sale rung up on another
-   * workstation — or a void performed here — would not appear in this table
-   * until the page was reloaded.
-   */
-  const historyReloadTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const unsubscribe = subscribeToDataChanges((domains) => {
-      if (!domains.includes('payments')) return;
-      if (historyReloadTimerRef.current !== null) window.clearTimeout(historyReloadTimerRef.current);
-      historyReloadTimerRef.current = window.setTimeout(() => {
-        historyReloadTimerRef.current = null;
-        void loadTransactions();
-      }, HISTORY_RELOAD_DEBOUNCE_MS);
-    });
-
-    return () => {
-      unsubscribe();
-      if (historyReloadTimerRef.current !== null) {
-        window.clearTimeout(historyReloadTimerRef.current);
-        historyReloadTimerRef.current = null;
-      }
-    };
-  }, [loadTransactions]);
-
   /** Sales and custom orders merged into one searchable timeline. */
   const history = usePOSHistory({ transactions, orders, inventory });
 
@@ -225,9 +162,10 @@ export default function POS() {
 
       // The sale exists. Adopt it, so the history table and the stock figures
       // describe what actually happened rather than what the till believed.
-      setTransactions((previous) => [mapPaymentTransaction(committed), ...previous]);
-      setTransactionError(null);
-      emitDataChange('payments', 'inventory');
+      recordReconciled(committed);
+      // The sale exists; the history table and the stock figures now describe
+      // what actually happened rather than what the till believed.
+      emitDataChange('inventory');
       return { kind: 'committed', reference: committed.id };
     } catch {
       return { kind: 'unknown' };
@@ -293,12 +231,10 @@ export default function POS() {
           idempotencyKey,
         });
         completeAttempt();
-        setTransactions((previous) => [mapPaymentTransaction(createdTransaction), ...previous]);
-        setTransactionError(null);
-        // A retail sale writes a payment row *and* decrements stock server-side.
-        // Both domains are announced so the POS catalogue, the dashboard's
-        // stock alerts, and analytics all re-read without a page reload.
-        emitDataChange('payments', 'inventory');
+        recordCommitted(createdTransaction);
+        // A retail sale decrements stock server-side; the catalogue, stock alerts
+        // and analytics re-read without a page reload.
+        emitDataChange('inventory');
         receipts.recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
         saleCompleted = true;
       } else {
@@ -421,20 +357,6 @@ export default function POS() {
   const handlePaymentMethodChange = (method: 'Cash' | 'Card') => {
     setPaymentMethod(method);
     localStorage.setItem(LAST_PAYMENT_METHOD_KEY, method);
-  };
-
-  const voidTransaction = async (id: string) => {
-    if (window.confirm('Void this transaction? Inventory will be restored.')) {
-      try {
-        const voided = await paymentsApi.void(id);
-        setTransactions((previous) => previous.map((transaction) => transaction.id === id ? mapPaymentTransaction(voided) : transaction));
-        setTransactionError(null);
-        // Voiding restores the stock the sale consumed.
-        emitDataChange('payments', 'inventory');
-      } catch (error) {
-        setTransactionError(error instanceof ApiError ? error.message : 'The transaction could not be voided.');
-      }
-    }
   };
 
   return (
