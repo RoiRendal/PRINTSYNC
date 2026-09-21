@@ -25,55 +25,16 @@ import { POSHistoryView, type CombinedHistoryRow } from '../components/pos/POSHi
 import { useCartTotals } from '../hooks/useCartTotals';
 import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
+import { printDocument, usePOSReceipts } from '../hooks/usePOSReceipts';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange, subscribeToDataChanges } from '../../../shared/store/dataEvents';
 import type { CartItem, CreateOrder, Order, OrderLineItem, Transaction } from '../types';
-import {
-  documentFromSale,
-  documentFromTransaction,
-  type PrintableDocument,
-} from '../types/printableDocument';
+import { documentFromSale } from '../types/printableDocument';
 
 const LAST_PAYMENT_METHOD_KEY = 'printsync:last-payment-method';
 
-/**
- * Prints one document and restores the tab title afterwards.
- *
- * Two jobs in one place. `@media print` in `index.css` decides *what* is on the
- * paper; this decides what the PDF is *called*. Without the rename, a cashier
- * printing three receipts in a row saves three files called "PrintSync" and has
- * to open each to find the right one.
- */
-function printDocument(document: PrintableDocument) {
-  const previousTitle = window.document.title;
-  const safeRef = document.reference.replace(/[^a-zA-Z0-9-]/g, '');
-  window.document.title = `${document.kind === 'receipt' ? 'Receipt' : 'Order'}-${safeRef}`;
-  try {
-    window.print();
-  } finally {
-    // Restored synchronously: `window.print()` blocks until the dialog closes in
-    // every browser we support, so the title is correct for the print job and
-    // back to normal before the user sees the tab again.
-    window.document.title = previousTitle;
-  }
-}
-
 /** Coalesces a burst of payment events into a single refetch. */
 const HISTORY_RELOAD_DEBOUNCE_MS = 400;
-
-/**
- * The sale just completed, so its paperwork can be reopened.
- *
- * The receipt used to exist only inside the checkout dialog, which closes itself
- * two seconds after a sale. A customer who wants their summary an hour later, or
- * a cashier whose printer jammed, had no way to get it back — the document was
- * gone. This is what makes it survive.
- */
-interface LastDocument {
-  document: PrintableDocument;
-  /** Shown on the terminal button so the cashier knows which sale it reopens. */
-  label: string;
-}
 
 /**
  * What the cashier is told when a checkout's fate had to be investigated.
@@ -133,19 +94,10 @@ export default function POS() {
     const saved = typeof window !== 'undefined' ? localStorage.getItem(LAST_PAYMENT_METHOD_KEY) : null;
     return saved === 'Card' ? 'Card' : 'Cash';
   });
-  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   /** `true` when the success on screen came from reconciling a failed attempt. */
   const [checkoutRecovered, setCheckoutRecovered] = useState(false);
-  /**
-   * The document on screen in the receipt dialog.
-   *
-   * Frozen at the moment it is opened — for a live sale, before the cart is
-   * cleared. A document rendered from live cart state would print an empty slip,
-   * which is exactly what it used to do.
-   */
-  const [receipt, setReceipt] = useState<PrintableDocument | null>(null);
-  /** The last completed sale, which stays printable after the dialog closes. */
-  const [lastDocument, setLastDocument] = useState<LastDocument | null>(null);
+  /** Every piece of paper the till can produce, frozen at the moment of sale. */
+  const receipts = usePOSReceipts();
 
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
   const filteredProducts = useFilteredProducts(inventory, searchTerm, activeCategory);
@@ -494,27 +446,6 @@ export default function POS() {
     }
   };
 
-  /**
-   * Files a completed sale's paperwork.
-   *
-   * One call does three things that must never drift apart: stage the document
-   * for the receipt dialog, keep a copy on the terminal so it can be reopened
-   * after the dialog closes, and derive the button's label from the same
-   * document. The label is the last nine characters of the reference, matching
-   * how the history table abbreviates a sale — so the button and the row a
-   * cashier finds later read as the same thing.
-   */
-  const recordCompletedSale = (document: PrintableDocument, customerName?: string) => {
-    const shortRef = document.reference.replace('TRX-', '').slice(-8);
-    setReceipt(document);
-    setLastDocument({
-      document,
-      label: document.kind === 'receipt'
-        ? `#${shortRef}`
-        : `${customerName || 'Order'} · ${document.reference}`,
-    });
-  };
-
   const handleCheckout = () => {
     if (cart.length === 0) return;
     // Opening a checkout is a fresh look at the cart; a message from the previous
@@ -573,7 +504,7 @@ export default function POS() {
         // Both domains are announced so the POS catalogue, the dashboard's
         // stock alerts, and analytics all re-read without a page reload.
         emitDataChange('payments', 'inventory');
-        recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
+        receipts.recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
         saleCompleted = true;
       } else {
         const preparedOrder: CreateOrder = {
@@ -615,10 +546,10 @@ export default function POS() {
             // an edit someone else made while this cart was open.
             editingOrderVersion,
           );
-          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: updated.id }), customerName);
+          receipts.recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: updated.id }), customerName);
         } else {
           const created = await addOrder(preparedOrder);
-          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: created.id }), customerName);
+          receipts.recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName, orderId: created.id }), customerName);
         }
         saleCompleted = true;
       }
@@ -643,7 +574,7 @@ export default function POS() {
         const outcome = await reconcileAttempt(attemptKey);
         if (outcome.kind === 'committed') {
           completeAttempt();
-          recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
+          receipts.recordCompletedSale(documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod, customerName }));
           saleCompleted = true;
           saleRecovered = true;
         } else {
@@ -716,29 +647,6 @@ export default function POS() {
     }
   };
 
-  /**
-   * Reopens the paperwork for a row in the history table.
-   *
-   * Takes the `Transaction` the table already holds and maps it, rather than
-   * hunting for the matching row object: by the time a cashier clicks, the table
-   * has already normalised sales and custom orders into one shape, and going
-   * back to the raw order would be a second, lossier conversion of data that is
-   * sitting right there.
-   *
-   * The document is derived from the *record*, so a past custom order reprints
-   * as an order summary even while the terminal is set to Retail.
-   */
-  const openHistoricalReceipt = (transaction: Transaction) => {
-    setReceipt(documentFromTransaction(transaction));
-    setIsReceiptModalOpen(true);
-  };
-
-  const reopenLastDocument = () => {
-    if (!lastDocument) return;
-    setReceipt(lastDocument.document);
-    setIsReceiptModalOpen(true);
-  };
-
   return (
     <div className="flex flex-col gap-5">
       {transactionError && (
@@ -786,18 +694,18 @@ export default function POS() {
             dismisses itself two seconds after confirming, so without this the
             receipt was reachable only by whoever happened to click in time.
           */}
-          {lastDocument && (
+          {receipts.lastDocument && (
             <Button
               type="button"
               variant="secondary"
               size="sm"
-              onClick={reopenLastDocument}
-              title={`Reopen the receipt for ${lastDocument.document.reference}`}
+              onClick={receipts.reopenLastDocument}
+              title={`Reopen the receipt for ${receipts.lastDocument.document.reference}`}
               leftIcon={<ReceiptText className="h-3.5 w-3.5" aria-hidden="true" />}
               className="max-w-[240px]"
             >
               <span className="truncate">
-                Last receipt · <span className="font-mono">{lastDocument.label}</span>
+                Last receipt · <span className="font-mono">{receipts.lastDocument.label}</span>
               </span>
             </Button>
           )}
@@ -852,7 +760,7 @@ export default function POS() {
           onSelectTransaction={setSelectedTransaction}
           onVoidTransaction={voidTransaction}
           onCloseTransactionDetail={() => setSelectedTransaction(null)}
-          onOpenReceipt={openHistoricalReceipt}
+          onOpenReceipt={receipts.openHistoricalReceipt}
           orderToHistoryTransaction={orderToHistoryTransaction}
         />
       )}
@@ -882,7 +790,7 @@ export default function POS() {
           setCheckoutError(null);
           setCheckoutRecovered(false);
         }}
-        onPrintReceipt={() => { setIsCheckoutModalOpen(false); setIsReceiptModalOpen(true); }}
+        onPrintReceipt={() => { setIsCheckoutModalOpen(false); receipts.openReceiptModal(); }}
       />
 
       {/*
@@ -892,10 +800,10 @@ export default function POS() {
         after the receipt rather than after the application.
       */}
       <ReceiptModal
-        isOpen={isReceiptModalOpen}
-        onClose={() => setIsReceiptModalOpen(false)}
-        document={receipt}
-        onPrint={() => receipt && printDocument(receipt)}
+        isOpen={receipts.isReceiptModalOpen}
+        onClose={receipts.closeReceiptModal}
+        document={receipts.receipt}
+        onPrint={() => receipts.receipt && printDocument(receipts.receipt)}
       />
     </div>
   );
