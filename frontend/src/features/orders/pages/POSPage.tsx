@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { History, ReceiptText, ShoppingBag, Sparkles } from 'lucide-react';
+import { History, ReceiptText, ShoppingBag } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { ApiError, isServerRejection } from '../../../shared/api/errors';
