@@ -227,10 +227,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         </div>
       </header>
 
-      {/* Page Toolbar. The gap above and the side outlines are what stop this
-          reading as a continuation of the header — the two share one fill, so
-          without them the header's own bottom edge is the only separation. */}
-      <div className="relative z-[40] mt-3 flex h-11 shrink-0 items-center justify-between border-x border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-4">
+      {/* Page Toolbar. Inset from the window like the sidebar and the body, and
+          fully outlined — it shares one fill with the header, so the outline is
+          the only thing that makes it read as a bar of its own. */}
+      <div className="relative z-[40] mx-3 mt-3 flex h-11 shrink-0 items-center justify-between border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
