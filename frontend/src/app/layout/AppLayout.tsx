@@ -265,7 +265,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           />
         )}
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
-          <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
+          {/* The left inset is deliberately smaller than the other three: the
+              sidebar column and the page body read as one unit, so the gap
+              between them is a seam rather than a frame margin. */}
+          <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 lg:pl-3 xl:p-6 xl:pl-3">
             <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>
