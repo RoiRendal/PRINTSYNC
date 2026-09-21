@@ -17,7 +17,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
          the parent passes for the collapsed mobile case. */
       style={{ width: isCollapsed ? 0 : 196 }}
       className={cn(
-        'surface-panel flex shrink-0 flex-col overflow-hidden border-r text-macos-text dark:text-zinc-100',
+        'flex shrink-0 flex-col overflow-hidden border border-r border-[var(--app-border-hairline)] bg-[var(--app-surface)] text-macos-text dark:text-zinc-100',
         'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}

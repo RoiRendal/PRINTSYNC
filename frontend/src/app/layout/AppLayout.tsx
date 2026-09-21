@@ -113,7 +113,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans dark:text-zinc-100">
       {/* Global Top Header */}
-      <header className="surface-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
+      <header className="relative z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[var(--app-border-hairline)] bg-[var(--app-surface)] px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
@@ -231,7 +231,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* Page Toolbar */}
-      <div className="surface-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
+      <div className="relative z-[40] flex h-11 shrink-0 items-center justify-between border-b border-[var(--app-border-hairline)] bg-[var(--app-surface)] px-3 lg:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
@@ -269,7 +269,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
           <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
-            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] p-3 dark:bg-[#0c0c0e] lg:p-4">
+            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-hairline)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>
           </div>
