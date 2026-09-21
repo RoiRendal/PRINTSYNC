@@ -295,7 +295,9 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 `[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
 
 > **Status, 2026-09-21.** Tier 0 and Tier 1 are **done, verified and pushed** to `flat-ui`
-> (`b3a5d3a..c2b9d90`). Read the sections below as the original findings, not as outstanding work.
+> (`b3a5d3a..c2b9d90`). **Tier 2 is done, verified and committed, but not yet pushed** — local
+> `flat-ui` is at `da45b30`, the remote at `5246eb0`. Read the sections below as the original
+> findings, not as outstanding work.
 >
 > | Tier | State | Commits |
 > | --- | --- | --- |
@@ -305,11 +307,31 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 1 — 1.3 | done, **migration must be applied before deploy** | `d39161f` |
 > | 1 — 1.4 | done; a third role is still a design decision | `142d5ae` |
 > | 1 — 1.5 | **half** — the contract is repaired and guarded; the six hand-copied frontend type files are measured but untouched | `8cf0f34` |
-> | 2, 3 | untouched | — |
+> | 2 — 2.2 | done, verified end to end | `a748710` |
+> | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **two migrations must be applied before deploy** | `e409a31` |
+> | 2 — 2.3 | done — **but the recommendation below was wrong in two places; see the correction under 2.3** | `3028781` |
+> | 2 — 2.4 | done | `da45b30` |
+> | 3 | untouched | — |
 >
-> Two items were found while doing the work and are not in the lists below:
-> `OrderPayment.createdBy` was missing from the contract (same class as R7, fixed in `8cf0f34`), and
-> the frontend type-check had been failing on this branch since `fbfb0a1` (fixed in `c2b9d90`).
+> Three items were found while doing the work and are not in the lists below:
+> `OrderPayment.createdBy` was missing from the contract (same class as R7, fixed in `8cf0f34`); the
+> frontend type-check had been failing on this branch since `fbfb0a1` (fixed in `c2b9d90`); and
+> money audit rows carried **no IP address and no user-agent** — only the auth and users routes
+> passed them, which left the 1.2 `trust proxy` fix inert for exactly the actions that matter
+> (fixed in `a748710`).
+>
+> **Two of this review's own claims did not survive measurement.** They are corrected inline rather
+> than quietly dropped, because a fix list that keeps a wrong instruction in it is worse than one
+> with a visible scar:
+>
+> - **2.3's `requestTimeout = 30_000` was wrong — 120 s shipped.** `requestTimeout` bounds *receiving*
+>   a request, not how long a handler may run. An 8 MB base64 image upload on a slow shop uplink
+>   legitimately exceeds 30 s, so the recommendation would have broken logo uploads and presented as
+>   anything but a timeout.
+> - **2.3's premise that the SSE exemption is what keeps realtime alive was wrong.** Measured: an
+>   event stream held open for 75 s survives **with and without** `request.setTimeout(0)`, because by
+>   then the request had been fully received. The exemption still ships, but as a documented guard,
+>   not a rescue.
 
 ### Tier 0 — Restore the ability to provision an environment
 
@@ -425,11 +447,48 @@ the action. Adding a parameter means the old arity must be dropped first — the
 error. Verify by forcing the audit insert to fail in a scratch database and asserting the sale rolls
 back. **Ordering: after 0.2.** Highest-touch item in the list — it edits the money RPC.
 
+> **As shipped, 2026-09-21 (`e409a31`).** `supabase/migrations/20260921000500_atomic_audit_writes.sql`
+> drops and recreates **five** money RPCs — `create_order_with_items`, `replace_order_with_items`,
+> `delete_order_with_items`, `create_transaction_with_payment`, `void_transaction` — each gaining three
+> **trailing defaulted** audit parameters (`p_audit_request_id`, `p_audit_ip_address`,
+> `p_audit_user_agent`) and a `perform public.write_audit_log(...)` immediately before `return`.
+> Trailing defaults are deliberate: a backend still on the previous version sends the old argument
+> count and resolves to the *same* function, so the migration can be applied **before** the code
+> deploys. Idempotency replays return early and write **no** audit row.
+>
+> **A trap this list missed.** Moving `order.updated` into `replace_order_with_items` while leaving the
+> route's own write in place would have produced **two audit rows per line-item edit**. Handled by
+> splitting the paths: the line-item path audits inside the RPC, the status-only path (which has no
+> RPC) audits at the route, guarded by `if (updates.lineItems === undefined)`.
+>
+> **Not covered, by design.** Deletes with no RPC (customers, suppliers, designs, expenses, inventory
+> items) and the two `order_payments` writes still audit from the route, after the fact. Because
+> `writeAuditLog` now throws, those callers get a 500 **after** their action has already committed —
+> the action happened and is not recorded. The durable fix is an RPC each; out of scope here.
+>
+> **Proof:** `…/printsync-migration-integrity-verification/scripts/verify-atomic-audit.mjs` — 28
+> checks, including a `pg_get_functiondef` body-fidelity diff against the originals and an atomicity
+> test that forces `write_audit_log` to raise and asserts the sale, the void and the order delete all
+> refuse *for the audit reason*.
+
 **2.2 — Add request IDs (R14). Low-Med.**
 NEW `backend/src/middleware/requestId.ts` accepting `x-request-id` or minting a UUID, echoing it in
 the response header and into every log line and audit `metadata`. Register early in `app.ts`. Verify
 with `curl -i` and by matching a log line to the response header. **Do this before 2.1** so the ID is
 available to it.
+
+> **As shipped, 2026-09-21 (`a748710`).** Implemented with `AsyncLocalStorage`
+> (`backend/src/shared/requestContext.ts`) rather than by threading an id through every signature —
+> the id is only useful if it lands on **every** line, including ones written deep inside a service
+> and by the error handler, and those call sites should not have to remember. `x-request-id` is
+> adopted only if it is printable ASCII and ≤128 characters, otherwise a UUID is minted; the id is
+> echoed in the response header, added to every log line by `writeLog`, and written into audit
+> `metadata` via `auditRpcArguments()`.
+>
+> The client address is validated with `net.isIP` before it is used, so a forged `X-Forwarded-For`
+> becomes `null` rather than an uncastable `inet` value — an `inet` cast failure inside a money RPC
+> would roll back a real sale on the strength of a request header. `20260921000400_audit_log_request_id.sql`
+> adds `p_request_id text default null` to `write_audit_log`, merged into `metadata` only when non-blank.
 
 **2.3 — Add server timeouts (R9). Medium.**
 `server.requestTimeout = 30_000`, `headersTimeout = 35_000`, `keepAliveTimeout = 65_000` in
@@ -437,9 +496,40 @@ available to it.
 in `events.routes.ts`, or the 30s timeout kills realtime for everyone. Verify with `curl -N` holding
 the stream open past 30s. **The exemption ships in the same change.**
 
+> **Correction, 2026-09-21 — measured, and two claims above are wrong.** Shipped in `3028781`.
+>
+> - **30 s is too aggressive; 120 s shipped.** `requestTimeout` bounds how long the server will wait
+>   to **receive** a request, not how long a handler may take. An 8 MB base64 image upload over a slow
+>   shop uplink exceeds 30 s, so the recommended value would have broken image uploads and presented
+>   as anything but a timeout. Shipped: `REQUEST_TIMEOUT_MS = 120_000`, `HEADERS_TIMEOUT_MS =
+>   35_000`, `KEEP_ALIVE_TIMEOUT_MS = 65_000`.
+> - **The exemption is not what keeps realtime alive.** Against a real server, an event stream held
+>   open for 75 s stayed alive **with and without** `request.setTimeout(0)` — 37 heartbeats either
+>   way — because by then the request had been fully received. `request.setTimeout` clears a *socket
+>   idle* timer; `requestTimeout` governs *receiving*. **They are not connected.** The exemption still
+>   ships, but as a guard, and both the code comment and the commit message say so instead of the
+>   reassuring version.
+> - **`requestTimeout` is armed and effective** — a positive control (a stalled POST body) was closed
+>   at ~60 s with `408`. It is enforced by Node's `connectionsCheckingInterval`, which ticks every
+>   30 s, so a timeout is observed at the first tick *after* the deadline, not at the deadline. That
+>   is the likely source of the "30 s" reading.
+>
+> **Proof:** `~/.workbuddy-ai/skills/printsync-http-runtime-verification/scripts/verify-sse-timeouts.mjs`
+> — the positive control plus both stream arms.
+
 **2.4 — Add a global rate limit (R10). Medium.**
 A limiter on `/api/v1` with a generous ceiling, skipping `/api/v1/events`. Keep the existing
 login/refresh limiters. **Ordering: after 1.2**, or every client shares the proxy's bucket.
+
+> **As shipped, 2026-09-21 (`da45b30`).** Ceiling **1,500 requests / minute per client**
+> (`backend/src/middleware/apiRateLimit.ts`), derived rather than guessed: the degraded revalidation
+> poll is 60 s across five domains (`orders`, `inventory`, `customers`, `designs`, `users`), so eight
+> pessimistic workstations are ≈480/min. The ceiling is ~3× headroom and exists to **end a runaway,
+> not to shape normal use** — a limit tight enough to notice in normal work would be the wrong limit.
+> `/api/v1/health`, `/api/v1/ready` and `/api/v1/events` are skipped, matched on a **path boundary**
+> so a future `/api/v1/events-export` cannot be silently exempted by a bare `startsWith`. The bucket
+> is the **shop, not the workstation**, because Cloudflare/Render and every workstation share one
+> public IP — which is exactly why this had to land after 1.2.
 
 ### Tier 3 — Maintainability
 
@@ -538,3 +628,8 @@ Stated plainly so nobody treats an inference as a measurement:
 - **Branch note:** this review covers the `flat-ui` working tree. `main` is behind it (`main` at
   `ccbe44a3`, `flat-ui` at `556d98a`) and still carries `motion@12`, so R11–R12 and the flat-UI items
   describe `flat-ui`, not `main`.
+- **Amended 2026-09-21.** The fixes that followed this review **were** run: migrations replayed
+  against embedded PostgreSQL, the money RPCs forced to fail to prove rollback, the production server
+  started and probed, and the build exercised. Two of this review's own claims did not survive that
+  measurement — 2.3's timeout value and its SSE premise — and both are corrected inline in §4. The
+  bullets above describe the review **as it was performed**, before any of that.
