@@ -23,7 +23,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
       )}
     >
       <div className="flex h-full min-w-[196px] flex-col">
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-hide">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 py-3 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}
@@ -31,7 +31,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold',
+                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-1.5 text-[13px] font-semibold',
                   isActive
                     ? 'text-white dark:text-white'
                     : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
@@ -61,9 +61,6 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   <span className="relative z-10 truncate whitespace-nowrap">
                     {item.label}
                   </span>
-                  {isActive && (
-                    <span className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-[#e6e6e6]" />
-                  )}
                 </>
               )}
             </NavLink>
