@@ -31,7 +31,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 py-0.5 text-[13px] font-semibold',
+                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 text-[13px] font-semibold',
                   /* One colour for both states, and the icon inherits it, so
                      selecting an item never recolours anything — only the row's
                      own fill moves. Hover is a fill for the same reason: there is
