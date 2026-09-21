@@ -51,6 +51,12 @@
   --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
   --app-border-hairline: #d5d5da;    /* internal dividers */
   --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
+  /* The shell's structural outline — the divider under the header and the page
+     toolbar, and the box around the page body. Now that every shell region is
+     filled with the same colour, this line is the only thing separating one from
+     the next, so it is deliberately stronger than the hairline it sits beside
+     (2.94:1 on the page, against the hairline's 1.34:1). */
+  --app-border-frame: #8e8e93;
   --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
   --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
 
@@ -90,6 +96,7 @@
   --app-state-hover-sub: #48484a;
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
+  --app-border-frame: #66666a;       /* 2.98:1 on the page — matched to the light step */
   --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
   --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
 
