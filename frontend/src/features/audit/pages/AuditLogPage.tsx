@@ -99,7 +99,7 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
     <button
       type="button"
       onClick={() => setExpanded(!expanded)}
-      className="text-left text-[10px] text-macos-text-muted transition-colors hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
+      className="text-left text-[10px] text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
     >
       {expanded ? (
         <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 text-[10px] dark:bg-[#373739]">

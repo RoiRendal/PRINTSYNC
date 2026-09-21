@@ -70,6 +70,26 @@ const RULES = [
   ['text-shadow (non-none)', /text-shadow\s*:\s+(?!none\b)/i],
   ['drop-shadow() / drop-shadow utility', /\bdrop-shadow\b/i],
   ['boxShadow in a JS style object', /\bboxShadow\b/],
+  // -------------------------------------------------------------- animation
+  // Anything that makes a value change over time. Instant :hover / :active
+  // state changes are fine and are not matched — they carry no duration.
+  ['animate-<name> utility', /\banimate-[a-z]+\b/],
+  ['animate-[...] utility', /\banimate-\[[^\]]*\]/],
+  ['transition / transition-* utility', /\btransition(?:-[a-z]+)?\b/],
+  ['duration-* utility', /\bduration-\d+/],
+  ['ease-* utility', /\bease-[a-z]+\b/],
+  ['delay-* utility', /\bdelay-\d+/],
+  ['motion / framer-motion import', /from\s+['"](motion(?:\/react)?|framer-motion)['"]/],
+  ['motion.<element> component', /\bmotion\.[a-z]+/],
+  ['AnimatePresence', /\bAnimatePresence\b/],
+  ['motion animate/exit/whileTap prop', /\b(?:initial|animate|exit|whileHover|whileTap|layoutId)\s*=\{\{/],
+  // Recharts animates its series on mount. `isAnimationActive={false}` is the
+  // sanctioned way to stop it, so it is matched on the value, not the token.
+  ['recharts animationDuration', /\banimationDuration\b/],
+  ['recharts animation enabled', /\bisAnimationActive\s*=\{\s*(?!false\b)/],
+  ['@keyframes', /@keyframes\b/],
+  ['animation (non-none)', /\banimation\s*:\s+(?!none\b)/],
+  ['will-change (non-auto)', /will-change\s*:\s+(?!auto\b)/],
 ];
 
 const files = [];

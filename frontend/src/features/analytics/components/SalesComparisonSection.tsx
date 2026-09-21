@@ -109,8 +109,8 @@ export function SalesComparisonSection({
                 <YAxis tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <RechartsTooltip formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]} labelStyle={{ color: 'var(--app-text)', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Line type="monotone" dataKey="timelineA" name={safeSelectionA} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} animationDuration={700} />
-                <Line type="monotone" dataKey="timelineB" name={safeSelectionB} stroke="#AF52DE" strokeWidth={3} dot={{ r: 4 }} animationDuration={700} />
+                <Line type="monotone" dataKey="timelineA" name={safeSelectionA} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="timelineB" name={safeSelectionB} stroke="#AF52DE" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
               </RechartsLineChart>
             </ResponsiveContainer>
           </div>

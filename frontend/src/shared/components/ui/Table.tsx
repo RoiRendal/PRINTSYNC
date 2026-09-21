@@ -46,7 +46,7 @@ export const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HT
 TableFooter.displayName = 'TableFooter';
 
 export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(({ className, ...props }, ref) => (
-  <tr ref={ref} className={cn('transition-colors duration-150 hover:bg-[var(--app-state-hover)]', className)} {...props} />
+  <tr ref={ref} className={cn(' hover:bg-[var(--app-state-hover)]', className)} {...props} />
 ));
 
 TableRow.displayName = 'TableRow';

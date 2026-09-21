@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Badge,
@@ -103,7 +102,7 @@ export default function Dashboard() {
         </div>
         <Link
           to="/orders"
-          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
         >
           Open Pipeline
         </Link>
@@ -193,11 +192,12 @@ export default function Dashboard() {
                     <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f2] dark:bg-[#414143]">
-                    <motion.div
+                    {/* The bar's width used to be the animated value. It is a
+                        real number, not decoration, so it becomes an inline
+                        style — dropping the props alone would leave it at 0. */}
+                    <div
                       className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-macos-blue')}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stockPercent}%` }}
-                      transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+                      style={{ width: `${stockPercent}%` }}
                     />
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export default function Dashboard() {
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"
-              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
             >
               Restock Now
             </Link>

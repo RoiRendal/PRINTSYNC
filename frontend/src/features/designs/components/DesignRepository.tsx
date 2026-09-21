@@ -199,7 +199,7 @@ export function DesignRepository() {
                   <SurfaceCard className="group overflow-hidden p-0">
                     <div className="relative aspect-square overflow-hidden bg-[#f7f7f7] dark:bg-[#373739]">
                       <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[var(--app-scrim)] opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[var(--app-scrim)] opacity-0 group-hover:opacity-100">
                         <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
                           <Eye className="h-4 w-4" aria-hidden="true" />
                         </Button>

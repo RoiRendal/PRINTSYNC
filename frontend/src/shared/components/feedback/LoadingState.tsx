@@ -1,4 +1,3 @@
-import { motion } from 'motion/react';
 import { LoaderCircle } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
@@ -11,13 +10,9 @@ export function LoadingState({ label = 'Loading', className = '' }: LoadingState
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}>
       <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)]">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1.1, ease: 'linear', repeat: Infinity }}
-          className="text-macos-blue dark:text-macos-cyan"
-        >
+        <div className="text-macos-blue dark:text-macos-cyan">
           <LoaderCircle className="h-5 w-5" aria-hidden="true" />
-        </motion.div>
+        </div>
       </div>
       <span className="text-[10px] font-bold uppercase tracking-[0.24em]">{label}</span>
     </div>

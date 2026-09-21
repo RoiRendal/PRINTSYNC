@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { Bell, Box, PackageSearch, X, CheckCheck, Trash2 } from 'lucide-react';
 import { useNotifications, type Notification } from '../providers/NotificationProvider';
 import { cn } from '../../shared/lib/cn';
@@ -40,12 +39,8 @@ export const NotificationPanel = React.forwardRef<
   } = useNotifications();
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, y: -8, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -8, scale: 0.96 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
       className="surface-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl sm:w-96"
       onClick={(e) => e.stopPropagation()}
     >
@@ -67,7 +62,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={markAllAsRead}
                 title="Mark all as read"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -75,7 +70,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={clearAll}
                 title="Clear all"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-400 dark:hover:text-red-300"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-400 dark:hover:text-red-300"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -90,7 +85,7 @@ export const NotificationPanel = React.forwardRef<
             onClick={onClose}
             title="Close"
             aria-label="Close notifications"
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -99,11 +94,9 @@ export const NotificationPanel = React.forwardRef<
 
       {/* List */}
       <div className="max-h-80 overflow-y-auto scrollbar-hide">
-        <AnimatePresence initial={false}>
+        <>
           {notifications.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <div
               className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center"
             >
               {/* Solid now: at 40% this icon measured 2.0:1 on the panel, and
@@ -111,17 +104,13 @@ export const NotificationPanel = React.forwardRef<
               <Bell className="h-8 w-8 text-[var(--app-text-muted)]" aria-hidden="true" />
               <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
               <p className="text-[10px] text-[var(--app-text-muted)]">Alerts for stock and orders appear here.</p>
-            </motion.div>
+            </div>
           ) : (
             notifications.map((notification) => (
-              <motion.div
+              <div
                 key={notification.id}
-                layout
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
                 className={cn(
-                  'group relative flex gap-3 border-b px-4 py-3 transition-colors last:border-b-0',
+                  'group relative flex gap-3 border-b px-4 py-3 last:border-b-0',
                   notification.read ? 'bg-transparent' : 'bg-[#f7f7f7] dark:bg-[#373739]'
                 )}
               >
@@ -155,13 +144,13 @@ export const NotificationPanel = React.forwardRef<
                     {notification.message}
                   </p>
                 </div>
-                <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100">
                   {!notification.read && (
                     <button
                       type="button"
                       onClick={() => markAsRead(notification.id)}
                       title="Mark as read"
-                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-500 dark:hover:text-zinc-100"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-500 dark:hover:text-zinc-100"
                     >
                       <CheckCheck className="h-3 w-3" aria-hidden="true" />
                     </button>
@@ -170,17 +159,17 @@ export const NotificationPanel = React.forwardRef<
                     type="button"
                     onClick={() => dismissNotification(notification.id)}
                     title="Dismiss"
-                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300"
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300"
                   >
                     <X className="h-3 w-3" aria-hidden="true" />
                   </button>
                 </div>
-              </motion.div>
+              </div>
             ))
           )}
-        </AnimatePresence>
+        </>
       </div>
-    </motion.div>
+    </div>
   );
 });
 

@@ -3,7 +3,7 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from '../../lib/cn';
 
 const fieldBaseClasses =
-  'w-full rounded-[var(--radius-button)] border border-[var(--app-border-control)] bg-[var(--app-surface-raised)] px-3 text-sm text-macos-text transition-all duration-200 ease-out placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-border-control)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--app-border-control)] dark:bg-[#414143] dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-[#454547]';
+  'w-full rounded-[var(--radius-button)] border border-[var(--app-border-control)] bg-[var(--app-surface-raised)] px-3 text-sm text-macos-text placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-border-control)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--app-border-control)] dark:bg-[#414143] dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-[#454547]';
 
 /* The focus ring is the one place a ring colour has to earn its contrast: it is
    the only affordance telling a keyboard user which field they are in, so it

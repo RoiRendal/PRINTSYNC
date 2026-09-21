@@ -132,7 +132,7 @@ export function OrdersTable({
                             */}
                             {isPending && (
                               <span role="status" aria-label="Saving phase change" className="inline-flex">
-                                <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                                <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
                               </span>
                             )}
                           </div>

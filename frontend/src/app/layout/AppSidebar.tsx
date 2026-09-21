@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
@@ -11,10 +10,12 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
     : [];
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: isCollapsed ? 0 : 196 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+    <aside
+      /* The width used to be driven by a spring-animated width prop. The
+         library wrote it as an inline style, so the static equivalent is an
+         inline style too — a class would fight the responsive `hidden lg:flex`
+         the parent passes for the collapsed mobile case. */
+      style={{ width: isCollapsed ? 0 : 196 }}
       className={cn(
         'surface-panel flex shrink-0 flex-col overflow-hidden border-r text-macos-text dark:text-zinc-100',
         'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
@@ -30,7 +31,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
+                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold',
                   isActive
                     ? 'text-white dark:text-white'
                     : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
@@ -40,17 +41,11 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <motion.span
-                      layoutId="sidebar-active-pill"
-                      className="absolute inset-0 rounded-xl bg-macos-blue"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    />
+                    <span className="absolute inset-0 rounded-xl bg-macos-blue" />
                   )}
-                  <motion.span
-                    whileTap={{ scale: 0.96 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                  <span
                     className={cn(
-                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
+                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border',
                       /* Tile fills are the flat composites of the translucent
                          whites they replace, over whatever each one actually sat
                          on: the inactive light tile was on the white sidebar and
@@ -62,7 +57,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                     )}
                   >
                     <item.icon className="h-4 w-4" />
-                  </motion.span>
+                  </span>
                   <span className="relative z-10 truncate whitespace-nowrap">
                     {item.label}
                   </span>
@@ -75,6 +70,6 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
           ))}
         </nav>
       </div>
-    </motion.aside>
+    </aside>
   );
 };

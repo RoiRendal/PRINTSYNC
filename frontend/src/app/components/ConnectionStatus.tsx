@@ -126,7 +126,7 @@ export function ConnectionStatus({ className }: { className?: string }) {
       >
         <span
           aria-hidden="true"
-          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', presentation.dot, presentation.pulse && 'animate-pulse')}
+          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', presentation.dot, presentation.pulse && '')}
         />
         {presentation.label}
       </span>

@@ -92,7 +92,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
               key={customer.id}
               type="button"
               onClick={() => handleSelect(customer)}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-[11px] transition-colors hover:bg-[var(--app-tint-purple)] dark:hover:bg-[var(--app-tint-purple)]"
+              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-[11px] hover:bg-[var(--app-tint-purple)] dark:hover:bg-[var(--app-tint-purple)]"
             >
               <span className="font-bold text-macos-text dark:text-zinc-100">{customer.name}</span>
               {(customer.phone || customer.email) && (

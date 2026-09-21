@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, Mail } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, SurfaceCard, Input } from '../../../shared/components/ui';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -26,12 +25,7 @@ export default function LoginPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] px-4 py-10 text-macos-text dark:text-zinc-100">
-      <motion.section
-        className="relative w-full max-w-md"
-        initial={{ opacity: 0, y: 22, scale: 0.97 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 28 }}
-      >
+      <section className="relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border bg-[var(--app-surface-raised)] dark:bg-[#414143]">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
@@ -92,7 +86,7 @@ export default function LoginPage() {
             </Button>
           </form>
         </SurfaceCard>
-      </motion.section>
+      </section>
     </main>
   );
 }

@@ -137,15 +137,6 @@ html {
   border-color: var(--app-hairline);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /*
  * Printing shows the document and nothing else.
  *
@@ -272,7 +263,6 @@ html {
   .surface-modal {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
-    will-change: transform, opacity;
   }
 
   .macos-squircle {

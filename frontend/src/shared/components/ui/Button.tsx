@@ -56,7 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || isLoading}
         className={cn(
-          'inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold tracking-tight transition-all duration-200 ease-out',
+          'inline-flex cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold tracking-tight',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950',
           'disabled:cursor-not-allowed disabled:opacity-55',
           'active:scale-[0.98]',
@@ -67,7 +67,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         {...props}
       >
-        {isLoading ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> : leftIcon}
+        {isLoading ? <LoaderCircle className="h-3.5 w-3.5" aria-hidden="true" /> : leftIcon}
         {children}
         {!isLoading && rightIcon}
       </button>

@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
@@ -10,7 +9,6 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   maxWidth?: string;
-  disableAnimation?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,7 +17,6 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   maxWidth = 'max-w-md',
-  disableAnimation = false,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -34,23 +31,15 @@ export const Modal: React.FC<ModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const transition = disableAnimation
-    ? { duration: 0 }
-    : { type: 'spring' as const, stiffness: 420, damping: 34 };
-
   return createPortal(
-    <AnimatePresence>
+    <>
       {isOpen && (
-        <motion.div
+        <div
           className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[var(--app-scrim)] p-4 sm:p-6 lg:p-10"
           onClick={onClose}
           role="presentation"
-          initial={disableAnimation ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={disableAnimation ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: disableAnimation ? 0 : 0.18 }}
         >
-          <motion.div
+          <div
             className={cn(
               'surface-modal flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden rounded-[var(--radius-modal)] sm:max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-5rem)]',
               maxWidth,
@@ -59,10 +48,6 @@ export const Modal: React.FC<ModalProps> = ({
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            initial={disableAnimation ? false : { opacity: 0, y: 18, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={disableAnimation ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 12, scale: 0.97 }}
-            transition={transition}
           >
             <div className="surface-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -73,7 +58,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted transition-colors hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] dark:text-zinc-400 dark:hover:text-zinc-100"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -82,10 +67,10 @@ export const Modal: React.FC<ModalProps> = ({
             <div className="overflow-y-auto p-4 text-macos-text dark:text-zinc-100 sm:p-5">
               {children}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>,
+    </>,
     document.body,
   );
 };

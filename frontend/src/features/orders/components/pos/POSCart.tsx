@@ -114,7 +114,7 @@ export function POSCart({
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
                     <span className="truncate text-[10px] font-bold uppercase leading-tight text-macos-text dark:text-zinc-100">{item.name}</span>
-                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted transition-colors hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
+                    <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>

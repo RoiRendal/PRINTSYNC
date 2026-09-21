@@ -29,7 +29,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'solid', padding = 'md', ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-[var(--radius-card)] transition-colors duration-200', variantClasses[variant], paddingClasses[padding], className)}
+      className={cn('rounded-[var(--radius-card)]', variantClasses[variant], paddingClasses[padding], className)}
       {...props}
     />
   ),

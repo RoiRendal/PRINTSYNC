@@ -194,7 +194,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                           type="button"
                           onClick={() => setSelectedLineItemIndex(index)}
                           className={cn(
-                            'block w-full cursor-pointer text-right underline-offset-2 transition-colors hover:underline',
+                            'block w-full cursor-pointer text-right underline-offset-2 hover:underline',
                             selectedLineItemIndex === index ? 'text-macos-blue dark:text-macos-cyan' : 'text-macos-text dark:text-zinc-100',
                           )}
                         >

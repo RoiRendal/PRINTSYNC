@@ -23,11 +23,11 @@ function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: bo
       type="button"
       aria-pressed={enabled}
       onClick={onToggle}
-      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
     >
       <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">{label}</span>
-      <span className={cn('relative h-5 w-9 rounded-full p-0.5 transition-colors', enabled ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
-        <span className={cn('block h-4 w-4 rounded-full bg-white ring-1 ring-black/20 transition-transform', enabled && 'translate-x-4')} />
+      <span className={cn('relative h-5 w-9 rounded-full p-0.5', enabled ? 'bg-macos-green' : 'bg-[#d9d9d9] dark:bg-[#525254]')}>
+        <span className={cn('block h-4 w-4 rounded-full bg-white ring-1 ring-black/20', enabled && 'translate-x-4')} />
       </span>
     </button>
   );
@@ -313,7 +313,7 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', theme === item ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em]', theme === item ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>
@@ -338,7 +338,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportOrders}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -346,7 +346,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportInventory}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
@@ -354,7 +354,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={handleExportTransactions}
-              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left transition-all hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
+              className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:bg-[#39393b] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
               <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>

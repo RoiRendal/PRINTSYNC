@@ -92,14 +92,14 @@ export default function Inventory() {
           <button
             type="button"
             onClick={() => setViewMode('inventory')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'inventory' ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em]', viewMode === 'inventory' ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
             type="button"
             onClick={() => setViewMode('designs')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em] transition-all', viewMode === 'designs' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold uppercase tracking-[0.18em]', viewMode === 'designs' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>
