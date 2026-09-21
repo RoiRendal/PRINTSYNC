@@ -84,6 +84,40 @@ eventsRouter.get('/', authenticate, (request, response) => {
   // until the first event, and EventSource reports a connection that never opens.
   response.flushHeaders();
 
+  /**
+   * Clears the socket's idle timeout for this connection.
+   *
+   * ### What this does and does not do, measured rather than assumed
+   *
+   * It is **not** what keeps the stream alive today. `server.ts` sets
+   * `requestTimeout`, and the obvious fear is that it closes every workstation's
+   * event stream on a schedule — so that was measured against a real server, with
+   * a positive control to prove the timeout was armed:
+   *
+   *   - a POST whose body never arrives is refused with `408` after ~60 s, so
+   *     `requestTimeout` does fire;
+   *   - an event stream held open for 75 s survives, with **and** without this
+   *     line, because the request was already fully received and `requestTimeout`
+   *     only governs receiving it.
+   *
+   * So this is a guard, not a rescue. It is kept because it is one line that
+   * states the intent — this connection is meant to outlive every timeout the
+   * server has — and because the failure it prevents is silent: if `server.timeout`
+   * were ever set, or a socket-level timeout introduced, realtime would stop for
+   * the whole shop with no error anywhere. One line is a fair price for not
+   * depending on the absence of a setting.
+   *
+   * Placed next to `flushHeaders()` deliberately: the two lines are one decision —
+   * this response has started and will not end on its own. Keeping them together
+   * is what stops a later edit from moving the exemption somewhere it no longer
+   * applies.
+   *
+   * The heartbeat below is the reaper in the other direction. With no timeout of
+   * our own, a client that vanishes without a FIN is discovered when a heartbeat
+   * write fails, not by a timer.
+   */
+  request.setTimeout(0);
+
   let closed = false;
 
   const send = (event: RealtimeEventName, payload: unknown) => {
