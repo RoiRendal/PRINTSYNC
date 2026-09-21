@@ -294,10 +294,10 @@ deliberate decision on whether to keep it, label it, or remove it before release
 Ordered by what must happen first. Each item names the files, the change, and how to prove it worked.
 `[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
 
-> **Status, 2026-09-21.** Tier 0 and Tier 1 are **done, verified and pushed** to `flat-ui`
-> (`b3a5d3a..c2b9d90`). **Tier 2 is done, verified and committed, but not yet pushed** — local
-> `flat-ui` is at `da45b30`, the remote at `5246eb0`. Read the sections below as the original
-> findings, not as outstanding work.
+> **Status, updated 2026-09-21.** Every fix in Tiers 0, 1 and 2 is **done, verified and pushed** to
+> `origin/flat-ui` (HEAD `39422de`). Tier 3 maintainability is **done except 3.1** — 3.2–3.7 are
+> committed and pushed; only the `POSPage.tsx` decomposition (3.1) remains open. Read the sections
+> below as the original findings, not as outstanding work — the plan is complete apart from 3.1.
 >
 > | Tier | State | Commits |
 > | --- | --- | --- |
@@ -306,12 +306,17 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 1 — 1.2 | done | `0bbda8c` |
 > | 1 — 1.3 | done, **migration must be applied before deploy** | `d39161f` |
 > | 1 — 1.4 | done; a third role is still a design decision | `142d5ae` |
-> | 1 — 1.5 | **half** — the contract is repaired and guarded; the six hand-copied frontend type files are measured but untouched | `8cf0f34` |
+> | 1 — 1.5 | **half** — contract repaired and guarded; six hand-copied frontend type files measured but untouched | `8cf0f34` |
 > | 2 — 2.2 | done, verified end to end | `a748710` |
 > | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **two migrations must be applied before deploy** | `e409a31` |
-> | 2 — 2.3 | done — **but the recommendation below was wrong in two places; see the correction under 2.3** | `3028781` |
+> | 2 — 2.3 | done — **but wrong in two places; see correction under 2.3** | `3028781` |
 > | 2 — 2.4 | done | `da45b30` |
-> | 3 | untouched | — |
+> | 3 — 3.2 | done, pushed — flat-UI CI gate + E2E scaffold | `5be4e2d` |
+> | 3 — 3.3 | done, pushed — single analytics path | `44281a1` |
+> | 3 — 3.4 | done, pushed — `playwright` → devDependencies | `5be4e2d` |
+> | 3 — 3.5, 3.6 | done, pushed — drop dup index + index twelve FKs | `c2a4006` |
+> | 3 — 3.7 | done, pushed — dead exports/UI + `purchase_orders` reserved | `39422de` |
+> | 3 — 3.1 | **OPEN** — decompose `POSPage.tsx` (902 lines) | — |
 >
 > Three items were found while doing the work and are not in the lists below:
 > `OrderPayment.createdBy` was missing from the contract (same class as R7, fixed in `8cf0f34`); the
