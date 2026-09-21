@@ -233,8 +233,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           step smaller than the sidebar's: at this height that radius would round
           the ends into a capsule instead of a corner. The 8px above it is the same
           8px the sidebar and the body sit below it — one rhythm, three sections,
-          so these three values have to move together. */}
-      <div className="relative z-[40] mx-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:px-3">
+          so these three values have to move together.
+
+          Its right margin tracks the content area's right inset at each
+          breakpoint (12 / 20 / 24), so the bar's right edge lands on the body
+          card's right edge instead of 12px past it. The horizontal padding is a
+          flat 8px — not for symmetry, but because that is the number that puts
+          the chevron's left edge on the header logo's left edge (both at x=30 at
+          1440). Changing it moves the chevron off that line. */}
+      <div className="relative z-[40] ml-3 mr-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mr-5 xl:mr-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
