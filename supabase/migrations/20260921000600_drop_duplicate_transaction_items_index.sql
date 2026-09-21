@@ -1,0 +1,29 @@
+-- Drop a duplicate index on sales_transaction_items.
+--
+-- `sales_transaction_items(transaction_id)` is indexed twice, by two different
+-- migrations, under two different names:
+--
+--   20260910001100_payments_transactions.sql:58  sales_transaction_items_transaction_idx
+--   20260910001400_analytics_indexes.sql:13      sales_transaction_items_transaction_created_idx
+--
+-- Both are single-column indexes on the same column, so they are interchangeable
+-- to the planner and identical in cost. Keeping both buys nothing and charges
+-- every insert, update and delete on this table an extra index maintenance — and
+-- this is the hottest table in the system, one row per line item per sale.
+--
+-- `..._transaction_created_idx` is the one that goes, and the reason is the name.
+-- Its comment claims a composite "for sales_transaction_items joined to
+-- transactions by created_at", but the definition is `(transaction_id)` alone:
+-- the `created_at` half was never written. A name promising a composite the index
+-- does not provide is worse than a redundant index — it is a redundant index that
+-- misleads whoever reads `pg_indexes` next.
+--
+-- Query behaviour does not change. The planner already had two interchangeable
+-- options and was picking one of them; now there is one. `20260910001400` guards
+-- its create with `if not exists`, so the set still replays from empty after this
+-- drop — the drop simply leaves one index rather than two.
+--
+-- Verified by replaying the set: `sales_transaction_items` keeps
+-- `..._transaction_idx` and the duplicated name is absent.
+
+drop index if exists public.sales_transaction_items_transaction_created_idx;
