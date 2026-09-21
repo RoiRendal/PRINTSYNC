@@ -23,7 +23,6 @@ export function createOrderPaymentsApi(client: ApiClient = apiClient) {
   return {
     list: (orderId: string) => client.get<OrderPayment[]>(`/order-payments/${orderId}`),
     create: (payload: CreateOrderPayment) => client.post<OrderPayment, CreateOrderPayment>('/order-payments', payload),
-    remove: (id: string) => client.delete<void>(`/order-payments/${id}`),
   };
 }
 

@@ -2,11 +2,16 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export interface TableContainerProps extends HTMLAttributes<HTMLDivElement> {
-  raisedHeader?: boolean;
-}
+/**
+ * `raisedHeader` used to live here — a boolean that was accepted and then
+ * discarded (`raisedHeader: _raisedHeader`, never read). Nothing passed it, and
+ * nothing could: the raised header it was meant to switch on no longer exists as
+ * a separate surface. A prop that silently does nothing is worse than no prop,
+ * because passing it looks like it worked.
+ */
+export type TableContainerProps = HTMLAttributes<HTMLDivElement>;
 
-export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({ className, raisedHeader: _raisedHeader, ...props }, ref) => (
+export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(

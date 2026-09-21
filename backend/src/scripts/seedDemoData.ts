@@ -25,7 +25,6 @@ import {
   DESIGNS,
   EXPENSE_TEMPLATES,
   PRODUCTS,
-  PURCHASE_ORDERS,
   SUPPLIERS,
   type ProductSeed,
 } from './seed/dataset.js';
@@ -50,7 +49,7 @@ const ALL_TABLES = [
 const WIPE_ORDER = [
   'audit_logs', 'order_payments', 'order_items', 'orders', 'payments',
   'sales_transaction_items', 'sales_transactions', 'inventory_movements',
-  'designs', 'inventory_items', 'purchase_orders', 'suppliers',
+  'designs', 'inventory_items', 'suppliers',
   'operating_expenses', 'customers',
 ] as const;
 
@@ -433,25 +432,6 @@ async function seedSuppliers(supabase: SupabaseClient): Promise<string[]> {
   const ids = (data as Array<{ id: string }>).map((row) => row.id);
   console.log(`  ${ids.length} suppliers created`);
   return ids;
-}
-
-async function seedPurchaseOrders(supabase: SupabaseClient, supplierIds: readonly string[], adminId: string): Promise<void> {
-  const rows = PURCHASE_ORDERS.map((order, index) => {
-    const dayOffset = randomInt(2, HISTORY_DAYS - 5);
-    const supplierId = supplierIds[index % supplierIds.length] ?? null;
-    return {
-      supplier_id: supplierId,
-      status: order.status,
-      total_amount: order.totalAmount,
-      notes: order.notes,
-      created_by: adminId,
-      created_at: manilaInstant(manilaDate(dayOffset), 10, randomInt(0, 59)),
-      updated_at: manilaInstant(manilaDate(Math.max(0, dayOffset - 2)), 11, randomInt(0, 59)),
-    };
-  });
-  const { error } = await supabase.from('purchase_orders').insert(rows);
-  if (error) throw new Error(`Could not create purchase orders: ${error.message}`);
-  console.log(`  ${rows.length} purchase orders created`);
 }
 
 async function seedDesigns(supabase: SupabaseClient, adminId: string): Promise<string[]> {
@@ -858,7 +838,6 @@ async function main(): Promise<void> {
   await seedSettings(supabase, adminId);
   const customerIds = await seedCustomers(supabase);
   const supplierIds = await seedSuppliers(supabase);
-  await seedPurchaseOrders(supabase, supplierIds, adminId);
   const designIds = await seedDesigns(supabase, adminId);
 
   console.log('\nPlan history');

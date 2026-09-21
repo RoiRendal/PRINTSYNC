@@ -2,7 +2,21 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export type CardVariant = 'solid' | 'raised' | 'elevated';
+/**
+ * Two names, and only because collapsing the second one is a visual change.
+ *
+ * `solid` and `elevated` were byte-identical class strings, so `solid` is gone —
+ * it had no call sites anywhere, which makes promoting `elevated` to the default
+ * a provable no-op rather than a hopeful one.
+ *
+ * `raised` is deliberately left alone even though it reaches the same appearance.
+ * It is **not** the same declaration: `.surface-panel` is a component-layer rule
+ * while the others are utility-layer ones, so a caller passing an overriding
+ * class (a `bg-*`, say) resolves differently between them. Merging them would be
+ * a visual change that has to be measured rather than reasoned about, and it
+ * touches 22 call sites.
+ */
+export type CardVariant = 'raised' | 'elevated';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -11,8 +25,6 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantClasses: Record<CardVariant, string> = {
-  solid:
-    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
   raised: 'surface-panel',
   elevated:
     'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
@@ -26,7 +38,7 @@ const paddingClasses: Record<CardPadding, string> = {
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'solid', padding = 'md', ...props }, ref) => (
+  ({ className, variant = 'elevated', padding = 'md', ...props }, ref) => (
     <div
       ref={ref}
       className={cn('rounded-[var(--radius-card)]', variantClasses[variant], paddingClasses[padding], className)}
