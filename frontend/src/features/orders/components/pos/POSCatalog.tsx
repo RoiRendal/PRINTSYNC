@@ -56,7 +56,7 @@ export function POSCatalog({
                 className={cn(
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em]',
                   activeCategory === cat
-                    ? 'border-macos-blue bg-macos-blue text-white'
+                    ? 'border-macos-blue bg-macos-blue text-[var(--app-accent-ink)]'
                     : 'bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-[var(--app-border-control)] hover:text-macos-blue dark:bg-[#3d3d3f] dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >

@@ -313,7 +313,7 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em]', theme === item ? 'bg-macos-blue text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em]', theme === item ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>

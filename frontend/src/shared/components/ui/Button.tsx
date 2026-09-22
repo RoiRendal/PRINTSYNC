@@ -17,7 +17,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-macos-blue text-white hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
+    'bg-macos-blue text-[var(--app-accent-ink)] hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
   secondary:
     'bg-[var(--app-surface-sub)] text-macos-text ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
   ghost:
