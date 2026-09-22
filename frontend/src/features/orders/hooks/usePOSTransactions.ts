@@ -35,11 +35,16 @@ export function mapPaymentTransaction(
             stock: 0,
             reorderLevel: 0,
             price: item.unitPrice,
-            imageUrl: undefined,
+            // The catalogue row is gone, so there is no cost to recover; the
+            // field is required by the contract and zero is the honest value.
+            costPrice: 0,
+            // `null`, not `undefined`: `imageUrl` is a nullable column, and a
+            // key set to `undefined` would vanish from the JSON round-trip.
+            imageUrl: null,
             createdAt: transaction.date,
             updatedAt: transaction.date,
             qty: item.quantity,
-          } as Transaction['items'][number]);
+          } satisfies Transaction['items'][number]);
     }),
     subtotal: transaction.subtotal,
     discount: transaction.discount > 0 ? transaction.discount : undefined,

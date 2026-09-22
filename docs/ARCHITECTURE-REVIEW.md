@@ -297,8 +297,9 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > **Status, updated 2026-09-21.** Every fix in Tiers 0, 1 and 2 is **done, verified and pushed** to
 > `origin/flat-ui` (HEAD `39422de`). Tier 3 maintainability is **done** — 3.1 is committed and pushed
 > on top of `39422de`, decomposing `POSPage.tsx` from 902 to 294 lines across eight hooks/components
-> plus a real `usePaymentStore` (see `7797a8d`). Read the sections below as the original findings —
-> the plan is complete.
+> plus a real `usePaymentStore` (see `7797a8d`). **1.5 is finished as well** — the seven hand-copied
+> frontend type files are converted and both drift guards are in place, committed locally on top of
+> that. Read the sections below as the original findings — the plan is complete.
 >
 > | Tier | State | Commits |
 > | --- | --- | --- |
@@ -307,7 +308,7 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 1 — 1.2 | done | `0bbda8c` |
 > | 1 — 1.3 | done, **migration must be applied before deploy** | `d39161f` |
 > | 1 — 1.4 | done; a third role is still a design decision | `142d5ae` |
-> | 1 — 1.5 | **half** — contract repaired and guarded; six hand-copied frontend type files measured but untouched | `8cf0f34` |
+> | 1 — 1.5 | **done** — contract repaired in `8cf0f34`; the seven hand-copied frontend type files converted to re-exports; two drift guards added | `8cf0f34` + local commit |
 > | 2 — 2.2 | done, verified end to end | `a748710` |
 > | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **two migrations must be applied before deploy** | `e409a31` |
 > | 2 — 2.3 | done — **but wrong in two places; see correction under 2.3** | `3028781` |
@@ -443,6 +444,48 @@ Ordered by what must happen first. Each item names the files, the change, and ho
   intended outcome; fix them deliberately rather than silencing them. Type-only imports keep the "not
   aliased in Vite" rule intact.
 - **Ordering:** shared package first (CI builds it before the backend).
+
+> **As shipped, 2026-09-21 (local commit, not pushed).** The contract itself was repaired earlier, in
+> `8cf0f34` — `Order.updatedAt` and `OrderPayment.createdBy` restored. What remained was the seven
+> frontend files that hand-copied types instead of re-exporting them. All seven now read
+> `export type { … } from '@printsync/shared-types'`, following `features/customers/types.ts`.
+>
+> **The reconciliation surfaced real mismatches, exactly as this entry predicted — and they were the
+> frontend's, not the contract's.** `CreateOrder` correctly omits `item` and `quantity` because the API
+> derives both from `lineItems` (`orders.service.ts:86-88`), so the two call sites still *sending* them
+> were the defect. Three copies had quietly made contract-required fields optional —
+> `InventoryItem.costPrice`, `Order.lineItems`, `Design.assetType`/`assetSizeBytes` — and the fix adopts
+> the stricter shared shape and repairs the consumers rather than loosening the contract.
+> `UserSummary.access` widened from `PageAccessKey[]` to the contract's `string[]`, so `normalizeAccess`
+> clamps rather than assumes. Every change is behaviour-preserving: the five money tests and all 240
+> frontend tests stayed green throughout.
+>
+> **One contract oddity left standing, deliberately.** The shared `CreateTransaction` requires a
+> `status`, but the API's `TransactionInput` has no such field — the RPC sets it. The call site passes
+> `'completed'` to satisfy the type; the server ignores it. Tightening the contract here would mean
+> editing the shared package, which is outside a frontend drift fix.
+>
+> **Two guards, because `tsc` alone cannot catch a re-introduced copy** — a hand-written type is still a
+> valid type, and the original defect was a *valid* hand-written type:
+>
+> - `frontend/src/shared/contracts/contract-guard.ts` — compile-time `Identical` assertions that each
+>   feature module's exported type *is* the published one, a derived-types block for the deliberate
+>   narrowings (`CartItem`, `AuthUser`, …), and a named assertion for `Order.updatedAt`.
+> - `frontend/scripts/check-shared-types.mjs` — reads the source and refuses a *declaration* of a name
+>   the package owns, with one documented `ALLOW` entry (the history table's own `Transaction`, a
+>   different concept that shares the name). Wired to `npm run check:shared-types` and into the CI
+>   `frontend` job.
+>
+> **Proof, both directions.** Re-introducing the original defect — a hand-copied `Order` without
+> `updatedAt` — makes the source gate exit 1 naming the file, and `tsc` fail on `contract-guard.ts`
+> with `Type 'false' does not satisfy the constraint 'true'`. Both files were then restored
+> byte-identically (verified with `cmp`) and the gates re-run green. Green after restore:
+> `packages/shared-types` untouched (git clean, `dist/` current, so the backend is unaffected);
+> frontend `lint`, `check:shared-types`, `check:flat-ui` and `test` (240/240); backend `lint`,
+> `lint:tests` and `test:unit` (255/255).
+>
+> **Not run: the migration replay gate.** This change touches no SQL — only `.ts` files — so the
+> replay would prove nothing it has not already proven.
 
 ### Tier 2 — Operational robustness
 

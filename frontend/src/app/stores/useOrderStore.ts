@@ -33,10 +33,10 @@ export const useOrderStore = createListStore<Order, OrderActions>({
     rollbackOptimistic,
   }) => ({
     addOrder: async (order) => {
-      const lineItems = order.lineItems?.length
-        ? order.lineItems.map((item) => ({ ...item, unitPrice: item.unitPrice ?? 0 }))
-        : [{ name: order.item, quantity: order.quantity, designId: order.designId, unitPrice: 0 }];
-      const created = await ordersApi.create({ ...order, lineItems });
+      // `item` and `quantity` are not sent: the contract omits them because the
+      // API derives both from `lineItems` (orders.service.ts), and a client-side
+      // copy could only ever disagree with that derivation.
+      const created = await ordersApi.create(order);
       mutateItems((items) => [created, ...items]);
       setError(null);
       // Order creation can move inventory server-side, so both domains are

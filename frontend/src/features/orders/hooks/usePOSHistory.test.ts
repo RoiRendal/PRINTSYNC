@@ -54,8 +54,8 @@ describe('usePOSHistory', () => {
         amount: 500,
         notes: 'Rush job',
         lineItems: [
-          { itemId: 'item-1', name: 'Glossy Paper A4', quantity: 3, designId: 'design-1' },
-          { itemId: 'item-2', name: 'Stapler', quantity: 2 },
+          { itemId: 'item-1', name: 'Glossy Paper A4', quantity: 3, designId: 'design-1', unitPrice: 0 },
+          { itemId: 'item-2', name: 'Stapler', quantity: 2, unitPrice: 0 },
         ],
       });
 
@@ -77,7 +77,7 @@ describe('usePOSHistory', () => {
 
     it('falls back to the item name when a line carries no id', () => {
       const { result } = renderHistory([]);
-      const order = makeOrder({ lineItems: [{ name: 'Stapler', quantity: 1 }] });
+      const order = makeOrder({ lineItems: [{ name: 'Stapler', quantity: 1, unitPrice: 0 }] });
 
       expect(result.current.orderToHistoryTransaction(order).items[0]?.id).toBe('item-2');
     });
@@ -87,7 +87,7 @@ describe('usePOSHistory', () => {
       const order = makeOrder({
         amount: 400,
         quantity: 2,
-        lineItems: [{ itemId: 'gone', name: 'Discontinued Ink', quantity: 2 }],
+        lineItems: [{ itemId: 'gone', name: 'Discontinued Ink', quantity: 2, unitPrice: 0 }],
       });
 
       const line = result.current.orderToHistoryTransaction(order).items[0];

@@ -29,6 +29,7 @@ import {
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
 import type { RbacRole, UserSummary } from '../types';
+import { normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
 import { cn } from '../../../shared/lib/cn';
 
@@ -110,7 +111,10 @@ export default function UserManagement() {
       position: user.position,
       createdAt: user.createdAt,
       password: '',
-      access: user.access,
+      // The shared contract types `access` as `string[]` (the API may emit codes
+      // this client does not know); the form works in `PageAccessKey`, so clamp
+      // on the way in — the same rule the user store applies to every row.
+      access: normalizeAccess(user.role, user.access),
     });
     setActionError(null);
     setIsModalOpen(true);

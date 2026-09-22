@@ -124,6 +124,17 @@ jobs:
         run: npm run check:flat-ui
         working-directory: frontend
 
+      # Every feature module used to hand-copy the types it needed from
+      # `@printsync/shared-types`, and the copies drifted — the shared `Order` had
+      # lost the `updatedAt` compare-and-swap token the order editor depends on.
+      # `tsc` alone cannot catch a re-introduced copy: a hand-written type is still
+      # a valid type. This reads the source and refuses a declaration of a name the
+      # package owns; `src/shared/contracts/contract-guard.ts` covers the other half
+      # under the Type-check step above.
+      - name: Shared-types drift gate
+        run: npm run check:shared-types
+        working-directory: frontend
+
       # The suite covers the parts that fail silently rather than loudly: the
       # store freshness rules, the idempotency-key lifetime that decides whether
       # a retry double-charges, the structured-error contract, and the realtime

@@ -1,36 +1,19 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
 import { readApiErrorBody } from '../../../shared/api/errors';
-import type { InsufficientStockDetails, PaginatedResponse } from '@printsync/shared-types';
-import type { PaymentMethod } from '../types';
+import type {
+  Transaction as PaymentTransaction,
+  TransactionItem as PaymentTransactionItem,
+  CreateTransaction,
+  InsufficientStockDetails,
+  PaginatedResponse,
+} from '@printsync/shared-types';
 
-export interface PaymentTransactionItem {
-  itemId?: string;
-  name: string;
-  quantity: number;
-  unitPrice: number;
-}
+// The till's transaction row is the shared contract (`Transaction`); it is re-exported
+// under the name this module has always used so no caller changes. `CreatePaymentTransaction`
+// is that contract plus the one field the POS owns: the idempotency key.
+export type { PaymentTransaction, PaymentTransactionItem };
 
-export interface PaymentTransaction {
-  id: string;
-  status: 'completed' | 'voided';
-  items: PaymentTransactionItem[];
-  subtotal: number;
-  discount: number;
-  tax: number;
-  total: number;
-  paymentMethod: PaymentMethod;
-  paymentAmount: number;
-  date: string;
-}
-
-export interface CreatePaymentTransaction {
-  items: PaymentTransactionItem[];
-  subtotal: number;
-  discount: number;
-  tax: number;
-  total: number;
-  paymentMethod: PaymentMethod;
-  paymentAmount: number;
+export type CreatePaymentTransaction = CreateTransaction & {
   /**
    * Identifies one checkout attempt. Minted once when the cashier commits to
    * paying, then reused for every retry of that same attempt, so a double-click
@@ -38,7 +21,7 @@ export interface CreatePaymentTransaction {
    * server replays the original sale instead of inserting a second one.
    */
   idempotencyKey: string;
-}
+};
 
 /**
  * Reads the structured stock shortfall off a failed checkout.

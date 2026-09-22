@@ -165,6 +165,10 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
               name,
               quantity: order.quantity,
               designId: order.designId,
+              // Legacy orders carry no per-line price; the cart re-prices from
+              // the catalogue on hydration, so the contract's required field is
+              // stated as zero rather than invented.
+              unitPrice: 0,
             }));
 
     const hydratedCart: CartItem[] = sourceLineItems

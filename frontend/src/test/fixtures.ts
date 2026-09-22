@@ -27,6 +27,8 @@ export function makeCartItem(overrides: Partial<CartItem> = {}): CartItem {
     stock: 120,
     reorderLevel: 20,
     price: 100,
+    costPrice: 0,
+    imageUrl: null,
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
     qty: 2,
@@ -43,6 +45,8 @@ export function makeInventoryItem(overrides: Partial<InventoryItem> = {}): Inven
     stock: 120,
     reorderLevel: 20,
     price: 100,
+    costPrice: 0,
+    imageUrl: null,
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
     ...overrides,
@@ -54,11 +58,18 @@ export function makeOrder(overrides: Partial<Order> = {}): Order {
     id: 'order-1',
     customer: 'Ada Lovelace',
     item: 'Glossy Paper A4',
+    // Empty by default, which exercises the same legacy `item` fallback a
+    // missing list always did — the contract requires the field, not a value.
+    lineItems: [],
     quantity: 2,
     status: 'Pending',
     date: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
     amount: 200,
+    totalPaid: 0,
+    balanceDue: 200,
+    notes: '',
+    isCustom: false,
     ...overrides,
   };
 }

@@ -18,11 +18,13 @@ interface InventoryFormModalProps {
 }
 
 const emptyForm: CreateInventoryItem = {
+  sku: '',
   name: '',
   category: '',
   stock: 0,
   reorderLevel: 10,
   price: 0,
+  costPrice: 0,
   imageUrl: '',
 };
 
@@ -41,11 +43,13 @@ export function InventoryFormModal({
     if (isOpen) {
       if (editingItem) {
         setFormData({
+          sku: editingItem.sku,
           name: editingItem.name,
           category: editingItem.category,
           stock: editingItem.stock,
           reorderLevel: editingItem.reorderLevel,
           price: editingItem.price,
+          costPrice: editingItem.costPrice,
           imageUrl: editingItem.imageUrl || '',
         });
       } else {

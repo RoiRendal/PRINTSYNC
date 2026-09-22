@@ -165,6 +165,11 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
           total: trxTotal,
           paymentMethod: paymentMethod,
           paymentAmount: trxTotal,
+          // The contract carries a status on every transaction; a sale is
+          // `completed` the moment it is written. The server owns the value —
+          // the RPC sets it, and the API's `TransactionInput` has no such field
+          // — so this satisfies the contract without claiming authority over it.
+          status: 'completed',
           idempotencyKey,
         });
         // INVARIANT 3 — the sale is known landed; retire the key so the next
@@ -182,14 +187,16 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
         const preparedOrder: CreateOrder = {
           customer: options.customerName,
           customerId: options.customerId ?? undefined,
-          item: saleCart.map((i) => i.name).join(', '),
+          // `item` and `quantity` are not sent: the contract omits them because
+          // the API derives both from `lineItems` (orders.service.ts), and a
+          // second copy here could only ever disagree with that derivation.
           lineItems: saleCart.map((i) => ({
             itemId: i.id,
             name: i.name,
             quantity: i.qty,
             designId: i.designId,
+            unitPrice: i.price,
           })),
-          quantity: saleCart.reduce((acc, i) => acc + i.qty, 0),
           amount: trxTotal,
           status: 'Pending',
           isCustom: true,

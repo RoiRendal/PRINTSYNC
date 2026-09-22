@@ -23,7 +23,7 @@ export function DesignRepository() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
-  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [] });
+  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [], assetType: null, assetSizeBytes: null });
   const [editDesignData, setEditDesignData] = useState<Design | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
@@ -61,7 +61,7 @@ export function DesignRepository() {
         assetSizeBytes = uploaded.assetSizeBytes;
       }
       await addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
-      setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });
+      setNewDesign({ name: '', category: '', imageUrl: '', tags: [], assetType: null, assetSizeBytes: null });
       setSelectedAsset(null);
       setIsAddModalOpen(false);
     } catch (error: unknown) {

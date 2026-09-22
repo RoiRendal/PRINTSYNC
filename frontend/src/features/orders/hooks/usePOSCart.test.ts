@@ -257,8 +257,8 @@ describe('usePOSCart', () => {
         customerId: 'cust-9',
         notes: 'Two colours',
         lineItems: [
-          { itemId: 'item-1', name: 'Glossy Paper A4', quantity: 3, designId: 'design-1' },
-          { itemId: 'item-2', name: 'Stapler', quantity: 1 },
+          { itemId: 'item-1', name: 'Glossy Paper A4', quantity: 3, designId: 'design-1', unitPrice: 0 },
+          { itemId: 'item-2', name: 'Stapler', quantity: 1, unitPrice: 0 },
         ],
       });
 
@@ -309,7 +309,7 @@ describe('usePOSCart', () => {
     it('matches a line by name when it carries no item id', () => {
       const { result } = renderCart();
       const order = makeOrder({
-        lineItems: [{ name: 'glossy paper a4', quantity: 2 }],
+        lineItems: [{ name: 'glossy paper a4', quantity: 2, unitPrice: 0 }],
       });
 
       act(() => result.current.hydrateFromOrder(order, CATALOGUE));

@@ -59,6 +59,11 @@ function getOrderLineItems(order: Order): OrderLineItem[] {
       name,
       quantity: order.quantity,
       designId: order.designId,
+      // A legacy order names its items in one string and carries no per-line
+      // price, so there is none to recover here; the money shown comes from the
+      // order's own `amount`. The field is required by the contract, so it is
+      // stated as zero rather than omitted.
+      unitPrice: 0,
     }));
 }
 
