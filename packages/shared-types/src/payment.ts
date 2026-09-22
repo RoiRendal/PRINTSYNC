@@ -21,7 +21,17 @@ export interface Transaction {
   date: string;
 }
 
-export type CreateTransaction = Omit<Transaction, 'id' | 'date'>;
+/**
+ * The create-side shape of a sale.
+ *
+ * `status` is omitted rather than made optional, because it is not the client's
+ * to send. The server owns it: the sale RPC writes `completed` the moment the
+ * sale commits, and the only route to `voided` is the separate void endpoint. A
+ * client able to set it could claim a state the ledger never passed through, so
+ * the contract does not offer the field at all. This matches the API, whose
+ * `TransactionInput` has never carried a `status`.
+ */
+export type CreateTransaction = Omit<Transaction, 'id' | 'date' | 'status'>;
 
 /**
  * The structured context the API attaches when a sale is rejected because stock

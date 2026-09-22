@@ -460,10 +460,15 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > clamps rather than assumes. Every change is behaviour-preserving: the five money tests and all 240
 > frontend tests stayed green throughout.
 >
-> **One contract oddity left standing, deliberately.** The shared `CreateTransaction` requires a
-> `status`, but the API's `TransactionInput` has no such field — the RPC sets it. The call site passes
-> `'completed'` to satisfy the type; the server ignores it. Tightening the contract here would mean
-> editing the shared package, which is outside a frontend drift fix.
+> **The one contract oddity is now resolved (2026-09-22).** The shared `CreateTransaction` used to
+> *require* a `status`, but the API's `TransactionInput` has never carried one — the sale RPC sets it.
+> The POS call site passed `'completed'` purely to satisfy the type, and the server ignored it. The
+> contract was tightened rather than the call site worked around:
+> `CreateTransaction = Omit<Transaction, 'id' | 'date' | 'status'>`. The create-side shape no longer
+> offers a field the server owns — a client able to set `status` could claim a state the ledger never
+> passed through — and `usePOSCheckout` no longer sends one. This is the follow-up that 1.5
+> deliberately left open; the reasoning for *not* doing it inside a frontend drift fix still holds,
+> which is why it lands as its own change.
 >
 > **Two guards, because `tsc` alone cannot catch a re-introduced copy** — a hand-written type is still a
 > valid type, and the original defect was a *valid* hand-written type:

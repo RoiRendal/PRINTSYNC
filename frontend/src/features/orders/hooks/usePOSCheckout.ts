@@ -165,11 +165,9 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
           total: trxTotal,
           paymentMethod: paymentMethod,
           paymentAmount: trxTotal,
-          // The contract carries a status on every transaction; a sale is
-          // `completed` the moment it is written. The server owns the value —
-          // the RPC sets it, and the API's `TransactionInput` has no such field
-          // — so this satisfies the contract without claiming authority over it.
-          status: 'completed',
+          // No `status`: the contract omits it because the server owns it — the
+          // sale RPC writes `completed`, and only the void endpoint may set
+          // `voided`. Sending one would claim authority the till does not have.
           idempotencyKey,
         });
         // INVARIANT 3 — the sale is known landed; retire the key so the next
