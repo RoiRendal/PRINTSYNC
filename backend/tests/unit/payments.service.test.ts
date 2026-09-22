@@ -12,6 +12,19 @@ import {
 } from '../../src/modules/payments/payments.service.js';
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
+import { runWithRequestContext } from '../../src/shared/requestContext.js';
+
+/**
+ * A request as `middleware/requestId.ts` would have established it.
+ *
+ * The sale RPC writes its own audit row inside the money transaction, so these
+ * three values have to reach it or a committed sale has an unattributable record.
+ */
+const REQUEST_CONTEXT = {
+  requestId: 'req-sale-1',
+  ipAddress: '203.0.113.9',
+  userAgent: 'till/1.0',
+};
 
 const TRANSACTION_ROW = {
   id: 'txn-1',
@@ -216,6 +229,19 @@ describe('payments.service', () => {
       assert.equal(transaction.id, 'txn-1');
     });
 
+    it('carries the request context into the sale RPC, which audits from inside', async () => {
+      const db = createFakeSupabase();
+      db.queueRpc('create_transaction_with_payment', { data: { id: 'txn-1' } });
+      queueTransactionSingle(db);
+
+      await runWithRequestContext(REQUEST_CONTEXT, () => createTransaction(db.client, baseInput, 'actor-1'));
+
+      const payload = db.lastCall('create_transaction_with_payment')?.payload as Record<string, unknown>;
+      assert.equal(payload.p_audit_request_id, 'req-sale-1');
+      assert.equal(payload.p_audit_ip_address, '203.0.113.9');
+      assert.equal(payload.p_audit_user_agent, 'till/1.0');
+    });
+
     it('surfaces the database message when creation fails', async () => {
       const db = createFakeSupabase();
       db.queueRpc('create_transaction_with_payment', { data: null, error: { message: 'totals do not match items' } });
@@ -281,6 +307,20 @@ describe('payments.service', () => {
       assert.equal(payload.p_transaction_id, 'txn-1');
       assert.equal(payload.p_voided_by, 'actor-1');
       assert.equal(transaction.status, 'voided');
+    });
+
+    it('carries the request context into the void RPC, which audits the reversal', async () => {
+      const db = createFakeSupabase();
+      db.queueRpc('void_transaction', { data: { id: 'txn-1' } });
+      db.queueTable('sales_transactions', { data: { ...TRANSACTION_ROW, status: 'voided' }, error: null });
+      queueTransactionChildren(db);
+
+      await runWithRequestContext(REQUEST_CONTEXT, () => voidTransaction(db.client, 'txn-1', 'actor-1'));
+
+      const payload = db.lastCall('void_transaction')?.payload as Record<string, unknown>;
+      assert.equal(payload.p_audit_request_id, 'req-sale-1');
+      assert.equal(payload.p_audit_ip_address, '203.0.113.9');
+      assert.equal(payload.p_audit_user_agent, 'till/1.0');
     });
 
     it('maps a void failure to a 400 TRANSACTION_VOID_FAILED', async () => {

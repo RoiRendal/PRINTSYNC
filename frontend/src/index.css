@@ -7,7 +7,7 @@
   --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-  --color-macos-blue: #555558;
+  --color-macos-blue: #a3a3a3;
   --color-macos-blue-dark: #8e8e93;
   --color-macos-cyan: #aeaeb2;
   --color-macos-green: #34c759;
@@ -26,45 +26,97 @@
   --radius-modal: 1rem;
   --radius-squircle: 1.25rem;
   --radius-pill: 9999px;
-
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.08), 0 0 0 0.5px rgb(0 0 0 / 0.06);
-  --shadow-glass: 0 12px 40px rgb(0 0 0 / 0.12), inset 0 1px 0 rgb(255 255 255 / 0.32);
-  --shadow-modal: 0 24px 80px rgb(0 0 0 / 0.34), 0 0 0 0.5px rgb(0 0 0 / 0.08);
 }
 
 :root {
   color-scheme: light;
-  /* Light-mode glass tokens: increased opacity and a subtle dark border so panels
-     remain distinct from the light page background while keeping the glass aesthetic. */
-  --glass-bg: rgb(255 255 255 / 0.82);
-  --glass-bg-strong: rgb(255 255 255 / 0.94);
-  --glass-border: rgb(0 0 0 / 0.10);
-  --glass-highlight: rgb(255 255 255 / 0.60);
-  --glass-blur-sidebar: 24px;
-  --glass-blur-toolbar: 20px;
-  --glass-blur-modal: 40px;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
-  --app-hairline: rgb(0 0 0 / 0.12);
+  /* The default border colour for every element, so it is the largest single source
+     of translucency in the app — every divider inherits it. Solid now, and the same
+     value as the explicit hairline token. */
+  --app-hairline: #d5d5da;
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
+
+  /* Flat surface ladder — replaces the glass fills, which measured only 1.03:1 to
+     1.09:1 against the page and so were never what separated a panel from it.
+     Once the fill is solid, the BORDER carries the separation: a card is 1.09:1
+     from the page no matter what it is filled with. Ratios below are measured. */
+  --app-surface-sub: #ececef;        /* toolbars, table headers, segmented tracks */
+  --app-surface-sunken: #e3e3e8;     /* inset wells */
+  --app-state-hover: #ececef;        /* 1.18:1 on raised — stronger than the 1.12:1 of the old 5%-black hover tint */
+  --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
+  /* The selected nav row. Deliberately not the accent colour: the row's own fill
+     is the only thing that changes when an item is selected, so the icon and the
+     label keep one colour in both states. A light grey here, a dark one in dark
+     mode — same role, opposite steps, and deliberately not the same value. */
+  --app-state-selected: #e3e3e8;     /* light step */
+  --app-border-hairline: #d5d5da;    /* internal dividers */
+  --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
+  /* The shell's structural outline — the divider under the header and the page
+     toolbar, and the box around the page body. Now that every shell region is
+     filled with the same colour, this line is the only thing separating one from
+     the next, so it is deliberately stronger than the hairline it sits beside
+     (2.94:1 on the page, against the hairline's 1.34:1). */
+  --app-border-frame: #bbbbbb;
+  --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
+  --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
+
+  /* Solid badge tints. Each is the flat composite of the translucent tint it
+     replaces — the old 12%-opacity fills resolved to almost exactly these over a
+     white card, so the badges look the same and stop being translucent. Every
+     pairing with its badge text was measured; all clear 4.5:1. */
+  --app-tint-neutral: #f5f6f8;
+  --app-tint-blue: #ebebeb;
+  --app-tint-green: #e7f8eb;
+  --app-tint-red: #ffe7e6;
+  --app-tint-orange: #fff0db;
+  --app-tint-purple: #f5eafb;
+  --app-tint-gray: #fcfcfd;
+  --app-tint-amber: #fef5e7;
+  /* Theme-independent: the dialog dim is a focus cue, not a surface. */
+  --app-scrim: rgb(0 0 0 / 0.45);
 }
 
 .dark {
   color-scheme: dark;
-  --glass-bg: rgb(28 28 30 / 0.72);
-  --glass-bg-strong: rgb(44 44 46 / 0.84);
-  --glass-border: rgb(255 255 255 / 0.12);
-  --glass-highlight: rgb(255 255 255 / 0.14);
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
   --app-text: #f5f5f7;
   --app-text-muted: #98989d;
-  --app-hairline: rgb(255 255 255 / 0.1);
+  --app-hairline: #48484a;
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
+
+  /* Dark partners for the flat ladder. Note the muted-text steps: the default
+     --app-text-muted (#98989d) measures 3.95:1 on -sub and 3.18:1 on -sunken,
+     both below the 4.5:1 floor, so a muted label on those surfaces must use the
+     lighter step below rather than the default. */
+  --app-surface-sub: #3a3a3c;
+  --app-surface-sunken: #48484a;
+  --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
+  --app-state-hover-sub: #48484a;
+  --app-state-selected: #48484a;     /* dark step — one step up from the surface, never the light value */
+  --app-border-hairline: #48484a;
+  --app-border-control: #8e8e93;     /* 4.27:1 on raised */
+  --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */
+  --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
+  --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
+
+  /* Dark badge tints, composited over the raised surface. The gray one is the
+     reason the gray badge's dark text had to move up a step: the old text measured
+     4.23:1 on this fill, under the 4.5:1 floor for 9px type. */
+  --app-tint-neutral: #414143;
+  --app-tint-blue: #3e3e40;
+  --app-tint-green: #2d4535;
+  --app-tint-red: #4e2e2e;
+  --app-tint-orange: #4e3d27;
+  --app-tint-purple: #41324a;
+  --app-tint-gray: #3d3d3f;
+  --app-tint-amber: #4b422c;
 }
 
 html {
@@ -77,19 +129,12 @@ html {
 :root body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top left, rgb(142 142 147 / 0.10), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.06), transparent 32rem),
-    var(--app-surface);
+  /* Flat page. The two corner washes that used to sit here are gone: they were a
+     decorative radial gradient on the one surface every other surface sits on, and
+     they are the first half of the "no gradients" rule. */
+  background: var(--app-surface);
   color: var(--app-text);
   font-family: var(--font-sans);
-}
-
-.dark body {
-  background:
-    radial-gradient(circle at top left, rgb(142 142 147 / 0.18), transparent 34rem),
-    radial-gradient(circle at bottom right, rgb(110 110 115 / 0.12), transparent 32rem),
-    var(--app-surface);
 }
 
 #root {
@@ -101,16 +146,19 @@ html {
   color: var(--app-selection-text);
 }
 
-* {
-  border-color: var(--app-hairline);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+/*
+ * The default border colour for every element, so it is the largest single source
+ * of borders in the app — every divider inherits it.
+ *
+ * It MUST sit inside `@layer base`. An unlayered rule outranks every layer, so
+ * outside one it silently beat every Tailwind `border-*` utility: inputs and
+ * buttons asking for `--app-border-control` (3.26:1, the WCAG 1.4.11 floor for
+ * control edges) were painted with this near-invisible hairline instead. Inside
+ * `base`, utilities win again and control edges actually appear.
+ */
+@layer base {
+  * {
+    border-color: var(--app-hairline);
   }
 }
 
@@ -221,31 +269,25 @@ html {
 }
 
 @layer utilities {
-  .glass-panel {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-glass);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-sidebar));
-    will-change: backdrop-filter;
+  /*
+   * The old glass layer, now three flat surfaces. They were redefined in place so
+   * that all eleven call sites inherited the change; the names were renamed once
+   * nothing else referenced them, which is Phase 6. Separation comes from the
+   * hairline border above; no surface in the app casts elevation or a halo.
+   */
+  .surface-panel {
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-border-hairline);
   }
 
-  .glass-toolbar {
-    background: color-mix(in srgb, var(--glass-bg) 88%, transparent);
-    border-bottom: 1px solid var(--glass-border);
-    box-shadow: 0 1px 0 var(--glass-highlight), 0 8px 30px rgb(0 0 0 / 0.06);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-toolbar));
-    will-change: backdrop-filter;
+  .surface-toolbar {
+    background: var(--app-surface-sub);
+    border-bottom: 1px solid var(--app-border-hairline);
   }
 
-  .glass-modal {
-    background: var(--glass-bg-strong);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-modal);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur-modal));
-    will-change: transform, opacity, backdrop-filter;
+  .surface-modal {
+    background: var(--app-surface-raised);
+    border: 1px solid var(--app-border-hairline);
   }
 
   .macos-squircle {

@@ -41,7 +41,7 @@ export function InventoryTable({
 }: InventoryTableProps) {
   return (
     <Card variant="elevated" padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Stock Catalog</CardTitle>
           <CardDescription>Search SKUs, update materials, and flag reorder thresholds.</CardDescription>
@@ -58,7 +58,7 @@ export function InventoryTable({
       </CardHeader>
 
       <CardContent>
-        <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+        <TableContainer className="rounded-none border-0 bg-transparent">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -112,7 +112,7 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="glass-toolbar flex justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PRINTSYNC CLOUD SECURE SYNCED</span>
       </div>

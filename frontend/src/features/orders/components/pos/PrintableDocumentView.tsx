@@ -27,7 +27,7 @@ export function PrintableDocumentView({ document, reprintNote }: PrintableDocume
   return (
     <div
       id="receipt-content"
-      className="space-y-4 rounded-[var(--radius-card)] border border-black/10 bg-white p-6 text-black shadow-sm dark:border-white/10 dark:bg-zinc-100 dark:text-zinc-900"
+      className="space-y-4 rounded-[var(--radius-card)] border border-black/10 bg-white p-6 text-black dark:border-white/10 dark:bg-zinc-100 dark:text-zinc-900"
     >
       {/*
         Stamped across the top, not tucked into the footer. A reprint of a

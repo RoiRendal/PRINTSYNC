@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { OrderConflictDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
+import { auditRpcArguments } from '../../shared/requestContext.js';
 
 /**
  * The structured context the RPC attaches when a save loses a race with another
@@ -74,6 +76,7 @@ function toRecord(
   row: Record<string, unknown>,
   items: OrderLineItem[],
   totalPaid: number,
+  timeZone: string,
 ): OrderRecord {
   return {
     id: String(row.id),
@@ -84,7 +87,9 @@ function toRecord(
     lineItems: items,
     quantity: items.reduce((total, item) => total + item.quantity, 0),
     status: String(row.status) as OrderStatus,
-    date: String(row.created_at).slice(0, 10),
+    // The shop's calendar day, not the UTC one. Slicing the UTC ISO string put
+    // every order taken before 08:00 local on the previous day.
+    date: toShopDateKey(String(row.created_at), timeZone),
     updatedAt: String(row.updated_at),
     amount: Number(row.amount),
     totalPaid,
@@ -133,10 +138,21 @@ async function loadPayments(supabase: SupabaseClient, orderIds: string[]): Promi
   return result;
 }
 
+/**
+ * The one place rows become `OrderRecord`s, so the shop's time zone is resolved
+ * once per call rather than threaded through every caller. `getShopTimeZone` is
+ * cached, so this is not a settings query per order.
+ */
 async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<OrderRecord[]> {
   const ids = rows.map((row) => String(row.id));
-  const [itemMap, paymentMap] = await Promise.all([loadItems(supabase, ids), loadPayments(supabase, ids)]);
-  return rows.map((row) => toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0));
+  const [itemMap, paymentMap, timeZone] = await Promise.all([
+    loadItems(supabase, ids),
+    loadPayments(supabase, ids),
+    getShopTimeZone(supabase),
+  ]);
+  return rows.map((row) =>
+    toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0, timeZone),
+  );
 }
 
 export async function listOrders(
@@ -172,6 +188,9 @@ export async function createOrder(supabase: SupabaseClient, input: OrderInput, a
     p_items: input.lineItems,
     p_customer_id: input.customerId ?? null,
     p_due_date: input.dueDate ?? null,
+    // The RPC writes the `order.created` audit row itself, inside its own
+    // transaction, so the row cannot be lost while the order survives.
+    ...auditRpcArguments(),
   });
   if (error || !data) throw new AppError(400, 'ORDER_CREATE_FAILED', error?.message ?? 'The order could not be created.');
   return getOrder(supabase, String((data as Record<string, unknown>).id));
@@ -238,6 +257,10 @@ export async function updateOrder(
       p_customer_id: input.customerId ?? existing.customerId ?? null,
       p_due_date: input.dueDate ?? existing.dueDate ?? null,
       p_expected_updated_at: expectedUpdatedAt,
+      // `order.updated` is audited here, inside the transaction. The status-only
+      // path below has no RPC, so it still audits from the route — see
+      // `orders.routes.ts`, which has to tell the two apart.
+      ...auditRpcArguments(),
     });
     if (error || !data) throw mapUpdateFailure(error);
     return getOrder(supabase, id);
@@ -288,7 +311,13 @@ export async function updateOrder(
 }
 
 export async function deleteOrder(supabase: SupabaseClient, id: string, actorId: string): Promise<void> {
-  const { error } = await supabase.rpc('delete_order_with_items', { p_order_id: id, p_actor_id: actorId });
+  const { error } = await supabase.rpc('delete_order_with_items', {
+    p_order_id: id,
+    p_actor_id: actorId,
+    // This is the one that matters most. After it returns the order row is gone,
+    // and the audit row is the only remaining evidence that it existed.
+    ...auditRpcArguments(),
+  });
   if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', error.message || 'The order could not be deleted.');
 }
 

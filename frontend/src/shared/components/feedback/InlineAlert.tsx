@@ -15,12 +15,12 @@ export type InlineAlertTone = 'error' | 'warning';
 const TONE_STYLES: Record<InlineAlertTone, { panel: string; Icon: LucideIcon }> = {
   error: {
     panel:
-      'border-macos-red/20 bg-macos-red/10 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300',
+      'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
     Icon: AlertCircle,
   },
   warning: {
     panel:
-      'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:border-amber-400/30 dark:bg-amber-400/15 dark:text-amber-300',
+      'border-[var(--app-border-hairline)] bg-[var(--app-tint-amber)] text-amber-700 dark:text-amber-300',
     Icon: AlertTriangle,
   },
 };

@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 
 export type UserRole = 'admin' | 'staff';
 
@@ -153,6 +154,10 @@ async function toSummary(
   email: string,
   role: UserRole,
 ): Promise<UserSummary> {
+  // The join date the directory shows is a calendar day in the shop's zone, not in
+  // UTC — the same reason orders and payments are converted. `getShopTimeZone` is
+  // cached, so this is not a settings read per row.
+  const timeZone = await getShopTimeZone(supabase);
   return {
     id: profile.id,
     name: profile.name,
@@ -160,7 +165,7 @@ async function toSummary(
     phone: profile.phone,
     role,
     position: profile.position,
-    createdAt: profile.created_at.slice(0, 10),
+    createdAt: toShopDateKey(profile.created_at, timeZone),
     access: await getRoleAccess(supabase, profile.role_id),
   };
 }

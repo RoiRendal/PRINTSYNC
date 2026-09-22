@@ -23,8 +23,8 @@ export function PhaseProgress({ status }: { status: Order['status'] }) {
           <span
             key={phase}
             className={cn(
-              'h-1.5 flex-1 rounded-full transition-colors duration-200',
-              isDone ? 'bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_0_10px_rgb(0_122_255/0.25)]' : 'bg-black/8 dark:bg-white/10',
+              'h-1.5 flex-1 rounded-full',
+              isDone ? 'bg-macos-blue' : 'bg-[#ebebeb] dark:bg-[#414143]',
             )}
           />
         );

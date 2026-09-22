@@ -12,11 +12,13 @@ export { useInventory, useInventoryStore } from './useInventoryStore';
 export { useCustomers, useCustomerStore } from './useCustomerStore';
 export { useDesigns, useDesignStore } from './useDesignStore';
 export { useUserContext, useUserStore } from './useUserStore';
+export { usePayments, usePaymentStore } from './usePaymentStore';
 
 import { useCustomerStore } from './useCustomerStore';
 import { useDesignStore } from './useDesignStore';
 import { useInventoryStore } from './useInventoryStore';
 import { useOrderStore } from './useOrderStore';
+import { usePaymentStore } from './usePaymentStore';
 import { useUserStore } from './useUserStore';
 import type { DataDomain } from '../../shared/store/dataEvents';
 
@@ -29,19 +31,28 @@ export function resetDataStores(): void {
   useInventoryStore.getState().resetList();
   useDesignStore.getState().resetList();
   useOrderStore.getState().resetList();
+  usePaymentStore.getState().resetList();
   useUserStore.getState().resetList();
 }
 
 /**
  * Loads the collections the app needs once a session exists. Each store is a
  * no-op when it already holds data, so this is safe to run on every auth change.
+ *
+ * @param canSeeUsers whether the session may open the Users page. The caller
+ *                    passes the page key (`access.includes('users')`), which is
+ *                    satisfied by either `users.read` or `users.manage` — so this
+ *                    is a *visibility* check, not a capability check. It was named
+ *                    `canManageUsers`, which suggested the narrower thing and would
+ *                    have made the user store look like it should stop loading for
+ *                    a read-only role.
  */
-export function loadDataStores(canManageUsers: boolean): void {
+export function loadDataStores(canSeeUsers: boolean): void {
   void useCustomerStore.getState().ensureLoaded();
   void useInventoryStore.getState().ensureLoaded();
   void useDesignStore.getState().ensureLoaded();
   void useOrderStore.getState().ensureLoaded();
-  if (canManageUsers) {
+  if (canSeeUsers) {
     void useUserStore.getState().ensureLoaded();
   }
 }
@@ -69,10 +80,10 @@ function revalidateIfLoaded(
 /**
  * Maps a domain announced on the data-change bus to the store that owns it.
  *
- * Domains without an owning list store — `payments` and `settings` — are
- * deliberately absent. Their consumers (`POSPage`'s transaction history, the
- * branding provider) subscribe to the bus directly, because they read bespoke
- * endpoints rather than a paginated collection.
+ * `payments` now has a real store (R11 moved `POSPage`'s transaction history off
+ * `paymentsApi`), so it is revalidated like every other collection. `settings`
+ * remains a genuine no-op: it has no list store — the branding provider reads a
+ * single bespoke endpoint and subscribes to the bus directly.
  */
 const DOMAIN_REVALIDATORS: Record<DataDomain, (force: boolean) => void> = {
   orders: (force) => revalidateIfLoaded(useOrderStore.getState(), force),
@@ -80,7 +91,7 @@ const DOMAIN_REVALIDATORS: Record<DataDomain, (force: boolean) => void> = {
   customers: (force) => revalidateIfLoaded(useCustomerStore.getState(), force),
   designs: (force) => revalidateIfLoaded(useDesignStore.getState(), force),
   users: (force) => revalidateIfLoaded(useUserStore.getState(), force),
-  payments: () => {},
+  payments: (force) => revalidateIfLoaded(usePaymentStore.getState(), force),
   settings: () => {},
 };
 

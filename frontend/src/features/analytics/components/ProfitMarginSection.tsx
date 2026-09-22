@@ -105,11 +105,11 @@ export function ProfitMarginSection({
                 <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <YAxis yAxisId="amount" tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
                 <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <RechartsTooltip formatter={(value, name) => { const numericValue = Number(value ?? 0); const label = String(name); if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label]; return [money.format(numericValue), label]; }} labelStyle={{ color: '#1D1D1F', fontSize: 12 }} contentStyle={chartTooltipStyle} />
+                <RechartsTooltip formatter={(value, name) => { const numericValue = Number(value ?? 0); const label = String(name); if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label]; return [money.format(numericValue), label]; }} labelStyle={{ color: 'var(--app-text)', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#555558" radius={[8, 8, 0, 0]} animationDuration={700} />
-                <Bar yAxisId="amount" dataKey="expenses" name="COGS" fill="#AF52DE" radius={[8, 8, 0, 0]} animationDuration={700} />
-                <Line yAxisId="margin" type="monotone" dataKey="margin" name="Margin %" stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} animationDuration={700} />
+                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#555558" radius={[8, 8, 0, 0]} isAnimationActive={false} />
+                <Bar yAxisId="amount" dataKey="expenses" name="COGS" fill="#AF52DE" radius={[8, 8, 0, 0]} isAnimationActive={false} />
+                <Line yAxisId="margin" type="monotone" dataKey="margin" name="Margin %" stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -118,7 +118,7 @@ export function ProfitMarginSection({
             <Badge variant="orange">Lowest: {profitMarginStats.lowestPoint.label} ({profitMarginStats.lowestPoint.margin.toFixed(1)}%)</Badge>
           </div>
           <TableContainer className="mt-4">
-            <div className="flex items-center justify-between border-b border-black/5 p-3 dark:border-white/10">
+            <div className="flex items-center justify-between border-b p-3">
               <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Margin Ranking Table</p>
               <Select fieldSize="sm" className="w-44" value={marginSortOrder} onChange={(event) => setMarginSortOrder(event.target.value as 'desc' | 'asc')}>
                 <option value="desc">Highest to Lowest</option>

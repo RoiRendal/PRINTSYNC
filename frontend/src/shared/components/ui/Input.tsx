@@ -3,7 +3,12 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from '../../lib/cn';
 
 const fieldBaseClasses =
-  'w-full rounded-[var(--radius-button)] border border-black/10 bg-white/72 px-3 text-sm text-macos-text shadow-inner shadow-black/[0.02] transition-all duration-200 ease-out placeholder:text-macos-text-muted/70 focus:border-macos-blue/55 focus:bg-white focus:outline-none focus:ring-4 focus:ring-macos-blue/15 dark:border-white/10 dark:bg-white/10 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-white/12';
+  'w-full rounded-[var(--radius-button)] border border-[var(--app-border-control)] bg-[var(--app-surface-raised)] px-3 text-sm text-macos-text placeholder:text-[var(--app-text-muted)] focus:border-[var(--app-border-control)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--app-border-control)] dark:bg-[#414143] dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-[#454547]';
+
+/* The focus ring is the one place a ring colour has to earn its contrast: it is
+   the only affordance telling a keyboard user which field they are in, so it
+   needs 3:1 against the surface. The old macos-blue/15 resolved to about 1.3:1
+   on white. --app-border-control measures 3.26:1. */
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   fieldSize?: 'sm' | 'md' | 'lg';

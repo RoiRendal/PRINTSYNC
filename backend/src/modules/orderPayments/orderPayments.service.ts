@@ -9,7 +9,13 @@ export interface OrderPayment {
   amount: number;
   method: OrderPaymentMethod;
   notes: string;
-  createdBy: string | undefined;
+  /**
+   * Who recorded the payment. Optional rather than `string | undefined`: the row
+   * may have no `created_by`, and the key is then dropped by `JSON.stringify`
+   * before it reaches the client. Declaring it required described this process's
+   * object, not the wire.
+   */
+  createdBy?: string | undefined;
   createdAt: string;
 }
 

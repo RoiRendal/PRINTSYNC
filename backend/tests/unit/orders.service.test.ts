@@ -12,6 +12,20 @@ import {
 } from '../../src/modules/orders/orders.service.js';
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
+import { runWithRequestContext } from '../../src/shared/requestContext.js';
+
+/**
+ * A request as `middleware/requestId.ts` would have established it.
+ *
+ * The money RPCs write their own audit row, so these three values have to reach
+ * them or the row is unattributable. `runWithRequestContext` is the real
+ * mechanism, not a stand-in for it.
+ */
+const REQUEST_CONTEXT = {
+  requestId: 'req-test-1',
+  ipAddress: '203.0.113.9',
+  userAgent: 'till/1.0',
+};
 
 const ORDER_ROW = {
   id: 'order-1',
@@ -204,6 +218,42 @@ describe('orders.service', () => {
       assert.equal(rpcPayload.p_due_date, null);
     });
 
+    it('carries the request context into the create RPC, which audits from inside', async () => {
+      const db = createFakeSupabase();
+      db.queueRpc('create_order_with_items', { data: { id: 'order-1' } });
+      queueOrderSingle(db);
+
+      await runWithRequestContext(REQUEST_CONTEXT, () =>
+        createOrder(
+          db.client,
+          { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }], amount: 10 },
+          'actor-1',
+        ),
+      );
+
+      const rpcPayload = db.lastCall('create_order_with_items')?.payload as Record<string, unknown>;
+      assert.equal(rpcPayload.p_audit_request_id, 'req-test-1');
+      assert.equal(rpcPayload.p_audit_ip_address, '203.0.113.9');
+      assert.equal(rpcPayload.p_audit_user_agent, 'till/1.0');
+    });
+
+    it('sends nulls when there is no request, as for the seeder and the CLI', async () => {
+      const db = createFakeSupabase();
+      db.queueRpc('create_order_with_items', { data: { id: 'order-1' } });
+      queueOrderSingle(db);
+
+      await createOrder(
+        db.client,
+        { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }], amount: 10 },
+        'actor-1',
+      );
+
+      const rpcPayload = db.lastCall('create_order_with_items')?.payload as Record<string, unknown>;
+      assert.equal(rpcPayload.p_audit_request_id, null);
+      assert.equal(rpcPayload.p_audit_ip_address, null);
+      assert.equal(rpcPayload.p_audit_user_agent, null);
+    });
+
     it('surfaces the database error message when creation fails', async () => {
       const db = createFakeSupabase();
       db.queueRpc('create_order_with_items', { data: null, error: { message: 'insufficient stock' } });
@@ -255,6 +305,23 @@ describe('orders.service', () => {
       assert.equal(rpcPayload.p_is_custom, true);
       assert.equal(rpcPayload.p_customer_id, 'customer-1');
       assert.equal(rpcPayload.p_due_date, '2026-09-30');
+    });
+
+    it('carries the request context into the replace RPC, which audits the edit', async () => {
+      const db = createFakeSupabase();
+      // Read before the RPC to merge, and again after it to return the new version.
+      queueOrderSingle(db);
+      db.queueRpc('replace_order_with_items', { data: { id: 'order-1' } });
+      queueOrderSingle(db);
+
+      await runWithRequestContext(REQUEST_CONTEXT, () =>
+        updateOrder(db.client, 'order-1', { lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }] }, 'actor-1', version),
+      );
+
+      const rpcPayload = db.lastCall('replace_order_with_items')?.payload as Record<string, unknown>;
+      assert.equal(rpcPayload.p_audit_request_id, 'req-test-1');
+      assert.equal(rpcPayload.p_audit_ip_address, '203.0.113.9');
+      assert.equal(rpcPayload.p_audit_user_agent, 'till/1.0');
     });
 
     it('maps a lost race on the RPC path to a 409 carrying both versions', async () => {
@@ -387,6 +454,20 @@ describe('orders.service', () => {
       db.queueRpc('delete_order_with_items', { data: null, error: { message: 'order is locked' } });
 
       await assertAppError(() => deleteOrder(db.client, 'order-1', 'actor-1'), 404, 'ORDER_DELETE_FAILED', 'order is locked');
+    });
+
+    it('carries the request context into the delete RPC, so the last record of the order is attributable', async () => {
+      // The order row is gone once this returns. If the audit row does not name the
+      // request, nothing does.
+      const db = createFakeSupabase();
+      db.queueRpc('delete_order_with_items', { data: { id: 'order-1' } });
+
+      await runWithRequestContext(REQUEST_CONTEXT, () => deleteOrder(db.client, 'order-1', 'actor-1'));
+
+      const rpcPayload = db.lastCall('delete_order_with_items')?.payload as Record<string, unknown>;
+      assert.equal(rpcPayload.p_audit_request_id, 'req-test-1');
+      assert.equal(rpcPayload.p_audit_ip_address, '203.0.113.9');
+      assert.equal(rpcPayload.p_audit_user_agent, 'till/1.0');
     });
   });
 

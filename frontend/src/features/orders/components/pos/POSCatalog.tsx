@@ -54,10 +54,10 @@ export function POSCatalog({
                 type="button"
                 onClick={() => onCategoryChange(cat)}
                 className={cn(
-                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em] transition-all',
+                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em]',
                   activeCategory === cat
-                    ? 'border-macos-blue bg-macos-blue text-white shadow-[0_6px_16px_rgb(0_122_255/0.22)]'
-                    : 'border-white/50 bg-white/60 text-macos-text-muted hover:border-macos-blue/30 hover:text-macos-blue dark:border-white/10 dark:bg-white/8 dark:text-zinc-400 dark:hover:text-macos-cyan',
+                    ? 'border-macos-blue bg-macos-blue text-white'
+                    : 'bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-[var(--app-border-control)] hover:text-macos-blue dark:bg-[#3d3d3f] dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >
                 {cat}
@@ -75,21 +75,21 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border border-white/60 bg-white/82 p-2 text-left shadow-[var(--shadow-card)] backdrop-blur-xl transition-colors hover:border-macos-blue/35 dark:border-white/10 dark:bg-zinc-900/82 dark:hover:border-macos-blue-dark/35',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left hover:border-[var(--app-border-control)] dark:bg-[#19191c]',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
-            <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border border-black/5 bg-black/[0.03] dark:border-white/10 dark:bg-white/5 xl:h-32">
+            <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border bg-[#f7f7f7] dark:bg-[#373739] xl:h-32">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex flex-col items-center text-macos-text-muted transition-colors group-hover:text-macos-blue dark:text-zinc-600 dark:group-hover:text-macos-cyan">
+                <div className="flex flex-col items-center text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-600 dark:group-hover:text-macos-cyan">
                   <ShoppingBag className="h-9 w-9 stroke-1" aria-hidden="true" />
                   <span className="mt-1 text-[8px] font-mono uppercase tracking-widest">No image</span>
                 </div>
               )}
               <div className="absolute right-1.5 top-1.5">
-                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'blue'} className="bg-white/80 dark:bg-zinc-950/70">
+                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'blue'} className="bg-[var(--app-surface-raised)] dark:bg-[#141416]">
                   {product.stock} stock
                 </Badge>
               </div>

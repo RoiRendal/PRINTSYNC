@@ -1,21 +1,11 @@
-export interface AuditLogRecord {
-  id: string;
-  actorId: string | null;
-  action: string;
-  entityType: string;
-  entityId: string | null;
-  metadata: Record<string, unknown>;
-  ipAddress: string | null;
-  userAgent: string | null;
-  createdAt: string;
-}
+// The audit-log record and its list result are the shared contract; re-export them
+// so the viewer and the API cannot drift. The action/entity unions are frontend-only
+// (they widen to `string` because the API may emit codes this client does not know).
+import type { AuditLogRecord, ListAuditLogsResult } from '@printsync/shared-types';
 
-export interface AuditLogListResult {
-  items: AuditLogRecord[];
-  page: number;
-  pageSize: number;
-  total: number;
-}
+export type { AuditLogRecord, ListAuditLogsResult };
+
+export type AuditLogListResult = ListAuditLogsResult;
 
 export type AuditLogAction =
   | 'order.created'

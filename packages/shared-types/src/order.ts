@@ -24,6 +24,18 @@ export interface Order {
   quantity: number;
   status: OrderStatus;
   date: string;
+  /**
+   * The row's `updated_at`, handed to the client so its next save can name the
+   * version it was working from. Passed back verbatim — it is a version token, not
+   * a date to be parsed and re-formatted, and rounding it to milliseconds would
+   * make every save look like a conflict.
+   *
+   * This field was missing here while `OrderRecord` in the API and the frontend's
+   * local `Order` both declared it. The type is the contract, and the contract was
+   * silent about the one field the compare-and-swap on the server depends on.
+   * `backend/tests/unit/contract.test.ts` is what stops that happening again.
+   */
+  updatedAt: string;
   amount: number;
   totalPaid: number;
   balanceDue: number;
@@ -32,7 +44,15 @@ export interface Order {
   isCustom: boolean;
 }
 
-export type CreateOrder = Omit<Order, 'id' | 'date' | 'totalPaid' | 'balanceDue' | 'item' | 'quantity'> & {
+/**
+ * `updatedAt` is omitted along with the other server-owned fields: a client
+ * creating an order has no version to name yet. It comes back on the created row
+ * and is echoed on every update from then on.
+ */
+export type CreateOrder = Omit<
+  Order,
+  'id' | 'date' | 'updatedAt' | 'totalPaid' | 'balanceDue' | 'item' | 'quantity'
+> & {
   lineItems: OrderLineItem[];
 };
 
@@ -44,6 +64,15 @@ export interface OrderPayment {
   amount: number;
   method: 'Cash' | 'Card' | 'Other';
   notes: string;
+  /**
+   * Who recorded the payment. Optional because the API omits the key when the row
+   * has no `created_by` — `JSON.stringify` drops an `undefined` value.
+   *
+   * Found by the contract guard in `backend/tests/unit/contract.test.ts`, and the
+   * second instance of the same defect as `Order.updatedAt`: the API sent a field
+   * the contract never mentioned.
+   */
+  createdBy?: string;
   createdAt: string;
 }
 

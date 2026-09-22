@@ -40,7 +40,18 @@ orderPaymentsRouter.post('/', authenticate, requirePermission('order_payments.cr
   response.status(201).json({ data: payment });
 });
 
-orderPaymentsRouter.delete('/:id', authenticate, requirePermission('order_payments.create'), async (request, response) => {
+/**
+ * Gated on `order_payments.delete`, not `order_payments.create`.
+ *
+ * Deleting a payment moves the order's balance due, so it is a bookkeeping
+ * correction rather than a checkout action. While this checked `.create`, every
+ * staff member who could take a payment could also erase one — there was no way
+ * to grant one without the other. `payments.void` has always worked this way.
+ *
+ * Requires `20260921000300_order_payments_delete_permission.sql` to be applied
+ * first: without the grant, this 403s for everyone including admins.
+ */
+orderPaymentsRouter.delete('/:id', authenticate, requirePermission('order_payments.delete'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const id = request.params.id;
   if (!id || Array.isArray(id)) throw new AppError(400, 'INVALID_PAYMENT_ID', 'The payment id is invalid.');

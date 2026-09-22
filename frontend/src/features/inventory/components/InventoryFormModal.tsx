@@ -18,11 +18,13 @@ interface InventoryFormModalProps {
 }
 
 const emptyForm: CreateInventoryItem = {
+  sku: '',
   name: '',
   category: '',
   stock: 0,
   reorderLevel: 10,
   price: 0,
+  costPrice: 0,
   imageUrl: '',
 };
 
@@ -41,11 +43,13 @@ export function InventoryFormModal({
     if (isOpen) {
       if (editingItem) {
         setFormData({
+          sku: editingItem.sku,
           name: editingItem.name,
           category: editingItem.category,
           stock: editingItem.stock,
           reorderLevel: editingItem.reorderLevel,
           price: editingItem.price,
+          costPrice: editingItem.costPrice,
           imageUrl: editingItem.imageUrl || '',
         });
       } else {
@@ -76,7 +80,7 @@ export function InventoryFormModal({
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Item Image</label>
-            <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border border-white/45 bg-white/50 dark:border-white/10 dark:bg-white/6">
+            <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]">
               {formData.imageUrl ? (
                 <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
               ) : (
@@ -121,13 +125,13 @@ export function InventoryFormModal({
         </div>
 
         {mutationError && (
-          <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-3 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+          <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-3 text-xs font-medium text-red-700 dark:text-red-300">
             <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{mutationError}</span>
           </div>
         )}
 
-        <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10">
+        <div className="flex gap-3 border-t pt-4">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button type="submit" fullWidth>{editingItem ? 'Save Changes' : 'Create Item'}</Button>
         </div>
@@ -147,7 +151,7 @@ export function DeleteConfirmModal({ isOpen, item, onClose, onConfirm }: DeleteC
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Confirm Deletion" maxWidth="max-w-sm">
       <div className="space-y-4">
-        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-4 text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-4 text-red-700 dark:text-red-300">
           <AlertTriangle className="h-6 w-6 shrink-0" aria-hidden="true" />
           <p className="text-xs font-medium">Are you sure you want to delete <span className="font-bold">{item?.name}</span>? This action cannot be undone.</p>
         </div>

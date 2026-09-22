@@ -99,10 +99,10 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
     <button
       type="button"
       onClick={() => setExpanded(!expanded)}
-      className="text-left text-[10px] text-macos-text-muted transition-colors hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
+      className="text-left text-[10px] text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
     >
       {expanded ? (
-        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-black/5 p-2 text-[10px] dark:bg-white/5">
+        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 text-[10px] dark:bg-[#373739]">
           {JSON.stringify(metadata, null, 2)}
         </pre>
       ) : (
@@ -165,7 +165,7 @@ export default function AuditLogPage() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Activity Overview</CardTitle>
               <CardDescription>Summary of tracked events.</CardDescription>
@@ -176,9 +176,9 @@ export default function AuditLogPage() {
                 { label: 'Current Page', value: `${page} / ${totalPages || 1}`, tone: 'purple' as const },
                 { label: 'Shown', value: items.length, tone: 'green' as const },
               ].map(({ label, value, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#39393b]">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <ScrollText className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
@@ -192,7 +192,7 @@ export default function AuditLogPage() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card variant="elevated" padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Event Log</CardTitle>
                 <CardDescription>{filteredItems.length} matching events across the system.</CardDescription>
@@ -217,7 +217,7 @@ export default function AuditLogPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+              <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -267,7 +267,7 @@ export default function AuditLogPage() {
               </TableContainer>
 
               {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t border-black/5 px-4 py-3 dark:border-white/10">
+                <div className="flex items-center justify-between border-t px-4 py-3">
                   <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">
                     Showing {items.length} of {total} events
                   </span>

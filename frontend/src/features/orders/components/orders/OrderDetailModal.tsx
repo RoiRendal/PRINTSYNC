@@ -42,7 +42,7 @@ function printDocument(document: PrintableDocument) {
 
 function ImageFallback({ label }: { label: string }) {
   return (
-    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed border-black/10 bg-black/[0.03] text-macos-text-muted dark:border-white/10 dark:bg-white/5 dark:text-zinc-500">
+    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[#f7f7f7] text-macos-text-muted dark:bg-[#373739] dark:text-zinc-500">
       <ImageIcon className="h-8 w-8 opacity-35" aria-hidden="true" />
       <p className="px-3 text-center text-[10px] font-bold uppercase tracking-[0.18em]">{label}</p>
     </div>
@@ -59,6 +59,11 @@ function getOrderLineItems(order: Order): OrderLineItem[] {
       name,
       quantity: order.quantity,
       designId: order.designId,
+      // A legacy order names its items in one string and carries no per-line
+      // price, so there is none to recover here; the money shown comes from the
+      // order's own `amount`. The field is required by the contract, so it is
+      // stated as zero rather than omitted.
+      unitPrice: 0,
     }));
 }
 
@@ -151,7 +156,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
     >
       {order && (
         <div className="space-y-6">
-          <div className="flex flex-col gap-4 border-b border-black/5 pb-4 dark:border-white/10 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Badge variant={getStatusBadgeVariant(order.status)} size="md" className="mb-2">{order.status}</Badge>
               <h3 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{order.customer}</h3>
@@ -184,7 +189,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                 <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                   <ClipboardList className="h-3 w-3" aria-hidden="true" /> Job Specifications
                 </h4>
-                <Card variant="glass" padding="sm" className="divide-y divide-black/5 dark:divide-white/10">
+                <Card variant="raised" padding="sm" className="divide-y">
                   <div className="flex items-start justify-between gap-4 py-2 text-xs">
                     <span className="pt-1 text-macos-text-muted dark:text-zinc-500">Item</span>
                     <div className="space-y-1 text-right font-bold">
@@ -194,7 +199,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                           type="button"
                           onClick={() => setSelectedLineItemIndex(index)}
                           className={cn(
-                            'block w-full cursor-pointer text-right underline-offset-2 transition-colors hover:underline',
+                            'block w-full cursor-pointer text-right underline-offset-2 hover:underline',
                             selectedLineItemIndex === index ? 'text-macos-blue dark:text-macos-cyan' : 'text-macos-text dark:text-zinc-100',
                           )}
                         >
@@ -237,7 +242,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                     <MessageSquare className="h-3 w-3" aria-hidden="true" /> Production Notes
                   </h4>
-                  <div className="rounded-[var(--radius-card)] border border-white/45 bg-white/50 p-3 text-xs italic text-macos-text dark:border-white/10 dark:bg-white/6 dark:text-zinc-300">
+                  <div className="rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 text-xs italic text-macos-text dark:bg-[#39393b] dark:text-zinc-300">
                     &ldquo;{order.notes}&rdquo;
                   </div>
                 </section>
@@ -254,7 +259,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                     <div className="space-y-1.5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
                       {activeLineInventoryItem?.imageUrl ? (
-                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]">
                           <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
                         </div>
                       ) : <ImageFallback label="No product image" />}
@@ -262,9 +267,9 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                     <div className="space-y-1.5">
                       <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Custom design</p>
                       {activeLineItemDesign ? (
-                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                        <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
-                          <div className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white backdrop-blur-md">
+                          <div className="absolute right-2 top-2 rounded-full bg-[#666666] px-2 py-1 text-[8px] font-bold uppercase tracking-widest text-white">
                             Ref: {activeLineItem?.designId || order.designId}
                           </div>
                         </div>
@@ -275,7 +280,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   <div className="space-y-1.5">
                     <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Product</p>
                     {activeLineInventoryItem?.imageUrl ? (
-                      <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] border border-black/5 bg-white/50 dark:border-white/10 dark:bg-white/6">
+                      <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]">
                         <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
                       </div>
                     ) : <ImageFallback label="No product image" />}
@@ -286,12 +291,12 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           </div>
 
           {selectedOrderIsCustom && (
-            <Card variant="glass" padding="md" className="space-y-4">
+            <Card variant="raised" padding="md" className="space-y-4">
               <h4 className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
               {paymentError && (
-                <div className="rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+                <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:text-red-300">
                   {paymentError}
                 </div>
               )}
@@ -302,9 +307,9 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
               ) : (
                 <div className="space-y-2">
                   {payments.map((payment) => (
-                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-2.5 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                    <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 dark:bg-[#39393b]">
                       <div className="flex items-center gap-2">
-                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-macos-green/14 text-macos-green' : payment.method === 'Card' ? 'bg-macos-blue/14 text-macos-blue' : 'bg-macos-purple/14 text-macos-purple')}>
+                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-macos-green' : payment.method === 'Card' ? 'bg-[var(--app-tint-blue)] text-macos-blue' : 'bg-[var(--app-tint-purple)] text-macos-purple')}>
                           {payment.method[0]}
                         </span>
                         <div>
@@ -318,7 +323,7 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                 </div>
               )}
 
-              <form onSubmit={handleRecordPayment} className="space-y-2 border-t border-black/5 pt-3 dark:border-white/10">
+              <form onSubmit={handleRecordPayment} className="space-y-2 border-t pt-3">
                 <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">Record Payment</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-[11px]" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
@@ -335,20 +340,20 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
           )}
 
           {order.dueDate && new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-red-700 dark:text-red-300">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               This order is overdue (due {order.dueDate}). Prioritize completion or update the customer.
             </div>
           )}
 
           {selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border border-macos-orange/20 bg-macos-orange/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700 dark:border-macos-orange/25 dark:bg-macos-orange/15 dark:text-orange-300">
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-orange)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               Balance due of {currencySymbol}{balanceDue.toFixed(2)} remains unpaid. Confirm payment before delivery.
             </div>
           )}
 
-          <Card variant="glass" padding="md">
+          <Card variant="raised" padding="md">
             <h4 className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Update Work Phase</h4>
             <div className="flex items-center gap-3">
               <Button

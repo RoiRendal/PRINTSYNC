@@ -10,7 +10,7 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, GlassCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
@@ -23,7 +23,7 @@ export function DesignRepository() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
-  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [] });
+  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [], assetType: null, assetSizeBytes: null });
   const [editDesignData, setEditDesignData] = useState<Design | null>(null);
   const [tagInput, setTagInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
@@ -61,7 +61,7 @@ export function DesignRepository() {
         assetSizeBytes = uploaded.assetSizeBytes;
       }
       await addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
-      setNewDesign({ name: '', category: '', imageUrl: '', tags: [] });
+      setNewDesign({ name: '', category: '', imageUrl: '', tags: [], assetType: null, assetSizeBytes: null });
       setSelectedAsset(null);
       setIsAddModalOpen(false);
     } catch (error: unknown) {
@@ -169,7 +169,7 @@ export function DesignRepository() {
     <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
       {mutationError && (
-        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border border-macos-red/20 bg-macos-red/10 p-3 text-xs font-medium text-red-700 dark:border-macos-red/25 dark:bg-macos-red/15 dark:text-red-300">
+        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-3 text-xs font-medium text-red-700 dark:text-red-300">
           <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
           <span>{mutationError}</span>
           <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
@@ -177,7 +177,7 @@ export function DesignRepository() {
       )}
 
       <Card variant="elevated" padding="none" className="overflow-hidden">
-        <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+        <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
           <div>
 
             <CardTitle>Design Repository</CardTitle>
@@ -196,14 +196,14 @@ export function DesignRepository() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {filteredDesigns.map((design) => (
                 <div key={design.id}>
-                  <GlassCard className="group overflow-hidden p-0">
-                    <div className="relative aspect-square overflow-hidden bg-black/[0.03] dark:bg-white/5">
+                  <SurfaceCard className="group overflow-hidden p-0">
+                    <div className="relative aspect-square overflow-hidden bg-[#f7f7f7] dark:bg-[#373739]">
                       <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/45 opacity-0 backdrop-blur-[2px] transition-opacity group-hover:opacity-100">
-                        <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
+                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[var(--app-scrim)] opacity-0 group-hover:opacity-100">
+                        <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
                           <Eye className="h-4 w-4" aria-hidden="true" />
                         </Button>
-                        <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-white/24 text-white ring-white/20 hover:bg-white/34">
+                        <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
                           <Download className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
@@ -225,12 +225,12 @@ export function DesignRepository() {
                         {design.tags.length > 3 && <Badge variant="neutral">+{design.tags.length - 3}</Badge>}
                       </div>
                     </div>
-                  </GlassCard>
+                  </SurfaceCard>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="rounded-[var(--radius-card)] border border-dashed border-black/10 py-20 dark:border-white/10">
+            <div className="rounded-[var(--radius-card)] border border-dashed py-20">
               <EmptyState title="No designs found" message="Try adjusting your search or upload a new design." icon={<ImageIcon className="h-12 w-12 opacity-15" aria-hidden="true" />} className="gap-3" />
             </div>
           )}
@@ -249,17 +249,17 @@ export function DesignRepository() {
             <div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())} /><Button type="button" variant="secondary" onClick={handleAddTag}>Add</Button></div>
             <div className="flex flex-wrap gap-1.5">{newDesign.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div>
           </div>
-          <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10"><Button type="button" variant="secondary" fullWidth onClick={() => setIsAddModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading} leftIcon={<UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />}>{isUploading ? 'Uploading...' : 'Upload Design'}</Button></div>
+          <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsAddModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading} leftIcon={<UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />}>{isUploading ? 'Uploading...' : 'Upload Design'}</Button></div>
         </form>
       </Modal>
 
       <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={selectedDesign?.name || 'Design View'} maxWidth="max-w-2xl">
         {selectedDesign && (
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border border-white/45 bg-white/50 dark:border-white/10 dark:bg-white/6"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
+            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
               <div><h4 className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="purple" className="mt-2">{selectedDesign.category}</Badge></div>
-              <GlassCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Reference ID</p><p className="font-mono text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></GlassCard>
+              <SurfaceCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Reference ID</p><p className="font-mono text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></SurfaceCard>
               <div className="space-y-2"><h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Tags</h4><div className="flex flex-wrap gap-1.5">{selectedDesign.tags.map((tag) => <Badge key={tag} variant="gray">{tag}</Badge>)}</div></div>
               <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')} leftIcon={<Download className="h-4 w-4" aria-hidden="true" />}>Download Assets</Button>
             </div>
@@ -274,14 +274,14 @@ export function DesignRepository() {
             <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
             <label className="block space-y-1.5"><span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Image URL</span><Input type="text" value={editDesignData.imageUrl} onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })} /></label>
             <div className="space-y-2"><span className="block text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Tags</span><div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={editTagInput} onChange={(e) => setEditTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())} /><Button type="button" variant="secondary" onClick={handleEditAddTag}>Add</Button></div><div className="flex flex-wrap gap-1.5">{editDesignData.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeEditTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div></div>
-            <div className="flex gap-3 border-t border-black/5 pt-4 dark:border-white/10"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth>Save Changes</Button></div>
+            <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth>Save Changes</Button></div>
           </form>
         )}
       </Modal>
 
       <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Deletion">
         <div className="space-y-4 py-2 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border border-macos-red/20 bg-macos-red/12 text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border bg-[var(--app-tint-red)] text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
           <div className="space-y-1"><h3 className="text-sm font-bold uppercase tracking-wider text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted dark:text-zinc-400">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
           <div className="flex gap-3 pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button type="button" variant="danger" fullWidth onClick={handleDelete}>Confirm Delete</Button></div>
         </div>

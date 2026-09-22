@@ -2,15 +2,20 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes, TableHTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export interface TableContainerProps extends HTMLAttributes<HTMLDivElement> {
-  glassHeader?: boolean;
-}
+/**
+ * `raisedHeader` used to live here — a boolean that was accepted and then
+ * discarded (`raisedHeader: _raisedHeader`, never read). Nothing passed it, and
+ * nothing could: the raised header it was meant to switch on no longer exists as
+ * a separate surface. A prop that silently does nothing is worse than no prop,
+ * because passing it looks like it worked.
+ */
+export type TableContainerProps = HTMLAttributes<HTMLDivElement>;
 
-export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({ className, glassHeader: _glassHeader, ...props }, ref) => (
+export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn(
-      'overflow-hidden rounded-[var(--radius-card)] border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
+      'overflow-hidden rounded-[var(--radius-card)] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
       className,
     )}
     {...props}
@@ -28,25 +33,25 @@ export const Table = forwardRef<HTMLTableElement, TableHTMLAttributes<HTMLTableE
 Table.displayName = 'Table';
 
 export const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('glass-toolbar text-macos-text-muted dark:text-zinc-400', className)} {...props} />
+  <thead ref={ref} className={cn('surface-toolbar text-macos-text-muted dark:text-zinc-400', className)} {...props} />
 ));
 
 TableHeader.displayName = 'TableHeader';
 
 export const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn('divide-y divide-gray-100 dark:divide-white/10', className)} {...props} />
+  <tbody ref={ref} className={cn('divide-y', className)} {...props} />
 ));
 
 TableBody.displayName = 'TableBody';
 
 export const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <tfoot ref={ref} className={cn('border-t border-gray-100 bg-gray-50/70 dark:border-white/10 dark:bg-white/5', className)} {...props} />
+  <tfoot ref={ref} className={cn('border-t border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)]', className)} {...props} />
 ));
 
 TableFooter.displayName = 'TableFooter';
 
 export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTableRowElement>>(({ className, ...props }, ref) => (
-  <tr ref={ref} className={cn('transition-colors duration-150 hover:bg-macos-blue/5 dark:hover:bg-macos-blue-dark/10', className)} {...props} />
+  <tr ref={ref} className={cn(' hover:bg-[var(--app-state-hover)]', className)} {...props} />
 ));
 
 TableRow.displayName = 'TableRow';

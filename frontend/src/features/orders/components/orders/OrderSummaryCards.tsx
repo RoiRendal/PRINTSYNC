@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import { CheckCircle2, ClipboardList, Eye, Printer } from 'lucide-react';
-import { GlassCard } from '../../../../shared/components/ui';
+import { SurfaceCard } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import type { Order } from '../../types';
 
@@ -14,24 +14,24 @@ interface SummaryCardProps {
 }
 
 const summaryToneClasses: Record<SummaryTone, string> = {
-  purple: 'from-macos-purple/20 text-purple-700 ring-macos-purple/25 dark:text-purple-300',
-  blue: 'from-macos-blue/20 text-macos-blue ring-macos-blue/25 dark:text-macos-cyan',
-  green: 'from-macos-green/20 text-green-700 ring-macos-green/25 dark:text-green-300',
-  orange: 'from-macos-orange/20 text-orange-700 ring-macos-orange/25 dark:text-orange-300',
+  purple: 'text-purple-700 ring-[var(--app-border-hairline)] dark:text-purple-300',
+  blue: 'text-macos-blue ring-[var(--app-border-hairline)] dark:text-macos-cyan',
+  green: 'text-green-700 ring-[var(--app-border-hairline)] dark:text-green-300',
+  orange: 'text-orange-700 ring-[var(--app-border-hairline)] dark:text-orange-300',
 };
 
 function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
   return (
     <div>
-      <GlassCard className="flex items-center justify-between gap-3 p-3 md:p-4">
+      <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-gradient-to-br to-white/50 shadow-[var(--shadow-card)] ring-1 dark:to-white/5', summaryToneClasses[tone])}>
+          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] ring-1', summaryToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
           <span className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">{label}</span>
         </div>
         <span className="font-mono text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
-      </GlassCard>
+      </SurfaceCard>
     </div>
   );
 }

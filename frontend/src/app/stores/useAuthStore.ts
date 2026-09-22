@@ -26,6 +26,22 @@ interface AuthState {
 /** Maps a backend session payload onto the RBAC user used across the UI. */
 const toAuthUser = (user: Awaited<ReturnType<typeof usersApi.session>>): AuthUser | null => {
   if (!user) return null;
+  /**
+   * `users.manage` is the admin marker, not `users.read`.
+   *
+   * The two keys are separate on purpose — the API gates `GET /users` on
+   * `users.read` and the write routes on `users.manage` — but this app models two
+   * roles, and the line between them is "can change things", so `manage` is the
+   * right discriminator here.
+   *
+   * Known limitation, and the reason `normalizeAccess` is called just below: a
+   * hypothetical read-only role holding `users.read` without `users.manage` would
+   * be labelled `staff`, and `normalizeAccess` clamps a `staff` session to
+   * `STAFF_PAGE_ACCESS`, which does not list `users` — so the grant would be
+   * stripped and the Users page would disappear. Adding a third role means
+   * teaching `RbacRole`, `normalizeAccess` and the page-access lists about it;
+   * it is not a one-line change.
+   */
   const role: RbacRole = user.permissions.includes('users.manage') ? 'admin' : 'staff';
   // Backend permissions look like `orders.read`; the page key is the prefix.
   const access = user.permissions

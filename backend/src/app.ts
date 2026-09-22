@@ -7,6 +7,8 @@ import helmet from 'helmet';
 import { env } from './config/env.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { notFound } from './middleware/notFound.js';
+import { requestId } from './middleware/requestId.js';
+import { apiRateLimit } from './middleware/apiRateLimit.js';
 import { authRouter } from './routes/auth.routes.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { brandingRouter } from './routes/branding.routes.js';
@@ -102,9 +104,60 @@ function contentSecurityPolicyDirectives() {
 export function createApp() {
   const app = express();
 
+  /**
+   * Trust exactly one proxy hop — Render's load balancer, which is the only thing
+   * that ever sits in front of this process (see `render.yaml`: one service, one
+   * address).
+   *
+   * Without this, `request.ip` is the *proxy's* address for every request, so two
+   * things silently stop working:
+   *
+   *   - `audit_logs.ip_address` records the load balancer for every actor, which
+   *     makes the one field that could attribute an action to a person useless.
+   *   - `express-rate-limit` counts every login attempt in the world against a
+   *     single bucket, so ten wrong passwords anywhere lock out everyone.
+   *
+   * The value is the number `1`, not `true`. `true` trusts the whole
+   * `X-Forwarded-For` chain, which lets a client prepend its own entry and choose
+   * the address the limiter and the audit log see; `express-rate-limit` rejects
+   * `true` outright as a permissive setting. One hop means Express reads exactly
+   * the address Render appended and ignores anything the client sent.
+   *
+   * Consequence worth stating: this process must never be exposed directly. With
+   * no proxy in front, a client could set the header itself and forge the address.
+   */
+  app.set('trust proxy', 1);
+
   app.disable('x-powered-by');
+
+  /**
+   * First, before anything that could log or start a response.
+   *
+   * This mints (or adopts) the request id and puts it, the client address and the
+   * user agent into the request context — which is what makes the id appear on
+   * every log line for this request without a single call site mentioning it, and
+   * what lets an audit row record where the action came from.
+   *
+   * It must run after `trust proxy` above, or `request.ip` would be the load
+   * balancer's address and every audit row would name the proxy.
+   */
+  app.use(requestId);
+
   app.use(helmet({ contentSecurityPolicy: { directives: contentSecurityPolicyDirectives() } }));
   app.use(cors({ origin: env.FRONTEND_ORIGIN, credentials: true }));
+
+  /**
+   * The API-wide ceiling, registered before the body parsers.
+   *
+   * Before them on purpose: the point of a limit is to stop work rather than to
+   * do it and then decline, and a refused request should not have had a body read
+   * into memory first. An image upload is the case that matters — refusing one
+   * after parsing 8 MB would be the opposite of protection.
+   *
+   * `/api/v1/events`, `/api/v1/health` and `/api/v1/ready` are exempt; see
+   * `middleware/apiRateLimit.ts` for why each one has to be.
+   */
+  app.use('/api/v1', apiRateLimit);
 
   // Image uploads arrive as a base64 data URL inside a JSON body, and base64 is
   // roughly a third larger than the bytes it encodes. A 5 MB design asset is

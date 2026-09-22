@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'motion/react';
 import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
 import { useTheme } from '../providers/ThemeProvider';
 import { useNotifications } from '../providers/NotificationProvider';
@@ -112,22 +111,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     .toUpperCase();
 
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans transition-colors duration-300 dark:text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,rgba(90,200,250,0.18),transparent_30rem),radial-gradient(circle_at_85%_18%,rgba(175,82,222,0.13),transparent_28rem),radial-gradient(circle_at_55%_95%,rgba(0,122,255,0.10),transparent_34rem)]" />
-
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans dark:text-zinc-100">
       {/* Global Top Header */}
-      <header className="glass-toolbar relative z-[60] flex h-12 shrink-0 items-center justify-between px-3 lg:px-5">
+      <header className="relative z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-5">
         <div className="flex min-w-0 items-center gap-3">
           <div
             className="flex min-w-0 items-center gap-2 overflow-hidden whitespace-nowrap rounded-full px-1.5 py-1"
             title={APP_NAME}
           >
             {logoFailed ? (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)]">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/70 shadow-[var(--shadow-card)] ring-1 ring-black/5 dark:bg-white/10 dark:ring-white/10">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#f9f9fa] ring-1 ring-[var(--app-border-hairline)] dark:bg-[#4e4e50]">
                 <img
                   src={effectiveBusinessLogoUrl}
                   alt=""
@@ -142,9 +139,6 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               <h1 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white">
                 {businessDisplayName}
               </h1>
-              <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500 sm:block">
-                {APP_NAME} Workspace
-              </p>
             </div>
           </div>
         </div>
@@ -181,9 +175,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 </span>
               )}
             </Button>
-            <AnimatePresence>
-              {isNotificationsOpen && <NotificationPanel onClose={() => setIsNotificationsOpen(false)} />}
-            </AnimatePresence>
+            {isNotificationsOpen && <NotificationPanel onClose={() => setIsNotificationsOpen(false)} />}
           </div>
 
           <div
@@ -193,10 +185,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           >
             <button
               type="button"
-              className="flex cursor-pointer items-center gap-2 rounded-full border border-white/40 bg-white/42 py-1 pl-1 pr-2 text-left shadow-sm transition-all duration-200 hover:bg-white/70 active:scale-[0.98] dark:border-white/10 dark:bg-white/8 dark:hover:bg-white/14"
+              className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left hover:bg-[#f9f9fa] active:scale-[0.98]"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-macos-blue to-macos-cyan text-[10px] font-bold text-white shadow-[0_8px_22px_rgb(0_122_255/0.25)]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
@@ -204,17 +196,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               </span>
             </button>
 
-            <AnimatePresence>
-              {isProfileOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                  className="glass-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="border-b border-black/5 px-4 py-3 dark:border-white/10">
+            {isProfileOpen && (
+              <div
+                className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                  <div className="border-b px-4 py-3">
                     <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
                       {currentUser?.name ?? 'Admin'}
                     </p>
@@ -225,19 +212,36 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   <button
                     type="button"
                     onClick={logout}
-                    className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-macos-red transition-colors hover:bg-macos-red/10"
+                    /* `text-macos-red` (#ff3b30) measured 3.55:1 at rest on the
+                       raised panel and 3.01:1 on the red hover tint — and 3.93 /
+                       3.37 in dark. This label is 12px, so it needs the full
+                       4.5:1, not the 3:1 large-text allowance. red-700 / red-300
+                       measure 6.42 / 5.45 and 7.26 / 6.24 (browser-resolved). */
+                    className="w-full cursor-pointer px-4 py-2.5 text-left text-xs font-semibold text-red-700 hover:bg-[var(--app-tint-red)] dark:text-red-300"
                   >
                     Logout
                   </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Page Toolbar */}
-      <div className="glass-toolbar relative z-[40] flex h-11 shrink-0 items-center justify-between px-3 lg:px-4">
+      {/* Page Toolbar. Inset from the window like the sidebar and the body, and
+          fully outlined — it shares one fill with the header, so the outline is
+          the only thing that makes it read as a bar of its own. The corner is one
+          step smaller than the sidebar's: at this height that radius would round
+          the ends into a capsule instead of a corner. The 8px above it is the same
+          8px the sidebar and the body sit below it — one rhythm, three sections,
+          so these three values have to move together.
+
+          Its right margin tracks the content area's right inset at each
+          breakpoint (12 / 20 / 24), so the bar's right edge lands on the body
+          card's right edge instead of 12px past it. The horizontal padding is a
+          flat 8px — not for symmetry, but because that is the number that puts
+          the chevron's left edge on the header logo's left edge (both at x=30 at
+          1440). Changing it moves the chevron off that line. */}
+      <div className="relative z-[40] ml-3 mr-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mr-5 xl:mr-6">
         <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
@@ -245,16 +249,16 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             onClick={toggleCollapse}
             title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-            className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="h-8 w-8 rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
           >
-            {isCollapsed ? <PanelLeft className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </Button>
           <div className="min-w-0">
-            <span className="block truncate text-base font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
+            <span className="block truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
 
           </div>
         </div>
-        <ConnectionStatus className="shrink-0" />
+        <ConnectionStatus className="shrink-0 px-2 py-0.5 text-[9px]" />
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}
@@ -267,20 +271,23 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             isCollapsed && 'hidden lg:flex',
           )}
         />
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-40 bg-black/35 backdrop-blur-[2px] lg:hidden"
-              onClick={toggleCollapse}
-            />
-          )}
-        </AnimatePresence>
-        <main className="flex flex-1 flex-col overflow-hidden bg-transparent transition-colors duration-300">
-          <div className="flex-1 overflow-y-auto p-3 scrollbar-hide lg:p-5 xl:p-6">
-            <section className="min-h-full rounded-[1.5rem] border border-white/65 bg-white/86 p-3 shadow-[var(--shadow-card)] backdrop-blur-sm dark:border-white/10 dark:bg-zinc-950/82 lg:p-4">
+        {!isCollapsed && (
+          <div
+            className="absolute inset-0 z-40 bg-[var(--app-scrim)] lg:hidden"
+            onClick={toggleCollapse}
+          />
+        )}
+        <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
+          {/* The left and top insets are deliberately smaller than the other two:
+              the sidebar column and the page body read as one unit under the
+              toolbar, so those two gaps are seams rather than frame margins.
+              Top is 8px — the same 8px that sits above the toolbar. Left is 4px,
+              and the sidebar nav's own 4px makes the visible channel from a tab
+              highlight to this card's border 8px as well: one number on both
+              axes. Raising this back toward 12px is the first thing to try if the
+              two columns ever read as cramped rather than joined. */}
+          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pl-1 lg:pt-2 xl:p-6 xl:pl-1 xl:pt-2">
+            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>
           </div>

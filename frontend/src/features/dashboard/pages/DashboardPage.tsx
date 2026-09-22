@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { AlertTriangle, CheckCircle2, DollarSign, PackageSearch, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Badge,
@@ -11,7 +10,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  GlassCard,
+  SurfaceCard,
   Table,
   TableBody,
   TableCell,
@@ -37,27 +36,27 @@ interface StatCardProps {
 }
 
 const statToneClasses: Record<StatTone, string> = {
-  green: 'from-macos-green/20 text-green-700 ring-macos-green/20 dark:text-green-300',
-  blue: 'from-macos-blue/20 text-macos-blue ring-macos-blue/20 dark:text-macos-cyan',
-  red: 'from-macos-red/20 text-red-700 ring-macos-red/20 dark:text-red-300',
-  purple: 'from-macos-purple/20 text-purple-700 ring-macos-purple/20 dark:text-purple-300',
+  green: 'text-green-700 ring-[var(--app-border-hairline)] dark:text-green-300',
+  blue: 'text-macos-blue ring-[var(--app-border-hairline)] dark:text-macos-cyan',
+  red: 'text-red-700 ring-[var(--app-border-hairline)] dark:text-red-300',
+  purple: 'text-purple-700 ring-[var(--app-border-hairline)] dark:text-purple-300',
 };
 
 function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
   return (
     <div>
-      <GlassCard className="h-full p-4">
+      <SurfaceCard className="h-full p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
             <p className="mt-2 truncate font-mono text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{value}</p>
           </div>
-          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-gradient-to-br to-white/50 shadow-[var(--shadow-card)] ring-1 backdrop-blur-xl dark:to-white/5', statToneClasses[tone])}>
+          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[var(--app-surface-sub)] ring-1', statToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
-      </GlassCard>
+      </SurfaceCard>
     </div>
   );
 }
@@ -98,12 +97,12 @@ export default function Dashboard() {
 
           <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Dashboard</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
-            Monitor revenue, production flow, and material health from one Liquid Glass command center.
+            Monitor revenue, production flow, and material health from one command center.
           </p>
         </div>
         <Link
           to="/orders"
-          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+          className="inline-flex h-9 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
         >
           Open Pipeline
         </Link>
@@ -118,7 +117,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 xl:gap-5">
         <Card className="xl:col-span-3" padding="none" variant="elevated">
-          <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b border-black/5 p-4 dark:border-white/10">
+          <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b p-4">
             <div>
               <CardTitle>Production Pipeline</CardTitle>
               <CardDescription>Current print jobs awaiting completion or delivery.</CardDescription>
@@ -126,7 +125,7 @@ export default function Dashboard() {
             <Badge variant="blue" size="md">{productionQueue.length} active</Badge>
           </CardHeader>
           <CardContent>
-            <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+            <TableContainer className="rounded-none border-0 bg-transparent">
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
@@ -169,13 +168,13 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <GlassCard className="flex flex-col p-4 xl:p-5">
-          <div className="mb-4 flex items-start justify-between gap-3 border-b border-white/35 pb-3 dark:border-white/10">
+        <SurfaceCard className="flex flex-col p-4 xl:p-5">
+          <div className="mb-4 flex items-start justify-between gap-3 border-b pb-3">
             <div>
               <CardTitle>Stock Vitality</CardTitle>
               <CardDescription>Top materials by current availability.</CardDescription>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-macos-blue/12 text-macos-blue shadow-[var(--shadow-card)] dark:text-macos-cyan">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[0.9rem] bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan">
               <PackageSearch className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
@@ -192,12 +191,13 @@ export default function Dashboard() {
                     <span className="truncate text-macos-text dark:text-zinc-200">{item.name}</span>
                     <span className={cn('font-mono', isLow ? 'text-macos-red dark:text-red-300' : 'text-macos-text-muted dark:text-zinc-400')}>{item.stock}</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-black/5 shadow-inner dark:bg-white/10">
-                    <motion.div
-                      className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-gradient-to-r from-macos-blue to-macos-cyan')}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stockPercent}%` }}
-                      transition={{ type: 'spring', stiffness: 180, damping: 26 }}
+                  <div className="h-2 overflow-hidden rounded-full bg-[#f2f2f2] dark:bg-[#414143]">
+                    {/* The bar's width used to be the animated value. It is a
+                        real number, not decoration, so it becomes an inline
+                        style — dropping the props alone would leave it at 0. */}
+                    <div
+                      className={cn('h-full rounded-full', isLow ? 'bg-macos-red' : 'bg-macos-blue')}
+                      style={{ width: `${stockPercent}%` }}
                     />
                   </div>
                 </div>
@@ -206,16 +206,16 @@ export default function Dashboard() {
             {inventorySnapshot.length === 0 && <EmptyState title="No inventory items" message="Add materials to start monitoring stock vitality." className="py-8" />}
           </div>
 
-          <div className="mt-6 rounded-[var(--radius-card)] border border-white/45 bg-white/45 p-4 backdrop-blur-xl dark:border-white/10 dark:bg-white/6">
+          <div className="mt-6 rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-4 dark:bg-[#39393b]">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"
-              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white shadow-[0_8px_22px_rgb(0_122_255/0.24)] transition-all duration-200 hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
+              className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-white hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"
             >
               Restock Now
             </Link>
           </div>
-        </GlassCard>
+        </SurfaceCard>
       </div>
     </div>
   );

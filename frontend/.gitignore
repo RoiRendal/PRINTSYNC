@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Playwright output. Traces, screenshots and the HTML report are per-run
+# artefacts, never source — a committed trace is a large binary nobody can read
+# in a diff, and `playwright-report/` regenerates on every run.
+test-results/
+playwright-report/

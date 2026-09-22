@@ -195,7 +195,7 @@ export default function CustomersPage() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Directory Overview</CardTitle>
               <CardDescription>Current customer database snapshot.</CardDescription>
@@ -206,9 +206,9 @@ export default function CustomersPage() {
                 { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
                 { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#39393b]">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
@@ -222,7 +222,7 @@ export default function CustomersPage() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card variant="elevated" padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Customers</CardTitle>
                 <CardDescription>{filtered.length} matching customers in the directory.</CardDescription>
@@ -233,7 +233,7 @@ export default function CustomersPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+              <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -250,7 +250,7 @@ export default function CustomersPage() {
                       <TableRow key={customer.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-gradient-to-br from-macos-blue/16 to-white/45 text-[10px] font-bold text-macos-blue ring-1 ring-macos-blue/15 dark:to-white/5 dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-[var(--app-surface-sub)] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(customer.name)}
                             </div>
                             <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
@@ -297,7 +297,7 @@ export default function CustomersPage() {
             <Input type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} placeholder="Email address" />
             <Input value={form.notes} onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))} placeholder="Notes" />
           </div>
-          <div className="flex justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="flex justify-end gap-2 border-t pt-4">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>
             <Button type="submit" isLoading={isSaving}>{editingId ? 'Save Changes' : 'Add Customer'}</Button>
           </div>

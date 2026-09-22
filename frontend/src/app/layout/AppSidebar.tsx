@@ -1,5 +1,4 @@
 import { NavLink } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
@@ -11,18 +10,24 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
     : [];
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: isCollapsed ? 0 : 196 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+    <aside
+      /* The width used to be driven by a spring-animated width prop. The
+         library wrote it as an inline style, so the static equivalent is an
+         inline style too — a class would fight the responsive `hidden lg:flex`
+         the parent passes for the collapsed mobile case. */
+      style={{ width: isCollapsed ? 0 : 196 }}
       className={cn(
-        'glass-panel flex shrink-0 flex-col overflow-hidden border-r border-white/55 text-macos-text dark:border-white/10 dark:text-zinc-100',
-        'rounded-none lg:my-3 lg:ml-3 lg:rounded-[1.35rem]',
+        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface)] text-macos-text dark:text-zinc-100',
+        'rounded-none lg:mb-3 lg:ml-3 lg:rounded-[1.35rem]',
         className,
       )}
     >
       <div className="flex h-full min-w-[196px] flex-col">
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3 scrollbar-hide">
+        {/* The top padding is the sidebar's entire gap to the toolbar — the aside
+            itself carries no top margin — so it has to match the 8px above the
+            toolbar. It also has to clear the panel's corner curve: much below 8px
+            and the first tab's corner starts getting clipped by it. */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-3 pt-2 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}
@@ -30,46 +35,35 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-2.5 overflow-hidden rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-colors duration-200',
-                  isActive
-                    ? 'text-white dark:text-white'
-                    : 'text-macos-text-muted hover:text-macos-text dark:text-zinc-300 dark:hover:text-zinc-100',
+                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 text-[13px] font-semibold',
+                  /* One colour for both states, and the icon inherits it, so
+                     selecting an item never recolours anything — only the row's
+                     own fill moves. Hover is a fill for the same reason: there is
+                     no colour left to change. */
+                  'text-[var(--app-text)]',
+                  !isActive && 'hover:bg-[var(--app-state-hover)]',
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <motion.span
-                      layoutId="sidebar-active-pill"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-macos-blue to-macos-cyan shadow-[0_10px_26px_rgb(0_122_255/0.24)]"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    />
+                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected)]" />
                   )}
-                  <motion.span
-                    whileTap={{ scale: 0.96 }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 32 }}
-                    className={cn(
-                      'relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200',
-                      isActive
-                        ? 'border-white/20 bg-white/20 text-white'
-                        : 'border-black/5 bg-white/55 text-macos-text-muted group-hover:bg-white/80 group-hover:text-macos-text dark:border-white/20 dark:bg-white/22 dark:text-zinc-200 dark:group-hover:bg-white/30 dark:group-hover:text-zinc-100',
-                    )}
-                  >
+                  {/* An alignment box only. It paints nothing and takes its colour
+                      from the row, so the icon and the label can never drift apart. */}
+                  <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center">
                     <item.icon className="h-4 w-4" />
-                  </motion.span>
+                  </span>
                   <span className="relative z-10 truncate whitespace-nowrap">
                     {item.label}
                   </span>
-                  {isActive && (
-                    <span className="relative z-10 ml-auto h-1.5 w-1.5 rounded-full bg-white/85 shadow-[0_0_12px_rgb(255_255_255/0.8)]" />
-                  )}
                 </>
               )}
             </NavLink>
           ))}
         </nav>
       </div>
-    </motion.aside>
+    </aside>
   );
 };

@@ -21,7 +21,10 @@ create table public.order_items (
 );
 
 create index orders_status_created_idx on public.orders(status, created_at desc);
-create index orders_customer_idx on public.orders using gin(to_tsvector('simple', customer));
+-- Renamed from `orders_customer_idx`: that name was reused for a btree on customer_id in
+-- 20260910002100_order_due_date.sql, which made the whole set impossible to replay. See
+-- 20260921000000_fix_orders_customer_index.sql.
+create index if not exists orders_customer_fts_idx on public.orders using gin(to_tsvector('simple', customer));
 create index order_items_order_idx on public.order_items(order_id);
 
 create trigger orders_set_updated_at

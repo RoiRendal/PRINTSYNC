@@ -54,7 +54,7 @@ export function OrdersTable({
   const { currencySymbol } = useBusinessBranding();
   return (
     <Card variant="elevated" padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Active Dispatch Queue</CardTitle>
           <CardDescription>Click any row to inspect assets, notes, and phase controls.</CardDescription>
@@ -72,7 +72,7 @@ export function OrdersTable({
       </CardHeader>
 
       <CardContent>
-        <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+        <TableContainer className="rounded-none border-0 bg-transparent">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -132,7 +132,7 @@ export function OrdersTable({
                             */}
                             {isPending && (
                               <span role="status" aria-label="Saving phase change" className="inline-flex">
-                                <LoaderCircle className="h-3 w-3 animate-spin text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                                <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
                               </span>
                             )}
                           </div>
@@ -158,7 +158,7 @@ export function OrdersTable({
                         <div className="flex items-center justify-end gap-1.5">
                           {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                             <>
-                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red shadow-[0_0_6px_rgb(255_59_48/0.6)]" />
+                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
                               <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
@@ -228,7 +228,7 @@ export function OrdersTable({
         </TableContainer>
       </CardContent>
 
-      <div className="glass-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-center px-3 py-3 text-[9px] font-bold uppercase tracking-[0.24em] text-macos-text-muted dark:text-zinc-500">
         End of Active Dispatch Queue
       </div>
     </Card>

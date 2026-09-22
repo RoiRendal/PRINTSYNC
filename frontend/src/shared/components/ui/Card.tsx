@@ -2,7 +2,21 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export type CardVariant = 'solid' | 'glass' | 'elevated';
+/**
+ * Two names, and only because collapsing the second one is a visual change.
+ *
+ * `solid` and `elevated` were byte-identical class strings, so `solid` is gone —
+ * it had no call sites anywhere, which makes promoting `elevated` to the default
+ * a provable no-op rather than a hopeful one.
+ *
+ * `raised` is deliberately left alone even though it reaches the same appearance.
+ * It is **not** the same declaration: `.surface-panel` is a component-layer rule
+ * while the others are utility-layer ones, so a caller passing an overriding
+ * class (a `bg-*`, say) resolves differently between them. Merging them would be
+ * a visual change that has to be measured rather than reasoned about, and it
+ * touches 22 call sites.
+ */
+export type CardVariant = 'raised' | 'elevated';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -11,11 +25,9 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const variantClasses: Record<CardVariant, string> = {
-  solid:
-    'border border-gray-200/80 bg-[var(--app-surface-raised)] shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-zinc-900',
-  glass: 'glass-panel',
+  raised: 'surface-panel',
   elevated:
-    'border border-white/60 bg-white/92 shadow-[0_18px_50px_rgb(0_0_0/0.12)] dark:border-white/10 dark:bg-zinc-900/92 dark:shadow-black/30',
+    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -26,10 +38,10 @@ const paddingClasses: Record<CardPadding, string> = {
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'solid', padding = 'md', ...props }, ref) => (
+  ({ className, variant = 'elevated', padding = 'md', ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-[var(--radius-card)] transition-colors duration-200', variantClasses[variant], paddingClasses[padding], className)}
+      className={cn('rounded-[var(--radius-card)]', variantClasses[variant], paddingClasses[padding], className)}
       {...props}
     />
   ),
@@ -37,11 +49,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
 
 Card.displayName = 'Card';
 
-export const GlassCard = forwardRef<HTMLDivElement, Omit<CardProps, 'variant'>>(
-  ({ className, ...props }, ref) => <Card ref={ref} variant="glass" className={className} {...props} />,
+export const SurfaceCard = forwardRef<HTMLDivElement, Omit<CardProps, 'variant'>>(
+  ({ className, ...props }, ref) => <Card ref={ref} variant="raised" className={className} {...props} />,
 );
 
-GlassCard.displayName = 'GlassCard';
+SurfaceCard.displayName = 'SurfaceCard';
 
 export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => <div ref={ref} className={cn('mb-4 flex flex-col gap-1.5', className)} {...props} />,
@@ -73,7 +85,7 @@ CardContent.displayName = 'CardContent';
 
 export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10', className)} {...props} />
+    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-[var(--app-border-hairline)] pt-4', className)} {...props} />
   ),
 );
 

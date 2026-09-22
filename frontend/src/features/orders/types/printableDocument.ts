@@ -206,9 +206,11 @@ export function documentFromOrder(
 ): PrintableDocument {
   /*
    * Annotated as `OrderLineItem[]`, not left to inference: the two branches
-   * below produce different shapes (the fallback has no `itemId` or
-   * `unitPrice`), and the union that inference would build cannot be read
-   * without narrowing every field at the point of use.
+   * below produce different shapes (the fallback has no `itemId`), and the
+   * union that inference would build cannot be read without narrowing every
+   * field at the point of use. `unitPrice: 0` on the fallback is deliberate —
+   * see the `> 0` test further down, which turns a stored or absent zero into
+   * the order's own average instead of printing a free line.
    */
   const lineItems: OrderLineItem[] =
     order.lineItems && order.lineItems.length > 0
@@ -221,6 +223,7 @@ export function documentFromOrder(
             name,
             quantity: Math.max(1, Math.floor(order.quantity / Math.max(1, order.item.split(',').map((s) => s.trim()).filter(Boolean).length))),
             designId: order.designId,
+            unitPrice: 0,
           }));
 
   const totalPaid = order.totalPaid ?? 0;

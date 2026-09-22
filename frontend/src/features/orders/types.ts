@@ -1,51 +1,18 @@
 import type { InventoryItem } from '../inventory/types';
 
-export interface OrderLineItem {
-  itemId?: string;
-  name: string;
-  quantity: number;
-  designId?: string;
-  unitPrice?: number;
-}
-
-export type OrderStatus =
-  | 'Pending'
-  | 'In Production'
-  | 'Ready for Pickup'
-  | 'Designing'
-  | 'Completed'
-  | 'Delivered';
-
-export interface Order {
-  id: string;
-  customer: string;
-  customerId?: string;
-  item: string;
-  lineItems?: OrderLineItem[];
-  quantity: number;
-  status: OrderStatus;
-  date: string;
-  /**
-   * The row's version token, as the server sent it.
-   *
-   * Echo it back untouched on the next save — it names the version this screen is
-   * working from, and the server refuses the write if the order has moved on since
-   * (someone else edited it). Do not run it through `new Date()`: parsing and
-   * re-serialising drops the microseconds, which would make every save look like a
-   * conflict.
-   */
-  updatedAt: string;
-  amount: number;
-  totalPaid?: number;
-  balanceDue?: number;
-  dueDate?: string;
-  designId?: string;
-  notes?: string;
-  isCustom?: boolean;
-}
-
-export type CreateOrder = Omit<Order, 'id' | 'date' | 'updatedAt'>;
-export type UpdateOrder = Partial<CreateOrder>;
+// The order contract lives in `@printsync/shared-types` — `Order`, `OrderStatus`,
+// `OrderLineItem`, `CreateOrder` and `UpdateOrder` are re-exported from there so the
+// version token (`updatedAt`) can never be silently dropped by a local re-copy. The
+// types below are frontend-only: the POS basket, the till's transaction row, and the
+// checkout method union.
+export type {
+  OrderLineItem,
+  OrderStatus,
+  Order,
+  CreateOrder,
+  UpdateOrder,
+  PaymentMethod,
+} from '@printsync/shared-types';
 
 export interface CartItem extends InventoryItem {
   qty: number;
@@ -66,8 +33,6 @@ export interface Transaction {
   paymentMethod: 'Cash' | 'Card' | 'Custom Order';
   status?: 'completed' | 'voided';
 }
-
-export type PaymentMethod = 'Cash' | 'Card' | 'Custom Order';
 
 export interface OrderPaymentRecord {
   id: string;

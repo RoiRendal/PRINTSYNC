@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
+import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 
 export interface DesignRecord {
   id: string;
@@ -26,13 +27,13 @@ export interface DesignInput {
 
 const designSelect = 'id, name, category, image_url, created_at, updated_at, tags, asset_type, asset_size_bytes';
 
-function toRecord(row: Record<string, unknown>): DesignRecord {
+function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord {
   return {
     id: String(row.id),
     name: String(row.name),
     category: String(row.category),
     imageUrl: String(row.image_url),
-    createdAt: String(row.created_at).slice(0, 10),
+    createdAt: toShopDateKey(String(row.created_at), timeZone),
     updatedAt: String(row.updated_at),
     tags: Array.isArray(row.tags) ? row.tags.map(String) : [],
     assetType: row.asset_type ? String(row.asset_type) : null,
@@ -51,7 +52,8 @@ export async function listDesigns(
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'DESIGNS_LOOKUP_FAILED', 'Designs could not be loaded.');
-  return createPaginatedResponse(data.map((row) => toRecord(row)), count ?? 0, params.page, params.limit);
+  const timeZone = await getShopTimeZone(supabase);
+  return createPaginatedResponse(data.map((row) => toRecord(row, timeZone)), count ?? 0, params.page, params.limit);
 }
 
 export async function createDesign(
@@ -73,7 +75,7 @@ export async function createDesign(
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(400, 'DESIGN_CREATE_FAILED', 'The design could not be created.');
-  return toRecord(data);
+  return toRecord(data, await getShopTimeZone(supabase));
 }
 
 export async function updateDesign(supabase: SupabaseClient, id: string, input: DesignInput): Promise<DesignRecord> {
@@ -91,7 +93,7 @@ export async function updateDesign(supabase: SupabaseClient, id: string, input: 
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(404, 'DESIGN_NOT_FOUND', 'The design was not found.');
-  return toRecord(data);
+  return toRecord(data, await getShopTimeZone(supabase));
 }
 
 export async function deleteDesign(supabase: SupabaseClient, id: string): Promise<void> {

@@ -1,5 +1,3 @@
-import type { Design } from '../../features/designs/types';
-
 /**
  * Offline design previews live under Vite `public/`.
  *
@@ -8,9 +6,10 @@ import type { Design } from '../../features/designs/types';
  *
  * Optional default when adding a design without an image URL:
  * `public/design-images/placeholder.png` → `/design-images/placeholder.png`
+ *
+ * There was a `designImagePublicUrl(designId)` helper here too. It had no callers
+ * — designs carry their own image URL, and the bundled previews are reached by
+ * literal path — so it is gone rather than kept as a second place for the shape
+ * above to drift from.
  */
-export function designImagePublicUrl(designId: Design['id']): string {
-  return `/design-images/${designId}.png`;
-}
-
 export const DEFAULT_NEW_DESIGN_IMAGE_URL = '/design-images/placeholder.png';

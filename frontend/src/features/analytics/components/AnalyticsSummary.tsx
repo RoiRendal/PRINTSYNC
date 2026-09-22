@@ -31,7 +31,7 @@ export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummary
             <MetricTile label="Inventory alerts" value={summary.inventoryAlerts.toLocaleString()} tone={summary.inventoryAlerts > 0 ? 'orange' : 'neutral'} icon={LineChartIcon} />
           </div>
           {summary.topItems.length > 0 && (
-            <div className="mt-4 border-t border-black/5 pt-3 dark:border-white/10">
+            <div className="mt-4 border-t pt-3">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Top items by revenue</p>
               <div className="flex flex-wrap gap-2">
                 {summary.topItems.slice(0, 5).map((item) => <Badge key={item.name} variant="gray">{item.name} · {money.format(item.revenue)}</Badge>)}

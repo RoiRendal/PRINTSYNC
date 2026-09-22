@@ -1,50 +1,35 @@
-import type { PageAccessKey } from '../../shared/constants/navigation';
-
 /**
- * Canonical RBAC role. Shared by the auth session and the user directory so the
- * two can never drift apart.
+ * The user directory contract lives in `@printsync/shared-types`. `UserSummary`,
+ * `CreateUserInput`, `UpdateUserInput`, `SessionUser` and `AuthResponse` are
+ * re-exported from there so the auth session and the user directory cannot drift
+ * apart. The bits below are frontend-only: the role alias, the signed-in user
+ * (a directory record minus its audit timestamp), and the login payload.
  */
-export type RbacRole = 'admin' | 'staff';
+import type {
+  UserSummary,
+  CreateUserInput,
+  UpdateUserInput,
+  SessionUser,
+  AuthResponse,
+  UserRole,
+} from '@printsync/shared-types';
 
-export interface UserSummary {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: RbacRole;
-  position: string;
-  createdAt: string;
-  access: PageAccessKey[];
-}
+export type {
+  UserSummary,
+  CreateUserInput,
+  UpdateUserInput,
+  SessionUser,
+  AuthResponse,
+  UserRole,
+};
+
+/** Canonical RBAC role, shared with the backend contract. */
+export type RbacRole = UserRole;
 
 /** The signed-in user: a directory record without the audit timestamp. */
 export type AuthUser = Omit<UserSummary, 'createdAt'>;
 
-export interface CreateUserInput {
-  name: string;
-  email: string;
-  phone: string;
-  role: RbacRole;
-  position: string;
-  createdAt?: string;
-  password: string;
-  access: PageAccessKey[];
-}
-
-export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>> & {
-  password?: string;
-};
-
 export interface LoginInput {
   email: string;
   password: string;
-}
-
-export interface SessionUser extends UserSummary {
-  roleId: string;
-  permissions: string[];
-}
-
-export interface AuthResponse {
-  user: SessionUser;
 }

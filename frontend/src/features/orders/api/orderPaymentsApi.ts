@@ -1,29 +1,16 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
+import type { OrderPayment, CreateOrderPayment } from '@printsync/shared-types';
 
-export type OrderPaymentMethod = 'Cash' | 'Card' | 'Other';
+// The order-payment contract is shared; re-export it so the API and the store agree.
+export type { OrderPayment, CreateOrderPayment };
 
-export interface OrderPayment {
-  id: string;
-  orderId: string;
-  amount: number;
-  method: OrderPaymentMethod;
-  notes: string;
-  createdBy?: string;
-  createdAt: string;
-}
-
-export interface CreateOrderPayment {
-  orderId: string;
-  amount: number;
-  method: OrderPaymentMethod;
-  notes?: string;
-}
+// Derived from the shared method union so the two cannot drift apart.
+export type OrderPaymentMethod = OrderPayment['method'];
 
 export function createOrderPaymentsApi(client: ApiClient = apiClient) {
   return {
     list: (orderId: string) => client.get<OrderPayment[]>(`/order-payments/${orderId}`),
     create: (payload: CreateOrderPayment) => client.post<OrderPayment, CreateOrderPayment>('/order-payments', payload),
-    remove: (id: string) => client.delete<void>(`/order-payments/${id}`),
   };
 }
 

@@ -13,7 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  GlassCard,
+  SurfaceCard,
   Input,
   Modal,
   Pagination,
@@ -29,6 +29,7 @@ import {
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
 import type { RbacRole, UserSummary } from '../types';
+import { normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
 import { cn } from '../../../shared/lib/cn';
 
@@ -110,7 +111,10 @@ export default function UserManagement() {
       position: user.position,
       createdAt: user.createdAt,
       password: '',
-      access: user.access,
+      // The shared contract types `access` as `string[]` (the API may emit codes
+      // this client does not know); the form works in `PageAccessKey`, so clamp
+      // on the way in — the same rule the user store applies to every row.
+      access: normalizeAccess(user.role, user.access),
     });
     setActionError(null);
     setIsModalOpen(true);
@@ -197,7 +201,7 @@ export default function UserManagement() {
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="space-y-3 lg:col-span-1">
-          <Card variant="glass" padding="lg">
+          <Card variant="raised" padding="lg">
             <CardHeader>
               <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Station Overview</CardTitle>
               <CardDescription>Current account distribution.</CardDescription>
@@ -208,9 +212,9 @@ export default function UserManagement() {
                 { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/45 bg-white/52 p-3 shadow-[var(--shadow-card)] dark:border-white/10 dark:bg-white/6">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#39393b]">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-macos-purple/14 text-macos-purple', tone === 'blue' && 'bg-macos-blue/14 text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-macos-green/14 text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
@@ -224,7 +228,7 @@ export default function UserManagement() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card variant="elevated" padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b border-black/5 p-4 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <CardTitle>Team Directory</CardTitle>
                 <CardDescription>{filteredUsers.length} matching users across administrators and staff.</CardDescription>
@@ -235,7 +239,7 @@ export default function UserManagement() {
               </div>
             </CardHeader>
             <CardContent>
-              <TableContainer className="rounded-none border-0 bg-transparent shadow-none">
+              <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -253,7 +257,7 @@ export default function UserManagement() {
                       <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-gradient-to-br from-macos-blue/16 to-white/45 text-[10px] font-bold text-macos-blue ring-1 ring-macos-blue/15 dark:to-white/5 dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-[var(--app-surface-sub)] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
                             <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
@@ -308,7 +312,7 @@ export default function UserManagement() {
             <Input className="md:col-span-2" required={!editingUserId} type="password" value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} placeholder="Password" />
           </div>
 
-          <GlassCard className="space-y-3 p-3">
+          <SurfaceCard className="space-y-3 p-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
               {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
@@ -317,16 +321,16 @@ export default function UserManagement() {
                 const item = NAV_ITEMS.find((nav) => nav.key === key);
                 if (!item) return null;
                 return (
-                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border border-white/40 bg-white/40 px-3 py-2 text-[11px] text-macos-text dark:border-white/10 dark:bg-white/6 dark:text-zinc-300">
-                    <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border border-black/15 accent-macos-blue dark:border-white/20" />
+                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text dark:bg-[#39393b] dark:text-zinc-300">
+                    <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-macos-blue" />
                     {item.label}
                   </label>
                 );
               })}
             </div>
-          </GlassCard>
+          </SurfaceCard>
 
-          <div className="flex justify-end gap-2 border-t border-black/5 pt-4 dark:border-white/10">
+          <div className="flex justify-end gap-2 border-t pt-4">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>
             <Button type="submit" isLoading={isSaving}>{editingUserId ? 'Save Changes' : 'Create User'}</Button>
           </div>

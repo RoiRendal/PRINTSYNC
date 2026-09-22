@@ -39,9 +39,9 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page - 1)}
           disabled={!canGoPrevious}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-white/50 bg-white/60 text-macos-text shadow-[var(--shadow-card)] transition-all dark:border-white/10 dark:bg-white/8 dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text dark:text-zinc-200',
             !canGoPrevious && 'cursor-not-allowed opacity-40',
-            canGoPrevious && 'hover:border-macos-blue/30 hover:bg-white/80 dark:hover:border-macos-blue-dark/25',
+            canGoPrevious && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
           )}
           aria-label="Previous page"
         >
@@ -56,10 +56,10 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               type="button"
               onClick={() => onPageChange(p as number)}
               className={cn(
-                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider shadow-[var(--shadow-card)] transition-all',
+                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider',
                 page === p
-                  ? 'border-macos-blue/30 bg-macos-blue text-white dark:border-macos-blue-dark/25 dark:bg-macos-blue-dark'
-                  : 'border-white/50 bg-white/60 text-macos-text hover:border-macos-blue/30 hover:bg-white/80 dark:border-white/10 dark:bg-white/8 dark:text-zinc-200 dark:hover:border-macos-blue-dark/25',
+                  ? 'border-macos-blue bg-macos-blue text-white dark:border-macos-blue-dark dark:bg-macos-blue-dark'
+                  : 'border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text hover:border-macos-blue hover:bg-[var(--app-state-hover)] dark:text-zinc-200',
               )}
             >
               {p}
@@ -71,9 +71,9 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page + 1)}
           disabled={!canGoNext}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-white/50 bg-white/60 text-macos-text shadow-[var(--shadow-card)] transition-all dark:border-white/10 dark:bg-white/8 dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text dark:text-zinc-200',
             !canGoNext && 'cursor-not-allowed opacity-40',
-            canGoNext && 'hover:border-macos-blue/30 hover:bg-white/80 dark:hover:border-macos-blue-dark/25',
+            canGoNext && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
           )}
           aria-label="Next page"
         >

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { GlassCard } from '../../../shared/components/ui';
+import { SurfaceCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 
 interface MetricTileProps {
@@ -11,7 +11,7 @@ interface MetricTileProps {
 
 export function MetricTile({ label, value, tone = 'neutral', icon: Icon }: MetricTileProps) {
   return (
-    <GlassCard className="p-3">
+    <SurfaceCard className="p-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">{label}</p>
@@ -19,6 +19,6 @@ export function MetricTile({ label, value, tone = 'neutral', icon: Icon }: Metri
         </div>
         {Icon && <Icon className="h-4 w-4 shrink-0 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />}
       </div>
-    </GlassCard>
+    </SurfaceCard>
   );
 }
