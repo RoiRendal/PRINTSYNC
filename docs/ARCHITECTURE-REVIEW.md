@@ -294,12 +294,23 @@ deliberate decision on whether to keep it, label it, or remove it before release
 Ordered by what must happen first. Each item names the files, the change, and how to prove it worked.
 `[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
 
-> **Status, updated 2026-09-21.** Every fix in Tiers 0, 1 and 2 is **done, verified and pushed** to
-> `origin/flat-ui` (HEAD `39422de`). Tier 3 maintainability is **done** — 3.1 is committed and pushed
-> on top of `39422de`, decomposing `POSPage.tsx` from 902 to 294 lines across eight hooks/components
-> plus a real `usePaymentStore` (see `7797a8d`). **1.5 is finished as well** — the seven hand-copied
-> frontend type files are converted and both drift guards are in place, committed locally on top of
-> that. Read the sections below as the original findings — the plan is complete.
+> **Status, updated 2026-09-22 — the plan is complete and everything is pushed.** Every fix in Tiers
+> 0, 1, 2 and 3 is **done, verified and pushed** to `origin/flat-ui` (HEAD `f391b32`). Tier 3.1
+> decomposes `POSPage.tsx` from 902 to 294 lines across eight hooks/components plus a real
+> `usePaymentStore` (`7797a8d`), and its visual no-op is now **confirmed by eye** — the till renders
+> the same as it did before the split. **1.5 and its follow-up are pushed** (`7b22079`, `dc18c03`):
+> the seven hand-copied frontend type files are converted to re-exports and both drift guards are in
+> place. Read the sections below as the original findings — the plan is complete.
+>
+> **Migrations verified against the live project, 2026-09-22.** Confirmed present rather than assumed:
+> `business_settings.time_zone` = `Asia/Manila` (1.1); `order_payments.delete` seeded and held by
+> `admin` only, while `staff` keeps read and create (1.3); `write_audit_log` accepts `p_request_id`
+> (2.2); all five money RPCs carry the three `p_audit_*` parameters (2.1); and `orders.customer_id`
+> and `orders.due_date` both exist on live, so 0.1's blast radius did not materialise.
+>
+> **Two of those are still unverified.** 0.1's index names and 0.2's dropped overloads need
+> `pg_indexes` and `pg_proc`, which the REST API cannot reach — only a SQL session can settle them.
+> Treat 0.1 and 0.2 as applied-but-unproven until someone runs those two queries.
 >
 > | Tier | State | Commits |
 > | --- | --- | --- |
@@ -308,7 +319,7 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 1 — 1.2 | done | `0bbda8c` |
 > | 1 — 1.3 | done, **migration must be applied before deploy** | `d39161f` |
 > | 1 — 1.4 | done; a third role is still a design decision | `142d5ae` |
-> | 1 — 1.5 | **done** — contract repaired in `8cf0f34`; the seven hand-copied frontend type files converted to re-exports; two drift guards added | `8cf0f34` + local commit |
+> | 1 — 1.5 | **done, pushed** — contract repaired in `8cf0f34`; the seven hand-copied frontend type files converted to re-exports; two drift guards added; `CreateTransaction` no longer requires `status` | `8cf0f34`, `7b22079`, `dc18c03` |
 > | 2 — 2.2 | done, verified end to end | `a748710` |
 > | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **two migrations must be applied before deploy** | `e409a31` |
 > | 2 — 2.3 | done — **but wrong in two places; see correction under 2.3** | `3028781` |
@@ -667,9 +678,11 @@ Each of these is independently reviewable and revertible:
 
 Stated plainly so nobody treats an inference as a measurement:
 
-- **The live database's actual index and column state.** The migration files contradict what the
-  running system implies. Only `pg_indexes` / `information_schema.columns` queries against the live
-  project settle it. Fix 0.1 is written to converge from either state.
+- **The live database's actual index and overload state.** The migration files contradict what the
+  running system implies. Only `pg_indexes` / `pg_proc` queries against the live project settle it.
+  Fix 0.1 is written to converge from either state. **Partially closed 2026-09-22:** the *column*
+  half is now settled (`orders.customer_id` and `orders.due_date` are both present on live), but the
+  index names and the dropped overloads still need a SQL session.
 - **The `main` branch protection ruleset.** Not stored in the repository and `gh` is not installed.
   Only the CI job names could be confirmed as consistent with the convention.
 - **Runtime behaviour of `express-rate-limit` without `trust proxy`** — the setting is confirmed
