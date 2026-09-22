@@ -120,7 +120,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             title={APP_NAME}
           >
             {logoFailed ? (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-white">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-[var(--app-accent-ink)]">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
@@ -188,7 +188,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left hover:bg-[#f9f9fa] active:scale-[0.98]"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-white">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-[var(--app-accent-ink)]">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">

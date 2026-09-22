@@ -7,8 +7,15 @@
   --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-  --color-macos-blue: #a3a3a3;
-  --color-macos-blue-dark: #8e8e93;
+  /* The accent. Near-black, not a hue: orange, purple, blue, green and red are
+     already spoken for as status colours, and an accent that reuses one of them
+     stops staff being able to tell "clickable" from "what state this job is in".
+     Frappe's own --primary is literally gray-900 for the same reason.
+     Measured: white on this fill is 17.93:1; the fill against the page is
+     16.47:1 (the floor for a filled control is 3:1). The old value was a grey,
+     #a3a3a3, and white on it measured 2.52:1 — every primary button failed. */
+  --color-macos-blue: #171717;
+  --color-macos-blue-dark: #2f2f33;
   --color-macos-cyan: #aeaeb2;
   --color-macos-green: #34c759;
   --color-macos-red: #ff3b30;
@@ -65,6 +72,11 @@
   --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
   --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
 
+  /* Text and icons sitting ON the accent fill. This cannot be written literally
+     as `text-white`: the accent inverts in dark mode (see `.dark` below), and
+     white on the inverted light fill measures 1.09:1. Ink on it is 16.47:1. */
+  --app-accent-ink: #ffffff;
+
   /* Solid badge tints. Each is the flat composite of the translucent tint it
      replaces — the old 12%-opacity fills resolved to almost exactly these over a
      white card, so the badges look the same and stop being translucent. Every
@@ -117,6 +129,15 @@
   --app-tint-purple: #41324a;
   --app-tint-gray: #3d3d3f;
   --app-tint-amber: #4b422c;
+
+  /* The accent inverts after dark. Near-black on this theme's #1c1c1e surface
+     measures 1.05:1 — the fill would be invisible — so the accent becomes the
+     light step and the ink on it becomes dark. Every `bg-macos-blue` /
+     `text-macos-blue` utility follows these two variables, so the 58 usages
+     across the app invert without being touched one by one. */
+  --color-macos-blue: #f5f5f7;
+  --color-macos-blue-dark: #d8d8dc;
+  --app-accent-ink: #171717;
 }
 
 html {

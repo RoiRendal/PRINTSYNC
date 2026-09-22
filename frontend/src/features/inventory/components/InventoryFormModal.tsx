@@ -90,7 +90,7 @@ export function InventoryFormModal({
                 </div>
               )}
             </div>
-            <Input type="file" accept="image/*" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-white" onChange={handleImageUpload} />
+            <Input type="file" accept="image/*" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-macos-blue file:px-3 file:py-1.5 file:text-[10px] file:font-bold file:uppercase file:text-[var(--app-accent-ink)]" onChange={handleImageUpload} />
             {formData.imageUrl && <Button type="button" variant="danger" size="sm" fullWidth onClick={() => setFormData({ ...formData, imageUrl: '' })}>Remove Image</Button>}
             {editingItem && <p className="text-[10px] leading-relaxed text-macos-text-muted dark:text-zinc-500">SKU <span className="font-mono font-bold text-macos-text dark:text-zinc-200">{editingItem.sku}</span> updates are saved when you submit this dialog.</p>}
           </div>
