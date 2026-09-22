@@ -295,7 +295,7 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 `[LIVE]` = must run against the real Supabase project · `[LOCAL]` = runs locally or in CI.
 
 > **Status, updated 2026-09-22 — the plan is complete and everything is pushed.** Every fix in Tiers
-> 0, 1, 2 and 3 is **done, verified and pushed** to `origin/flat-ui` (HEAD `f391b32`). Tier 3.1
+> 0, 1, 2 and 3 is **done, verified and pushed** to `origin/flat-ui` (HEAD `ae49490`). Tier 3.1
 > decomposes `POSPage.tsx` from 902 to 294 lines across eight hooks/components plus a real
 > `usePaymentStore` (`7797a8d`), and its visual no-op is now **confirmed by eye** — the till renders
 > the same as it did before the split. **1.5 and its follow-up are pushed** (`7b22079`, `dc18c03`):
@@ -317,11 +317,11 @@ Ordered by what must happen first. Each item names the files, the change, and ho
 > | 0 — 0.1, 0.2 | done, applied live, replay proven | `94a6168` |
 > | 1 — 1.1 | done, verified against real PostgreSQL | `5158875` |
 > | 1 — 1.2 | done | `0bbda8c` |
-> | 1 — 1.3 | done, **migration must be applied before deploy** | `d39161f` |
+> | 1 — 1.3 | done, **migration verified applied on live 2026-09-22** | `d39161f` |
 > | 1 — 1.4 | done; a third role is still a design decision | `142d5ae` |
 > | 1 — 1.5 | **done, pushed** — contract repaired in `8cf0f34`; the seven hand-copied frontend type files converted to re-exports; two drift guards added; `CreateTransaction` no longer requires `status` | `8cf0f34`, `7b22079`, `dc18c03` |
 > | 2 — 2.2 | done, verified end to end | `a748710` |
-> | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **two migrations must be applied before deploy** | `e409a31` |
+> | 2 — 2.1 | done, atomicity proven against real PostgreSQL; **migrations verified applied on live 2026-09-22** | `e409a31` |
 > | 2 — 2.3 | done — **but wrong in two places; see correction under 2.3** | `3028781` |
 > | 2 — 2.4 | done | `da45b30` |
 > | 3 — 3.2 | done, pushed — flat-UI CI gate + E2E scaffold | `5be4e2d` |
