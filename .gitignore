@@ -28,8 +28,10 @@ supabase/.temp/
 # that prefers `.js` over `.ts` would silently resolve the stale build instead.
 packages/shared-types/src/**/*.js
 
-# Working documents that are deliberately kept off the remote. This is the
-# manager's own planning file for the Geist font work; it is read locally and
-# never pushed. Ignoring it (rather than just leaving it untracked) means a
-# `git add -A` cannot sweep it into a commit by accident.
+# Working documents that are deliberately kept off the remote. These are the
+# manager's own planning files — the Geist font work, and the outline/sentence-
+# case work. They are read locally and never pushed. Ignoring them (rather than
+# just leaving them untracked) means a `git add -A` cannot sweep one into a
+# commit by accident.
 docs/geist-font-plan.md
+docs/outline-and-case-plan.md
