@@ -51,9 +51,22 @@
 }
 
 @theme {
-  --font-sans: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* One family, Geist, self-hosted from /fonts and declared at the top of this
+     file. The named faces that used to lead these stacks — "SF Pro Display",
+     "Inter", "SF Mono", "Cascadia Code", "JetBrains Mono" — are gone: each one
+     resolved only if that exact font happened to be installed on the machine,
+     so a Windows shop PC and a Mac rendered the same screen in two different
+     typefaces, with nothing to indicate it.
+
+     What remains after "Geist" is the operating system's own default. That is
+     what renders during the font-display swap window and if a file ever fails
+     to load, so it is kept rather than trimmed.
+
+     The serif token is deleted outright. It was declared and referenced
+     nowhere, and Tailwind had already tree-shaken it out of the built
+     stylesheet, so removing it changes no shipped byte. */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The accent. Near-black, not a hue: orange, purple, blue, green and red are
      already spoken for as status colours, and an accent that reuses one of them
