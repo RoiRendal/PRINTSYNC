@@ -198,6 +198,12 @@
      across the app invert without being touched one by one. */
   --color-macos-blue: #f5f5f7;
   --color-macos-blue-dark: #d8d8dc;
+  /* Dark partner for the muted-text token. Without this the token kept its light value (#555558) and
+     rendered at 2.29:1 on the dark page — effectively invisible. zinc-400 clears the 4.5:1 floor
+     (6.64:1 on the page, 5.44:1 on a raised card) and matches the `dark:text-zinc-400` the other 176
+     uses already pair with this token, so the 10 labels that had no dark override now read the same
+     grey as their siblings. */
+  --color-macos-text-muted: #a1a1aa;
   --app-accent-ink: #171717;
 }
 
