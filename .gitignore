@@ -27,3 +27,9 @@ supabase/.temp/
 # compiles src -> dist; stale `src/*.js` files were committed once, and any tool
 # that prefers `.js` over `.ts` would silently resolve the stale build instead.
 packages/shared-types/src/**/*.js
+
+# Working documents that are deliberately kept off the remote. This is the
+# manager's own planning file for the Geist font work; it is read locally and
+# never pushed. Ignoring it (rather than just leaving it untracked) means a
+# `git add -A` cannot sweep it into a commit by accident.
+docs/geist-font-plan.md
