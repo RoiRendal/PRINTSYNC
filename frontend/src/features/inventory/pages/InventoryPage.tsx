@@ -88,7 +88,7 @@ export default function Inventory() {
           </p>
         </div>
 
-        <div className="flex items-center rounded-full border bg-[var(--app-surface-raised)] p-1 dark:bg-[#3d3d3f]">
+        <div className="flex items-center rounded-full border p-1">
           <button
             type="button"
             onClick={() => setViewMode('inventory')}

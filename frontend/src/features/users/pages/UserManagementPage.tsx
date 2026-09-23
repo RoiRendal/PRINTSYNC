@@ -212,7 +212,7 @@ export default function UserManagement() {
                 { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#39393b]">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -257,7 +257,7 @@ export default function UserManagement() {
                       <TableRow key={user.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-[var(--app-surface-sub)] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
                             <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
@@ -321,7 +321,7 @@ export default function UserManagement() {
                 const item = NAV_ITEMS.find((nav) => nav.key === key);
                 if (!item) return null;
                 return (
-                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text dark:bg-[#39393b] dark:text-zinc-300">
+                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-[11px] text-macos-text dark:text-zinc-300">
                     <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-macos-blue" />
                     {item.label}
                   </label>

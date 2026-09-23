@@ -102,7 +102,7 @@ export function POSCart({
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
-            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2.5 dark:bg-[#39393b]">
+            <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border p-2.5">
               <div className="flex gap-3">
                 <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-[#f5f5f5] dark:bg-[#3d3d3f]">
                   {item.designId ? (
@@ -141,7 +141,7 @@ export function POSCart({
         )}
       </div>
 
-      <div className="space-y-3 border-t bg-[var(--app-surface-raised)] p-4 dark:bg-[#39393b]">
+      <div className="space-y-3 border-t p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
           <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">

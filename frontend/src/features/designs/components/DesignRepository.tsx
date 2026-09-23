@@ -256,7 +256,7 @@ export function DesignRepository() {
       <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={selectedDesign?.name || 'Design View'} maxWidth="max-w-2xl">
         {selectedDesign && (
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
+            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
               <div><h4 className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="purple" className="mt-2">{selectedDesign.category}</Badge></div>
               <SurfaceCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Reference ID</p><p className="font-mono text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-[9px] uppercase tracking-wider text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></SurfaceCard>

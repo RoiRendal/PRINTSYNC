@@ -9,7 +9,7 @@ interface LoadingStateProps {
 export function LoadingState({ label = 'Loading', className = '' }: LoadingStateProps) {
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-macos-text-muted dark:text-zinc-500', className)}>
-      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)]">
+      <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--app-border-hairline)]">
         <div className="text-macos-blue dark:text-macos-cyan">
           <LoaderCircle className="h-5 w-5" aria-hidden="true" />
         </div>

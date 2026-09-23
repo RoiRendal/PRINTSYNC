@@ -80,7 +80,7 @@ export function InventoryFormModal({
         <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="space-y-3">
             <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Item Image</label>
-            <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] dark:bg-[#39393b]">
+            <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border">
               {formData.imageUrl ? (
                 <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
               ) : (

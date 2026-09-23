@@ -114,7 +114,7 @@ export function POSHistoryView({
               <p className="text-[8px] font-bold uppercase tracking-[0.2em] text-macos-text-muted">Items Purchased</p>
               <div className="max-h-36 space-y-1 overflow-y-auto pr-1 scrollbar-hide">
                 {selectedTransaction.items.map((item, idx) => (
-                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border bg-[var(--app-surface-raised)] p-2 text-[9px] dark:bg-[#39393b]">
+                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border p-2 text-[9px]">
                     <div className="min-w-0 flex-1 pr-2">
                       <p className="truncate font-bold text-macos-text dark:text-zinc-100">{item.name}</p>
                       <p className="text-[7px] text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>

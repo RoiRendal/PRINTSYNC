@@ -9,7 +9,7 @@ interface PeriodSelectorProps {
 
 export function PeriodSelector({ value, onChange, prefix }: PeriodSelectorProps) {
   return (
-    <div className="flex rounded-full border bg-[var(--app-surface-raised)] p-1 dark:bg-[#3d3d3f]">
+    <div className="flex rounded-full border p-1">
       {periods.map((item) => (
         <button
           key={`${prefix}-${item}`}

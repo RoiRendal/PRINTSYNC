@@ -15,7 +15,7 @@ export const TableContainer = forwardRef<HTMLDivElement, TableContainerProps>(({
   <div
     ref={ref}
     className={cn(
-      'overflow-hidden rounded-[var(--radius-card)] border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
+      'overflow-hidden rounded-[var(--radius-card)] border border-[var(--app-border-hairline)]',
       className,
     )}
     {...props}

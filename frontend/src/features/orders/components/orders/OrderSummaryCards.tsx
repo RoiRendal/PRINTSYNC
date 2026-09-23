@@ -25,7 +25,7 @@ function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
     <div>
       <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] bg-[var(--app-surface-sub)] ring-1', summaryToneClasses[tone])}>
+          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] ring-1', summaryToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
           <span className="truncate text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">{label}</span>
