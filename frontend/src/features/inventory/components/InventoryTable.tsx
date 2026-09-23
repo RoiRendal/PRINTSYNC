@@ -80,7 +80,7 @@ export function InventoryTable({
                     <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
                     <TableCell className="text-right font-mono font-bold">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
-                      <span className="ml-1 text-[9px] text-macos-text-muted">PCS</span>
+                      <span className="ml-1 text-[9px] text-macos-text-muted">pcs</span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                     <TableCell>
@@ -114,7 +114,7 @@ export function InventoryTable({
 
       <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
-        <span className="hidden opacity-50 sm:inline">PRINTSYNC CLOUD SECURE SYNCED</span>
+        <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
       </div>
     </Card>
   );

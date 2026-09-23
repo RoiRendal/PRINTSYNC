@@ -143,19 +143,19 @@ export function POSCart({
 
       <div className="space-y-3 border-t p-4">
         <div className="space-y-1.5">
-          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">SUBTOTAL</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
           <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">
-            <span className="shrink-0 font-bold">DISCOUNT ({currencySymbol})</span>
+            <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right font-mono text-[10px]" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
           </div>
-          {appliedDiscount > 0 && <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">AFTER DISCOUNT</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
+          {appliedDiscount > 0 && <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">After discount</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
           <div className="flex items-center justify-between gap-2 text-[10px] font-mono text-macos-text-muted dark:text-zinc-500">
-            <span className="shrink-0 font-bold">VAT RATE (%)</span>
+            <span className="shrink-0 font-bold">VAT rate (%)</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right font-mono text-[10px]" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
           </div>
           <div className="flex justify-between text-[10px] font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
           <div className="mt-2 flex justify-between border-t pt-3 text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">
-            <span>{posMode === 'retail' ? 'TOTAL' : 'ORDER VAL'}</span>
+            <span>{posMode === 'retail' ? 'Total' : 'Order value'}</span>
             <span className={cn('font-mono', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-purple dark:text-purple-300')}>{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
