@@ -30,7 +30,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
 
   return (
     <div className={cn('flex items-center justify-between gap-3', className)}>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-macos-text-muted dark:text-zinc-500">
+      <span className="text-[10px] font-medium text-macos-text-muted dark:text-zinc-500">
         Page {page} of {totalPages} ({total} total)
       </span>
       <div className="flex items-center gap-1">
@@ -56,7 +56,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               type="button"
               onClick={() => onPageChange(p as number)}
               className={cn(
-                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold uppercase tracking-wider',
+                'flex h-7 min-w-[1.75rem] items-center justify-center rounded-lg border px-1.5 text-[10px] font-bold',
                 page === p
                   ? 'border-macos-blue bg-macos-blue text-[var(--app-accent-ink)] dark:border-macos-blue-dark dark:bg-macos-blue-dark'
                   : 'border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)] text-macos-text hover:border-macos-blue hover:bg-[var(--app-state-hover)] dark:text-zinc-200',

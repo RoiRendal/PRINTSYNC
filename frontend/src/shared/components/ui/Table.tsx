@@ -57,7 +57,7 @@ export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTable
 TableRow.displayName = 'TableRow';
 
 export const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
-  <th ref={ref} className={cn('px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.2em]', className)} {...props} />
+  <th ref={ref} className={cn('px-4 py-2.5 text-[11px] font-semibold', className)} {...props} />
 ));
 
 TableHead.displayName = 'TableHead';
@@ -69,7 +69,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLT
 TableCell.displayName = 'TableCell';
 
 export const TableCaption = forwardRef<HTMLTableCaptionElement, HTMLAttributes<HTMLTableCaptionElement>>(({ className, ...props }, ref) => (
-  <caption ref={ref} className={cn('mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted', className)} {...props} />
+  <caption ref={ref} className={cn('mt-3 text-[10px] font-semibold text-macos-text-muted', className)} {...props} />
 ));
 
 TableCaption.displayName = 'TableCaption';
