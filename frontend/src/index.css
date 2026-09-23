@@ -2,10 +2,71 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+/* One family, self-hosted. Geist + Geist Mono, variable weight 100-900, four
+   files totalling ~82 KB. Nothing here is fetched from a CDN at runtime.
+
+   Both subsets of each family must ship. The peso sign U+20B1 lives in
+   latin-ext and never in latin — verified glyph-by-glyph against these exact
+   files, not inferred from the published character range. Shipping only the
+   smaller latin file would render ₱ in a fallback font mid-line inside every
+   money cell on every screen, which looks like a rendering glitch rather than
+   a missing file. The digits are the mirror image: they exist only in latin,
+   which is also the file carrying `tnum`, so the two subsets mix safely.
+
+   These sit at top level on purpose. They must stay OUT of the print-media
+   block further down: that block is asserted verbatim by printStyles.test.ts,
+   and a font declaration inside it is the one edit able to change the printed
+   receipt's metrics. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-latin-ext-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono-latin-ext-wght-normal.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
 @theme {
-  --font-sans: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --font-serif: "New York", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  /* One family, Geist, self-hosted from /fonts and declared at the top of this
+     file. The named faces that used to lead these stacks — "SF Pro Display",
+     "Inter", "SF Mono", "Cascadia Code", "JetBrains Mono" — are gone: each one
+     resolved only if that exact font happened to be installed on the machine,
+     so a Windows shop PC and a Mac rendered the same screen in two different
+     typefaces, with nothing to indicate it.
+
+     What remains after "Geist" is the operating system's own default. That is
+     what renders during the font-display swap window and if a file ever fails
+     to load, so it is kept rather than trimmed.
+
+     The serif token is deleted outright. It was declared and referenced
+     nowhere, and Tailwind had already tree-shaken it out of the built
+     stylesheet, so removing it changes no shipped byte. */
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The accent. Near-black, not a hue: orange, purple, blue, green and red are
      already spoken for as status colours, and an accent that reuses one of them

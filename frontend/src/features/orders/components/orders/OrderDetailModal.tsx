@@ -210,11 +210,11 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="text-macos-text-muted dark:text-zinc-500">Quantity</span>
-                    <span className="font-bold">{order.quantity} Units</span>
+                    <span className="font-bold tabular-nums">{order.quantity} Units</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="text-macos-text-muted dark:text-zinc-500">Unit Price</span>
-                    <span className="font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
+                    <span className="font-mono font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="font-bold uppercase text-macos-text-muted dark:text-zinc-500">Total Value</span>
