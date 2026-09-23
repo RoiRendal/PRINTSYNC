@@ -114,7 +114,7 @@ export function ProductTrendSection({
           <TableContainer className="mt-4">
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Rank</TableHead><TableHead>Product</TableHead><TableHead className="text-right">Units</TableHead></TableRow></TableHeader>
-              <TableBody>{productTrendSummary.ranked.map((item, index) => <TableRow key={item.label}><TableCell>{index + 1}</TableCell><TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.label}</TableCell><TableCell className="text-right font-bold text-macos-text dark:text-zinc-100">{item.units.toLocaleString()}</TableCell></TableRow>)}</TableBody>
+              <TableBody>{productTrendSummary.ranked.map((item, index) => <TableRow key={item.label}><TableCell>{index + 1}</TableCell><TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.label}</TableCell><TableCell className="text-right font-bold tabular-nums text-macos-text dark:text-zinc-100">{item.units.toLocaleString()}</TableCell></TableRow>)}</TableBody>
             </Table>
           </TableContainer>
         </>

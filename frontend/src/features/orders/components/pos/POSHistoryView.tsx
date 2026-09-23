@@ -65,7 +65,7 @@ export function POSHistoryView({
                       <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
                       <TableCell className="font-mono text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
                       <TableCell>
-                        <span className="font-medium text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
+                        <span className="font-medium tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                         <div className="max-w-[240px] truncate text-[9px] text-macos-text-muted dark:text-zinc-500">
                           {row.source === 'order' ? <span>{row.order!.customer} — </span> : null}
                           {trx.items.map((i) => i.name).join(', ')}
