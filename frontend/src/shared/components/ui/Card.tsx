@@ -27,7 +27,7 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 const variantClasses: Record<CardVariant, string> = {
   raised: 'surface-panel',
   elevated:
-    'border border-[var(--app-border-hairline)] bg-[var(--app-surface-raised)]',
+    'border border-[var(--app-border-hairline)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {

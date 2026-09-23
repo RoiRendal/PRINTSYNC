@@ -19,14 +19,14 @@ export function POSDesignSelectorModal({ isOpen, designs, onSelect, onClose }: P
               key={design.id}
               type="button"
               onClick={() => onSelect(design.id)}
-              className="overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] text-left hover:border-[var(--app-border-control)] dark:bg-[#3d3d3f]"
+              className="overflow-hidden rounded-[var(--radius-card)] border text-left hover:border-[var(--app-border-control)]"
             >
               <div className="aspect-square border-b bg-[#f7f7f7] dark:bg-[#373739]">
                 <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
               </div>
               <div className="p-2">
-                <p className="truncate text-[10px] font-bold uppercase text-macos-text dark:text-zinc-100">{design.name}</p>
-                <p className="text-[8px] uppercase tracking-widest text-macos-text-muted dark:text-zinc-500">{design.category}</p>
+                <p className="truncate text-[10px] font-bold text-macos-text dark:text-zinc-100">{design.name}</p>
+                <p className="text-[8px] text-macos-text-muted dark:text-zinc-500">{design.category}</p>
               </div>
             </button>
           ))}

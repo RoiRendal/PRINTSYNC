@@ -54,12 +54,12 @@ export function POSToolbar({
         </Button>
       </div>
 
-      <div className="flex items-center rounded-full border bg-[var(--app-surface-raised)] p-1 dark:bg-[#3d3d3f]">
+      <div className="flex items-center rounded-full border p-1">
         <button
           type="button"
           onClick={() => onSelectMode('retail')}
           className={cn(
-            'h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em]',
+            'h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold',
             posMode === 'retail'
               ? 'bg-macos-blue text-[var(--app-accent-ink)]'
               : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
@@ -71,7 +71,7 @@ export function POSToolbar({
           type="button"
           onClick={() => onSelectMode('custom')}
           className={cn(
-            'h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold uppercase tracking-[0.18em]',
+            'h-7 cursor-pointer rounded-full px-3 text-[9px] font-bold',
             posMode === 'custom'
               ? 'bg-macos-purple text-white'
               : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',

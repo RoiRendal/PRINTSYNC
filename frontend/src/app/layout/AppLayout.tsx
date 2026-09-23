@@ -205,7 +205,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
                       {currentUser?.name ?? 'Admin'}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">
+                    <p className="mt-1 text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
                       {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                     </p>
                   </div>

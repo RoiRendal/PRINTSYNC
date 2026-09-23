@@ -198,6 +198,12 @@
      across the app invert without being touched one by one. */
   --color-macos-blue: #f5f5f7;
   --color-macos-blue-dark: #d8d8dc;
+  /* Dark partner for the muted-text token. Without this the token kept its light value (#555558) and
+     rendered at 2.29:1 on the dark page — effectively invisible. zinc-400 clears the 4.5:1 floor
+     (6.64:1 on the page, 5.44:1 on a raised card) and matches the `dark:text-zinc-400` the other 176
+     uses already pair with this token, so the 10 labels that had no dark override now read the same
+     grey as their siblings. */
+  --color-macos-text-muted: #a1a1aa;
   --app-accent-ink: #171717;
 }
 
@@ -352,13 +358,17 @@ html {
 
 @layer utilities {
   /*
-   * The old glass layer, now three flat surfaces. They were redefined in place so
-   * that all eleven call sites inherited the change; the names were renamed once
+   * The old glass layer, now flat surfaces. They were redefined in place so that
+   * all eleven call sites inherited the change; the names were renamed once
    * nothing else referenced them, which is Phase 6. Separation comes from the
    * hairline border above; no surface in the app casts elevation or a halo.
+   *
+   * `.surface-panel` carries no background. A panel is a GROUP, and a group is
+   * shown by its outline; only surfaces that float above the page keep a fill —
+   * `.surface-modal`, `.surface-toolbar`, dropdowns, tooltips, and the two
+   * exceptions the manager named, badges and toolbars.
    */
   .surface-panel {
-    background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
   }
 
@@ -370,6 +380,25 @@ html {
   .surface-modal {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
+  }
+
+  /*
+   * The one place caps are allowed.
+   *
+   * Frappe's rule, and now ours: `text-transform: uppercase` exists at exactly one
+   * size with exactly one tracking value — the `tiny` step in
+   * `espresso/_typography.scss` is `--text-tiny: 11px` with `$letter-space: 0.09em`,
+   * and every other step in that scale tracks 0.005–0.02em. So caps are 11px /
+   * 600 / 0.09em, defined once, and every kept all-caps label adopts this class.
+   *
+   * Caps name a BLOCK of content — a group header. Everything else in the app
+   * carries its hierarchy through weight and size, which is what ERPNext does.
+   */
+  .label-caps {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
   }
 
   .macos-squircle {

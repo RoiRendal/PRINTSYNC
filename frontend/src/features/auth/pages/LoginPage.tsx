@@ -27,7 +27,7 @@ export default function LoginPage() {
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] px-4 py-10 text-macos-text dark:text-zinc-100">
       <section className="relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border bg-[var(--app-surface-raised)] dark:bg-[#414143]">
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border">
             <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
           </div>
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
         <SurfaceCard className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-[11px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+              <label htmlFor="email" className="text-[11px] font-bold text-macos-text-muted dark:text-zinc-500">
                 Email address
               </label>
               <div className="relative">
@@ -58,7 +58,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-[11px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+              <label htmlFor="password" className="text-[11px] font-bold text-macos-text-muted dark:text-zinc-500">
                 Password
               </label>
               <div className="relative">

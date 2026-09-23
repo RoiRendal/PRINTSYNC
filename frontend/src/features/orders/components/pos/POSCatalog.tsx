@@ -54,10 +54,10 @@ export function POSCatalog({
                 type="button"
                 onClick={() => onCategoryChange(cat)}
                 className={cn(
-                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.18em]',
+                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-[9px] font-bold',
                   activeCategory === cat
                     ? 'border-macos-blue bg-macos-blue text-[var(--app-accent-ink)]'
-                    : 'bg-[var(--app-surface-raised)] text-macos-text-muted hover:border-[var(--app-border-control)] hover:text-macos-blue dark:bg-[#3d3d3f] dark:text-zinc-400 dark:hover:text-macos-cyan',
+                    : 'text-macos-text-muted hover:border-[var(--app-border-control)] hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan',
                 )}
               >
                 {cat}
@@ -75,7 +75,7 @@ export function POSCatalog({
             onClick={() => onAddToCart(product)}
             disabled={product.stock <= 0}
             className={cn(
-              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-2 text-left hover:border-[var(--app-border-control)] dark:bg-[#19191c]',
+              'group flex cursor-pointer flex-col rounded-[var(--radius-card)] border p-2 text-left hover:border-[var(--app-border-control)]',
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
@@ -85,7 +85,7 @@ export function POSCatalog({
               ) : (
                 <div className="flex flex-col items-center text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-600 dark:group-hover:text-macos-cyan">
                   <ShoppingBag className="h-9 w-9 stroke-1" aria-hidden="true" />
-                  <span className="mt-1 text-[8px] font-mono uppercase tracking-widest">No image</span>
+                  <span className="mt-1 text-[8px] font-mono">No image</span>
                 </div>
               )}
               <div className="absolute right-1.5 top-1.5">
@@ -94,7 +94,7 @@ export function POSCatalog({
                 </Badge>
               </div>
             </div>
-            <h3 className="line-clamp-2 text-[11px] font-bold uppercase tracking-tight text-macos-text dark:text-zinc-100 xl:text-[12px]">{product.name}</h3>
+            <h3 className="line-clamp-2 text-[11px] font-bold tracking-tight text-macos-text dark:text-zinc-100 xl:text-[12px]">{product.name}</h3>
             <div className="mt-2 flex items-center justify-between">
               <p className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100 xl:text-[11px]">{currencySymbol}{product.price.toFixed(2)}</p>
               <Plus className="h-3.5 w-3.5 text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-500 dark:group-hover:text-macos-cyan" aria-hidden="true" />

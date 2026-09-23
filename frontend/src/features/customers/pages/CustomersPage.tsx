@@ -197,7 +197,7 @@ export default function CustomersPage() {
         <div className="space-y-3 lg:col-span-1">
           <Card variant="raised" padding="lg">
             <CardHeader>
-              <CardTitle className="text-[11px] uppercase tracking-[0.24em]">Directory Overview</CardTitle>
+              <CardTitle className="label-caps">Directory Overview</CardTitle>
               <CardDescription>Current customer database snapshot.</CardDescription>
             </CardHeader>
             <div className="space-y-2.5">
@@ -206,12 +206,12 @@ export default function CustomersPage() {
                 { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
                 { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
               ].map(({ label, value, icon: Icon, tone }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-3 dark:bg-[#39393b]">
+                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>
@@ -250,10 +250,10 @@ export default function CustomersPage() {
                       <TableRow key={customer.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] bg-[var(--app-surface-sub)] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(customer.name)}
                             </div>
-                            <span className="text-[11px] font-bold uppercase leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
+                            <span className="text-[11px] font-bold leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-[10px]">{customer.phone || '—'}</TableCell>
@@ -311,7 +311,7 @@ export default function CustomersPage() {
           </p>
 
           {isCheckingOrders && (
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-macos-text-muted dark:text-zinc-500">
+            <p className="text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
               Checking this customer's order history…
             </p>
           )}

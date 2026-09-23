@@ -48,10 +48,10 @@ function StatCard({ title, value, icon: Icon, tone, detail }: StatCardProps) {
       <SurfaceCard className="h-full p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">{title}</p>
+            <p className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">{title}</p>
             <p className="mt-2 truncate font-mono text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{value}</p>
           </div>
-          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] bg-[var(--app-surface-sub)] ring-1', statToneClasses[tone])}>
+          <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem] ring-1', statToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
         </div>
@@ -206,8 +206,8 @@ export default function Dashboard() {
             {inventorySnapshot.length === 0 && <EmptyState title="No inventory items" message="Add materials to start monitoring stock vitality." className="py-8" />}
           </div>
 
-          <div className="mt-6 rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] p-4 dark:bg-[#39393b]">
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
+          <div className="mt-6 rounded-[var(--radius-card)] border p-4">
+            <p className="mb-3 label-caps text-macos-text-muted dark:text-zinc-500">Inventory Management</p>
             <Link
               to="/inventory"
               className="inline-flex h-9 w-full items-center justify-center rounded-[var(--radius-button)] bg-macos-blue px-4 text-xs font-semibold text-[var(--app-accent-ink)] hover:bg-macos-blue-dark active:scale-[0.98] dark:bg-macos-blue-dark dark:hover:bg-macos-blue"

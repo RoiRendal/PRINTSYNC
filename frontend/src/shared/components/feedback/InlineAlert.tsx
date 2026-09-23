@@ -78,7 +78,7 @@ export function InlineAlert({
     >
       <div className={cn(title && 'space-y-1.5')}>
         {title && (
-          <div className="flex items-center gap-1.5 font-bold uppercase tracking-[0.18em]">
+          <div className="flex items-center gap-1.5 font-bold">
             <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{title}</span>
           </div>
@@ -89,7 +89,7 @@ export function InlineAlert({
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 cursor-pointer text-[10px] font-bold uppercase tracking-[0.18em] underline decoration-dotted underline-offset-2"
+          className="shrink-0 cursor-pointer text-[10px] font-bold underline decoration-dotted underline-offset-2"
         >
           Dismiss
         </button>

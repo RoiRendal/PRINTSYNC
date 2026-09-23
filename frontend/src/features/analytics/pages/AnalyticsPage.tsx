@@ -57,7 +57,7 @@ export default function AnalyticsPage() {
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Live performance, margin telemetry, demand ranking, and forecasting in one dashboard.</p>
         </div>
         <SurfaceCard className="flex flex-col gap-2 p-3 md:flex-row md:items-center">
-          <div className="flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500"><CalendarRange className="h-3.5 w-3.5" aria-hidden="true" /> Global Sort</div>
+          <div className="flex items-center gap-2 px-1 text-[10px] font-bold text-macos-text-muted dark:text-zinc-500"><CalendarRange className="h-3.5 w-3.5" aria-hidden="true" /> Global Sort</div>
           <PeriodSelector value={globalPeriod} onChange={applyGlobalPeriod} prefix="global" />
         </SurfaceCard>
       </div>
