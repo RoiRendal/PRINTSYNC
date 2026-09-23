@@ -376,6 +376,25 @@ html {
     border: 1px solid var(--app-border-hairline);
   }
 
+  /*
+   * The one place caps are allowed.
+   *
+   * Frappe's rule, and now ours: `text-transform: uppercase` exists at exactly one
+   * size with exactly one tracking value — the `tiny` step in
+   * `espresso/_typography.scss` is `--text-tiny: 11px` with `$letter-space: 0.09em`,
+   * and every other step in that scale tracks 0.005–0.02em. So caps are 11px /
+   * 600 / 0.09em, defined once, and every kept all-caps label adopts this class.
+   *
+   * Caps name a BLOCK of content — a group header. Everything else in the app
+   * carries its hierarchy through weight and size, which is what ERPNext does.
+   */
+  .label-caps {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
   .macos-squircle {
     border-radius: var(--radius-squircle);
   }

@@ -180,7 +180,7 @@ export default function Settings() {
         <CardContent className="grid gap-6 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
             <label className="block space-y-1.5" htmlFor="company-display-name">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Company name</span>
+              <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Company name</span>
               <Input
                 id="company-display-name"
                 type="text"
@@ -253,7 +253,7 @@ export default function Settings() {
           <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
             <div className="space-y-5">
               <label className="block space-y-1.5" htmlFor="vat-rate">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
+                <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
                 <Input
                   id="vat-rate"
                   type="number"
@@ -265,7 +265,7 @@ export default function Settings() {
                 />
               </label>
               <label className="block space-y-1.5" htmlFor="currency-symbol">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
+                <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
                 <Select
                   id="currency-symbol"
                   value={currencyDraft}
@@ -288,10 +288,10 @@ export default function Settings() {
             </div>
 
             <SurfaceCard className="space-y-4 p-4">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.22em] text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
+              <h3 className="label-caps text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
               <div className="space-y-3 text-[10px]">
-                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
-                <div className="flex justify-between gap-3"><span className="font-bold uppercase tracking-wider text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
               </div>
             </SurfaceCard>
           </CardContent>
@@ -313,7 +313,7 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.18em]', theme === item ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold', theme === item ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>

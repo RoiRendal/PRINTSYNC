@@ -40,7 +40,7 @@ export default function LoginPage() {
         <SurfaceCard className="p-5 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-[11px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+              <label htmlFor="email" className="text-[11px] font-bold text-macos-text-muted dark:text-zinc-500">
                 Email address
               </label>
               <div className="relative">
@@ -58,7 +58,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-[11px] font-bold uppercase tracking-[0.2em] text-macos-text-muted dark:text-zinc-500">
+              <label htmlFor="password" className="text-[11px] font-bold text-macos-text-muted dark:text-zinc-500">
                 Password
               </label>
               <div className="relative">

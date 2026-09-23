@@ -183,7 +183,7 @@ export function POSCheckoutModal({
 
             <div className="space-y-4">
               <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em]">Amount to Pay</span>
+                <span className="text-[10px] font-bold">Amount to Pay</span>
                 <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
               <div className="space-y-1 border-b pb-3 font-mono text-[9px] text-macos-text-muted dark:text-zinc-500">
@@ -195,7 +195,7 @@ export function POSCheckoutModal({
 
             {posMode === 'retail' && (
               <div className="space-y-2">
-                <label className="text-[9px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-400">Payment Method</label>
+                <label className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-400">Payment Method</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
                   <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
@@ -209,7 +209,7 @@ export function POSCheckoutModal({
                 return (
                   <div key={`${item.id}-${idx}`} className="space-y-0.5">
                     <div className="flex justify-between text-[10px]">
-                      <span className={cn('font-medium uppercase', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
+                      <span className={cn('font-medium', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
                         {item.qty}x {item.name}
                       </span>
                       <span className={cn('font-mono', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-300')}>
@@ -217,7 +217,7 @@ export function POSCheckoutModal({
                       </span>
                     </div>
                     {shortfall && (
-                      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-red-700 dark:text-red-300">
+                      <p className="text-[9px] font-bold text-red-700 dark:text-red-300">
                         Only {shortfall.available} left — {shortfall.requested} requested
                       </p>
                     )}

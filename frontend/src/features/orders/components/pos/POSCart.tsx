@@ -67,7 +67,7 @@ export function POSCart({
         </div>
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
           <div>
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-macos-text dark:text-zinc-100">
+            <h2 className="label-caps text-macos-text dark:text-zinc-100">
               {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
             </h2>
             <p className="mt-1 text-[11px] text-macos-text-muted dark:text-zinc-500">Checkout panel</p>
@@ -80,7 +80,7 @@ export function POSCart({
         {posMode === 'custom' && (
           <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-purple)] p-3">
             <label className="block space-y-1.5">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-purple-700 dark:text-purple-300">Customer</span>
+              <span className="text-[8px] font-bold text-purple-700 dark:text-purple-300">Customer</span>
               <CustomerSelector
                 customers={customers}
                 customerId={customerId}
@@ -89,7 +89,7 @@ export function POSCart({
               />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-purple-700 dark:text-purple-300">Production Notes</span>
+              <span className="text-[8px] font-bold text-purple-700 dark:text-purple-300">Production Notes</span>
               <div className="relative">
                 <FileText className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-purple" aria-hidden="true" />
                 <Input fieldSize="sm" className="pl-8 text-[11px]" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
@@ -113,7 +113,7 @@ export function POSCart({
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="truncate text-[10px] font-bold uppercase leading-tight text-macos-text dark:text-zinc-100">{item.name}</span>
+                    <span className="truncate text-[10px] font-bold leading-tight text-macos-text dark:text-zinc-100">{item.name}</span>
                     <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-macos-text-muted hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -160,7 +160,7 @@ export function POSCart({
           </div>
         </div>
 
-        {posMode === 'custom' && editingOrderId && <div className="text-center text-[8px] font-bold uppercase tracking-widest text-macos-purple dark:text-purple-300">Editing Order: {editingOrderId}</div>}
+        {posMode === 'custom' && editingOrderId && <div className="text-center text-[8px] font-bold text-macos-purple dark:text-purple-300">Editing Order: {editingOrderId}</div>}
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="secondary" onClick={onReset}>Reset</Button>
           <Button type="button" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
@@ -168,7 +168,7 @@ export function POSCart({
           </Button>
         </div>
         {posMode === 'custom' && !customerName && cart.length > 0 && (
-          <div className="flex items-center justify-center gap-1.5 text-[8px] font-bold uppercase text-macos-orange">
+          <div className="flex items-center justify-center gap-1.5 text-[8px] font-bold text-macos-orange">
             <AlertCircle className="h-2.5 w-2.5" aria-hidden="true" /> Client Name Required
           </div>
         )}

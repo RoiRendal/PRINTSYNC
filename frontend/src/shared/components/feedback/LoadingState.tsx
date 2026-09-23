@@ -14,7 +14,7 @@ export function LoadingState({ label = 'Loading', className = '' }: LoadingState
           <LoaderCircle className="h-5 w-5" aria-hidden="true" />
         </div>
       </div>
-      <span className="text-[10px] font-bold uppercase tracking-[0.24em]">{label}</span>
+      <span className="text-[10px] font-bold">{label}</span>
     </div>
   );
 }

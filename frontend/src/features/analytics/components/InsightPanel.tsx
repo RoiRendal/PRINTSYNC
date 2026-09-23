@@ -23,7 +23,7 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
           {state.isLoading ? 'Generating...' : 'Generate Insights'}
         </Button>
       </div>
-      <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.18em] text-macos-text-muted dark:text-zinc-500">Last generated: {formatInsightTime(state.lastGeneratedAt)}</p>
+      <p className="mt-2 text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Last generated: {formatInsightTime(state.lastGeneratedAt)}</p>
 
       {state.report ? (
         <div className="mt-4 space-y-3 text-xs leading-relaxed text-macos-text dark:text-zinc-300">

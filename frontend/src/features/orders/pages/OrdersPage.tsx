@@ -145,7 +145,7 @@ export default function Orders() {
                 type="button"
                 onClick={() => setStatusFilter(filter.value)}
                 className={cn(
-                  'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em]',
+                  'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold',
                   isActive
                     ? 'bg-macos-blue text-[var(--app-accent-ink)]'
                     : 'border text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',

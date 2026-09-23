@@ -112,7 +112,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {selectedCustomer && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.16em] text-macos-purple dark:text-purple-300">
+        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-macos-purple dark:text-purple-300">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-macos-purple" />
           Linked to customer record
         </div>
