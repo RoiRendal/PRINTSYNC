@@ -89,6 +89,53 @@ describe('inventory.service', () => {
 
       await assertAppError(() => listInventory(db.client, { page: 1, limit: 20 }), 503, 'INVENTORY_LOOKUP_FAILED');
     });
+
+    it('filters to low-stock items when asked', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
+
+      await listInventory(db.client, { page: 1, limit: 20 }, true);
+
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'eq'), ['is_low_stock', true]);
+    });
+
+    it('sends no low-stock filter when not asked', async () => {
+      // The inverse bug: a filter applied unconditionally would hide items from
+      // every caller that never asked to filter, and the list would look broken
+      // rather than over-eager.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
+
+      await listInventory(db.client, { page: 1, limit: 20 });
+
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'eq'), undefined);
+    });
+
+    it('reports the filtered total, not the table total', async () => {
+      // The fake returns whatever `count` is queued, standing in for what PostgREST
+      // computes once the filter is applied. The assertion that matters is that the
+      // service passes that number straight through instead of substituting its own.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 5 });
+
+      const response = await listInventory(db.client, { page: 1, limit: 20 }, true);
+
+      assert.equal(response.total, 5);
+      assert.equal(response.data.length, 1);
+    });
+
+    it('still applies the range to a filtered query', async () => {
+      // Filtering must not displace paging: a filtered list that always returned
+      // page 1 would be a different bug with the same symptom.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
+
+      await listInventory(db.client, { page: 2, limit: 5 }, true);
+
+      const call = db.callsFor('inventory_items')[0];
+      assert.deepEqual(FakeSupabase.filterOf(call, 'eq'), ['is_low_stock', true]);
+      assert.deepEqual(FakeSupabase.filterOf(call, 'range'), [5, 9]);
+    });
   });
 
   describe('createInventoryItem', () => {

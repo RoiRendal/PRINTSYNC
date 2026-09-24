@@ -41,7 +41,13 @@ export const ADMIN_PAGE_ACCESS: PageAccessKey[] = [
   'audit',
 ];
 
-export const STAFF_PAGE_ACCESS: PageAccessKey[] = ['orders', 'pos', 'inventory', 'customers'];
+export const STAFF_PAGE_ACCESS: PageAccessKey[] = [
+  'dashboard',
+  'orders',
+  'pos',
+  'inventory',
+  'customers',
+];
 
 export const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', label: 'Dashboard', path: '/', icon: LayoutDashboard },

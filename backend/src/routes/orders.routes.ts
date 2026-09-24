@@ -3,16 +3,16 @@ import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
-import { createOrder, deleteOrder, getOrder, listOrders, updateOrder } from '../modules/orders/orders.service.js';
+import { createOrder, deleteOrder, getOrder, getOrdersSummary, listOrders, updateOrder } from '../modules/orders/orders.service.js';
+import { ORDER_STATUSES } from '../modules/orders/orderStatuses.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
-import { parsePaginationQuery } from '../shared/pagination.js';
+import { paginationQuerySchema } from '../shared/pagination.js';
 
 export const ordersRouter = Router();
 
-const statuses = ['Pending', 'In Production', 'Ready for Pickup', 'Designing', 'Completed', 'Delivered'] as const;
 const lineItemSchema = z.object({
   itemId: z.string().uuid().optional(),
   name: z.string().trim().min(1),
@@ -24,12 +24,25 @@ const orderSchema = z.object({
   customer: z.string().trim().min(1),
   lineItems: z.array(lineItemSchema).min(1),
   amount: z.number().min(0),
-  status: z.enum(statuses).default('Pending'),
+  status: z.enum(ORDER_STATUSES).default('Pending'),
   notes: z.string().trim().default(''),
   isCustom: z.boolean().default(false),
   customerId: z.string().uuid().optional(),
   dueDate: z.string().date().optional(),
 });
+/*
+ * The list's query string: pagination, plus an optional status.
+ *
+ * A status, or nothing at all — never the literal `All`. The Workspace's cards
+ * deep-link with `?status=Ready for Pickup`, and the list drops the parameter when
+ * the user picks "All" rather than sending `All`. So an unrecognised value is a 400
+ * with a message, not a quiet fall back to the unfiltered list: a filter that stops
+ * filtering without saying so leaves the page looking like it worked.
+ */
+const listOrdersQuerySchema = paginationQuerySchema.extend({
+  status: z.enum(ORDER_STATUSES).optional(),
+});
+
 const updateSchema = orderSchema.partial().extend({
   /**
    * The `updatedAt` the editor loaded, echoed back so the server can refuse a save
@@ -53,7 +66,28 @@ function getOrderId(request: { params: Record<string, string | string[] | undefi
 }
 
 ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (request, response) => {
-  sendSuccess(response, await listOrders(getSupabase(), parsePaginationQuery(request.query)));
+  const parsed = listOrdersQuerySchema.safeParse(request.query);
+  if (!parsed.success) {
+    throw new AppError(400, 'INVALID_ORDER_QUERY', 'The order filters are invalid.');
+  }
+  const { status, ...pagination } = parsed.data;
+  sendSuccess(response, await listOrders(getSupabase(), pagination, status));
+});
+
+/*
+ * Declared before `/:id`, and that ordering is load-bearing. Express matches in
+ * registration order, so a `/summary` route placed after the parameterised one is
+ * never reached: `/orders/summary` matches `/:id` first and the literal string
+ * "summary" is passed to `getOrder` as an order id, which fails as an invalid uuid
+ * rather than as a missing route.
+ *
+ * The gate is `orders.read`, not `analytics.read`. These are order counts, not
+ * analytics — and `orders.read` is what staff already hold, so the endpoint is
+ * reachable by the people the Workspace is being built for. `analytics.read` would
+ * have made the page admin-only again through the back door.
+ */
+ordersRouter.get('/summary', authenticate, requirePermission('orders.read'), async (_request, response) => {
+  sendSuccess(response, await getOrdersSummary(getSupabase()));
 });
 
 ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (request, response) => {

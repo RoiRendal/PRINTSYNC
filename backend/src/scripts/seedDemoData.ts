@@ -53,7 +53,10 @@ const WIPE_ORDER = [
   'operating_expenses', 'customers',
 ] as const;
 
-type OrderStatus = 'Pending' | 'Designing' | 'In Production' | 'Ready for Pickup' | 'Completed' | 'Delivered';
+// A fourth spelling of the status list used to live here. It is imported from the
+// module that owns the list now, so a status added to the contract reaches the seed
+// data instead of leaving it generating a status set the API would reject.
+import type { OrderStatus } from '../modules/orders/orderStatuses.js';
 
 // ─── Small utilities ────────────────────────────────────────────────────────
 

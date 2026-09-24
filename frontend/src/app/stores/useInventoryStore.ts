@@ -1,5 +1,5 @@
 import { useShallow } from 'zustand/react/shallow';
-import { inventoryApi } from '../../features/inventory/api/inventoryApi';
+import { inventoryApi, type InventoryListFilters } from '../../features/inventory/api/inventoryApi';
 import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '../../features/inventory/types';
 import { createListStore } from '../../shared/store/createListStore';
 import { emitDataChange } from '../../shared/store/dataEvents';
@@ -11,7 +11,13 @@ interface InventoryActions {
   reset: () => void;
 }
 
-export const useInventoryStore = createListStore<InventoryItem, InventoryActions>({
+/**
+ * `InventoryListFilters` is the third type argument because this store does carry
+ * a filter: `setFilters({ lowStock: 1 })` narrows the list to items at or below
+ * their reorder level, server-side, and the filter is re-sent on every refetch so
+ * a revalidation cannot quietly widen the list back to all stock.
+ */
+export const useInventoryStore = createListStore<InventoryItem, InventoryActions, InventoryListFilters>({
   list: (query) => inventoryApi.list(query),
   fallbackErrorMessage: 'Inventory could not be loaded.',
 
@@ -78,6 +84,8 @@ export function useInventory() {
       error: state.error,
       refresh: state.refresh,
       goToPage: state.goToPage,
+      /* The writer, not the filter — see the same note in `useOrders()`. */
+      setFilters: state.setFilters,
       addItem: state.addItem,
       updateItem: state.updateItem,
       deleteItem: state.deleteItem,

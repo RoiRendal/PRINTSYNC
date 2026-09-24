@@ -47,13 +47,30 @@ function toItem(row: Record<string, unknown>): InventoryItem {
 export async function listInventory(
   supabase: SupabaseClient,
   params: PaginationParams,
+  lowStock = false,
 ): Promise<PaginatedResponse<InventoryItem>> {
   const { start, end } = calculateRange(params.page, params.limit);
-  const { data, error, count } = await supabase
+  /*
+   * `count: 'exact'` makes `total` the *filtered* count: PostgREST applies the
+   * filter to the counted query, not merely to the rows it returns. That is the
+   * same rule Phase 4 put on `GET /orders`, and it is what keeps the pager honest
+   * when the Low stock card opens this list — a total that counted the whole table
+   * would offer pages that cannot exist.
+   *
+   * The low-stock predicate is `stock <= reorder_level`. PostgREST cannot compare
+   * two columns through its filter DSL, so the expression is materialised as the
+   * generated column `is_low_stock` (migration
+   * 20260924000300_inventory_low_stock_flag.sql), which is exactly what
+   * `get_orders_summary` counts. That is why this list's low-stock total and the
+   * summary's `lowStock` field must always agree — and the live cross-check
+   * asserts they do.
+   */
+  let query = supabase
     .from('inventory_items')
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at', { count: 'exact' })
-    .order('name')
-    .range(start, end);
+    .order('name');
+  if (lowStock) query = query.eq('is_low_stock', true);
+  const { data, error, count } = await query.range(start, end);
   if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
   return createPaginatedResponse(data.map((row) => toItem(row)), count ?? 0, params.page, params.limit);
 }

@@ -1,7 +1,7 @@
 import { useShallow } from 'zustand/react/shallow';
 import { orderPaymentsApi } from '../../features/orders/api/orderPaymentsApi';
 import type { CreateOrderPayment, OrderPayment } from '../../features/orders/api/orderPaymentsApi';
-import { ordersApi } from '../../features/orders/api/ordersApi';
+import { ordersApi, type OrderListFilters } from '../../features/orders/api/ordersApi';
 import type { CreateOrder, Order, UpdateOrder } from '../../features/orders/types';
 import { createListStore } from '../../shared/store/createListStore';
 import { emitDataChange } from '../../shared/store/dataEvents';
@@ -20,7 +20,13 @@ interface OrderActions {
   reset: () => void;
 }
 
-export const useOrderStore = createListStore<Order, OrderActions>({
+/**
+ * `OrderListFilters` is the third type argument because this store does carry a
+ * filter: `setFilters({ status })` narrows the list server-side, and the filter
+ * is re-sent on every refetch — including the silent background ones — so a
+ * revalidation cannot quietly widen the board back to every order.
+ */
+export const useOrderStore = createListStore<Order, OrderActions, OrderListFilters>({
   list: (query) => ordersApi.list(query),
   fallbackErrorMessage: 'Orders could not be loaded.',
 
@@ -123,6 +129,13 @@ export function useOrders() {
       error: state.error,
       refresh: state.refresh,
       goToPage: state.goToPage,
+      /*
+       * The writer, not the filter itself. The page owns what is selected (it has
+       * to, to render the control), so exposing `state.filters` here as well would
+       * invite a second source of truth for the same decision. The store's copy
+       * exists only so a background refetch cannot drop the filter.
+       */
+      setFilters: state.setFilters,
       addOrder: state.addOrder,
       updateOrder: state.updateOrder,
       deleteOrder: state.deleteOrder,
