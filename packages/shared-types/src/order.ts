@@ -93,3 +93,43 @@ export interface OrderConflictDetails {
   expectedUpdatedAt: string;
   currentUpdatedAt: string;
 }
+
+/** One row of `OrdersSummary.byStatus` — how many orders sit in one status. */
+export interface OrderStatusCount {
+  status: OrderStatus;
+  count: number;
+}
+
+/**
+ * The Workspace summary: **how much work is waiting**, computed in the database.
+ *
+ * It exists because the Dashboard used to derive these numbers in the browser from
+ * page 1 of a 20-row list, so "Active Orders" silently under-reported and
+ * "Today's Revenue" read ₱0 beside orders carrying real values. The counts here are
+ * over the whole table, never a page.
+ *
+ * Two rules the consumer depends on:
+ *
+ * 1. **`byStatus` is zero-filled.** Every one of the six known statuses appears,
+ *    carrying `0` when no order is in it. A card must be able to render a zero; a
+ *    status that vanishes from the array would make a card disappear from the page.
+ * 2. **It counts work waiting, not money.** `open` is the orders still moving —
+ *    everything not `Completed` and not `Delivered`. Revenue is deliberately absent:
+ *    it is a figure with a date range and belongs on Analytics, not here.
+ *
+ * `lowStock` rides along on an order-shaped payload on purpose: the Workspace's
+ * cards are one screen fetched in one round trip, and splitting the inventory count
+ * into a second request would only give the page two ways to disagree with itself.
+ * It is the same predicate the inventory list applies at `?lowStock=1` — stock at or
+ * below reorder level — so the two must agree.
+ */
+export interface OrdersSummary {
+  /** Every order in the table, regardless of status. */
+  total: number;
+  /** Orders still moving: not `Completed`, not `Delivered`. */
+  open: number;
+  /** All six statuses, zero-filled. */
+  byStatus: OrderStatusCount[];
+  /** Inventory items at or below their reorder level. */
+  lowStock: number;
+}

@@ -29,9 +29,10 @@ supabase/.temp/
 packages/shared-types/src/**/*.js
 
 # Working documents that are deliberately kept off the remote. These are the
-# manager's own planning files — the Geist font work, and the outline/sentence-
-# case work. They are read locally and never pushed. Ignoring them (rather than
-# just leaving them untracked) means a `git add -A` cannot sweep one into a
-# commit by accident.
+# manager's own planning files — the Geist font work, the outline/sentence-case
+# work, and the Dashboard-as-Workspace structure pass. They are read locally and
+# never pushed. Ignoring them (rather than just leaving them untracked) means a
+# `git add -A` cannot sweep one into a commit by accident.
 docs/geist-font-plan.md
 docs/outline-and-case-plan.md
+docs/dashboard-workspace-plan.md

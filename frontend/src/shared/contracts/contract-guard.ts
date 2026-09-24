@@ -50,6 +50,8 @@ import type {
   OrderLineItem as SharedOrderLineItem,
   OrderPayment as SharedOrderPayment,
   OrderStatus as SharedOrderStatus,
+  OrderStatusCount as SharedOrderStatusCount,
+  OrdersSummary as SharedOrdersSummary,
   PaymentMethod as SharedPaymentMethod,
   SessionUser as SharedSessionUser,
   Transaction as SharedTransaction,
@@ -83,6 +85,8 @@ import type {
   Order,
   OrderLineItem,
   OrderStatus,
+  OrderStatusCount,
+  OrdersSummary,
   PaymentMethod,
   UpdateOrder,
 } from '../../features/orders/types';
@@ -143,6 +147,10 @@ export type FrontendModulesPublishTheContract = [
   Expect<Identical<CreateOrder, SharedCreateOrder>>,
   Expect<Identical<UpdateOrder, SharedUpdateOrder>>,
   Expect<Identical<PaymentMethod, SharedPaymentMethod>>,
+
+  // the Workspace summary — counts of work waiting, computed in the database.
+  Expect<Identical<OrderStatusCount, SharedOrderStatusCount>>,
+  Expect<Identical<OrdersSummary, SharedOrdersSummary>>,
 
   // the till's transaction row, re-exported under the module's own alias.
   Expect<Identical<PaymentTransaction, SharedTransaction>>,
