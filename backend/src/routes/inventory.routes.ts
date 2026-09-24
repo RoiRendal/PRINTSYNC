@@ -14,7 +14,7 @@ import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
-import { parsePaginationQuery } from '../shared/pagination.js';
+import { paginationQuerySchema } from '../shared/pagination.js';
 
 export const inventoryRouter = Router();
 
@@ -46,8 +46,30 @@ function getItemId(request: { params: Record<string, string | string[] | undefin
   return id;
 }
 
+/*
+ * The list's query string: pagination, plus an optional low-stock flag.
+ *
+ * A flag that is on, or absent — never a half-applied one. The Workspace's Low
+ * stock card links with `?lowStock=1`, and the list drops the parameter when the
+ * user clears the filter rather than sending `false`, so an unrecognised value is
+ * a 400 with a message, not a quiet fall back to the unfiltered list. Only `1`
+ * and `true` turn the filter on; any other value (including an absent parameter)
+ * means "show everything", which is the safe default for a flag.
+ */
+const listInventoryQuerySchema = paginationQuerySchema.extend({
+  lowStock: z
+    .string()
+    .optional()
+    .transform((value) => value === '1' || value === 'true'),
+});
+
 inventoryRouter.get('/', authenticate, requirePermission('inventory.read'), async (request, response) => {
-  sendSuccess(response, await listInventory(getSupabase(), parsePaginationQuery(request.query)));
+  const parsed = listInventoryQuerySchema.safeParse(request.query);
+  if (!parsed.success) {
+    throw new AppError(400, 'INVALID_INVENTORY_QUERY', 'The inventory filters are invalid.');
+  }
+  const { lowStock, ...pagination } = parsed.data;
+  sendSuccess(response, await listInventory(getSupabase(), pagination, lowStock));
 });
 
 inventoryRouter.post('/', authenticate, requirePermission('inventory.manage'), async (request, response) => {
