@@ -395,3 +395,153 @@ describe('createListStore — optimistic writes', () => {
     expect(store.getState().items[0]?.name).toBe('alpha');
   });
 });
+
+/**
+ * Filters.
+ *
+ * A list store can carry one domain filter, which is what lets a deep link like
+ * `/orders?status=Ready for Pickup` open a list that is *actually* narrowed.
+ *
+ * The rule under test, and the one most likely to rot: the filter is re-sent on
+ * **every** fetch, not just the one the user triggered. `revalidate()`,
+ * `refresh()` and `goToPage()` all refetch with pagination only, so a filter that
+ * travelled on `fetchList` alone would survive exactly one interaction — and then
+ * a focus, a poll or a page-turn would quietly refetch the whole table. That
+ * failure looks like "the filter came off by itself", which is hard to attribute
+ * and easy to ship. The third test below is the one that catches it.
+ */
+describe('createListStore — filters', () => {
+  interface WidgetFilters {
+    name?: string;
+  }
+
+  type FilteredListFn = (query: ListQuery<WidgetFilters>) => Promise<PaginatedResponse<Widget>>;
+
+  /**
+   * A store that carries a filter. The mock echoes the page it was asked for, so
+   * a test can tell "refetched page 1" from "refetched the current page" — the
+   * plain `setup()` always answers with page 1, which would hide that difference.
+   */
+  function setupFiltered() {
+    const list = vi.fn<FilteredListFn>(async (query) =>
+      page([widget('alpha')], 1, query.page ?? 1, query.limit ?? 20),
+    );
+    const store = createListStore<Widget, Record<string, never>, WidgetFilters>({
+      list,
+      fallbackErrorMessage: 'Widgets could not be loaded.',
+    });
+    return { list, store };
+  }
+
+  it('a store with no filter still sends pagination and nothing else', async () => {
+    // The additive half of the change: widening the factory must not alter what a
+    // store that filters nothing puts on the wire.
+    const { list, store } = setup();
+
+    await store.getState().fetchList();
+
+    expect(list).toHaveBeenLastCalledWith({ page: 1, limit: 20 });
+  });
+
+  it('forwards the filter verbatim to the API, alongside pagination', async () => {
+    const { list, store } = setupFiltered();
+
+    await store.getState().setFilters({ name: 'alpha' });
+
+    // Verbatim, not reshaped: the API module forwards the query object and the
+    // client serialises it, so `name` has to arrive as a plain key.
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 1, limit: 20 });
+  });
+
+  it('a filter change refetches from page 1, not the page the user was on', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().fetchList();
+    await store.getState().goToPage(3);
+    expect(store.getState().page).toBe(3);
+
+    await store.getState().setFilters({ name: 'alpha' });
+
+    // Applying a filter on page 3 would show an empty list for a filter that has
+    // matches on page 1, and the pager would report the wrong page count.
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 1, limit: 20 });
+    expect(store.getState().page).toBe(1);
+  });
+
+  it('a background revalidation still asks for the filtered page', async () => {
+    // The regression this whole design exists to prevent. `revalidate()` carries
+    // no filter of its own, so if the filter were not held in state the request
+    // below would come back unfiltered and silently widen the screen.
+    vi.useFakeTimers();
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+    list.mockClear();
+
+    vi.advanceTimersByTime(DEFAULT_STALE_TIME_MS + 1);
+    await store.getState().revalidate();
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 1, limit: 20 });
+  });
+
+  it('a forced revalidation — a domain event — keeps the filter too', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+    list.mockClear();
+
+    await store.getState().forceRevalidate();
+
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 1, limit: 20 });
+  });
+
+  it('paging keeps the filter', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+    list.mockClear();
+
+    await store.getState().goToPage(2);
+
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 2, limit: 20 });
+  });
+
+  it('setFilters works as the very first fetch, before the store has loaded', async () => {
+    // The mount case a deep link hits: the page sets its filter from the URL
+    // before anything has been fetched, and must not need a load first.
+    const { list, store } = setupFiltered();
+    expect(store.getState().hasLoaded).toBe(false);
+
+    await store.getState().setFilters({ name: 'alpha' });
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(list).toHaveBeenLastCalledWith({ name: 'alpha', page: 1, limit: 20 });
+    expect(store.getState().hasLoaded).toBe(true);
+  });
+
+  it('setFilters({}) clears the filter', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+
+    await store.getState().setFilters({});
+
+    // Replaced, not merged — an empty object has to mean "everything".
+    expect(list).toHaveBeenLastCalledWith({ page: 1, limit: 20 });
+  });
+
+  it('resetList clears the filter along with the data', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+
+    store.getState().resetList();
+    await store.getState().fetchList();
+
+    expect(list).toHaveBeenLastCalledWith({ page: 1, limit: 20 });
+  });
+
+  it('a filter named on the query wins over the stored one', async () => {
+    const { list, store } = setupFiltered();
+    await store.getState().setFilters({ name: 'alpha' });
+
+    await store.getState().fetchList({ name: 'beta' });
+
+    expect(list).toHaveBeenLastCalledWith({ name: 'beta', page: 1, limit: 20 });
+  });
+});

@@ -35,21 +35,60 @@ export const DEFAULT_STALE_TIME_MS = 15_000;
  */
 export const OPTIMISTIC_TTL_MS = 10_000;
 
-export interface ListQuery {
+/**
+ * The query a list store hands to its feature API: pagination, plus whatever
+ * domain filter the store is currently carrying.
+ *
+ * Filter keys are spread in flat — `{ page, limit, status }` — rather than nested
+ * under a `filters` key, because that is already the shape `client.get()`
+ * serialises into request parameters. A feature API module can therefore forward
+ * the query untouched and the filter reaches the server with no translation step.
+ *
+ * ### Why the default is `Record<never, never>` and not `Record<string, never>`
+ *
+ * Both spell "no filters", but only the first is safe to intersect. A
+ * `Record<string, never>` carries a `string` index signature, and intersecting
+ * that with `page`/`limit` would collapse both to `never` — every existing
+ * `fetchList({ page })` would stop compiling.
+ */
+export type ListQuery<TFilters extends object = Record<never, never>> = {
   page?: number;
   limit?: number;
-}
+} & TFilters;
+
+/**
+ * The pagination half of a `ListQuery`.
+ *
+ * This is what an *internal* refetch is allowed to vary. `goToPage`, `refresh`
+ * and the revalidation paths have no opinion about the filter — they must not be
+ * able to set one — so they are typed to say so, and `runFetch` supplies the
+ * active filter from state instead.
+ */
+export type PaginationQuery = {
+  page?: number;
+  limit?: number;
+};
 
 /** Minimum contract every entity managed by a list store must satisfy. */
 export interface Identifiable {
   id: string;
 }
 
-export interface PaginatedListState<TItem> {
+export interface PaginatedListState<TItem, TFilters extends object = Record<never, never>> {
   items: TItem[];
   total: number;
   page: number;
   limit: number;
+  /**
+   * The domain filter currently applied to the list.
+   *
+   * This is held in store state, not read off each call's query, because
+   * `revalidate()`, `refresh()` and `goToPage()` all refetch through `runFetch`
+   * with pagination only. A filter that travelled on `fetchList` alone would be
+   * silently dropped by every background refresh, and the screen would quietly
+   * widen from "Awaiting pickup" back to the whole table.
+   */
+  filters: TFilters;
   isLoading: boolean;
   /** `true` while a *background* refresh runs — never used to blank the view. */
   isRevalidating: boolean;
@@ -60,9 +99,18 @@ export interface PaginatedListState<TItem> {
   lastFetchedAt: number | null;
 }
 
-export interface PaginatedListActions<TItem> {
+export interface PaginatedListActions<TItem, TFilters extends object = Record<never, never>> {
   /** Fetch a page with the blocking loading state. Persists `page`/`limit`. */
-  fetchList: (query?: ListQuery) => Promise<void>;
+  fetchList: (query?: ListQuery<TFilters>) => Promise<void>;
+  /**
+   * Replace the active filter, then refetch **from page 1**.
+   *
+   * Replaces rather than merges, so `setFilters({})` is how a filter is cleared.
+   * Resetting to page 1 is not an implementation detail: applying a filter while
+   * the user sits on page 3 would show an empty list for a filter that has plenty
+   * of matches, and the pager would report the wrong page count.
+   */
+  setFilters: (filters: TFilters) => Promise<void>;
   /** Fetch only when the store has no data yet — safe to call from many components. */
   ensureLoaded: () => Promise<void>;
   /** Re-fetch the page that is currently selected, showing the loading state. */
@@ -109,17 +157,21 @@ export interface PaginatedListActions<TItem> {
   resetList: () => void;
 }
 
-export type PaginatedListStore<TItem> = PaginatedListState<TItem> & PaginatedListActions<TItem>;
+export type PaginatedListStore<TItem, TFilters extends object = Record<never, never>> = PaginatedListState<
+  TItem,
+  TFilters
+> &
+  PaginatedListActions<TItem, TFilters>;
 
 /**
  * Helpers handed to the domain-specific `actions` builder so feature stores can
  * read and mutate the list slice without depending on zustand internals.
  */
-export interface ListStoreContext<TItem extends Identifiable> {
+export interface ListStoreContext<TItem extends Identifiable, TFilters extends object = Record<never, never>> {
   /** Apply a partial update to the list slice. */
-  patch: (partial: Partial<PaginatedListState<TItem>>) => void;
+  patch: (partial: Partial<PaginatedListState<TItem, TFilters>>) => void;
   /** Read the current list slice (including its actions). */
-  snapshot: () => PaginatedListStore<TItem>;
+  snapshot: () => PaginatedListStore<TItem, TFilters>;
   /** Re-fetch the current page. */
   refresh: () => Promise<void>;
   /** Optimistically update the cached collection. */
@@ -136,16 +188,23 @@ export interface ListStoreContext<TItem extends Identifiable> {
   rollbackOptimistic: (id: string) => void;
 }
 
-export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
-  /** Calls the feature API module. Must return a paginated envelope. */
-  list: (query: ListQuery) => Promise<PaginatedResponse<TItem>>;
+export interface CreateListStoreOptions<
+  TItem extends Identifiable,
+  TExtra,
+  TFilters extends object = Record<never, never>,
+> {
+  /**
+   * Calls the feature API module. Must return a paginated envelope, and receives
+   * the active filter alongside pagination so the request it builds is narrowed.
+   */
+  list: (query: ListQuery<TFilters>) => Promise<PaginatedResponse<TItem>>;
   /** Message shown when the API rejects without a usable message. */
   fallbackErrorMessage: string;
   defaultLimit?: number;
   /** Overrides `DEFAULT_STALE_TIME_MS` for stores that change very rapidly. */
   staleTime?: number;
   /** Domain-specific actions layered on top of the generic list behaviour. */
-  actions?: (context: ListStoreContext<TItem>) => TExtra;
+  actions?: (context: ListStoreContext<TItem, TFilters>) => TExtra;
 }
 
 /**
@@ -177,12 +236,32 @@ export interface CreateListStoreOptions<TItem extends Identifiable, TExtra> {
  * the event reaches `forceRevalidate()`, and the refetch it starts would otherwise
  * overwrite the very change the user just made. Stamping `lastFetchedAt` cannot
  * prevent that, because `forceRevalidate()` skips the staleness check by design.
+ *
+ * ### Filters
+ *
+ * A store may carry one domain filter (a status, a low-stock flag). It lives in
+ * state and is re-sent on **every** fetch, including the silent background ones —
+ * see `PaginatedListState.filters` for why that is the only arrangement that
+ * survives a revalidation. `setFilters()` is the way in; it replaces the filter
+ * and refetches page 1.
+ *
+ * Stores that filter nothing keep the default `TFilters`, so the whole mechanism
+ * is invisible to them.
  */
-export function createListStore<TItem extends Identifiable, TExtra extends object = Record<string, never>>(
-  options: CreateListStoreOptions<TItem, TExtra>,
-) {
+export function createListStore<
+  TItem extends Identifiable,
+  TExtra extends object = Record<string, never>,
+  TFilters extends object = Record<never, never>,
+>(options: CreateListStoreOptions<TItem, TExtra, TFilters>) {
   const defaultLimit = options.defaultLimit ?? DEFAULT_PAGE_SIZE;
   const staleTime = options.staleTime ?? DEFAULT_STALE_TIME_MS;
+  /**
+   * The filter a store starts with and returns to on `resetList()`.
+   *
+   * One object per store, shared by both, and never mutated — every write
+   * replaces the whole filter — so the sharing cannot leak between callers.
+   */
+  const emptyFilters = {} as TFilters;
   /** Guards against out-of-order responses when pages are changed quickly. */
   let latestRequestId = 0;
 
@@ -216,20 +295,20 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
     });
   };
 
-  return create<PaginatedListStore<TItem> & TExtra>()((set, get) => {
+  return create<PaginatedListStore<TItem, TFilters> & TExtra>()((set, get) => {
     /*
-     * The store is typed as `PaginatedListStore<TItem> & TExtra`, but the
-     * generic `TExtra` is unresolved in here, so TypeScript cannot prove that a
-     * partial of the list slice is a valid store patch. The slice only ever
+     * The store is typed as `PaginatedListStore<TItem, TFilters> & TExtra`, but
+     * the generic `TExtra` is unresolved in here, so TypeScript cannot prove that
+     * a partial of the list slice is a valid store patch. The slice only ever
      * writes to its own fields, so narrowing `set` once (with a documented
      * cast) keeps the rest of the factory fully type-safe.
      */
     const patch = set as unknown as (
       partial:
-        | Partial<PaginatedListState<TItem>>
-        | ((state: PaginatedListState<TItem>) => Partial<PaginatedListState<TItem>>),
+        | Partial<PaginatedListState<TItem, TFilters>>
+        | ((state: PaginatedListState<TItem, TFilters>) => Partial<PaginatedListState<TItem, TFilters>>),
     ) => void;
-    const snapshot = (): PaginatedListStore<TItem> => get();
+    const snapshot = (): PaginatedListStore<TItem, TFilters> => get();
     const toMessage = (error: unknown) =>
       error instanceof ApiError ? error.message : options.fallbackErrorMessage;
 
@@ -238,10 +317,21 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
      *             failures as an error state; `'silent'` refreshes underneath
      *             the rendered data and swallows failures.
      */
-    const runFetch = async (query: ListQuery | undefined, mode: 'blocking' | 'silent') => {
-      const { page, limit } = get();
+    const runFetch = async (query: PaginationQuery | undefined, mode: 'blocking' | 'silent') => {
+      const { page, limit, filters: activeFilters } = get();
       const nextPage = Math.max(FIRST_PAGE, query?.page ?? page);
       const nextLimit = query?.limit ?? limit;
+      /*
+       * The stored filter is the baseline, and the incoming query may add to it.
+       *
+       * This is the one line that keeps filtering honest. `revalidate()`,
+       * `refresh()` and `goToPage()` all call `runFetch` with pagination only —
+       * none of them knows about the filter — so reading the filter off `query`
+       * alone would let every focus, poll and page-turn quietly refetch the
+       * unfiltered list and silently widen what is on screen. A query that does
+       * name filter keys (`fetchList({ status })`) wins over the stored value.
+       */
+      const filters = { ...activeFilters, ...query } as ListQuery<TFilters>;
       const requestId = ++latestRequestId;
 
       if (mode === 'silent') {
@@ -251,7 +341,7 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
       }
 
       try {
-        const response = await options.list({ page: nextPage, limit: nextLimit });
+        const response = await options.list({ ...filters, page: nextPage, limit: nextLimit });
         if (requestId !== latestRequestId) return;
         patch({
           items: applyOptimistic(response.data),
@@ -313,8 +403,19 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
       await runFetch(undefined, 'silent');
     };
 
-    const listActions: PaginatedListActions<TItem> = {
+    const listActions: PaginatedListActions<TItem, TFilters> = {
       fetchList: (query) => runFetch(query, 'blocking'),
+
+      /*
+       * The filter is patched into state *before* the fetch, so `runFetch` reads
+       * the new value as its baseline. Page 1 is passed explicitly rather than
+       * left to the current page — see `setFilters` on why a filter must never
+       * land on page 3.
+       */
+      setFilters: (filters) => {
+        patch({ filters });
+        return runFetch({ page: FIRST_PAGE }, 'blocking');
+      },
 
       ensureLoaded: async () => {
         const { hasLoaded, isLoading } = get();
@@ -412,6 +513,7 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
           total: 0,
           page: FIRST_PAGE,
           limit: defaultLimit,
+          filters: emptyFilters,
           isLoading: false,
           isRevalidating: false,
           error: null,
@@ -440,6 +542,7 @@ export function createListStore<TItem extends Identifiable, TExtra extends objec
       total: 0,
       page: FIRST_PAGE,
       limit: defaultLimit,
+      filters: emptyFilters,
       isLoading: false,
       isRevalidating: false,
       error: null,

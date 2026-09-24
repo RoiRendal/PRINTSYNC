@@ -1,7 +1,7 @@
 import { apiClient, type ApiClient } from '../../../shared/api/client';
 import { readApiErrorBody } from '../../../shared/api/errors';
 import type { OrderConflictDetails, PaginatedResponse } from '@printsync/shared-types';
-import type { CreateOrder, Order, UpdateOrder } from '../types';
+import type { CreateOrder, Order, OrderStatus, UpdateOrder } from '../types';
 
 /**
  * Reads the conflict context off a refused order save.
@@ -34,9 +34,21 @@ export function readOrderConflict(error: unknown): OrderConflictDetails | null {
   };
 }
 
+/**
+ * The orders list's domain filter, declared next to the request that sends it.
+ *
+ * `status` travels as the `status` query parameter, which the server applies
+ * (`GET /orders?status=…`) — so the envelope's `total` counts *matching* orders
+ * rather than the whole table, and pagination cannot lie about how many match.
+ * An absent `status` means "every status"; there is deliberately no `'All'`
+ * member, because the server would reject it as an unknown status.
+ */
+export type OrderListFilters = { status?: OrderStatus };
+
 export function createOrdersApi(client: ApiClient = apiClient) {
   return {
-    list: (query?: { page?: number; limit?: number }) => client.get<PaginatedResponse<Order>>('/orders', query),
+    list: (query?: { page?: number; limit?: number } & OrderListFilters) =>
+      client.get<PaginatedResponse<Order>>('/orders', query),
     get: (id: string) => client.get<Order>(`/orders/${id}`),
     create: (payload: CreateOrder) => client.post<Order, CreateOrder>('/orders', payload),
     /**
