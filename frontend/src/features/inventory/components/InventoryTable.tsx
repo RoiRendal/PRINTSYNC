@@ -40,7 +40,7 @@ export function InventoryTable({
   onDeleteItem,
 }: InventoryTableProps) {
   return (
-    <Card variant="elevated" padding="none" className="overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Stock Catalog</CardTitle>
@@ -80,7 +80,7 @@ export function InventoryTable({
                     <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
                     <TableCell className="text-right font-mono font-bold">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
-                      <span className="ml-1 text-[9px] text-macos-text-muted">pcs</span>
+                      <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                     <TableCell>

@@ -32,7 +32,7 @@ export function POSCatalog({
 }: POSCatalogProps) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-3">
-      <Card variant="elevated" padding="md">
+      <Card padding="md">
         <div className="flex flex-col gap-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />

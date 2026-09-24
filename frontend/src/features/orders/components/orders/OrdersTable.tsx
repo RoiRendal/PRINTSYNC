@@ -53,7 +53,7 @@ export function OrdersTable({
 }: OrdersTableProps) {
   const { currencySymbol } = useBusinessBranding();
   return (
-    <Card variant="elevated" padding="none" className="overflow-hidden">
+    <Card padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
         <div>
           <CardTitle>Active Dispatch Queue</CardTitle>
