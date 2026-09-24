@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, Box, Image as ImageIcon } from 'lucide-react';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -9,12 +9,13 @@ import { InventoryStats } from '../components/InventoryStats';
 import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../../../app/stores/useInventoryStore';
+import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import { Pagination } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 
 export default function Inventory() {
-  const { items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem } = useInventory();
+  const { items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem, setFilters } = useInventory();
   const [viewMode, setViewMode] = useState<'inventory' | 'designs'>('inventory');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,6 +23,20 @@ export default function Inventory() {
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
+
+  // The URL is the one source of truth for the low-stock filter. `lowStock=1`
+  // is the key the server understands; clearing deletes the param.
+  const [lowStockParam, setLowStockParam] = useUrlFilter('lowStock', '');
+  const lowStockOnly = lowStockParam === '1';
+  /*
+   * Keep the server-side filter in step with the URL. Keyed on `lowStockOnly`
+   * (derived from the URL), so it fires once on arrival and once per real URL
+   * change — never on every render. `setFilters` has no equality guard, so
+   * calling it from a render loop would refetch the list in a storm; this does not.
+   */
+  useEffect(() => {
+    setFilters(lowStockOnly ? { lowStock: 1 } : {});
+  }, [lowStockOnly, setFilters]);
 
   const { filteredItems, categories, inventoryStats } = useFilteredInventory(items, searchTerm);
 
@@ -109,6 +124,22 @@ export default function Inventory() {
       {viewMode === 'inventory' ? (
         <div className="space-y-4">
           <InventoryStats stats={inventoryStats} />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setLowStockParam(lowStockOnly ? '' : '1')}
+              aria-pressed={lowStockOnly}
+              className={cn(
+                'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold',
+                lowStockOnly
+                  ? 'bg-orange-500 text-white dark:bg-orange-600'
+                  : 'border text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
+              )}
+            >
+              Low stock only
+            </button>
+          </div>
 
           <InventoryTable
             items={filteredItems}

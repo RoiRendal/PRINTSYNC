@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -13,6 +13,7 @@ import { OrdersTable } from '../components/orders/OrdersTable';
 import { readOrderConflict } from '../api/ordersApi';
 import { useOrderFilters } from '../hooks/useOrderFilters';
 import { useOrders } from '../../../app/stores/useOrderStore';
+import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import type { Order, OrderStatus } from '../types';
 import { workPhases } from '../components/orders/PhaseProgress';
 
@@ -27,15 +28,29 @@ const STATUS_FILTERS: Array<{ label: string; value: OrderStatus | 'All' }> = [
 ];
 
 export default function Orders() {
-  const { orders, total, page, limit, isLoading, error, refresh, goToPage, updateOrder, deleteOrder, refreshOrder } = useOrders();
+  const { orders, total, page, limit, isLoading, error, refresh, goToPage, updateOrder, deleteOrder, refreshOrder, setFilters } = useOrders();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'All'>('All');
+  // The URL is the one source of truth for the status filter. The param is read
+  // here and written by the filter buttons; "All" deletes the param so the URL
+  // stays clean (`/orders`, not `/orders?status=All`).
+  const [statusParam, setStatusParam] = useUrlFilter('status', 'All');
+  const statusFilter = (statusParam ?? 'All') as OrderStatus | 'All';
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [pendingOrderIds, setPendingOrderIds] = useState<ReadonlySet<string>>(() => new Set());
+
+  /*
+   * Keep the server-side filter in step with the URL. Keyed on `statusParam`
+   * (the URL value), so it fires once on arrival and once per real URL change —
+   * never on every render. `setFilters` has no equality guard, so calling it from
+   * a render loop would refetch the list in a storm; this does not.
+   */
+  useEffect(() => {
+    setFilters(statusParam ? { status: statusParam as OrderStatus } : {});
+  }, [statusParam, setFilters]);
 
   const filteredOrders = useOrderFilters(orders, {
     searchTerm,
@@ -143,7 +158,7 @@ export default function Orders() {
               <button
                 key={filter.value}
                 type="button"
-                onClick={() => setStatusFilter(filter.value)}
+                onClick={() => setStatusParam(filter.value)}
                 className={cn(
                   'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold',
                   isActive
