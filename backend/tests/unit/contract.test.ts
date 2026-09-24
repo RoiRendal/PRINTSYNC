@@ -9,6 +9,7 @@ import type {
   Order as SharedOrder,
   OrderLineItem as SharedOrderLineItem,
   OrderPayment as SharedOrderPayment,
+  OrdersSummary as SharedOrdersSummary,
   Supplier as SharedSupplier,
   Transaction as SharedTransaction,
   UserSummary as SharedUserSummary,
@@ -18,7 +19,7 @@ import type { AuditLogRecord } from '../../src/modules/audit/audit.service.js';
 import type { DesignRecord } from '../../src/modules/designs/designs.service.js';
 import type { Expense } from '../../src/modules/expenses/expenses.service.js';
 import type { InventoryItem } from '../../src/modules/inventory/inventory.service.js';
-import type { OrderLineItem, OrderRecord } from '../../src/modules/orders/orders.service.js';
+import type { OrderLineItem, OrderRecord, OrdersSummary } from '../../src/modules/orders/orders.service.js';
 import type { OrderPayment } from '../../src/modules/orderPayments/orderPayments.service.js';
 import type { TransactionRecord } from '../../src/modules/payments/payments.service.js';
 import type { Supplier } from '../../src/modules/suppliers/suppliers.service.js';
@@ -112,6 +113,8 @@ export type ApiMatchesPublishedContract = [
   Expect<Provides<SharedSupplier, Supplier>>,
   Expect<Provides<OrderPayment, SharedOrderPayment>>,
   Expect<Provides<SharedOrderPayment, OrderPayment>>,
+  Expect<Provides<OrdersSummary, SharedOrdersSummary>>,
+  Expect<Provides<SharedOrdersSummary, OrdersSummary>>,
 ];
 
 describe('the API and the published contract agree', () => {

@@ -1,9 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { OrderConflictDetails, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
+import type {
+  OrderConflictDetails,
+  OrdersSummary,
+  OrderStatusCount,
+  PaginationParams,
+  PaginatedResponse,
+} from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
+import { logger } from '../../shared/logger.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 import { auditRpcArguments } from '../../shared/requestContext.js';
+import { ORDER_STATUSES } from './orderStatuses.js';
 
 /**
  * The structured context the RPC attaches when a save loses a race with another
@@ -20,6 +28,11 @@ export type { OrderConflictDetails };
 // route validates against cannot disagree.
 import type { OrderStatus } from './orderStatuses.js';
 export type { OrderStatus };
+
+// Re-exported for the same reason: the Workspace summary is a published shape, and
+// `backend/tests/unit/contract.test.ts` can only assert the service agrees with the
+// contract if the service's own surface names the type it returns.
+export type { OrdersSummary, OrderStatusCount };
 
 export interface OrderLineItem {
   itemId?: string | undefined;
@@ -159,6 +172,71 @@ async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>
   return rows.map((row) =>
     toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0, timeZone),
   );
+}
+
+/**
+ * The Workspace's counts: how much work is waiting, over the whole table.
+ *
+ * This replaces a computation the Dashboard used to do in the browser from page 1
+ * of a 20-row list, which is why "Active Orders" under-reported and why the
+ * headline number disagreed with the table printed directly beneath it.
+ *
+ * **It fails loudly, and there is deliberately no fallback.** `analytics.service.ts`
+ * carries the long version of why: a fallback there re-aggregated the same numbers
+ * from four table reads, so a function that had raised on every call for months was
+ * indistinguishable from a working one at every vantage point a person has. The two
+ * paths also disagreed, so which figure you saw depended on whether an error nobody
+ * was told about had happened. For a count an operator uses to decide what to do
+ * next, a number quietly produced by a second implementation is worse than no
+ * number. So: 503, the RPC's own message in the log, one source of truth.
+ *
+ * The current in-browser aggregation is not kept as a fallback. It is deleted in
+ * the phase that rebuilds the page — that is part of the work, not a cleanup.
+ */
+export async function getOrdersSummary(supabase: SupabaseClient): Promise<OrdersSummary> {
+  const { data, error } = await supabase.rpc('get_orders_summary');
+
+  if (error || !data) {
+    logger.error('Orders summary RPC failed', { error: error?.message });
+    throw new AppError(503, 'ORDERS_SUMMARY_FAILED', 'Order counts could not be generated.');
+  }
+
+  const raw = data as {
+    total: number;
+    open: number;
+    byStatus: Array<{ status: string; count: number }> | null;
+    lowStock: number;
+  };
+
+  /*
+   * Zero-fill against the contract's list rather than trusting the payload's.
+   *
+   * The database already zero-fills, and `orders.status` is constrained to these
+   * six, so this looks redundant. It is the contract boundary: `OrdersSummary`
+   * promises every status appears, and a card whose status is missing from the
+   * array does not render a zero — it disappears from the page. That is a silent
+   * failure the type system cannot catch, because a shorter array is still a valid
+   * `OrderStatusCount[]`.
+   *
+   * Statuses the payload carries that are not in the contract are appended rather
+   * than dropped, so `total` keeps equalling the sum of `byStatus` even if that
+   * constraint is ever relaxed.
+   */
+  const counted = new Map((raw.byStatus ?? []).map((row) => [String(row.status), Number(row.count)]));
+  const byStatus: OrderStatusCount[] = ORDER_STATUSES.map((status) => ({
+    status,
+    count: counted.get(status) ?? 0,
+  }));
+  for (const [status, count] of counted) {
+    if (!ORDER_STATUSES.includes(status as OrderStatus)) byStatus.push({ status: status as OrderStatus, count });
+  }
+
+  return {
+    total: Number(raw.total),
+    open: Number(raw.open),
+    byStatus,
+    lowStock: Number(raw.lowStock),
+  };
 }
 
 export async function listOrders(

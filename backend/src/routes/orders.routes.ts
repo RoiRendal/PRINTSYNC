@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
-import { createOrder, deleteOrder, getOrder, listOrders, updateOrder } from '../modules/orders/orders.service.js';
+import { createOrder, deleteOrder, getOrder, getOrdersSummary, listOrders, updateOrder } from '../modules/orders/orders.service.js';
 import { ORDER_STATUSES } from '../modules/orders/orderStatuses.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
@@ -54,6 +54,22 @@ function getOrderId(request: { params: Record<string, string | string[] | undefi
 
 ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (request, response) => {
   sendSuccess(response, await listOrders(getSupabase(), parsePaginationQuery(request.query)));
+});
+
+/*
+ * Declared before `/:id`, and that ordering is load-bearing. Express matches in
+ * registration order, so a `/summary` route placed after the parameterised one is
+ * never reached: `/orders/summary` matches `/:id` first and the literal string
+ * "summary" is passed to `getOrder` as an order id, which fails as an invalid uuid
+ * rather than as a missing route.
+ *
+ * The gate is `orders.read`, not `analytics.read`. These are order counts, not
+ * analytics — and `orders.read` is what staff already hold, so the endpoint is
+ * reachable by the people the Workspace is being built for. `analytics.read` would
+ * have made the page admin-only again through the back door.
+ */
+ordersRouter.get('/summary', authenticate, requirePermission('orders.read'), async (_request, response) => {
+  sendSuccess(response, await getOrdersSummary(getSupabase()));
 });
 
 ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (request, response) => {
