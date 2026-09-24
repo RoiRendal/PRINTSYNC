@@ -3,20 +3,18 @@ import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
 /**
- * Two names, and only because collapsing the second one is a visual change.
+ * `raised` is the single Card variant — and the default.
  *
- * `solid` and `elevated` were byte-identical class strings, so `solid` is gone —
- * it had no call sites anywhere, which makes promoting `elevated` to the default
- * a provable no-op rather than a hopeful one.
- *
- * `raised` is deliberately left alone even though it reaches the same appearance.
- * It is **not** the same declaration: `.surface-panel` is a component-layer rule
- * while the others are utility-layer ones, so a caller passing an overriding
- * class (a `bg-*`, say) resolves differently between them. Merging them would be
- * a visual change that has to be measured rather than reasoned about, and it
- * touches 22 call sites.
+ * It maps to `.surface-panel` (`index.css`), declared inside `@layer utilities`
+ * as `border: 1px solid var(--app-border-hairline)` with no background. The old
+ * `elevated` variant compiled to the same hairline border (the `border
+ * border-[var(--app-border-hairline)]` utilities) and, being utility-layer too,
+ * rendered identically. Neither variant declares a background, so a caller-passed
+ * `bg-*` resolves the same for both. `elevated` was therefore collapsed into
+ * `raised`: no call site changes appearance. `solid` was removed earlier — it had
+ * no call sites anywhere.
  */
-export type CardVariant = 'raised' | 'elevated';
+export type CardVariant = 'raised';
 export type CardPadding = 'none' | 'sm' | 'md' | 'lg';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
@@ -26,8 +24,6 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 
 const variantClasses: Record<CardVariant, string> = {
   raised: 'surface-panel',
-  elevated:
-    'border border-[var(--app-border-hairline)]',
 };
 
 const paddingClasses: Record<CardPadding, string> = {
@@ -38,7 +34,7 @@ const paddingClasses: Record<CardPadding, string> = {
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = 'elevated', padding = 'md', ...props }, ref) => (
+  ({ className, variant = 'raised', padding = 'md', ...props }, ref) => (
     <div
       ref={ref}
       className={cn('rounded-[var(--radius-card)]', variantClasses[variant], paddingClasses[padding], className)}

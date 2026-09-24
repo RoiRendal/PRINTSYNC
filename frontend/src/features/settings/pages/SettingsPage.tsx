@@ -167,7 +167,7 @@ export default function Settings() {
         <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage business identity, defaults, appearance, and data export.</p>
       </div>
 
-      <Card variant="elevated" padding="lg" className="overflow-hidden">
+      <Card padding="lg" className="overflow-hidden">
         <CardHeader className="border-b pb-4">
           <div className="flex items-start gap-3">
             <SettingIcon><Building2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
@@ -240,7 +240,7 @@ export default function Settings() {
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
-        <Card variant="elevated" padding="lg" className="overflow-hidden">
+        <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
             <div className="flex items-start gap-3">
               <SettingIcon><Settings2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
@@ -323,7 +323,7 @@ export default function Settings() {
       </div>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <Card variant="elevated" padding="lg" className="overflow-hidden">
+        <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
             <div className="flex items-start gap-3">
               <SettingIcon><Download className="h-5 w-5" aria-hidden="true" /></SettingIcon>

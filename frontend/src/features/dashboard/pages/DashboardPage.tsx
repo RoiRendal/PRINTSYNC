@@ -116,7 +116,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-4 xl:gap-5">
-        <Card className="xl:col-span-3" padding="none" variant="elevated">
+        <Card className="xl:col-span-3" padding="none">
           <CardHeader className="mb-0 flex-row items-center justify-between gap-3 border-b p-4">
             <div>
               <CardTitle>Production Pipeline</CardTitle>
