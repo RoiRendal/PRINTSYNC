@@ -17,7 +17,13 @@ interface InventoryFormModalProps {
   onSubmit: (formData: CreateInventoryItem) => Promise<void>;
 }
 
-const emptyForm: CreateInventoryItem = {
+/*
+ * The form tracks the SKU as a string so the input stays controlled, but the
+ * request schema rejects a blank one (`min(1)`), so `''` must never reach the
+ * API. `''` means "none typed", and the server then generates the SKU — the same
+ * contract the edit path already honoured by leaving a blank SKU untouched.
+ */
+const emptyForm = {
   sku: '',
   name: '',
   category: '',
@@ -28,6 +34,24 @@ const emptyForm: CreateInventoryItem = {
   imageUrl: '',
 };
 
+type InventoryFormState = typeof emptyForm;
+
+/** Drops a blank SKU so the API receives the key only when it carries a value. */
+function toCreatePayload(form: InventoryFormState): CreateInventoryItem {
+  const trimmedSku = form.sku.trim();
+  const sku = trimmedSku ? { sku: trimmedSku } : {};
+  return {
+    name: form.name,
+    category: form.category,
+    stock: form.stock,
+    reorderLevel: form.reorderLevel,
+    price: form.price,
+    costPrice: form.costPrice,
+    imageUrl: form.imageUrl || null,
+    ...sku,
+  };
+}
+
 export function InventoryFormModal({
   isOpen,
   editingItem,
@@ -36,7 +60,7 @@ export function InventoryFormModal({
   onClose,
   onSubmit,
 }: InventoryFormModalProps) {
-  const [formData, setFormData] = useState<CreateInventoryItem>(emptyForm);
+  const [formData, setFormData] = useState<InventoryFormState>(emptyForm);
 
   // Sync form data when modal opens or editing item changes
   React.useEffect(() => {
@@ -71,7 +95,7 @@ export function InventoryFormModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    await onSubmit(toCreatePayload(formData));
   };
 
   return (
@@ -106,6 +130,21 @@ export function InventoryFormModal({
                 <option value="">Select Category</option>
                 {categories.map((category) => <option key={category} value={category}>{category}</option>)}
               </Select>
+            </label>
+            {/*
+             * SKU is optional — left blank, the API generates one. It was
+             * previously state-only with no input to edit it, so every add
+             * submitted a blank SKU (see `toCreatePayload`).
+             */}
+            <label className="block space-y-1.5">
+              <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">SKU <span className="font-normal normal-case">(optional)</span></span>
+              <Input
+                data-testid="inventory-sku-input"
+                type="text"
+                placeholder="Leave blank to generate automatically"
+                value={formData.sku}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+              />
             </label>
             <div className="grid grid-cols-2 gap-4">
               <label className="block space-y-1.5">
