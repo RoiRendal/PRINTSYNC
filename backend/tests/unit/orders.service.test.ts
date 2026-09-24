@@ -128,6 +128,53 @@ describe('orders.service', () => {
       assert.equal(response.data.length, 1);
     });
 
+    it('filters by status in the query rather than in memory', async () => {
+      const db = createFakeSupabase();
+      queueOrderList(db, [ORDER_ROW]);
+
+      await listOrders(db.client, { page: 1, limit: 20 }, 'Ready for Pickup');
+
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('orders')[0], 'eq'), ['status', 'Ready for Pickup']);
+    });
+
+    it('sends no status filter when none was asked for', async () => {
+      // The inverse bug: a filter applied unconditionally would hide orders from
+      // every caller that never asked to filter, and the list would look broken
+      // rather than over-eager.
+      const db = createFakeSupabase();
+      queueOrderList(db, [ORDER_ROW]);
+
+      await listOrders(db.client, { page: 1, limit: 20 });
+
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('orders')[0], 'eq'), undefined);
+    });
+
+    it('reports the filtered total, not the table total', async () => {
+      // The fake returns whatever `count` is queued, standing in for what PostgREST
+      // computes once the filter is applied. The assertion that matters is that the
+      // service passes that number straight through instead of substituting its own.
+      const db = createFakeSupabase();
+      queueOrderList(db, [ORDER_ROW], 7);
+
+      const response = await listOrders(db.client, { page: 1, limit: 20 }, 'Ready for Pickup');
+
+      assert.equal(response.total, 7);
+      assert.equal(response.data.length, 1);
+    });
+
+    it('still applies the range to a filtered query', async () => {
+      // Filtering must not displace paging: a filtered list that always returned
+      // page 1 would be a different bug with the same symptom.
+      const db = createFakeSupabase();
+      queueOrderList(db, [ORDER_ROW]);
+
+      await listOrders(db.client, { page: 2, limit: 5 }, 'Pending');
+
+      const call = db.callsFor('orders')[0];
+      assert.deepEqual(FakeSupabase.filterOf(call, 'eq'), ['status', 'Pending']);
+      assert.deepEqual(FakeSupabase.filterOf(call, 'range'), [5, 9]);
+    });
+
     it('treats a null count as zero rather than NaN', async () => {
       const db = createFakeSupabase();
       db.queueTable('orders', { data: [], error: null, count: null });

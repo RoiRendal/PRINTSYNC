@@ -242,11 +242,25 @@ export async function getOrdersSummary(supabase: SupabaseClient): Promise<Orders
 export async function listOrders(
   supabase: SupabaseClient,
   params: PaginationParams,
+  status?: OrderStatus,
 ): Promise<PaginatedResponse<OrderRecord>> {
   const { start, end } = calculateRange(params.page, params.limit);
-  const { data, error, count } = await supabase
-    .from('orders')
-    .select(orderSelect, { count: 'exact' })
+  /*
+   * The status filter belongs in the database, not in the browser, and that is the
+   * whole reason it exists. The list used to fetch page 1 of 20 and filter those
+   * rows in memory, so a link promising "orders awaiting pickup" showed matches
+   * among the newest 20 — and `total` counted the unfiltered table, so the pager
+   * offered pages that could not exist. A card that opens a list which looks
+   * filtered but is not is worse than a card with no link at all.
+   *
+   * `count: 'exact'` is what makes `total` the *filtered* count: PostgREST applies
+   * the filters to the counted query, not merely to the rows it returns. Swapping
+   * it for `planned` or dropping it would silently restore the old lie, because the
+   * rows would still be filtered while the total went back to counting everything.
+   */
+  let query = supabase.from('orders').select(orderSelect, { count: 'exact' });
+  if (status) query = query.eq('status', status);
+  const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');

@@ -9,7 +9,7 @@ import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
-import { parsePaginationQuery } from '../shared/pagination.js';
+import { paginationQuerySchema } from '../shared/pagination.js';
 
 export const ordersRouter = Router();
 
@@ -30,6 +30,19 @@ const orderSchema = z.object({
   customerId: z.string().uuid().optional(),
   dueDate: z.string().date().optional(),
 });
+/*
+ * The list's query string: pagination, plus an optional status.
+ *
+ * A status, or nothing at all — never the literal `All`. The Workspace's cards
+ * deep-link with `?status=Ready for Pickup`, and the list drops the parameter when
+ * the user picks "All" rather than sending `All`. So an unrecognised value is a 400
+ * with a message, not a quiet fall back to the unfiltered list: a filter that stops
+ * filtering without saying so leaves the page looking like it worked.
+ */
+const listOrdersQuerySchema = paginationQuerySchema.extend({
+  status: z.enum(ORDER_STATUSES).optional(),
+});
+
 const updateSchema = orderSchema.partial().extend({
   /**
    * The `updatedAt` the editor loaded, echoed back so the server can refuse a save
@@ -53,7 +66,12 @@ function getOrderId(request: { params: Record<string, string | string[] | undefi
 }
 
 ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (request, response) => {
-  sendSuccess(response, await listOrders(getSupabase(), parsePaginationQuery(request.query)));
+  const parsed = listOrdersQuerySchema.safeParse(request.query);
+  if (!parsed.success) {
+    throw new AppError(400, 'INVALID_ORDER_QUERY', 'The order filters are invalid.');
+  }
+  const { status, ...pagination } = parsed.data;
+  sendSuccess(response, await listOrders(getSupabase(), pagination, status));
 });
 
 /*
