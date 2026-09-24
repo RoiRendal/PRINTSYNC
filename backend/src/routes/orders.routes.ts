@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js'
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { createOrder, deleteOrder, getOrder, listOrders, updateOrder } from '../modules/orders/orders.service.js';
+import { ORDER_STATUSES } from '../modules/orders/orderStatuses.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
@@ -12,7 +13,6 @@ import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const ordersRouter = Router();
 
-const statuses = ['Pending', 'In Production', 'Ready for Pickup', 'Designing', 'Completed', 'Delivered'] as const;
 const lineItemSchema = z.object({
   itemId: z.string().uuid().optional(),
   name: z.string().trim().min(1),
@@ -24,7 +24,7 @@ const orderSchema = z.object({
   customer: z.string().trim().min(1),
   lineItems: z.array(lineItemSchema).min(1),
   amount: z.number().min(0),
-  status: z.enum(statuses).default('Pending'),
+  status: z.enum(ORDER_STATUSES).default('Pending'),
   notes: z.string().trim().default(''),
   isCustom: z.boolean().default(false),
   customerId: z.string().uuid().optional(),

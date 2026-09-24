@@ -13,7 +13,13 @@ import { auditRpcArguments } from '../../shared/requestContext.js';
  */
 export type { OrderConflictDetails };
 
-export type OrderStatus = 'Pending' | 'In Production' | 'Ready for Pickup' | 'Designing' | 'Completed' | 'Delivered';
+// `OrderStatus` is the contract's, not this module's: it was declared a second time
+// here, and a second declaration is a second copy to drift. It comes from
+// `./orderStatuses` — the module that owns the runtime list and proves the list and
+// the contract are the same set — so the type the service returns and the values the
+// route validates against cannot disagree.
+import type { OrderStatus } from './orderStatuses.js';
+export type { OrderStatus };
 
 export interface OrderLineItem {
   itemId?: string | undefined;
