@@ -4,14 +4,14 @@ import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { cn } from '../../../shared/lib/cn';
-import { DeleteConfirmModal, InventoryFormModal } from '../components/InventoryFormModal';
+import { InventoryFormModal } from '../components/InventoryFormModal';
 import { InventoryStats } from '../components/InventoryStats';
 import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
-import { Pagination } from '../../../shared/components/ui';
+import { DeleteConfirmModal, Pagination } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 
@@ -23,6 +23,7 @@ export default function Inventory() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
   const [itemsToDelete, setItemsToDelete] = useState<InventoryItem[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   // The URL is the one source of truth for the low-stock filter. `lowStock=1`
@@ -80,9 +81,10 @@ export default function Inventory() {
   };
 
   const confirmDelete = async () => {
-    if (itemsToDelete.length === 0) return;
+    if (itemsToDelete.length === 0 || isDeleting) return;
     const targets = itemsToDelete;
     setMutationError(null);
+    setIsDeleting(true);
     /*
      * One row at a time: `deleteItem` is a single-row endpoint, and a bulk route
      * would be a backend change this screen does not need. Whatever fails is
@@ -91,12 +93,18 @@ export default function Inventory() {
      * be retried.
      */
     const failed: string[] = [];
-    for (const item of targets) {
-      try {
-        await deleteItem(item.id);
-      } catch {
-        failed.push(item.sku);
+    try {
+      for (const item of targets) {
+        try {
+          await deleteItem(item.id);
+        } catch {
+          failed.push(item.sku);
+        }
       }
+    } finally {
+      // A throw between here and the close below would otherwise leave Confirm
+      // spinning on a dialog that never goes away.
+      setIsDeleting(false);
     }
     setIsDeleteModalOpen(false);
     setItemsToDelete([]);
@@ -195,7 +203,8 @@ export default function Inventory() {
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
-        items={itemsToDelete}
+        itemLabels={itemsToDelete.map((item) => item.name)}
+        isBusy={isDeleting}
         onClose={() => { setIsDeleteModalOpen(false); setItemsToDelete([]); }}
         onConfirm={confirmDelete}
       />

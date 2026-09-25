@@ -10,7 +10,7 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
@@ -23,6 +23,7 @@ export function DesignRepository() {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', tags: [], assetType: null, assetSizeBytes: null });
   const [editDesignData, setEditDesignData] = useState<Design | null>(null);
   const [tagInput, setTagInput] = useState('');
@@ -151,8 +152,9 @@ export function DesignRepository() {
   };
 
   const handleDelete = async () => {
-    if (!designToDelete) return;
+    if (!designToDelete || isDeleting) return;
     setMutationError(null);
+    setIsDeleting(true);
     try {
       await deleteDesign(designToDelete.id);
       setIsDeleteConfirmOpen(false);
@@ -160,6 +162,8 @@ export function DesignRepository() {
     } catch (error: unknown) {
       setMutationError(error instanceof ApiError ? error.message : 'The design could not be deleted.');
       setIsDeleteConfirmOpen(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -279,13 +283,13 @@ export function DesignRepository() {
         )}
       </Modal>
 
-      <Modal isOpen={isDeleteConfirmOpen} onClose={() => setIsDeleteConfirmOpen(false)} title="Confirm Deletion">
-        <div className="space-y-4 py-2 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[1.4rem] border bg-[var(--app-tint-red)] text-macos-red"><Trash2 className="h-8 w-8" aria-hidden="true" /></div>
-          <div className="space-y-1"><h3 className="text-sm font-bold text-macos-text dark:text-zinc-100">Delete Design?</h3><p className="text-xs text-macos-text-muted dark:text-zinc-400">Are you sure you want to delete <span className="font-bold text-macos-text dark:text-zinc-200">“{designToDelete?.name}”</span>? This action cannot be undone.</p></div>
-          <div className="flex gap-3 pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsDeleteConfirmOpen(false)}>Cancel</Button><Button type="button" variant="danger" fullWidth onClick={handleDelete}>Confirm Delete</Button></div>
-        </div>
-      </Modal>
+      <DeleteConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        itemLabels={designToDelete ? [designToDelete.name] : []}
+        isBusy={isDeleting}
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  DeleteConfirmModal,
   SurfaceCard,
   Input,
   Modal,
@@ -417,33 +418,15 @@ export default function UserManagement() {
         </form>
       </Modal>
 
-      <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
-        <div className="space-y-4">
-          <p className="text-sm text-macos-text-muted dark:text-zinc-400">
-            {usersToDelete.length > 1 ? (
-              <>
-                Are you sure you want to delete these{' '}
-                <strong className="text-macos-text dark:text-zinc-100">{usersToDelete.length} users</strong>?{' '}
-                <span className="font-mono text-[11px]">{usersToDelete.map((user) => user.name).join(', ')}</span>{' '}
-                This action cannot be undone.
-              </>
-            ) : (
-              <>
-                Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{usersToDelete[0]?.name}</strong>? This action cannot be undone.
-              </>
-            )}
-          </p>
-
-          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
-
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>
-              {usersToDelete.length > 1 ? `Delete ${usersToDelete.length} Users` : 'Delete User'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        itemLabels={usersToDelete.map((user) => user.name)}
+        isBusy={isDeleting}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+      >
+        {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
+      </DeleteConfirmModal>
     </div>
   );
 }

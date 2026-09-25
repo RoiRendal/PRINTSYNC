@@ -179,35 +179,3 @@ export function InventoryFormModal({
   );
 }
 
-interface DeleteConfirmModalProps {
-  isOpen: boolean;
-  /** Every row the delete will take. Named in full for one, counted for many. */
-  items: InventoryItem[];
-  onClose: () => void;
-  onConfirm: () => void;
-}
-
-export function DeleteConfirmModal({ isOpen, items, onClose, onConfirm }: DeleteConfirmModalProps) {
-  const isBulk = items.length > 1;
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirm Deletion" maxWidth="max-w-sm">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-4 text-red-700 dark:text-red-300">
-          <AlertTriangle className="h-6 w-6 shrink-0" aria-hidden="true" />
-          {isBulk ? (
-            <p className="text-xs font-medium">
-              Delete <span className="font-bold">{items.length} stock items</span>? This action cannot be undone.
-              <span className="mt-2 block font-mono text-[10px] opacity-80">{items.map((item) => item.sku).join(', ')}</span>
-            </p>
-          ) : (
-            <p className="text-xs font-medium">Are you sure you want to delete <span className="font-bold">{items[0]?.name}</span>? This action cannot be undone.</p>
-          )}
-        </div>
-        <div className="flex gap-3">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button type="button" variant="danger" fullWidth onClick={onConfirm}>Confirm Delete</Button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
