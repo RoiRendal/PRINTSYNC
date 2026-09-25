@@ -4,6 +4,8 @@ export { Button } from './Button';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, SurfaceCard } from './Card';
 export type { CardPadding, CardProps, CardVariant } from './Card';
+export { Checkbox } from './Checkbox';
+export type { CheckboxProps } from './Checkbox';
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 export { Modal } from './Modal';
@@ -18,6 +20,8 @@ export {
   TableHead,
   TableHeader,
   TableRow,
+  TableSelectCell,
+  TableSelectHead,
 } from './Table';
 export type { TableContainerProps } from './Table';
 export { Tooltip } from './Tooltip';

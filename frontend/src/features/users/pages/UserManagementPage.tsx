@@ -13,6 +13,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   SurfaceCard,
   Input,
   Modal,
@@ -25,9 +26,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSelectCell,
+  TableSelectHead,
 } from '../../../shared/components/ui';
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import type { RbacRole, UserSummary } from '../types';
 import { normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -67,7 +71,7 @@ export default function UserManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [userToDelete, setUserToDelete] = useState<UserSummary | null>(null);
+  const [usersToDelete, setUsersToDelete] = useState<UserSummary[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -93,6 +97,18 @@ export default function UserManagement() {
       );
     });
   }, [users, search]);
+
+  /*
+   * Tick state lives on the page, and the rows on offer exclude the signed-in
+   * admin's own account. Withholding it here — rather than letting the table tick
+   * a row the server will refuse — is what keeps "select all" and the count beside
+   * the button honest: neither can ever claim a row that cannot be deleted.
+   */
+  const selectableUserIds = useMemo(
+    () => filteredUsers.filter((user) => user.id !== firstAdminId).map((user) => user.id),
+    [filteredUsers, firstAdminId],
+  );
+  const selection = useRowSelection(selectableUserIds);
 
   const openCreate = () => {
     setEditingUserId(null);
@@ -127,33 +143,57 @@ export default function UserManagement() {
     setActionError(null);
   };
 
-  const openDelete = (user: UserSummary) => {
-    setUserToDelete(user);
+  const openDeleteSelected = () => {
+    const targets = filteredUsers.filter((user) => selection.selectedIds.has(user.id));
+    if (targets.length === 0) return;
+    setUsersToDelete(targets);
     setActionError(null);
     setIsDeleteModalOpen(true);
   };
 
   const closeDeleteModal = () => {
-    setUserToDelete(null);
+    setUsersToDelete([]);
     setIsDeleteModalOpen(false);
     setActionError(null);
   };
 
   const confirmDelete = async () => {
-    if (!userToDelete) return;
+    if (usersToDelete.length === 0) return;
+    const targets = usersToDelete;
     setActionError(null);
     setIsDeleting(true);
-    try {
-      await deleteUser(userToDelete.id);
-      closeDeleteModal();
-    } catch (deleteError) {
-      // Stays open, and says why. This used to `return` in silence, so a refused
-      // delete looked exactly like a button that did nothing — and the refusal a
-      // manager is most likely to hit here is deleting their own account.
-      setActionError(describeApiError(deleteError, 'The user could not be deleted.'));
-    } finally {
-      setIsDeleting(false);
+
+    /*
+     * One row at a time: `deleteUser` is a single-row endpoint, and a bulk route
+     * would be a backend change this screen does not need. A partial failure keeps
+     * the dialog open and names the survivors, so the retry is one click — the rows
+     * that did delete are already gone from the list, which drops their ticks with
+     * them.
+     */
+    const failures: Array<{ user: UserSummary; error: unknown }> = [];
+    for (const user of targets) {
+      try {
+        await deleteUser(user.id);
+      } catch (error) {
+        failures.push({ user, error });
+      }
     }
+    setIsDeleting(false);
+
+    if (failures.length === 0) {
+      selection.clear();
+      closeDeleteModal();
+      return;
+    }
+    setUsersToDelete(failures.map((failure) => failure.user));
+    setActionError(
+      // One refusal gets the precise reason — the refusal a manager is most likely
+      // to meet here is deleting their own account, and that deserves its own
+      // sentence rather than a headcount.
+      failures.length === 1
+        ? describeApiError(failures[0].error, 'The user could not be deleted.')
+        : `${failures.length} of ${targets.length} users could not be deleted: ${failures.map((failure) => failure.user.name).join(', ')}. The rest were removed.`,
+    );
   };
 
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -233,9 +273,28 @@ export default function UserManagement() {
                 <CardTitle>Team Directory</CardTitle>
                 <CardDescription>{filteredUsers.length} matching users across administrators and staff.</CardDescription>
               </div>
-              <div className="relative w-full md:max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." />
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                  <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." />
+                </div>
+                {/*
+                  The table's only delete control. Beside the filter, and visible
+                  while nothing is ticked (disabled, with the reason on hover) so
+                  the delete path is discoverable rather than appearing out of
+                  nowhere.
+                */}
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={selection.count === 0}
+                  onClick={openDeleteSelected}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+                  className="shrink-0"
+                >
+                  {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -243,6 +302,15 @@ export default function UserManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
+                      <TableSelectHead>
+                        <Checkbox
+                          checked={selection.allSelected}
+                          indeterminate={selection.isIndeterminate}
+                          disabled={selectableUserIds.length === 0}
+                          onChange={selection.toggleAll}
+                          aria-label="Select all users on this page"
+                        />
+                      </TableSelectHead>
                       <TableHead>Staff Identity</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
@@ -255,6 +323,21 @@ export default function UserManagement() {
                   <TableBody>
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
+                        <TableSelectCell>
+                          {/*
+                            The signed-in admin cannot be deleted, so the row is not
+                            offered for selection at all. A tick that the server
+                            would refuse is worse than no tick: it would let the
+                            count beside the button promise something it cannot do.
+                          */}
+                          <Checkbox
+                            checked={selection.has(user.id)}
+                            disabled={user.id === firstAdminId}
+                            onChange={() => selection.toggle(user.id)}
+                            aria-label={`Select ${user.name}`}
+                            title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : undefined}
+                          />
+                        </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
@@ -273,16 +356,13 @@ export default function UserManagement() {
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
                               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(user)} disabled={user.id === firstAdminId} title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : 'Delete user'} className="h-8 w-8 text-macos-red hover:text-macos-red">
-                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={8} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -340,14 +420,27 @@ export default function UserManagement() {
       <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
         <div className="space-y-4">
           <p className="text-sm text-macos-text-muted dark:text-zinc-400">
-            Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{userToDelete?.name}</strong>? This action cannot be undone.
+            {usersToDelete.length > 1 ? (
+              <>
+                Are you sure you want to delete these{' '}
+                <strong className="text-macos-text dark:text-zinc-100">{usersToDelete.length} users</strong>?{' '}
+                <span className="font-mono text-[11px]">{usersToDelete.map((user) => user.name).join(', ')}</span>{' '}
+                This action cannot be undone.
+              </>
+            ) : (
+              <>
+                Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{usersToDelete[0]?.name}</strong>? This action cannot be undone.
+              </>
+            )}
           </p>
 
           {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
 
           <div className="flex gap-2">
             <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>Delete User</Button>
+            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>
+              {usersToDelete.length > 1 ? `Delete ${usersToDelete.length} Users` : 'Delete User'}
+            </Button>
           </div>
         </div>
       </Modal>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, Box, Image as ImageIcon } from 'lucide-react';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -10,6 +10,7 @@ import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { Pagination } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';
@@ -21,7 +22,7 @@ export default function Inventory() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [itemsToDelete, setItemsToDelete] = useState<InventoryItem[]>([]);
   const [mutationError, setMutationError] = useState<string | null>(null);
 
   // The URL is the one source of truth for the low-stock filter. `lowStock=1`
@@ -39,6 +40,13 @@ export default function Inventory() {
   }, [lowStockOnly, setFilters]);
 
   const { filteredItems, categories, inventoryStats } = useFilteredInventory(items, searchTerm);
+
+  /*
+   * Tick state lives on the page. The rows on offer are the filtered ones, so a
+   * row hidden by the search box or by the low-stock filter cannot be deleted by
+   * accident — see `useRowSelection` for why that intersection is the point.
+   */
+  const selection = useRowSelection(useMemo(() => filteredItems.map((item) => item.id), [filteredItems]));
 
   const handleOpenModal = (item?: InventoryItem) => {
     setEditingItem(item ?? null);
@@ -64,21 +72,40 @@ export default function Inventory() {
     }
   };
 
-  const handleDeleteInitiate = (item: InventoryItem) => {
-    setItemToDelete(item);
+  const handleDeleteSelected = () => {
+    const targets = filteredItems.filter((item) => selection.selectedIds.has(item.id));
+    if (targets.length === 0) return;
+    setItemsToDelete(targets);
     setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!itemToDelete) return;
+    if (itemsToDelete.length === 0) return;
+    const targets = itemsToDelete;
     setMutationError(null);
-    try {
-      await deleteItem(itemToDelete.id);
-      setIsDeleteModalOpen(false);
-      setItemToDelete(null);
-    } catch (error: unknown) {
-      setMutationError(error instanceof ApiError ? error.message : 'The inventory item could not be deleted.');
-      setIsDeleteModalOpen(false);
+    /*
+     * One row at a time: `deleteItem` is a single-row endpoint, and a bulk route
+     * would be a backend change this screen does not need. Whatever fails is
+     * reported by SKU rather than by count — the rows that did delete have
+     * already left the list, so their ticks go with them and the rest can simply
+     * be retried.
+     */
+    const failed: string[] = [];
+    for (const item of targets) {
+      try {
+        await deleteItem(item.id);
+      } catch {
+        failed.push(item.sku);
+      }
+    }
+    setIsDeleteModalOpen(false);
+    setItemsToDelete([]);
+    selection.clear();
+
+    if (failed.length > 0) {
+      setMutationError(
+        `${failed.length} of ${targets.length} stock items could not be deleted: ${failed.join(', ')}.`,
+      );
     }
   };
 
@@ -148,7 +175,8 @@ export default function Inventory() {
             onSearchTermChange={setSearchTerm}
             onAddItem={() => handleOpenModal()}
             onEditItem={(item) => handleOpenModal(item)}
-            onDeleteItem={handleDeleteInitiate}
+            onDeleteSelected={handleDeleteSelected}
+            selection={selection}
           />
           <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
         </div>
@@ -167,8 +195,8 @@ export default function Inventory() {
 
       <DeleteConfirmModal
         isOpen={isDeleteModalOpen}
-        item={itemToDelete}
-        onClose={() => setIsDeleteModalOpen(false)}
+        items={itemsToDelete}
+        onClose={() => { setIsDeleteModalOpen(false); setItemsToDelete([]); }}
         onConfirm={confirmDelete}
       />
     </div>
