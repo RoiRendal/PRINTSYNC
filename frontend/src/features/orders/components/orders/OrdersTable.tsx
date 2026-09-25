@@ -170,11 +170,11 @@ export function OrdersTable({
                         aria-label={`Select order ${order.id}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="font-mono font-semibold text-macos-text dark:text-zinc-100">
+                    <TableCell className="font-mono text-macos-text dark:text-zinc-100">
                       #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
                     </TableCell>
                     <TableCell>
-                      <h3 className="font-bold text-macos-text dark:text-zinc-100 md:text-sm">{order.customer}</h3>
+                      <span className="text-macos-text dark:text-zinc-100">{order.customer}</span>
                     </TableCell>
                     <TableCell>
                       <Badge variant={isCustomOrder(order) ? 'purple' : 'gray'}>{isCustomOrder(order) ? 'Custom' : 'Retail'}</Badge>
@@ -233,7 +233,7 @@ export function OrdersTable({
                           {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                             <>
                               <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
-                              <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
+                              <span className="font-mono text-[10px] text-macos-red dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
                             <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
@@ -243,7 +243,7 @@ export function OrdersTable({
                         <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-mono text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
                     <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
                     </TableCell>
