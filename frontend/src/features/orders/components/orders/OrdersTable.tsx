@@ -174,10 +174,7 @@ export function OrdersTable({
                       #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
                     </TableCell>
                     <TableCell>
-                      <div>
-                        <h3 className="font-bold text-macos-text dark:text-zinc-100 md:text-sm">{order.customer}</h3>
-                        <p className="mt-0.5 max-w-xs truncate text-[10px] text-macos-text-muted dark:text-zinc-500 md:text-[11px]">{order.item} × {order.quantity} units</p>
-                      </div>
+                      <h3 className="font-bold text-macos-text dark:text-zinc-100 md:text-sm">{order.customer}</h3>
                     </TableCell>
                     <TableCell>
                       <Badge variant={isCustomOrder(order) ? 'purple' : 'gray'}>{isCustomOrder(order) ? 'Custom' : 'Retail'}</Badge>
