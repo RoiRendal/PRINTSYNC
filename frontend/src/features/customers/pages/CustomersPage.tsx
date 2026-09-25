@@ -11,6 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Input,
   Modal,
   Pagination,
@@ -21,9 +22,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSelectCell,
+  TableSelectHead,
 } from '../../../shared/components/ui';
 import { describeApiError } from '../../../shared/api/errors';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import type { Customer } from '../types';
 import { cn } from '../../../shared/lib/cn';
 
@@ -51,7 +55,7 @@ export default function CustomersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
+  const [customersToDelete, setCustomersToDelete] = useState<Customer[]>([]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -80,6 +84,13 @@ export default function CustomersPage() {
     );
   }, [customers, search]);
 
+  /*
+   * Tick state lives on the page. The rows on offer are the filtered ones, so a
+   * customer hidden by the search box cannot be deleted by accident — see
+   * `useRowSelection` for why that intersection is the point.
+   */
+  const selection = useRowSelection(useMemo(() => filtered.map((customer) => customer.id), [filtered]));
+
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -106,29 +117,38 @@ export default function CustomersPage() {
     setActionError(null);
   };
 
-  const openDelete = (customer: Customer) => {
+  const openDeleteSelected = () => {
+    const targets = filtered.filter((customer) => selection.selectedIds.has(customer.id));
+    if (targets.length === 0) return;
     const requestId = ++orderCountRequestRef.current;
-    setCustomerToDelete(customer);
+    setCustomersToDelete(targets);
     setActionError(null);
     setOrderCount(null);
     setIsDeleteModalOpen(true);
     setIsCheckingOrders(true);
 
     /*
-     * Ask how much history this customer has, so the warning can name a number
+     * Ask how much history these customers have, so the warning can name a number
      * instead of asking staff to accept an unquantified "this may affect orders".
      *
      * The foreign key is `on delete set null`, so the delete is never blocked —
      * the count only informs the decision. A count we cannot fetch therefore must
      * not block it either: refusing to delete because a warning could not be built
      * would be worse than the warning's absence.
+     *
+     * One request per customer, resolved together. If *any* of them fails the total
+     * is withheld rather than shown short — a partial sum would understate the
+     * history at risk, and understating it is worse than saying nothing.
      */
-    void countOrders(customer.id)
-      .then((count) => {
-        if (orderCountRequestRef.current === requestId) setOrderCount(count);
-      })
-      .catch(() => {
-        if (orderCountRequestRef.current === requestId) setOrderCount(null);
+    void Promise.allSettled(targets.map((customer) => countOrders(customer.id)))
+      .then((results) => {
+        if (orderCountRequestRef.current !== requestId) return;
+        const known = results.every((result) => result.status === 'fulfilled');
+        setOrderCount(
+          known
+            ? results.reduce((sum, result) => sum + (result.status === 'fulfilled' ? result.value : 0), 0)
+            : null,
+        );
       })
       .finally(() => {
         if (orderCountRequestRef.current === requestId) setIsCheckingOrders(false);
@@ -137,7 +157,7 @@ export default function CustomersPage() {
 
   const closeDeleteModal = () => {
     orderCountRequestRef.current += 1;
-    setCustomerToDelete(null);
+    setCustomersToDelete([]);
     setIsDeleteModalOpen(false);
     setOrderCount(null);
     setIsCheckingOrders(false);
@@ -145,19 +165,42 @@ export default function CustomersPage() {
   };
 
   const confirmDelete = async () => {
-    if (!customerToDelete) return;
+    if (customersToDelete.length === 0) return;
+    const targets = customersToDelete;
     setActionError(null);
     setIsDeleting(true);
-    try {
-      await deleteCustomer(customerToDelete.id);
-      closeDeleteModal();
-    } catch (deleteError) {
-      // Stays open, and says why. This used to `return` in silence, so a refused
-      // delete looked exactly like a button that did nothing.
-      setActionError(describeApiError(deleteError, 'The customer could not be deleted.'));
-    } finally {
-      setIsDeleting(false);
+
+    /*
+     * One row at a time: `deleteCustomer` is a single-row endpoint, and a bulk
+     * route would be a backend change this screen does not need. A partial failure
+     * keeps the dialog open and names the survivors, so the retry is one click —
+     * the rows that did delete are already gone from the list, which drops their
+     * ticks with them.
+     */
+    const failures: Array<{ customer: Customer; error: unknown }> = [];
+    for (const customer of targets) {
+      try {
+        await deleteCustomer(customer.id);
+      } catch (error) {
+        failures.push({ customer, error });
+      }
     }
+    setIsDeleting(false);
+
+    if (failures.length === 0) {
+      selection.clear();
+      closeDeleteModal();
+      return;
+    }
+    setCustomersToDelete(failures.map((failure) => failure.customer));
+    setActionError(
+      // One refusal gets the precise reason — including the session and
+      // permission cases only `describeApiError` knows how to phrase. A mixed
+      // batch cannot carry one reason per row, so it names the survivors instead.
+      failures.length === 1
+        ? describeApiError(failures[0].error, 'The customer could not be deleted.')
+        : `${failures.length} of ${targets.length} customers could not be deleted: ${failures.map((failure) => failure.customer.name).join(', ')}. The rest were removed.`,
+    );
   };
 
   const submitForm = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -227,9 +270,28 @@ export default function CustomersPage() {
                 <CardTitle>Customers</CardTitle>
                 <CardDescription>{filtered.length} matching customers in the directory.</CardDescription>
               </div>
-              <div className="relative w-full md:max-w-xs">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers..." />
+              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                  <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers..." />
+                </div>
+                {/*
+                  The table's only delete control. Beside the filter, and visible
+                  while nothing is ticked (disabled, with the reason on hover) so
+                  the delete path is discoverable rather than appearing out of
+                  nowhere.
+                */}
+                <Button
+                  type="button"
+                  variant="danger"
+                  disabled={selection.count === 0}
+                  onClick={openDeleteSelected}
+                  leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
+                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+                  className="shrink-0"
+                >
+                  {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
@@ -237,6 +299,15 @@ export default function CustomersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
+                      <TableSelectHead>
+                        <Checkbox
+                          checked={selection.allSelected}
+                          indeterminate={selection.isIndeterminate}
+                          disabled={filtered.length === 0}
+                          onChange={selection.toggleAll}
+                          aria-label="Select all customers on this page"
+                        />
+                      </TableSelectHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Email</TableHead>
@@ -248,6 +319,13 @@ export default function CustomersPage() {
                   <TableBody>
                     {filtered.map((customer) => (
                       <TableRow key={customer.id}>
+                        <TableSelectCell>
+                          <Checkbox
+                            checked={selection.has(customer.id)}
+                            onChange={() => selection.toggle(customer.id)}
+                            aria-label={`Select ${customer.name}`}
+                          />
+                        </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
@@ -265,16 +343,13 @@ export default function CustomersPage() {
                             <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(customer)} className="h-8 w-8" title="Edit customer">
                               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                             </Button>
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openDelete(customer)} className="h-8 w-8 text-macos-red hover:text-macos-red" title="Delete customer">
-                              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={6} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -307,12 +382,23 @@ export default function CustomersPage() {
       <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
         <div className="space-y-4">
           <p className="text-sm text-macos-text-muted dark:text-zinc-400">
-            Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{customerToDelete?.name}</strong>? This action cannot be undone.
+            {customersToDelete.length > 1 ? (
+              <>
+                Are you sure you want to delete these{' '}
+                <strong className="text-macos-text dark:text-zinc-100">{customersToDelete.length} customers</strong>?{' '}
+                <span className="font-mono text-[11px]">{customersToDelete.map((customer) => customer.name).join(', ')}</span>{' '}
+                This action cannot be undone.
+              </>
+            ) : (
+              <>
+                Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{customersToDelete[0]?.name}</strong>? This action cannot be undone.
+              </>
+            )}
           </p>
 
           {isCheckingOrders && (
             <p className="text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
-              Checking this customer's order history…
+              Checking {customersToDelete.length > 1 ? 'these customers’' : "this customer's"} order history…
             </p>
           )}
 
@@ -325,7 +411,7 @@ export default function CustomersPage() {
           {orderCount !== null && orderCount > 0 && (
             <InlineAlert
               tone="warning"
-              message={`This customer has ${orderCount} ${orderCount === 1 ? 'order' : 'orders'} on record. Those orders keep the customer's name, but will no longer be linked to this customer record.`}
+              message={`${customersToDelete.length > 1 ? 'These customers have' : 'This customer has'} ${orderCount} ${orderCount === 1 ? 'order' : 'orders'} on record. Those orders keep the customer's name, but will no longer be linked to ${customersToDelete.length > 1 ? 'these customer records' : 'this customer record'}.`}
             />
           )}
 
@@ -333,7 +419,9 @@ export default function CustomersPage() {
 
           <div className="flex gap-2">
             <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>Delete Customer</Button>
+            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>
+              {customersToDelete.length > 1 ? `Delete ${customersToDelete.length} Customers` : 'Delete Customer'}
+            </Button>
           </div>
         </div>
       </Modal>

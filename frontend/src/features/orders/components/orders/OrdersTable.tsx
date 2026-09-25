@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   Input,
   Table,
   TableBody,
@@ -15,9 +16,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableSelectCell,
+  TableSelectHead,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
+import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
 import { PhaseProgress, workPhases } from './PhaseProgress';
@@ -28,7 +32,14 @@ interface OrdersTableProps {
   onSearchTermChange: (value: string) => void;
   onSelectOrder: (order: Order) => void;
   onEditOrder: (order: Order) => void;
-  onDeleteOrder: (order: Order) => void;
+  /**
+   * Deletes every ticked row. The table no longer deletes one row at a time: the
+   * row's trash button was removed so a delete can only come from the header
+   * control, which is the one place that can state how many rows it will take.
+   */
+  onDeleteSelected: () => void;
+  /** Tick state, owned by the page. See `useRowSelection`. */
+  selection: RowSelection;
   onAdvancePhase: (order: Order, direction: -1 | 1) => void;
   /**
    * Orders whose phase move has been sent but not yet answered.
@@ -47,7 +58,8 @@ export function OrdersTable({
   onSearchTermChange,
   onSelectOrder,
   onEditOrder,
-  onDeleteOrder,
+  onDeleteSelected,
+  selection,
   onAdvancePhase,
   pendingOrderIds,
 }: OrdersTableProps) {
@@ -59,15 +71,34 @@ export function OrdersTable({
           <CardTitle>Active Dispatch Queue</CardTitle>
           <CardDescription>Click any row to inspect assets, notes, and phase controls.</CardDescription>
         </div>
-        <div className="relative w-full md:max-w-sm">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-          <Input
-            type="text"
-            placeholder="Filter active orders / client data..."
-            className="pl-9 text-xs"
-            value={searchTerm}
-            onChange={(e) => onSearchTermChange(e.target.value)}
-          />
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-xl">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+            <Input
+              type="text"
+              placeholder="Filter active orders / client data..."
+              className="pl-9 text-xs"
+              value={searchTerm}
+              onChange={(e) => onSearchTermChange(e.target.value)}
+            />
+          </div>
+          {/*
+            The table's only delete control. It sits beside the filter because
+            that is where the user's hands already are, and it stays visible while
+            nothing is ticked — disabled, with the reason on hover — so the
+            affordance is discoverable rather than appearing out of nowhere.
+          */}
+          <Button
+            type="button"
+            variant="danger"
+            disabled={selection.count === 0}
+            onClick={onDeleteSelected}
+            leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
+            title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+            className="shrink-0"
+          >
+            {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+          </Button>
         </div>
       </CardHeader>
 
@@ -76,6 +107,15 @@ export function OrdersTable({
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableSelectHead>
+                  <Checkbox
+                    checked={selection.allSelected}
+                    indeterminate={selection.isIndeterminate}
+                    disabled={orders.length === 0}
+                    onChange={selection.toggleAll}
+                    aria-label="Select all orders on this page"
+                  />
+                </TableSelectHead>
                 <TableHead>Order ID</TableHead>
                 <TableHead>Project / Client</TableHead>
                 <TableHead>Type</TableHead>
@@ -93,6 +133,18 @@ export function OrdersTable({
                 const isPending = pendingOrderIds.has(order.id);
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => onSelectOrder(order)}>
+                    {/*
+                      The tick has to stop here. The whole row opens the order, and
+                      without this a click on the box would open the detail modal
+                      on top of the tick the user was aiming for.
+                    */}
+                    <TableSelectCell onClick={(event) => event.stopPropagation()}>
+                      <Checkbox
+                        checked={selection.has(order.id)}
+                        onChange={() => selection.toggle(order.id)}
+                        aria-label={`Select order ${order.id}`}
+                      />
+                    </TableSelectCell>
                     <TableCell className="font-mono font-semibold text-macos-text dark:text-zinc-100">
                       #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
                     </TableCell>
@@ -195,19 +247,6 @@ export function OrdersTable({
                         >
                           <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onDeleteOrder(order);
-                          }}
-                          title="Delete order"
-                          className="h-8 w-8 text-macos-red hover:text-macos-red"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                        </Button>
                         <Button type="button" variant="ghost" size="icon" className="h-8 w-8" title="View details">
                           <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
@@ -218,7 +257,7 @@ export function OrdersTable({
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={9} className="py-12">
+                  <TableCell colSpan={10} className="py-12">
                     <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -6,7 +6,8 @@ import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { Button, Input, Pagination } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
-import { ApiError, describeApiError } from '../../../shared/api/errors';
+import { ApiError } from '../../../shared/api/errors';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
@@ -58,6 +59,15 @@ export default function Orders() {
     dateFrom,
     dateTo,
   });
+
+  /*
+   * Tick state lives on the page, not in the store: the store is a module-level
+   * singleton shared with the POS screen, and a selection is a property of this
+   * screen, not of the order data. The rows on offer are the filtered ones, so a
+   * row hidden by the search box or the status filter cannot be deleted by
+   * accident — see `useRowSelection` for why that intersection is the point.
+   */
+  const selection = useRowSelection(useMemo(() => filteredOrders.map((order) => order.id), [filteredOrders]));
 
   const markPending = (id: string, pending: boolean) =>
     setPendingOrderIds((previous) => {
@@ -113,15 +123,37 @@ export default function Orders() {
     }
   };
 
-  const handleDeleteOrder = async (order: Order) => {
-    if (!window.confirm(`Delete order ${order.id} for ${order.customer}?`)) return;
-    try {
-      await deleteOrder(order.id);
-      if (selectedOrder?.id === order.id) setSelectedOrder(null);
-    } catch (deleteError) {
-      // This used to go to the browser console, where nobody looks. A refused
-      // delete now says so on the page the user is actually on.
-      setStatusError(describeApiError(deleteError, 'The order could not be deleted.'));
+  /**
+   * Deletes every ticked order.
+   *
+   * One row at a time on purpose: `deleteOrder` is a single-row endpoint, and
+   * adding a bulk route to the API would be a backend change this screen does not
+   * need. The loop reports *which* rows survived rather than just how many, so a
+   * partial failure leaves the user able to retry — the rows that did delete are
+   * gone from the list, so their ticks go with them.
+   */
+  const handleDeleteSelected = async () => {
+    const ids = [...selection.selectedIds];
+    if (ids.length === 0) return;
+    const label = ids.length === 1 ? `order ${ids[0]}` : `${ids.length} orders`;
+    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
+
+    setStatusError(null);
+    const failed: string[] = [];
+    for (const id of ids) {
+      try {
+        await deleteOrder(id);
+        if (selectedOrder?.id === id) setSelectedOrder(null);
+      } catch {
+        failed.push(id);
+      }
+    }
+    selection.clear();
+
+    if (failed.length > 0) {
+      setStatusError(
+        `${failed.length} of ${ids.length} orders could not be deleted: ${failed.join(', ')}. The rest were removed.`,
+      );
     }
   };
 
@@ -202,7 +234,8 @@ export default function Orders() {
         onSearchTermChange={setSearchTerm}
         onSelectOrder={setSelectedOrder}
         onEditOrder={handleEditOrder}
-        onDeleteOrder={handleDeleteOrder}
+        onDeleteSelected={handleDeleteSelected}
+        selection={selection}
         onAdvancePhase={updateOrderStatusByStep}
         pendingOrderIds={pendingOrderIds}
       />
