@@ -23,7 +23,7 @@ import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingP
 import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
-import { PhaseProgress, workPhases } from './PhaseProgress';
+import { workPhases } from './PhaseProgress';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -195,21 +195,18 @@ export function OrdersTable({
                         >
                           <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <PhaseProgress status={order.status} />
-                          <div className="flex items-center gap-1.5">
-                            <StatusLabel tone={getStatusBadgeVariant(order.status)}>{order.status}</StatusLabel>
-                            {/*
-                              The phase on screen has already moved — this says the
-                              server has not confirmed it yet. Without it, a slow
-                              write looks like nothing is happening.
-                            */}
-                            {isPending && (
-                              <span role="status" aria-label="Saving phase change" className="inline-flex">
-                                <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                          <StatusLabel tone={getStatusBadgeVariant(order.status)}>{order.status}</StatusLabel>
+                          {/*
+                            The phase on screen has already moved — this says the
+                            server has not confirmed it yet. Without it, a slow
+                            write looks like nothing is happening.
+                          */}
+                          {isPending && (
+                            <span role="status" aria-label="Saving phase change" className="inline-flex">
+                              <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                            </span>
+                          )}
                         </div>
                         <Button
                           type="button"
