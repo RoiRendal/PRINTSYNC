@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Edit3, LoaderCircle, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -30,7 +30,6 @@ interface OrdersTableProps {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
   onSelectOrder: (order: Order) => void;
-  onEditOrder: (order: Order) => void;
   /**
    * Deletes every ticked row. The table no longer deletes one row at a time: the
    * row's trash button was removed so a delete can only come from the header
@@ -56,7 +55,6 @@ export function OrdersTable({
   searchTerm,
   onSearchTermChange,
   onSelectOrder,
-  onEditOrder,
   onDeleteSelected,
   selection,
   onAdvancePhase,
@@ -118,7 +116,6 @@ export function OrdersTable({
               <col style={{ width: '110px' }} />
               <col style={{ width: '110px' }} />
               <col style={{ width: '120px' }} />
-              <col style={{ width: '100px' }} />
             </colgroup>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -134,7 +131,7 @@ export function OrdersTable({
                 {/*
                   When rows are ticked the whole header collapses to just the
                   "# items selected" message (ERPNext item-list behaviour) — every
-                  column label disappears. The message spans all nine data columns
+                  column label disappears. The message spans all eight data columns
                   so nothing reads as a stray header.
                 */}
                 {selection.count === 0 ? (
@@ -147,10 +144,9 @@ export function OrdersTable({
                     <TableHead className="text-right">Value</TableHead>
                     <TableHead className="text-right">Paid</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={9} className="font-semibold text-macos-text dark:text-zinc-100">
+                  <TableHead colSpan={8} className="font-semibold text-macos-text dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -261,29 +257,12 @@ export function OrdersTable({
                         <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onEditOrder(order);
-                          }}
-                          title="Edit order in POS"
-                          className="h-8 w-8"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 );
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={10} className="py-12">
+                  <TableCell colSpan={9} className="py-12">
                     <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>

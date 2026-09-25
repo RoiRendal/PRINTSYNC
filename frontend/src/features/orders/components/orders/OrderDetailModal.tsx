@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, Image as ImageIcon, MessageSquare, Plus, Printer } from 'lucide-react';
+import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -70,11 +70,12 @@ function getOrderLineItems(order: Order): OrderLineItem[] {
 interface OrderDetailModalProps {
   order: Order | null;
   onClose: () => void;
+  onEditOrder: (order: Order) => void;
   onAdvancePhase: (order: Order, direction: -1 | 1) => void;
   onRefreshOrder: (id: string) => Promise<Order>;
 }
 
-export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrder }: OrderDetailModalProps) {
+export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, onRefreshOrder }: OrderDetailModalProps) {
   const { items: inventoryItems } = useInventory();
   const { designs } = useDesigns();
   const { currencySymbol } = useBusinessBranding();
@@ -398,8 +399,13 @@ export function OrderDetailModal({ order, onClose, onAdvancePhase, onRefreshOrde
             >
               Print Job Ticket
             </Button>
-            <Button type="button" fullWidth onClick={onClose}>
-              Close View
+            <Button
+              type="button"
+              fullWidth
+              leftIcon={<Edit3 className="h-3.5 w-3.5" aria-hidden="true" />}
+              onClick={() => order && onEditOrder(order)}
+            >
+              Edit Order
             </Button>
           </div>
         </div>
