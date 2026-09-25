@@ -5,9 +5,7 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   Checkbox,
   Input,
   Table,
@@ -21,6 +19,7 @@ import {
   TableSelectHead,
   Tooltip,
 } from '../../../shared/components/ui';
+import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
 
@@ -53,31 +52,29 @@ export function InventoryTable({
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <CardTitle>Stock Catalog</CardTitle>
-          <CardDescription>Search SKUs, update materials, and flag reorder thresholds.</CardDescription>
-        </div>
+      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
             <Input className="pl-9 text-xs" placeholder="Search SKU, material or category..." value={searchTerm} onChange={(e) => onSearchTermChange(e.target.value)} />
           </div>
           {/*
-            Beside the filter, and visible while nothing is ticked (disabled, with
-            the reason on hover) so the delete path is discoverable instead of
-            appearing only after the user has already ticked something.
+            Icon-only, gray, square — the same tone as Cancel. The hover title is
+            the only place the user sees *why* it is disabled, so the affordance
+            is discoverable rather than appearing out of nowhere once a row is
+            ticked.
           */}
           <Button
             type="button"
-            variant="danger"
+            variant="secondary"
+            size="icon"
             disabled={selection.count === 0}
             onClick={onDeleteSelected}
-            leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
-            title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+            aria-label={selection.count > 0 ? `Delete ${selection.count} selected stock item${selection.count === 1 ? '' : 's'}` : 'Delete selected stock items'}
+            title={selection.count === 0 ? 'Tick the rows you want to delete first.' : `Delete ${selection.count} stock item${selection.count === 1 ? '' : 's'}`}
             className="shrink-0"
           >
-            {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
           <Button type="button" onClick={onAddItem} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn" className="shrink-0">
             Add Stock
@@ -88,6 +85,15 @@ export function InventoryTable({
       <CardContent>
         <TableContainer className="rounded-none border-0 bg-transparent">
           <Table>
+            <colgroup>
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '240px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '100px' }} />
+              <col style={{ width: '110px' }} />
+              <col style={{ width: '100px' }} />
+            </colgroup>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableSelectHead>
@@ -99,12 +105,25 @@ export function InventoryTable({
                     aria-label="Select all stock items on this page"
                   />
                 </TableSelectHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Material Description</TableHead>
-                <TableHead className="text-center">Category</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/*
+                  When rows are ticked the whole header collapses to just the
+                  "# items selected" message (ERPNext item-list behaviour); every
+                  column label disappears. colSpan 6 = all six data columns.
+                */}
+                {selection.count === 0 ? (
+                  <>
+                    <TableHead>SKU</TableHead>
+                    <TableHead>Material Description</TableHead>
+                    <TableHead className="text-center">Category</TableHead>
+                    <TableHead className="text-right">Stock</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </>
+                ) : (
+                  <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
+                    {formatSelectedCount(selection.count)}
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>

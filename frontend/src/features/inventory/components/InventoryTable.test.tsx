@@ -79,7 +79,10 @@ describe('InventoryTable — one delete control, beside the search box', () => {
   it('keeps the delete button visible but disabled until a row is ticked', () => {
     render(<Harness />);
     expect(deleteButton()).toBeDisabled();
-    expect(deleteButton()).toHaveTextContent('Delete');
+    // Icon-only button: the "Delete" label lives in the aria-label, not in any
+    // visible text node — `toHaveAccessibleName` is the test that matches the
+    // contract the screen reader reads.
+    expect(deleteButton()).toHaveAccessibleName(/delete/i);
   });
 });
 
@@ -87,24 +90,32 @@ describe('InventoryTable — ticking rows', () => {
   it('gives every row a box, plus one in the header', () => {
     render(<Harness />);
     expect(screen.getAllByRole('checkbox')).toHaveLength(ITEMS.length + 1);
+    // With nothing ticked the normal column labels are shown.
+    expect(screen.getByRole('columnheader', { name: 'SKU' })).toBeInTheDocument();
   });
 
-  it('enables the delete button and states the count once a row is ticked', () => {
+  it('collapses the whole header to the "# item(s) selected" message when a row is ticked', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select SKU-2' }));
 
+    // Every column label disappears; only the message is left in the header
+    // (ERPNext item-list behaviour). The button no longer carries the count.
+    expect(screen.queryByRole('columnheader', { name: 'SKU' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: '1 item selected' })).toBeInTheDocument();
     expect(deleteButton()).toBeEnabled();
-    expect(deleteButton()).toHaveTextContent('Delete (1)');
+    expect(deleteButton()).toHaveAccessibleName('Delete 1 selected stock item');
   });
 
-  it('ticks every row from the header box, and reports the full count', () => {
+  it('reports the full count as the only header cell once every row is ticked', () => {
     render(<Harness />);
     fireEvent.click(screen.getByRole('checkbox', { name: /select all stock items/i }));
 
     for (const entry of ITEMS) {
       expect(screen.getByRole('checkbox', { name: `Select ${entry.sku}` })).toBeChecked();
     }
-    expect(deleteButton()).toHaveTextContent('Delete (3)');
+    expect(screen.queryByRole('columnheader', { name: 'SKU' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: '3 items selected' })).toBeInTheDocument();
+    expect(deleteButton()).toHaveAccessibleName('Delete 3 selected stock items');
   });
 
   it('reports the header box as neither fully ticked nor empty on a partial selection', () => {

@@ -4,9 +4,7 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   Checkbox,
   Input,
   Table,
@@ -20,6 +18,7 @@ import {
   TableSelectHead,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
+import { formatSelectedCount } from '../../../../shared/lib/selectionLabels';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
 import type { Order } from '../../types';
@@ -66,11 +65,14 @@ export function OrdersTable({
   const { currencySymbol } = useBusinessBranding();
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <CardTitle>Active Dispatch Queue</CardTitle>
-          <CardDescription>Click any row to inspect assets, notes, and phase controls.</CardDescription>
-        </div>
+      {/*
+        No title or description: the toolbar sits flush against the top edge of
+        the card so the table reads as a list, not a labelled section. The
+        delete control is now an icon-only square, gray like Cancel, and the
+        header cell to its right swaps to "# items selected" while rows are
+        ticked — see the increment-2 reference (ERPNext item list).
+      */}
+      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-xl">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
@@ -83,21 +85,22 @@ export function OrdersTable({
             />
           </div>
           {/*
-            The table's only delete control. It sits beside the filter because
-            that is where the user's hands already are, and it stays visible while
-            nothing is ticked — disabled, with the reason on hover — so the
-            affordance is discoverable rather than appearing out of nowhere.
+            The table's only delete control. It is icon-only and gray (the same
+            tone as Cancel) so it does not advertise itself as a destructive
+            action at a glance — the confirmation modal does that work. The
+            hover title is the only place the user sees *why* it is disabled.
           */}
           <Button
             type="button"
-            variant="danger"
+            variant="secondary"
+            size="icon"
             disabled={selection.count === 0}
             onClick={onDeleteSelected}
-            leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
-            title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+            aria-label={selection.count > 0 ? `Delete ${selection.count} selected order${selection.count === 1 ? '' : 's'}` : 'Delete selected orders'}
+            title={selection.count === 0 ? 'Tick the rows you want to delete first.' : `Delete ${selection.count} order${selection.count === 1 ? '' : 's'}`}
             className="shrink-0"
           >
-            {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
@@ -105,6 +108,18 @@ export function OrdersTable({
       <CardContent>
         <TableContainer className="rounded-none border-0 bg-transparent">
           <Table>
+            <colgroup>
+              <col style={{ width: '44px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '220px' }} />
+              <col style={{ width: '90px' }} />
+              <col style={{ width: '260px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '110px' }} />
+              <col style={{ width: '110px' }} />
+              <col style={{ width: '120px' }} />
+              <col style={{ width: '100px' }} />
+            </colgroup>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableSelectHead>
@@ -116,15 +131,29 @@ export function OrdersTable({
                     aria-label="Select all orders on this page"
                   />
                 </TableSelectHead>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Project / Client</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="min-w-[260px]">Work Phase</TableHead>
-                <TableHead className="text-right">Due Date</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead className="text-right">Paid</TableHead>
-                <TableHead className="text-right">Balance</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                {/*
+                  When rows are ticked the whole header collapses to just the
+                  "# items selected" message (ERPNext item-list behaviour) — every
+                  column label disappears. The message spans all nine data columns
+                  so nothing reads as a stray header.
+                */}
+                {selection.count === 0 ? (
+                  <>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Project / Client</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="min-w-[260px]">Work Phase</TableHead>
+                    <TableHead className="text-right">Due Date</TableHead>
+                    <TableHead className="text-right">Value</TableHead>
+                    <TableHead className="text-right">Paid</TableHead>
+                    <TableHead className="text-right">Balance</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </>
+                ) : (
+                  <TableHead colSpan={9} className="font-semibold text-macos-text dark:text-zinc-100">
+                    {formatSelectedCount(selection.count)}
+                  </TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -266,10 +295,6 @@ export function OrdersTable({
           </Table>
         </TableContainer>
       </CardContent>
-
-      <div className="surface-toolbar flex justify-center px-3 py-3 text-[9px] font-bold text-macos-text-muted dark:text-zinc-500">
-        End of Active Dispatch Queue
-      </div>
     </Card>
   );
 }
