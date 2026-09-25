@@ -1,12 +1,12 @@
-import { ChevronLeft, ChevronRight, LoaderCircle, Search, Trash2 } from 'lucide-react';
+import { LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   Checkbox,
   Input,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -23,7 +23,6 @@ import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingP
 import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
 import type { Order } from '../../types';
 import { isCustomOrder } from '../../utils/orderType';
-import { PhaseProgress, workPhases } from './PhaseProgress';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -38,14 +37,11 @@ interface OrdersTableProps {
   onDeleteSelected: () => void;
   /** Tick state, owned by the page. See `useRowSelection`. */
   selection: RowSelection;
-  onAdvancePhase: (order: Order, direction: -1 | 1) => void;
   /**
-   * Orders whose phase move has been sent but not yet answered.
-   *
-   * Required rather than optional on purpose: a caller that forgot to pass it
-   * would silently lose the guard, and the guard is what stops a second click on
-   * the same row from being refused by the server as a conflict with the user's
-   * own first click.
+   * Orders whose phase move has been sent but not yet answered. The row shows a
+   * small spinner beside the status while the write is in flight, so a slow save
+   * does not look like nothing is happening. Phase is now advanced only from the
+   * Order Production Detail modal, so this no longer guards an in-row click.
    */
   pendingOrderIds: ReadonlySet<string>;
 }
@@ -57,7 +53,6 @@ export function OrdersTable({
   onSelectOrder,
   onDeleteSelected,
   selection,
-  onAdvancePhase,
   pendingOrderIds,
 }: OrdersTableProps) {
   const { currencySymbol } = useBusinessBranding();
@@ -111,7 +106,7 @@ export function OrdersTable({
               <col style={{ width: '120px' }} />
               <col style={{ width: '220px' }} />
               <col style={{ width: '90px' }} />
-              <col style={{ width: '260px' }} />
+              <col style={{ width: '150px' }} />
               <col style={{ width: '120px' }} />
               <col style={{ width: '110px' }} />
               <col style={{ width: '110px' }} />
@@ -139,7 +134,7 @@ export function OrdersTable({
                     <TableHead>Order ID</TableHead>
                     <TableHead>Project / Client</TableHead>
                     <TableHead>Type</TableHead>
-                    <TableHead className="min-w-[260px]">Work Phase</TableHead>
+                    <TableHead>Work Phase</TableHead>
                     <TableHead className="text-right">Due Date</TableHead>
                     <TableHead className="text-right">Value</TableHead>
                     <TableHead className="text-right">Paid</TableHead>
@@ -154,7 +149,6 @@ export function OrdersTable({
             </TableHeader>
             <TableBody>
               {orders.map((order) => {
-                const phaseIndex = workPhases.indexOf(order.status);
                 const isPending = pendingOrderIds.has(order.id);
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => onSelectOrder(order)}>
@@ -170,88 +164,50 @@ export function OrdersTable({
                         aria-label={`Select order ${order.id}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="font-mono font-semibold text-macos-text dark:text-zinc-100">
+                    <TableCell className="text-macos-text dark:text-zinc-100">
                       #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
                     </TableCell>
                     <TableCell>
-                      <h3 className="font-bold text-macos-text dark:text-zinc-100 md:text-sm">{order.customer}</h3>
+                      <span className="text-macos-text dark:text-zinc-100">{order.customer}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={isCustomOrder(order) ? 'purple' : 'gray'}>{isCustomOrder(order) ? 'Custom' : 'Retail'}</Badge>
+                      {isCustomOrder(order) ? 'Custom' : 'Retail'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex max-w-[300px] items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={phaseIndex === 0 || isPending}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onAdvancePhase(order, -1);
-                          }}
-                          title="Back step"
-                          className="h-7 w-7 rounded-full"
-                        >
-                          <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                        </Button>
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <PhaseProgress status={order.status} />
-                          <div className="flex items-center gap-1.5">
-                            <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
-                            {/*
-                              The phase on screen has already moved — this says the
-                              server has not confirmed it yet. Without it, a slow
-                              write looks like nothing is happening.
-                            */}
-                            {isPending && (
-                              <span role="status" aria-label="Saving phase change" className="inline-flex">
-                                <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={phaseIndex === workPhases.length - 1 || isPending}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            onAdvancePhase(order, 1);
-                          }}
-                          title="Next step"
-                          className="h-7 w-7 rounded-full"
-                        >
-                          <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </Button>
+                      <div className="flex items-center gap-1.5">
+                        <StatusLabel tone={getStatusBadgeVariant(order.status)}>{order.status}</StatusLabel>
+                        {/*
+                          The phase on screen has already moved — this says the
+                          server has not confirmed it yet. Without it, a slow
+                          write looks like nothing is happening.
+                        */}
+                        {isPending && (
+                          <span role="status" aria-label="Saving phase change" className="inline-flex">
+                            <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                          </span>
+                        )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {order.dueDate ? (
-                        <div className="flex items-center justify-end gap-1.5">
-                          {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
-                            <>
-                              <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
-                              <span className="font-mono text-[10px] font-bold text-macos-red dark:text-red-300">{order.dueDate}</span>
-                            </>
-                          ) : (
-                            <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
-                          )}
-                        </div>
+                        new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
+                          <span className="text-macos-red dark:text-red-300">{order.dueDate}</span>
+                        ) : (
+                          <span className="text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
+                        )
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>
+                        <span className="text-macos-text-muted dark:text-zinc-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
+                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-macos-text-muted dark:text-zinc-400">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
-                        <Badge variant="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</Badge>
+                        <StatusLabel tone="red">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                        <span className="text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
                     </TableCell>
                   </TableRow>

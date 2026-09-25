@@ -258,7 +258,6 @@ export default function Orders() {
         onSelectOrder={setSelectedOrder}
         onDeleteSelected={openDeleteConfirm}
         selection={selection}
-        onAdvancePhase={updateOrderStatusByStep}
         pendingOrderIds={pendingOrderIds}
       />
       <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} className="mt-4" />
