@@ -136,9 +136,9 @@ export function InventoryTable({
                       />
                     </TableSelectCell>
                     <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
-                    <TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.name}</TableCell>
+                    <TableCell className="text-macos-text dark:text-zinc-100">{item.name}</TableCell>
                     <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
-                    <TableCell className="text-right font-mono font-bold">
+                    <TableCell className="text-right font-mono">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
                       <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>
                     </TableCell>

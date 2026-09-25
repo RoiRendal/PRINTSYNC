@@ -346,10 +346,10 @@ export default function CustomersPage() {
                         </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(customer.name)}
                             </div>
-                            <span className="text-[11px] font-bold leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
+                            <span className="text-[11px] leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
                           </div>
                         </TableCell>
                         <TableCell className="font-mono text-[10px]">{customer.phone || '—'}</TableCell>

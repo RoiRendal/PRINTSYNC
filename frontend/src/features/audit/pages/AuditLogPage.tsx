@@ -238,7 +238,7 @@ export default function AuditLogPage() {
                           <ActionBadge action={log.action} />
                         </TableCell>
                         <TableCell>
-                          <span className="text-[10px] font-semibold text-macos-text dark:text-zinc-200">
+                          <span className="text-[10px] text-macos-text dark:text-zinc-200">
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
