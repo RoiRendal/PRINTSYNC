@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronLeft, ChevronRight, Edit3, LoaderCircle, Search, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit3, LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
   Badge,
   Button,
@@ -275,9 +275,6 @@ export function OrdersTable({
                           className="h-8 w-8"
                         >
                           <Edit3 className="h-3.5 w-3.5" aria-hidden="true" />
-                        </Button>
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8" title="View details">
-                          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                         </Button>
                       </div>
                     </TableCell>

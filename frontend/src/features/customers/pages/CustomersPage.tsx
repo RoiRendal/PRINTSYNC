@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Mail, Phone, Plus, Search, Pencil, Trash2, Users } from 'lucide-react';
+import { Mail, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -302,7 +302,6 @@ export default function CustomersPage() {
                     <col style={{ width: '240px' }} />
                     <col style={{ width: '220px' }} />
                     <col style={{ width: '140px' }} />
-                    <col style={{ width: '100px' }} />
                   </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -318,7 +317,7 @@ export default function CustomersPage() {
                       {/*
                         When rows are ticked the whole header collapses to just the
                         "# items selected" message (ERPNext item-list behaviour);
-                        every column label disappears. colSpan 6 = all six data columns.
+                        every column label disappears. colSpan 5 = all five data columns.
                       */}
                       {selection.count === 0 ? (
                         <>
@@ -327,10 +326,9 @@ export default function CustomersPage() {
                           <TableHead>Email</TableHead>
                           <TableHead>Notes</TableHead>
                           <TableHead>Date Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
+                        <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -338,8 +336,8 @@ export default function CustomersPage() {
                   </TableHeader>
                   <TableBody>
                     {filtered.map((customer) => (
-                      <TableRow key={customer.id}>
-                        <TableSelectCell>
+                      <TableRow key={customer.id} className="cursor-pointer" onClick={() => openEdit(customer)}>
+                        <TableSelectCell onClick={(event) => event.stopPropagation()}>
                           <Checkbox
                             checked={selection.has(customer.id)}
                             onChange={() => selection.toggle(customer.id)}
@@ -358,18 +356,11 @@ export default function CustomersPage() {
                         <TableCell className="font-mono text-[10px]">{customer.email || '—'}</TableCell>
                         <TableCell className="max-w-[200px] truncate text-[10px] text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(customer)} className="h-8 w-8" title="Edit customer">
-                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={6} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { KeyRound, Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
+import { KeyRound, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -306,7 +306,6 @@ export default function UserManagement() {
                     <col style={{ width: '130px' }} />
                     <col style={{ width: '180px' }} />
                     <col style={{ width: '140px' }} />
-                    <col style={{ width: '100px' }} />
                   </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -322,7 +321,7 @@ export default function UserManagement() {
                       {/*
                         When rows are ticked the whole header collapses to just the
                         "# items selected" message (ERPNext item-list behaviour);
-                        every column label disappears. colSpan 7 = all seven data columns.
+                        every column label disappears. colSpan 6 = all six data columns.
                       */}
                       {selection.count === 0 ? (
                         <>
@@ -332,10 +331,9 @@ export default function UserManagement() {
                           <TableHead>RBAC Role</TableHead>
                           <TableHead>Position</TableHead>
                           <TableHead>Date Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={7} className="font-semibold text-macos-text dark:text-zinc-100">
+                        <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -343,8 +341,8 @@ export default function UserManagement() {
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableSelectCell>
+                      <TableRow key={user.id} className="cursor-pointer" onClick={() => openEdit(user)}>
+                        <TableSelectCell onClick={(event) => event.stopPropagation()}>
                           {/*
                             The signed-in admin cannot be deleted, so the row is not
                             offered for selection at all. A tick that the server
@@ -372,18 +370,11 @@ export default function UserManagement() {
                         <TableCell><Badge variant={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</Badge></TableCell>
                         <TableCell className="text-[10px] font-semibold text-macos-text dark:text-zinc-200">{user.position}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
-                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={8} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

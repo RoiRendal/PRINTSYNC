@@ -1,4 +1,4 @@
-import { Edit2, Package, Plus, Search, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Badge,
@@ -17,7 +17,6 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
-  Tooltip,
 } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
@@ -92,7 +91,6 @@ export function InventoryTable({
               <col style={{ width: '120px' }} />
               <col style={{ width: '100px' }} />
               <col style={{ width: '110px' }} />
-              <col style={{ width: '100px' }} />
             </colgroup>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -108,7 +106,7 @@ export function InventoryTable({
                 {/*
                   When rows are ticked the whole header collapses to just the
                   "# items selected" message (ERPNext item-list behaviour); every
-                  column label disappears. colSpan 6 = all six data columns.
+                  column label disappears. colSpan 5 = all five data columns.
                 */}
                 {selection.count === 0 ? (
                   <>
@@ -117,10 +115,9 @@ export function InventoryTable({
                     <TableHead className="text-center">Category</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
                     <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
+                  <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -130,8 +127,8 @@ export function InventoryTable({
               {items.map((item) => {
                 const isLowStock = item.stock <= item.reorderLevel;
                 return (
-                  <TableRow key={item.id}>
-                    <TableSelectCell>
+                  <TableRow key={item.id} className="cursor-pointer" onClick={() => onEditItem(item)}>
+                    <TableSelectCell onClick={(event) => event.stopPropagation()}>
                       <Checkbox
                         checked={selection.has(item.id)}
                         onChange={() => selection.toggle(item.id)}
@@ -146,21 +143,12 @@ export function InventoryTable({
                       <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1.5">
-                        <Tooltip content="Edit Item">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => onEditItem(item)} className="h-8 w-8">
-                            <Edit2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          </Button>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 );
               })}
               {items.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={7} className="py-14 text-center">
+                  <TableCell colSpan={6} className="py-14 text-center">
                     <EmptyState title="No stock items found" icon={<Package className="h-8 w-8 opacity-20" aria-hidden="true" />} />
                   </TableCell>
                 </TableRow>
