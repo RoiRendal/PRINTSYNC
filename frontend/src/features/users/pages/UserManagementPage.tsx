@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { KeyRound, Pencil, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
+import { KeyRound, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -33,6 +33,7 @@ import {
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
+import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RbacRole, UserSummary } from '../types';
 import { normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -269,38 +270,43 @@ export default function UserManagement() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Team Directory</CardTitle>
-                <CardDescription>{filteredUsers.length} matching users across administrators and staff.</CardDescription>
-              </div>
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
                   <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." />
                 </div>
                 {/*
-                  The table's only delete control. Beside the filter, and visible
-                  while nothing is ticked (disabled, with the reason on hover) so
-                  the delete path is discoverable rather than appearing out of
-                  nowhere.
+                  The table's only delete control. Icon-only and gray (the same
+                  tone as Cancel) so it does not advertise itself as destructive
+                  at a glance — the confirmation modal does that work.
                 */}
                 <Button
                   type="button"
-                  variant="danger"
+                  variant="secondary"
+                  size="icon"
                   disabled={selection.count === 0}
                   onClick={openDeleteSelected}
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
-                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+                  aria-label={selection.count > 0 ? `Delete ${selection.count} selected user${selection.count === 1 ? '' : 's'}` : 'Delete selected users'}
+                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : `Delete ${selection.count} user${selection.count === 1 ? '' : 's'}`}
                   className="shrink-0"
                 >
-                  {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
+                  <colgroup>
+                    <col style={{ width: '44px' }} />
+                    <col style={{ width: '200px' }} />
+                    <col style={{ width: '240px' }} />
+                    <col style={{ width: '150px' }} />
+                    <col style={{ width: '130px' }} />
+                    <col style={{ width: '180px' }} />
+                    <col style={{ width: '140px' }} />
+                  </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableSelectHead>
@@ -312,19 +318,31 @@ export default function UserManagement() {
                           aria-label="Select all users on this page"
                         />
                       </TableSelectHead>
-                      <TableHead>Staff Identity</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>RBAC Role</TableHead>
-                      <TableHead>Position</TableHead>
-                      <TableHead>Date Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      {/*
+                        When rows are ticked the whole header collapses to just the
+                        "# items selected" message (ERPNext item-list behaviour);
+                        every column label disappears. colSpan 6 = all six data columns.
+                      */}
+                      {selection.count === 0 ? (
+                        <>
+                          <TableHead>Staff Identity</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>RBAC Role</TableHead>
+                          <TableHead>Position</TableHead>
+                          <TableHead>Date Created</TableHead>
+                        </>
+                      ) : (
+                        <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
+                          {formatSelectedCount(selection.count)}
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableSelectCell>
+                      <TableRow key={user.id} className="cursor-pointer" onClick={() => openEdit(user)}>
+                        <TableSelectCell onClick={(event) => event.stopPropagation()}>
                           {/*
                             The signed-in admin cannot be deleted, so the row is not
                             offered for selection at all. A tick that the server
@@ -352,18 +370,11 @@ export default function UserManagement() {
                         <TableCell><Badge variant={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</Badge></TableCell>
                         <TableCell className="text-[10px] font-semibold text-macos-text dark:text-zinc-200">{user.position}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(user)} className="h-8 w-8" title="Edit user">
-                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={8} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

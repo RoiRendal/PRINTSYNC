@@ -32,12 +32,13 @@ const NONE: ReadonlySet<string> = new Set<string>();
  *
  * ### Why the selection is scoped to what is on screen
  *
- * The header box means "all of these", and the delete button's count is read
- * against the same list. If a tick could outlive the row's visibility, the
- * button would say "Delete (5)" while three of those rows sat on a page the user
- * is not looking at — a bulk delete whose target set cannot be seen is exactly
- * the accident this design is supposed to prevent. So `selectedIds` is the
- * intersection of the ticks with the rows the caller declares selectable.
+ * The header box means "all of these", and the "X items selected" label in
+ * the header reads against the same list. If a tick could outlive the row's
+ * visibility, the label would say "3 items selected" while two of those rows
+ * sat on a page the user is not looking at — a bulk delete whose target set
+ * cannot be seen is exactly the accident this design is supposed to prevent.
+ * So `selectedIds` is the intersection of the ticks with the rows the caller
+ * declares selectable.
  *
  * `selectableIds` is also how a caller withholds a row: an account that must not
  * be deleted is simply left out of the list, and it is then excluded from

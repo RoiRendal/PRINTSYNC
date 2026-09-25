@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Mail, Phone, Plus, Search, Pencil, Trash2, Users } from 'lucide-react';
+import { Mail, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -29,6 +29,7 @@ import {
 import { describeApiError } from '../../../shared/api/errors';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
+import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { Customer } from '../types';
 import { cn } from '../../../shared/lib/cn';
 
@@ -266,38 +267,42 @@ export default function CustomersPage() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Customers</CardTitle>
-                <CardDescription>{filtered.length} matching customers in the directory.</CardDescription>
-              </div>
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
                 <div className="relative flex-1">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
                   <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search customers..." />
                 </div>
                 {/*
-                  The table's only delete control. Beside the filter, and visible
-                  while nothing is ticked (disabled, with the reason on hover) so
-                  the delete path is discoverable rather than appearing out of
-                  nowhere.
+                  The table's only delete control. Icon-only and gray (the same
+                  tone as Cancel) so it does not advertise itself as destructive
+                  at a glance — the confirmation modal does that work.
                 */}
                 <Button
                   type="button"
-                  variant="danger"
+                  variant="secondary"
+                  size="icon"
                   disabled={selection.count === 0}
                   onClick={openDeleteSelected}
-                  leftIcon={<Trash2 className="h-3.5 w-3.5" aria-hidden="true" />}
-                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : undefined}
+                  aria-label={selection.count > 0 ? `Delete ${selection.count} selected customer${selection.count === 1 ? '' : 's'}` : 'Delete selected customers'}
+                  title={selection.count === 0 ? 'Tick the rows you want to delete first.' : `Delete ${selection.count} customer${selection.count === 1 ? '' : 's'}`}
                   className="shrink-0"
                 >
-                  {selection.count > 0 ? `Delete (${selection.count})` : 'Delete'}
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
+                  <colgroup>
+                    <col style={{ width: '44px' }} />
+                    <col style={{ width: '200px' }} />
+                    <col style={{ width: '150px' }} />
+                    <col style={{ width: '240px' }} />
+                    <col style={{ width: '220px' }} />
+                    <col style={{ width: '140px' }} />
+                  </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableSelectHead>
@@ -309,18 +314,30 @@ export default function CustomersPage() {
                           aria-label="Select all customers on this page"
                         />
                       </TableSelectHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Notes</TableHead>
-                      <TableHead>Date Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      {/*
+                        When rows are ticked the whole header collapses to just the
+                        "# items selected" message (ERPNext item-list behaviour);
+                        every column label disappears. colSpan 5 = all five data columns.
+                      */}
+                      {selection.count === 0 ? (
+                        <>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Notes</TableHead>
+                          <TableHead>Date Created</TableHead>
+                        </>
+                      ) : (
+                        <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
+                          {formatSelectedCount(selection.count)}
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filtered.map((customer) => (
-                      <TableRow key={customer.id}>
-                        <TableSelectCell>
+                      <TableRow key={customer.id} className="cursor-pointer" onClick={() => openEdit(customer)}>
+                        <TableSelectCell onClick={(event) => event.stopPropagation()}>
                           <Checkbox
                             checked={selection.has(customer.id)}
                             onChange={() => selection.toggle(customer.id)}
@@ -339,18 +356,11 @@ export default function CustomersPage() {
                         <TableCell className="font-mono text-[10px]">{customer.email || '—'}</TableCell>
                         <TableCell className="max-w-[200px] truncate text-[10px] text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-1.5">
-                            <Button type="button" variant="ghost" size="icon" onClick={() => openEdit(customer)} className="h-8 w-8" title="Edit customer">
-                              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
-                            </Button>
-                          </div>
-                        </TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={6} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

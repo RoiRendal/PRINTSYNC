@@ -7,9 +7,10 @@ import { useRowSelection } from './useRowSelection';
  *
  *   1. A bulk delete may only ever touch rows the user can see. The intersection
  *      with `selectableIds` is what enforces that, and it is the one property that
- *      makes "Delete (3)" safe to click without counting rows on screen first.
+ *      makes the "X items selected" header label honest without counting rows
+ *      on screen first.
  *   2. A row a caller withholds (an account that must not be deleted) is out of
- *      reach of both the row box and "select all", so the count beside the button
+ *      reach of both the row box and "select all", so the count in the header
  *      can never promise something the server will refuse.
  *   3. The header box reports three states, and unticking it clears everything.
  */

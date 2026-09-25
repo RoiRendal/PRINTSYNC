@@ -256,7 +256,6 @@ export default function Orders() {
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
         onSelectOrder={setSelectedOrder}
-        onEditOrder={handleEditOrder}
         onDeleteSelected={openDeleteConfirm}
         selection={selection}
         onAdvancePhase={updateOrderStatusByStep}
@@ -267,6 +266,7 @@ export default function Orders() {
       <OrderDetailModal
         order={selectedOrder}
         onClose={() => setSelectedOrder(null)}
+        onEditOrder={handleEditOrder}
         onAdvancePhase={updateOrderStatusByStep}
         onRefreshOrder={refreshOrder}
       />
