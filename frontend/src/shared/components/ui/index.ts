@@ -10,6 +10,8 @@ export { DeleteConfirmModal } from './DeleteConfirmModal';
 export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
+export { StatusLabel } from './StatusLabel';
+export type { StatusLabelProps } from './StatusLabel';
 export { Modal } from './Modal';
 export { Pagination } from './Pagination';
 export {

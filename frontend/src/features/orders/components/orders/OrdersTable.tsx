@@ -1,12 +1,12 @@
 import { ChevronLeft, ChevronRight, LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   Checkbox,
   Input,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -177,7 +177,7 @@ export function OrdersTable({
                       <span className="text-macos-text dark:text-zinc-100">{order.customer}</span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={isCustomOrder(order) ? 'purple' : 'gray'}>{isCustomOrder(order) ? 'Custom' : 'Retail'}</Badge>
+                      <StatusLabel tone={isCustomOrder(order) ? 'purple' : 'gray'}>{isCustomOrder(order) ? 'Custom' : 'Retail'}</StatusLabel>
                     </TableCell>
                     <TableCell>
                       <div className="flex max-w-[300px] items-center gap-2">
@@ -198,7 +198,7 @@ export function OrdersTable({
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <PhaseProgress status={order.status} />
                           <div className="flex items-center gap-1.5">
-                            <Badge variant={getStatusBadgeVariant(order.status)}>{order.status}</Badge>
+                            <StatusLabel tone={getStatusBadgeVariant(order.status)}>{order.status}</StatusLabel>
                             {/*
                               The phase on screen has already moved — this says the
                               server has not confirmed it yet. Without it, a slow
@@ -249,7 +249,7 @@ export function OrdersTable({
                     </TableCell>
                     <TableCell className="text-right">
                       {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
-                        <Badge variant="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</Badge>
+                        <StatusLabel tone="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
                       ) : (
                         <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
