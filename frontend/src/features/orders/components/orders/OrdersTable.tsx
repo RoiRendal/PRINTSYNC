@@ -233,25 +233,25 @@ export function OrdersTable({
                           {new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                             <>
                               <span className="h-1.5 w-1.5 rounded-full bg-macos-red" />
-                              <span className="font-mono text-[10px] text-macos-red dark:text-red-300">{order.dueDate}</span>
+                              <span className="font-mono text-macos-red dark:text-red-300">{order.dueDate}</span>
                             </>
                           ) : (
-                            <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
+                            <span className="font-mono text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
                           )}
                         </div>
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>
+                        <span className="font-mono text-macos-text-muted dark:text-zinc-500">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right font-mono text-[10px] text-macos-text-muted dark:text-zinc-400">
+                    <TableCell className="text-right font-mono text-macos-text-muted dark:text-zinc-400">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
                     </TableCell>
                     <TableCell className="text-right">
                       {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
-                        <StatusLabel tone="red" className="font-mono text-[10px]">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
+                        <StatusLabel tone="red" className="font-mono">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
                       ) : (
-                        <span className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                        <span className="font-mono text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
                     </TableCell>
                   </TableRow>
