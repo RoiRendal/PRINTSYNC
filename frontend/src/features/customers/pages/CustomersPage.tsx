@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  DeleteConfirmModal,
   Input,
   Modal,
   Pagination,
@@ -379,52 +380,34 @@ export default function CustomersPage() {
         </form>
       </Modal>
 
-      <Modal isOpen={isDeleteModalOpen} onClose={closeDeleteModal} title="Confirm Deletion" maxWidth="max-w-sm">
-        <div className="space-y-4">
-          <p className="text-sm text-macos-text-muted dark:text-zinc-400">
-            {customersToDelete.length > 1 ? (
-              <>
-                Are you sure you want to delete these{' '}
-                <strong className="text-macos-text dark:text-zinc-100">{customersToDelete.length} customers</strong>?{' '}
-                <span className="font-mono text-[11px]">{customersToDelete.map((customer) => customer.name).join(', ')}</span>{' '}
-                This action cannot be undone.
-              </>
-            ) : (
-              <>
-                Are you sure you want to delete <strong className="text-macos-text dark:text-zinc-100">{customersToDelete[0]?.name}</strong>? This action cannot be undone.
-              </>
-            )}
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        itemLabels={customersToDelete.map((customer) => customer.name)}
+        isBusy={isDeleting}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+      >
+        {isCheckingOrders && (
+          <p className="text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
+            Checking {customersToDelete.length > 1 ? 'these customers’' : "this customer's"} order history…
           </p>
+        )}
 
-          {isCheckingOrders && (
-            <p className="text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
-              Checking {customersToDelete.length > 1 ? 'these customers’' : "this customer's"} order history…
-            </p>
-          )}
+        {/*
+          The delete is never blocked by history — the foreign key is `on delete
+          set null`, so it succeeds and unlinks the orders. That is exactly why
+          the number has to be said out loud: the consequence is invisible
+          afterwards, and nobody notices until they try to find the order.
+        */}
+        {orderCount !== null && orderCount > 0 && (
+          <InlineAlert
+            tone="warning"
+            message={`${customersToDelete.length > 1 ? 'These customers have' : 'This customer has'} ${orderCount} ${orderCount === 1 ? 'order' : 'orders'} on record. Those orders keep the customer's name, but will no longer be linked to ${customersToDelete.length > 1 ? 'these customer records' : 'this customer record'}.`}
+          />
+        )}
 
-          {/*
-            The delete is never blocked by history — the foreign key is `on delete
-            set null`, so it succeeds and unlinks the orders. That is exactly why
-            the number has to be said out loud: the consequence is invisible
-            afterwards, and nobody notices until they try to find the order.
-          */}
-          {orderCount !== null && orderCount > 0 && (
-            <InlineAlert
-              tone="warning"
-              message={`${customersToDelete.length > 1 ? 'These customers have' : 'This customer has'} ${orderCount} ${orderCount === 1 ? 'order' : 'orders'} on record. Those orders keep the customer's name, but will no longer be linked to ${customersToDelete.length > 1 ? 'these customer records' : 'this customer record'}.`}
-            />
-          )}
-
-          {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
-
-          <div className="flex gap-2">
-            <Button type="button" variant="secondary" fullWidth onClick={closeDeleteModal} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="danger" fullWidth isLoading={isDeleting} onClick={confirmDelete}>
-              {customersToDelete.length > 1 ? `Delete ${customersToDelete.length} Customers` : 'Delete Customer'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        {actionError && <InlineAlert message={actionError} onDismiss={() => setActionError(null)} />}
+      </DeleteConfirmModal>
     </div>
   );
 }

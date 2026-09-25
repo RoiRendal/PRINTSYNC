@@ -6,6 +6,8 @@ export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, 
 export type { CardPadding, CardProps, CardVariant } from './Card';
 export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
+export { DeleteConfirmModal } from './DeleteConfirmModal';
+export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 export { Modal } from './Modal';

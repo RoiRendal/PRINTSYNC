@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { Button, Input, Pagination } from '../../../shared/components/ui';
+import { Button, DeleteConfirmModal, Input, Pagination } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { ApiError } from '../../../shared/api/errors';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
@@ -42,6 +42,8 @@ export default function Orders() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [pendingOrderIds, setPendingOrderIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [ordersToDelete, setOrdersToDelete] = useState<Order[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   /*
    * Keep the server-side filter in step with the URL. Keyed on `statusParam`
@@ -124,7 +126,21 @@ export default function Orders() {
   };
 
   /**
-   * Deletes every ticked order.
+   * Captures the ticked orders and opens the confirmation.
+   *
+   * The rows are snapshotted here rather than read back off `selection` when the
+   * user confirms: the list can refresh underneath an open dialog, and the dialog
+   * has to name the rows that were actually ticked, not whatever happens to be
+   * selected by the time Confirm gets clicked.
+   */
+  const openDeleteConfirm = () => {
+    const ids = [...selection.selectedIds];
+    if (ids.length === 0) return;
+    setOrdersToDelete(filteredOrders.filter((order) => ids.includes(order.id)));
+  };
+
+  /**
+   * Deletes every order named in the confirmation.
    *
    * One row at a time on purpose: `deleteOrder` is a single-row endpoint, and
    * adding a bulk route to the API would be a backend change this screen does not
@@ -132,27 +148,34 @@ export default function Orders() {
    * partial failure leaves the user able to retry — the rows that did delete are
    * gone from the list, so their ticks go with them.
    */
-  const handleDeleteSelected = async () => {
-    const ids = [...selection.selectedIds];
-    if (ids.length === 0) return;
-    const label = ids.length === 1 ? `order ${ids[0]}` : `${ids.length} orders`;
-    if (!window.confirm(`Delete ${label}? This cannot be undone.`)) return;
-
+  const confirmDeleteSelected = async () => {
+    if (ordersToDelete.length === 0 || isDeleting) return;
+    const targets = ordersToDelete;
     setStatusError(null);
+    setIsDeleting(true);
     const failed: string[] = [];
-    for (const id of ids) {
-      try {
-        await deleteOrder(id);
-        if (selectedOrder?.id === id) setSelectedOrder(null);
-      } catch {
-        failed.push(id);
+    try {
+      for (const order of targets) {
+        try {
+          await deleteOrder(order.id);
+          if (selectedOrder?.id === order.id) setSelectedOrder(null);
+        } catch {
+          // Named by customer rather than by id: the id means nothing to the
+          // person reading this, and they need to know which job to retry.
+          failed.push(order.customer);
+        }
       }
+    } finally {
+      // A throw before the close below would otherwise leave Confirm spinning
+      // on a dialog that never goes away.
+      setIsDeleting(false);
     }
+    setOrdersToDelete([]);
     selection.clear();
 
     if (failed.length > 0) {
       setStatusError(
-        `${failed.length} of ${ids.length} orders could not be deleted: ${failed.join(', ')}. The rest were removed.`,
+        `${failed.length} of ${targets.length} orders could not be deleted: ${failed.join(', ')}. The rest were removed.`,
       );
     }
   };
@@ -234,7 +257,7 @@ export default function Orders() {
         onSearchTermChange={setSearchTerm}
         onSelectOrder={setSelectedOrder}
         onEditOrder={handleEditOrder}
-        onDeleteSelected={handleDeleteSelected}
+        onDeleteSelected={openDeleteConfirm}
         selection={selection}
         onAdvancePhase={updateOrderStatusByStep}
         pendingOrderIds={pendingOrderIds}
@@ -246,6 +269,14 @@ export default function Orders() {
         onClose={() => setSelectedOrder(null)}
         onAdvancePhase={updateOrderStatusByStep}
         onRefreshOrder={refreshOrder}
+      />
+
+      <DeleteConfirmModal
+        isOpen={ordersToDelete.length > 0}
+        itemLabels={ordersToDelete.map((order) => order.customer)}
+        isBusy={isDeleting}
+        onClose={() => setOrdersToDelete([])}
+        onConfirm={confirmDeleteSelected}
       />
     </div>
   );
