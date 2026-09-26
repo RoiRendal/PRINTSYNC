@@ -28,7 +28,7 @@ function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
           <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] ring-1', summaryToneClasses[tone])}>
             <Icon className="h-5 w-5" aria-hidden="true" />
           </div>
-          <span className="truncate text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
+          <span className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
         </div>
         <span className="font-mono text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
       </SurfaceCard>

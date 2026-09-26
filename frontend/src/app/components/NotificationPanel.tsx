@@ -50,7 +50,7 @@ export const NotificationPanel = React.forwardRef<
           <Bell className="h-4 w-4 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
           <h3 className="text-sm font-bold text-macos-text dark:text-zinc-100">Notifications</h3>
           {unreadCount > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-macos-red px-1.5 text-[10px] font-bold text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-macos-red px-1.5 text-2xs font-bold text-white">
               {unreadCount}
             </span>
           )}
@@ -103,7 +103,7 @@ export const NotificationPanel = React.forwardRef<
                   zinc-600 measured 1.80:1 in dark — both under the 3:1 floor. */}
               <Bell className="h-8 w-8 text-[var(--app-text-muted)]" aria-hidden="true" />
               <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
-              <p className="text-[10px] text-[var(--app-text-muted)]">Alerts for stock and orders appear here.</p>
+              <p className="text-2xs text-[var(--app-text-muted)]">Alerts for stock and orders appear here.</p>
             </div>
           ) : (
             notifications.map((notification) => (
@@ -116,7 +116,7 @@ export const NotificationPanel = React.forwardRef<
               >
                 <div
                   className={cn(
-                    'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-[10px] font-bold',
+                    'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-2xs font-bold',
                     /* Amber and gray map onto the tint tokens. The blue chip does
                        not: --app-tint-blue is the composite of macos-blue, which
                        is a grey in this palette, so using it here would turn a
@@ -136,11 +136,11 @@ export const NotificationPanel = React.forwardRef<
                     <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted dark:text-zinc-500' : 'text-macos-text dark:text-zinc-100')}>
                       {notification.title}
                     </p>
-                    <span className="shrink-0 text-[10px] text-[var(--app-text-muted)]">
+                    <span className="shrink-0 text-2xs text-[var(--app-text-muted)]">
                       {formatTimeAgo(notification.createdAt)}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                  <p className="mt-0.5 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">
                     {notification.message}
                   </p>
                 </div>

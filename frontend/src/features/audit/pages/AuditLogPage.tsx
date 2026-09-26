@@ -152,7 +152,7 @@ export default function AuditLogPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Audit Log</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Audit Log</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
             Review system activity, who changed what, and when.
           </p>
@@ -180,7 +180,7 @@ export default function AuditLogPage() {
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <ScrollText className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>

@@ -193,7 +193,7 @@ export default function Orders() {
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Orders</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Orders</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
             Track active jobs, phase movement, customer artwork, and production-ready details.
           </p>
@@ -215,7 +215,7 @@ export default function Orders() {
                 type="button"
                 onClick={() => setStatusParam(filter.value)}
                 className={cn(
-                  'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold',
+                  'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                   isActive
                     ? 'bg-macos-blue text-[var(--app-accent-ink)]'
                     : 'border text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
@@ -232,15 +232,15 @@ export default function Orders() {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 w-auto text-[10px]"
+            className="h-8 w-auto text-2xs"
             placeholder="From"
           />
-          <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">to</span>
+          <span className="text-2xs text-macos-text-muted dark:text-zinc-500">to</span>
           <Input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 w-auto text-[10px]"
+            className="h-8 w-auto text-2xs"
             placeholder="To"
           />
           {(dateFrom || dateTo) && (
