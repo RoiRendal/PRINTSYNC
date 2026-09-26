@@ -66,10 +66,6 @@ export function POSHistoryView({
                       <TableCell className="font-mono text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
                       <TableCell>
                         <span className="tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
-                        <div className="max-w-[240px] truncate text-[9px] text-macos-text-muted dark:text-zinc-500">
-                          {row.source === 'order' ? <span>{row.order!.customer} — </span> : null}
-                          {trx.items.map((i) => i.name).join(', ')}
-                        </div>
                       </TableCell>
                       <TableCell><StatusLabel tone={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
                       <TableCell className="text-right font-mono text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
@@ -78,7 +74,7 @@ export function POSHistoryView({
                           <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onVoidTransaction(row.trx!.id); }} title="Void" className="h-8 w-8 text-macos-red hover:text-macos-red">
                             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
-                        ) : <span className="px-1 text-[8px] text-macos-text-muted">—</span>}
+                        ) : <span className="px-1 text-macos-text-muted">—</span>}
                       </TableCell>
                     </TableRow>
                   );

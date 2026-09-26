@@ -362,14 +362,14 @@ export default function UserManagement() {
                             <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
-                            <span className="text-[11px] leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
+                            <span className="leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-[10px]">{user.email}</TableCell>
-                        <TableCell className="font-mono text-[10px]">{user.phone}</TableCell>
+                        <TableCell className="font-mono">{user.email}</TableCell>
+                        <TableCell className="font-mono">{user.phone}</TableCell>
                         <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
-                        <TableCell className="text-[10px] text-macos-text dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell className="text-macos-text dark:text-zinc-200">{user.position}</TableCell>
+                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (

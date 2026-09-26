@@ -140,7 +140,6 @@ export function InventoryTable({
                     <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
                     <TableCell className="text-right font-mono">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
-                      <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>
                     </TableCell>
                     <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                   </TableRow>

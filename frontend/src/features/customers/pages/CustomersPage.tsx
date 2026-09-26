@@ -349,13 +349,13 @@ export default function CustomersPage() {
                             <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(customer.name)}
                             </div>
-                            <span className="text-[11px] leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
+                            <span className="leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-[10px]">{customer.phone || '—'}</TableCell>
-                        <TableCell className="font-mono text-[10px]">{customer.email || '—'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate text-[10px] text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
+                        <TableCell className="font-mono">{customer.phone || '—'}</TableCell>
+                        <TableCell className="font-mono">{customer.email || '—'}</TableCell>
+                        <TableCell className="max-w-[200px] truncate text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
+                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (

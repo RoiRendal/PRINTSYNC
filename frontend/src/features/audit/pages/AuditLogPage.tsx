@@ -91,7 +91,7 @@ function ActionBadge({ action }: { action: string }) {
 function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
   const [expanded, setExpanded] = useState(false);
   const entries = Object.entries(metadata);
-  if (entries.length === 0) return <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>;
+  if (entries.length === 0) return <span className="text-macos-text-muted dark:text-zinc-500">—</span>;
 
   const preview = entries.slice(0, 2).map(([k, v]) => `${k}: ${String(v).slice(0, 20)}`).join(', ');
 
@@ -99,10 +99,10 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
     <button
       type="button"
       onClick={() => setExpanded(!expanded)}
-      className="text-left text-[10px] text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
+      className="text-left text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
     >
       {expanded ? (
-        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 text-[10px] dark:bg-[#373739]">
+        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 dark:bg-[#373739]">
           {JSON.stringify(metadata, null, 2)}
         </pre>
       ) : (
@@ -231,23 +231,23 @@ export default function AuditLogPage() {
                   <TableBody>
                     {filteredItems.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">
                           {formatTimestamp(log.createdAt)}
                         </TableCell>
                         <TableCell>
                           <ActionBadge action={log.action} />
                         </TableCell>
                         <TableCell>
-                          <span className="text-[10px] text-macos-text dark:text-zinc-200">
+                          <span className="text-macos-text dark:text-zinc-200">
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
-                            <span className="ml-1.5 font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                            <span className="ml-1.5 font-mono text-macos-text-muted dark:text-zinc-500">
                               {log.entityId.slice(0, 8)}...
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text dark:text-zinc-200">
+                        <TableCell className="font-mono text-macos-text dark:text-zinc-200">
                           {log.actorId ? log.actorId.slice(0, 8) + '...' : 'System'}
                         </TableCell>
                         <TableCell>
