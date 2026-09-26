@@ -163,7 +163,7 @@ export default function Settings() {
   return (
     <div className="mx-auto max-w-7xl space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Settings</h1>
         <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage business identity, defaults, appearance, and data export.</p>
       </div>
 
@@ -180,7 +180,7 @@ export default function Settings() {
         <CardContent className="grid gap-6 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
             <label className="block space-y-1.5" htmlFor="company-display-name">
-              <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Company name</span>
+              <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Company name</span>
               <Input
                 id="company-display-name"
                 type="text"
@@ -216,10 +216,10 @@ export default function Settings() {
                   <ImagePlus className="h-4 w-4 text-macos-blue dark:text-macos-cyan" aria-hidden="true" />
                   <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Business logo</p>
                 </div>
-                <p className="text-[11px] leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                <p className="text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">
                   Stored in Supabase Storage, up to{' '}
-                  <span className="font-mono text-[10px]">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
-                  <span className="font-mono text-[10px]">{BRAND_LOGO_URL}</span> when unset.
+                  <span className="font-mono text-2xs">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
+                  <span className="font-mono text-2xs">{BRAND_LOGO_URL}</span> when unset.
                 </p>
                 <input ref={logoFileInputRef} type="file" accept={BUSINESS_LOGO_CONTENT_TYPES.join(',')} className="sr-only" onChange={handleBusinessLogoFile} />
                 <div className="flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ export default function Settings() {
                     </Button>
                   )}
                 </div>
-                {(logoUploadError || brandingError) && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{logoUploadError || brandingError}</p>}
+                {(logoUploadError || brandingError) && <p className="text-xs font-medium text-macos-red dark:text-red-300">{logoUploadError || brandingError}</p>}
               </div>
             </div>
           </SurfaceCard>
@@ -253,7 +253,7 @@ export default function Settings() {
           <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
             <div className="space-y-5">
               <label className="block space-y-1.5" htmlFor="vat-rate">
-                <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
+                <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Default VAT Rate (%)</span>
                 <Input
                   id="vat-rate"
                   type="number"
@@ -265,7 +265,7 @@ export default function Settings() {
                 />
               </label>
               <label className="block space-y-1.5" htmlFor="currency-symbol">
-                <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
+                <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Currency Symbol</span>
                 <Select
                   id="currency-symbol"
                   value={currencyDraft}
@@ -284,12 +284,12 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleSaveDefaults}>Save defaults</Button>
               </div>
-              {defaultsError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{defaultsError}</p>}
+              {defaultsError && <p className="text-xs font-medium text-macos-red dark:text-red-300">{defaultsError}</p>}
             </div>
 
             <SurfaceCard className="space-y-4 p-4">
               <h3 className="label-caps text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
-              <div className="space-y-3 text-[10px]">
+              <div className="space-y-3 text-2xs">
                 <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
                 <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
               </div>
@@ -313,7 +313,7 @@ export default function Settings() {
                 key={item}
                 type="button"
                 onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-[10px] font-bold', theme === item ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-2xs font-bold', theme === item ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
               >
                 {item}
               </button>
@@ -334,14 +334,14 @@ export default function Settings() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
-            {exportError && <p className="text-[11px] font-medium text-macos-red dark:text-red-300">{exportError}</p>}
+            {exportError && <p className="text-xs font-medium text-macos-red dark:text-red-300">{exportError}</p>}
             <button
               type="button"
               onClick={handleExportOrders}
               className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Orders</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-2xs text-macos-text-muted dark:text-zinc-500">CSV</span>
             </button>
             <button
               type="button"
@@ -349,7 +349,7 @@ export default function Settings() {
               className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Inventory</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-2xs text-macos-text-muted dark:text-zinc-500">CSV</span>
             </button>
             <button
               type="button"
@@ -357,7 +357,7 @@ export default function Settings() {
               className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:hover:bg-[#414143]"
             >
               <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">Export Transactions</span>
-              <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">CSV</span>
+              <span className="text-2xs text-macos-text-muted dark:text-zinc-500">CSV</span>
             </button>
           </CardContent>
         </Card>

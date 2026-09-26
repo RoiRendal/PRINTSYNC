@@ -23,8 +23,8 @@ const variantClasses: Record<BadgeVariant, string> = {
 };
 
 const sizeClasses: Record<BadgeSize, string> = {
-  sm: 'px-2 py-0.5 text-[9px]',
-  md: 'px-2.5 py-1 text-[10px]',
+  sm: 'px-2 py-0.5 text-2xs',
+  md: 'px-2.5 py-1 text-2xs',
 };
 
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(({ className, variant = 'neutral', size = 'sm', ...props }, ref) => (

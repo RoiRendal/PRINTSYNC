@@ -120,7 +120,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             title={APP_NAME}
           >
             {logoFailed ? (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-[10px] font-bold text-[var(--app-accent-ink)]">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
                 {APP_NAME.charAt(0)}
               </div>
             ) : (
@@ -170,7 +170,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             >
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-macos-red px-1 text-[9px] font-bold text-white dark:border-zinc-950">
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-macos-red px-1 text-2xs font-bold text-white dark:border-zinc-950">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -188,7 +188,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left hover:bg-[#f9f9fa] active:scale-[0.98]"
               aria-expanded={isProfileOpen}
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-[10px] font-bold text-[var(--app-accent-ink)]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
                 {initials}
               </div>
               <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
@@ -205,7 +205,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
                       {currentUser?.name ?? 'Admin'}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold text-macos-text-muted dark:text-zinc-500">
+                    <p className="mt-1 text-2xs font-semibold text-macos-text-muted dark:text-zinc-500">
                       {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                     </p>
                   </div>
@@ -258,7 +258,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
           </div>
         </div>
-        <ConnectionStatus className="shrink-0 px-2 py-0.5 text-[9px]" />
+        <ConnectionStatus className="shrink-0 px-2 py-0.5 text-2xs" />
       </div>
 
       {/* Main Content Area (Sidebar + Content) */}

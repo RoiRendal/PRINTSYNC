@@ -70,7 +70,7 @@ export function InlineAlert({
     <div
       role="alert"
       className={cn(
-        'rounded-[var(--radius-card)] border px-3 py-2 text-[11px] font-semibold leading-relaxed',
+        'rounded-[var(--radius-card)] border px-3 py-2 text-xs font-semibold leading-relaxed',
         panel,
         onDismiss && 'flex items-start justify-between gap-3',
         className,
@@ -89,7 +89,7 @@ export function InlineAlert({
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 cursor-pointer text-[10px] font-bold underline decoration-dotted underline-offset-2"
+          className="shrink-0 cursor-pointer text-2xs font-bold underline decoration-dotted underline-offset-2"
         >
           Dismiss
         </button>

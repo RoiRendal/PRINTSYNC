@@ -68,6 +68,30 @@
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
+  /* The size ramp, added so a screen can no longer invent a text size.
+
+     Until now the app carried nine literal sizes — 7, 8, 9, 10, 11, 12, 13 and
+     28px — written as `text-[Npx]` at 181 call sites. Nothing governed which
+     one a given screen picked, so two labels doing the same job could sit 1-3px
+     apart and no one could say which was the correct one. Frappe avoids this by
+     never writing a size inline: everything resolves through a named scale.
+
+     Every literal now lands on a step. The sub-default ones move UP by at most
+     1px — 7->8, 9->10, 11->12, 13->14 — so nothing on screen gets smaller and
+     nothing can clip that was not already clipping; 28px is preserved exactly.
+     `xs` and `sm` below are Tailwind's own values and are deliberately NOT
+     redefined here: overriding a default would silently rescale every existing
+     `text-xs` / `text-sm` in the app, which is a far wider change than this one.
+
+     --text-title is 1.75rem because that is Frappe's `$h1-font-size`.
+
+     One deliberate exception: the printed receipt (PrintableDocumentView.tsx)
+     keeps its own literal sizes. A thermal slip is laid out in millimetres, not
+     in a UI ramp, and its metrics are asserted by printStyles.test.ts. */
+  --text-3xs: 0.5rem;     /* 8px  — absorbed the old 7px and 8px */
+  --text-2xs: 0.625rem;   /* 10px — absorbed the old 9px and 10px */
+  --text-title: 1.75rem;  /* 28px — page titles at the lg breakpoint */
+
   /* The accent. Near-black, not a hue: orange, purple, blue, green and red are
      already spoken for as status colours, and an accent that reuses one of them
      stops staff being able to tell "clickable" from "what state this job is in".

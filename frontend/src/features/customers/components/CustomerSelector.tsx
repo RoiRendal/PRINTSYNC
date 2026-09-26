@@ -65,7 +65,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
         <User className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-purple" aria-hidden="true" />
         <Input
           fieldSize="sm"
-          className="pl-8 pr-8 text-[11px]"
+          className="pl-8 pr-8 text-xs"
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setIsOpen(true)}
@@ -92,11 +92,11 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
               key={customer.id}
               type="button"
               onClick={() => handleSelect(customer)}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-[11px] hover:bg-[var(--app-tint-purple)] dark:hover:bg-[var(--app-tint-purple)]"
+              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-xs hover:bg-[var(--app-tint-purple)] dark:hover:bg-[var(--app-tint-purple)]"
             >
               <span className="font-bold text-macos-text dark:text-zinc-100">{customer.name}</span>
               {(customer.phone || customer.email) && (
-                <span className="text-[10px] text-macos-text-muted dark:text-zinc-400">
+                <span className="text-2xs text-macos-text-muted dark:text-zinc-400">
                   {customer.phone}{customer.phone && customer.email ? ' · ' : ''}{customer.email}
                 </span>
               )}
@@ -106,13 +106,13 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {isOpen && query && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-[11px] text-macos-text-muted dark:bg-[#1a1a1d] dark:text-zinc-400">
+        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-xs text-macos-text-muted dark:bg-[#1a1a1d] dark:text-zinc-400">
           No matching customers. Type to create a new one.
         </div>
       )}
 
       {selectedCustomer && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-macos-purple dark:text-purple-300">
+        <div className="mt-1.5 flex items-center gap-1.5 text-2xs font-bold text-macos-purple dark:text-purple-300">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-macos-purple" />
           Linked to customer record
         </div>

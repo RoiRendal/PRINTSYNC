@@ -153,7 +153,7 @@ export function POSCheckoutModal({
                 {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
               </p>
               {recovered && (
-                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-[10px] font-semibold leading-relaxed text-macos-blue dark:text-macos-cyan">
+                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-2xs font-semibold leading-relaxed text-macos-blue dark:text-macos-cyan">
                   This sale had already been saved — the earlier attempt did go through. Do not ring it up again.
                 </p>
               )}
@@ -175,18 +175,18 @@ export function POSCheckoutModal({
                 title={panel.heading}
                 icon={panel.Icon}
                 message={checkoutError.message}
-                className="text-[10px]"
+                className="text-2xs"
               />
             ) : (
-              <InlineAlert message={checkoutError.message} className="text-[10px]" />
+              <InlineAlert message={checkoutError.message} className="text-2xs" />
             ))}
 
             <div className="space-y-4">
               <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
-                <span className="text-[10px] font-bold">Amount to Pay</span>
+                <span className="text-2xs font-bold">Amount to Pay</span>
                 <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="space-y-1 border-b pb-3 font-mono text-[9px] text-macos-text-muted dark:text-zinc-500">
+              <div className="space-y-1 border-b pb-3 font-mono text-2xs text-macos-text-muted dark:text-zinc-500">
                 <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
                 {appliedDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>−{currencySymbol}{appliedDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between"><span>VAT ({totals.vatRatePercent}%)</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>
@@ -195,7 +195,7 @@ export function POSCheckoutModal({
 
             {posMode === 'retail' && (
               <div className="space-y-2">
-                <label className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-400">Payment Method</label>
+                <label className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">Payment Method</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
                   <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
@@ -208,7 +208,7 @@ export function POSCheckoutModal({
                 const shortfall = shortfallFor(item.id);
                 return (
                   <div key={`${item.id}-${idx}`} className="space-y-0.5">
-                    <div className="flex justify-between text-[10px]">
+                    <div className="flex justify-between text-2xs">
                       <span className={cn('font-medium', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
                         {item.qty}x {item.name}
                       </span>
@@ -217,7 +217,7 @@ export function POSCheckoutModal({
                       </span>
                     </div>
                     {shortfall && (
-                      <p className="text-[9px] font-bold text-red-700 dark:text-red-300">
+                      <p className="text-2xs font-bold text-red-700 dark:text-red-300">
                         Only {shortfall.available} left — {shortfall.requested} requested
                       </p>
                     )}

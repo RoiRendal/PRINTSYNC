@@ -235,7 +235,7 @@ export default function UserManagement() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">User Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">User Management</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage staff profiles, RBAC roles, and default page access groups.</p>
         </div>
         <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
@@ -259,7 +259,7 @@ export default function UserManagement() {
                     <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
                   </div>
                   <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>
@@ -359,7 +359,7 @@ export default function UserManagement() {
                         </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
                             <span className="leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
@@ -405,7 +405,7 @@ export default function UserManagement() {
           </div>
 
           <SurfaceCard className="space-y-3 p-3">
-            <p className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">
+            <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">
               {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -413,7 +413,7 @@ export default function UserManagement() {
                 const item = NAV_ITEMS.find((nav) => nav.key === key);
                 if (!item) return null;
                 return (
-                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-[11px] text-macos-text dark:text-zinc-300">
+                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-xs text-macos-text dark:text-zinc-300">
                     <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-macos-blue" />
                     {item.label}
                   </label>

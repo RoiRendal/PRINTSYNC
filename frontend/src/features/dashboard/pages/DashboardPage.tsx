@@ -57,7 +57,7 @@ function WorkspaceTile({ label, count, unit, to, icon: Icon, detail, alert = fal
               >
                 {count}
               </span>
-              <span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
+              <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
             </p>
             <p className="mt-1 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
           </div>
@@ -69,7 +69,7 @@ function WorkspaceTile({ label, count, unit, to, icon: Icon, detail, alert = fal
             aria-hidden="true"
           />
         </div>
-        <div className="mt-4 flex items-center gap-1 text-[10px] font-bold text-macos-blue dark:text-macos-cyan">
+        <div className="mt-4 flex items-center gap-1 text-2xs font-bold text-macos-blue dark:text-macos-cyan">
           <span>View list</span>
           <ArrowRight className="h-3 w-3" aria-hidden="true" />
         </div>
@@ -81,7 +81,7 @@ function WorkspaceTile({ label, count, unit, to, icon: Icon, detail, alert = fal
 function DashboardHeader() {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Dashboard</h1>
+      <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Dashboard</h1>
       <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
         What needs your attention today — every count opens the list behind it.
       </p>

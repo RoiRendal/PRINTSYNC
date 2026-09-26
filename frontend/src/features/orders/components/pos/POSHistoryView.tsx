@@ -69,7 +69,7 @@ export function POSHistoryView({
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
           <div className="relative w-full md:max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
-            <Input type="text" aria-label="Filter transaction history" className="pl-8 text-[11px]" value={historySearchTerm} onChange={(e) => onHistorySearchChange(e.target.value)} />
+            <Input type="text" aria-label="Filter transaction history" className="pl-8 text-xs" value={historySearchTerm} onChange={(e) => onHistorySearchChange(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent>
@@ -130,23 +130,23 @@ export function POSHistoryView({
           <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1 scrollbar-hide">
             <div className="flex items-start justify-between border-b pb-3">
               <div className="space-y-0.5">
-                <p className="text-[8px] font-bold text-macos-text-muted">Reference ID</p>
-                <p className="font-mono text-[10px] font-bold">#{selectedTransaction.id}</p>
+                <p className="text-3xs font-bold text-macos-text-muted">Reference ID</p>
+                <p className="font-mono text-2xs font-bold">#{selectedTransaction.id}</p>
               </div>
               <div className="space-y-0.5 text-right">
-                <p className="text-[8px] font-bold text-macos-text-muted">Date &amp; Time</p>
-                <p className="text-[9px] font-medium">{selectedTransaction.date}</p>
+                <p className="text-3xs font-bold text-macos-text-muted">Date &amp; Time</p>
+                <p className="text-2xs font-medium">{selectedTransaction.date}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-[8px] font-bold text-macos-text-muted">Items Purchased</p>
+              <p className="text-3xs font-bold text-macos-text-muted">Items Purchased</p>
               <div className="max-h-36 space-y-1 overflow-y-auto pr-1 scrollbar-hide">
                 {selectedTransaction.items.map((item, idx) => (
-                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border p-2 text-[9px]">
+                  <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border p-2 text-2xs">
                     <div className="min-w-0 flex-1 pr-2">
                       <p className="truncate font-bold text-macos-text dark:text-zinc-100">{item.name}</p>
-                      <p className="text-[7px] text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
+                      <p className="text-3xs text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
                     </div>
                     <p className="shrink-0 font-mono font-bold">₱{(item.price * item.qty).toFixed(2)}</p>
                   </div>
@@ -154,16 +154,16 @@ export function POSHistoryView({
               </div>
             </div>
 
-            <div className="space-y-1 border-t pt-3 text-[9px] text-macos-text-muted">
+            <div className="space-y-1 border-t pt-3 text-2xs text-macos-text-muted">
               <div className="flex justify-between"><span>Subtotal</span><span className="font-mono">₱{selectedTransaction.subtotal.toFixed(2)}</span></div>
               {(selectedTransaction.discount ?? 0) > 0 && <div className="flex justify-between"><span>Discount</span><span className="font-mono">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span></div>}
               <div className="flex justify-between"><span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span><span className="font-mono">₱{selectedTransaction.tax.toFixed(2)}</span></div>
               <div className="mt-2 flex items-center justify-between border-t pt-2">
-                <span className="text-[9px] font-bold text-macos-text dark:text-zinc-100">Total Amount</span>
+                <span className="text-2xs font-bold text-macos-text dark:text-zinc-100">Total Amount</span>
                 <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
-                <span className="text-[8px] font-bold text-macos-text dark:text-zinc-100">Payment</span>
+                <span className="text-3xs font-bold text-macos-text dark:text-zinc-100">Payment</span>
                 <Badge variant="blue">{selectedTransaction.paymentMethod}</Badge>
               </div>
             </div>

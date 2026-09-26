@@ -25,8 +25,8 @@ export function POSDesignSelectorModal({ isOpen, designs, onSelect, onClose }: P
                 <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
               </div>
               <div className="p-2">
-                <p className="truncate text-[10px] font-bold text-macos-text dark:text-zinc-100">{design.name}</p>
-                <p className="text-[8px] text-macos-text-muted dark:text-zinc-500">{design.category}</p>
+                <p className="truncate text-2xs font-bold text-macos-text dark:text-zinc-100">{design.name}</p>
+                <p className="text-3xs text-macos-text-muted dark:text-zinc-500">{design.category}</p>
               </div>
             </button>
           ))}

@@ -180,7 +180,7 @@ export default function POS() {
   return (
     <div className="flex flex-col gap-5">
       {transactionError && (
-        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold text-red-700 dark:text-red-300">
+        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
           {transactionError}
         </div>
       )}

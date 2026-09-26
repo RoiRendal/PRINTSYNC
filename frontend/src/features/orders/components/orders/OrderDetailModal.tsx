@@ -44,7 +44,7 @@ function ImageFallback({ label }: { label: string }) {
   return (
     <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[#f7f7f7] text-macos-text-muted dark:bg-[#373739] dark:text-zinc-500">
       <ImageIcon className="h-8 w-8 opacity-35" aria-hidden="true" />
-      <p className="px-3 text-center text-[10px] font-bold">{label}</p>
+      <p className="px-3 text-center text-2xs font-bold">{label}</p>
     </div>
   );
 }
@@ -165,12 +165,12 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
             </div>
             <div className="flex flex-col gap-2 sm:text-right">
               <div>
-                <p className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Order Date</p>
+                <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Order Date</p>
                 <p className="text-sm font-bold text-macos-text dark:text-zinc-100">{order.date}</p>
               </div>
               {order.dueDate && (
                 <div>
-                  <p className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Due Date</p>
+                  <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Due Date</p>
                   <p className={cn(
                     'text-sm font-bold',
                     new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered'
@@ -258,7 +258,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                 {selectedOrderIsCustom ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <p className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
+                      <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
                       {activeLineInventoryItem?.imageUrl ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border">
                           <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -266,11 +266,11 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                       ) : <ImageFallback label="No product image" />}
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-500">Custom design</p>
+                      <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Custom design</p>
                       {activeLineItemDesign ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
-                          <div className="absolute right-2 top-2 rounded-full bg-[#666666] px-2 py-1 text-[8px] font-bold text-white">
+                          <div className="absolute right-2 top-2 rounded-full bg-[#666666] px-2 py-1 text-3xs font-bold text-white">
                             Ref: {activeLineItem?.designId || order.designId}
                           </div>
                         </div>
@@ -279,7 +279,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <p className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
+                    <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
                     {activeLineInventoryItem?.imageUrl ? (
                       <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] border">
                         <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -297,7 +297,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
               {paymentError && (
-                <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold text-red-700 dark:text-red-300">
+                <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
                   {paymentError}
                 </div>
               )}
@@ -310,45 +310,45 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                   {payments.map((payment) => (
                     <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border p-2.5">
                       <div className="flex items-center gap-2">
-                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-[9px] font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-macos-green' : payment.method === 'Card' ? 'bg-[var(--app-tint-blue)] text-macos-blue' : 'bg-[var(--app-tint-purple)] text-macos-purple')}>
+                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-2xs font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-macos-green' : payment.method === 'Card' ? 'bg-[var(--app-tint-blue)] text-macos-blue' : 'bg-[var(--app-tint-purple)] text-macos-purple')}>
                           {payment.method[0]}
                         </span>
                         <div>
-                          <p className="text-[10px] font-bold text-macos-text dark:text-zinc-100">{payment.method}</p>
-                          <p className="text-[9px] text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
+                          <p className="text-2xs font-bold text-macos-text dark:text-zinc-100">{payment.method}</p>
+                          <p className="text-2xs text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
                         </div>
                       </div>
-                      <span className="font-mono text-[10px] font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
+                      <span className="font-mono text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
               )}
 
               <form onSubmit={handleRecordPayment} className="space-y-2 border-t pt-3">
-                <p className="text-[9px] font-bold text-macos-text-muted dark:text-zinc-500">Record Payment</p>
+                <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Record Payment</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-[11px]" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
-                  <Select fieldSize="sm" className="text-[11px]" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'Cash' | 'Card' | 'Other')}>
+                  <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-xs" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
+                  <Select fieldSize="sm" className="text-xs" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'Cash' | 'Card' | 'Other')}>
                     <option value="Cash">Cash</option>
                     <option value="Card">Card</option>
                     <option value="Other">Other</option>
                   </Select>
                 </div>
-                <Input fieldSize="sm" className="text-[11px]" placeholder="Notes (optional)" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
+                <Input fieldSize="sm" className="text-xs" placeholder="Notes (optional)" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
                 <Button type="submit" size="sm" fullWidth leftIcon={<Plus className="h-3 w-3" aria-hidden="true" />}>Record Payment</Button>
               </form>
             </Card>
           )}
 
           {order.dueDate && new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-[10px] font-bold text-red-700 dark:text-red-300">
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               This order is overdue (due {order.dueDate}). Prioritize completion or update the customer.
             </div>
           )}
 
           {selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-orange)] px-3 py-2 text-[10px] font-bold text-orange-700 dark:text-orange-300">
+            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-orange)] px-3 py-2 text-2xs font-bold text-orange-700 dark:text-orange-300">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
               Balance due of {currencySymbol}{balanceDue.toFixed(2)} remains unpaid. Confirm payment before delivery.
             </div>

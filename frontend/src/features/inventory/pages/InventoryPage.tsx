@@ -132,7 +132,7 @@ export default function Inventory() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-[28px]">Inventory Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Inventory Management</h1>
           <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
             {viewMode === 'inventory' ? 'Manage raw materials, reorder thresholds, and stock valuation.' : 'Digital asset library for custom apparel designs.'}
           </p>
@@ -142,14 +142,14 @@ export default function Inventory() {
           <button
             type="button"
             onClick={() => setViewMode('inventory')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold', viewMode === 'inventory' ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'inventory' ? 'bg-macos-blue text-[var(--app-accent-ink)]' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
             type="button"
             onClick={() => setViewMode('designs')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-[10px] font-bold', viewMode === 'designs' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'designs' ? 'bg-macos-purple text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
           >
             <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>
@@ -166,7 +166,7 @@ export default function Inventory() {
               onClick={() => setLowStockParam(lowStockOnly ? '' : '1')}
               aria-pressed={lowStockOnly}
               className={cn(
-                'cursor-pointer rounded-full px-3 py-1.5 text-[10px] font-bold',
+                'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                 lowStockOnly
                   ? 'bg-orange-500 text-white dark:bg-orange-600'
                   : 'border text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',

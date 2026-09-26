@@ -85,8 +85,8 @@ export function SalesComparisonSection({
         {isLoading ? <LoadingState label="Loading sales timeline" /> : error ? <ErrorState message={error} /> : salesBucketLabels.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
           <>
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="block space-y-1.5"><span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Timeline A</span><Select value={safeSelectionA} onChange={(event) => setSelectionA(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
-              <label className="block space-y-1.5"><span className="text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">Timeline B</span><Select value={safeSelectionB} onChange={(event) => setSelectionB(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
+              <label className="block space-y-1.5"><span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Timeline A</span><Select value={safeSelectionA} onChange={(event) => setSelectionA(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
+              <label className="block space-y-1.5"><span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Timeline B</span><Select value={safeSelectionB} onChange={(event) => setSelectionB(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
             </div>
             <InsightPanel state={salesInsight} onToggleAutoGenerate={() => setSalesInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateSalesInsight} />
           </>
