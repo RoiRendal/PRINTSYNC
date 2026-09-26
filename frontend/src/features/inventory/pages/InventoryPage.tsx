@@ -185,8 +185,8 @@ export default function Inventory() {
             onEditItem={(item) => handleOpenModal(item)}
             onDeleteSelected={handleDeleteSelected}
             selection={selection}
+            footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
           />
-          <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
         </div>
       ) : (
         <DesignRepository />

@@ -259,8 +259,8 @@ export default function Orders() {
         onDeleteSelected={openDeleteConfirm}
         selection={selection}
         pendingOrderIds={pendingOrderIds}
+        footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
       />
-      <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} className="mt-4" />
 
       <OrderDetailModal
         order={selectedOrder}

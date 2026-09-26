@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Search, ScrollText } from 'lucide-react';
+import { RefreshCw, Search, ScrollText } from 'lucide-react';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   Input,
+  Pagination,
   Select,
   StatusLabel,
   Table,
@@ -118,6 +119,7 @@ export default function AuditLogPage() {
     isLoading,
     error,
     page,
+    pageSize,
     total,
     totalPages,
     actionFilter,
@@ -142,9 +144,6 @@ export default function AuditLogPage() {
       );
     });
   }, [items, search]);
-
-  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   if (isLoading && items.length === 0) return <LoadingState label="Loading audit logs" className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
@@ -192,11 +191,7 @@ export default function AuditLogPage() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Event Log</CardTitle>
-                <CardDescription>{filteredItems.length} matching events across the system.</CardDescription>
-              </div>
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative w-full sm:max-w-xs">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
@@ -266,24 +261,12 @@ export default function AuditLogPage() {
                 </Table>
               </TableContainer>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                  <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">
-                    Showing {items.length} of {total} events
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="ghost" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                    <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">
-                      Page {page} of {totalPages}
-                    </span>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleNextPage} disabled={page >= totalPages}>
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-2 border-t px-4 py-3">
+                <span className="block text-macos-text-muted dark:text-zinc-500">
+                  Showing {items.length} of {total} events
+                </span>
+                <Pagination page={page} limit={pageSize} total={total} onPageChange={setPage} />
+              </div>
             </CardContent>
           </Card>
         </div>

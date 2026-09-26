@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Package, Plus, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
@@ -37,6 +38,8 @@ interface InventoryTableProps {
   onDeleteSelected: () => void;
   /** Tick state, owned by the page. See `useRowSelection`. */
   selection: RowSelection;
+  /** Rendered inside the card, below the table — the shared pagination control. */
+  footer?: ReactNode;
 }
 
 export function InventoryTable({
@@ -48,6 +51,7 @@ export function InventoryTable({
   onEditItem,
   onDeleteSelected,
   selection,
+  footer,
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
@@ -157,10 +161,11 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-4 py-3 text-macos-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
       </div>
+      {footer ? <div className="border-t px-4 py-3">{footer}</div> : null}
     </Card>
   );
 }

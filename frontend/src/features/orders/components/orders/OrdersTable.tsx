@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { LoaderCircle, Search, Trash2 } from 'lucide-react';
 import {
   Button,
@@ -44,6 +45,8 @@ interface OrdersTableProps {
    * Order Production Detail modal, so this no longer guards an in-row click.
    */
   pendingOrderIds: ReadonlySet<string>;
+  /** Rendered inside the card, below the table — the shared pagination control. */
+  footer?: ReactNode;
 }
 
 export function OrdersTable({
@@ -54,6 +57,7 @@ export function OrdersTable({
   onDeleteSelected,
   selection,
   pendingOrderIds,
+  footer,
 }: OrdersTableProps) {
   const { currencySymbol } = useBusinessBranding();
   return (
@@ -224,6 +228,7 @@ export function OrdersTable({
           </Table>
         </TableContainer>
       </CardContent>
+      {footer ? <div className="border-t px-4 py-3">{footer}</div> : null}
     </Card>
   );
 }

@@ -380,7 +380,7 @@ export default function UserManagement() {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <div className="p-3">
+              <div className="border-t px-4 py-3">
                 <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
               </div>
             </CardContent>
