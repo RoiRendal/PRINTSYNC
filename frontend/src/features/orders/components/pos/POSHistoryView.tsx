@@ -4,10 +4,15 @@ import type { Transaction, Order } from '../../types';
 import { Badge, Button, Card, CardContent, CardHeader, Input, Modal, Pagination, StatusLabel } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
+import { DEFAULT_PAGE_SIZE } from '../../../../shared/store/createListStore';
 import type { CombinedHistoryRow } from '../../hooks/usePOSHistory';
 
-/** Rows per page in the history table. */
-const HISTORY_PAGE_SIZE = 10;
+/**
+ * Rows per page in the history table. Tied to the shared store default so every
+ * table in the app pages at the same size — this list is paged in the browser
+ * (it is one combined in-memory list), so it does not read the store's own limit.
+ */
+const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 interface POSHistoryViewProps {
   filteredHistoryRows: CombinedHistoryRow[];
