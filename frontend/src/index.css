@@ -66,6 +66,24 @@
      nowhere, and Tailwind had already tree-shaken it out of the built
      stylesheet, so removing it changes no shipped byte. */
   --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+
+  /* The second family, and where it is allowed to appear.
+
+     Geist Mono is for the printed receipt, and for figures, identifiers, URLs
+     and code — strings whose characters have to line up column to column, or be
+     told apart one character at a time. It is NOT for prose: labels, names and
+     sentences stay in Geist. Two places did put prose in mono — a "No image"
+     placeholder in the POS catalogue and a design name in the POS cart — and
+     both are Geist again now.
+
+     Inside a data TABLE, a figure is Geist + `tabular-nums`, not mono. A row
+     has to read as one uniform line, and a second family in the middle of it is
+     the thing that breaks that; tabular figures already line the digits up.
+     Frappe does the same: its list view sets `font-variant-numeric:
+     tabular-nums` on a row's figures (frappe/public/scss/desk/list.scss) and
+     keeps monospace for code alone (.diffview). Outside a table — a modal, a
+     tile, the POS panel, the receipt — there is no row to keep uniform, so a
+     figure there may be mono. */
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The size ramp, added so a screen can no longer invent a text size.

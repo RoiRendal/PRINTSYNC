@@ -133,7 +133,7 @@ export function POSCart({
                   <Button type="button" variant={item.designId ? 'primary' : 'secondary'} size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
-                  {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[#f2f2f2] px-2 py-2 text-3xs font-mono dark:bg-[#414143]">{designs.find(d => d.id === item.designId)?.name}</div>}
+                  {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[#f2f2f2] px-2 py-2 text-3xs dark:bg-[#414143]">{designs.find(d => d.id === item.designId)?.name}</div>}
                 </div>
               )}
             </div>

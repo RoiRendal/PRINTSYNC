@@ -85,7 +85,7 @@ export function POSCatalog({
               ) : (
                 <div className="flex flex-col items-center text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-600 dark:group-hover:text-macos-cyan">
                   <ShoppingBag className="h-9 w-9 stroke-1" aria-hidden="true" />
-                  <span className="mt-1 text-3xs font-mono">No image</span>
+                  <span className="mt-1 text-3xs">No image</span>
                 </div>
               )}
               <div className="absolute right-1.5 top-1.5">
