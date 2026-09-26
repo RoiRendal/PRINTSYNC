@@ -127,7 +127,7 @@ export function ProfitMarginSection({
             </div>
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Segment</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">COGS</TableHead><TableHead className="text-right">Profit</TableHead><TableHead className="text-right">Margin</TableHead></TableRow></TableHeader>
-              <TableBody>{sortedMarginRows.map((row) => <TableRow key={row.label}><TableCell className="font-bold text-macos-text dark:text-zinc-100">{row.label}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.revenue)}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.expenses)}</TableCell><TableCell className="text-right tabular-nums text-green-700 dark:text-green-300">{money.format(row.profit)}</TableCell><TableCell className="text-right font-bold tabular-nums text-macos-text dark:text-zinc-100">{row.margin.toFixed(1)}%</TableCell></TableRow>)}</TableBody>
+              <TableBody>{sortedMarginRows.map((row) => <TableRow key={row.label}><TableCell className="text-macos-text dark:text-zinc-100">{row.label}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.revenue)}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.expenses)}</TableCell><TableCell className="text-right tabular-nums text-green-700 dark:text-green-300">{money.format(row.profit)}</TableCell><TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">{row.margin.toFixed(1)}%</TableCell></TableRow>)}</TableBody>
             </Table>
           </TableContainer>
         </>

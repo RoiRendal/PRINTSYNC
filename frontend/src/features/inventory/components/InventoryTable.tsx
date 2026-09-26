@@ -1,13 +1,13 @@
 import { Package, Plus, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   Checkbox,
   Input,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -137,7 +137,7 @@ export function InventoryTable({
                     </TableSelectCell>
                     <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
                     <TableCell className="text-macos-text dark:text-zinc-100">{item.name}</TableCell>
-                    <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
+                    <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
                     <TableCell className="text-right font-mono">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
                       <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>

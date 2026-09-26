@@ -6,7 +6,6 @@ import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -20,6 +19,7 @@ import {
   Modal,
   Pagination,
   Select,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -367,7 +367,7 @@ export default function UserManagement() {
                         </TableCell>
                         <TableCell className="font-mono text-[10px]">{user.email}</TableCell>
                         <TableCell className="font-mono text-[10px]">{user.phone}</TableCell>
-                        <TableCell><Badge variant={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</Badge></TableCell>
+                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
                         <TableCell className="text-[10px] text-macos-text dark:text-zinc-200">{user.position}</TableCell>
                         <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>

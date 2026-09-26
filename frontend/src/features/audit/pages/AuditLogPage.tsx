@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, RefreshCw, Search, ScrollText } from 'lucide
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -12,6 +11,7 @@ import {
   CardTitle,
   Input,
   Select,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -74,9 +74,9 @@ function formatAction(action: string): string {
 
 /**
  * `BadgeVariant` is the only valid set of values — the previous local union
- * declared `'default'` and `'yellow'`, neither of which exists. `Badge` looks its
- * variant up in a record, so an unknown value resolved to `undefined` and the
- * badge rendered with no colour at all. Typing the variable as `BadgeVariant`
+ * declared `'default'` and `'yellow'`, neither of which exists. `StatusLabel`
+ * looks its tone up in a record, so an unknown value resolved to `undefined` and
+ * the dot rendered with no colour at all. Typing the variable as `BadgeVariant`
  * makes that class of mistake a compile error.
  */
 function ActionBadge({ action }: { action: string }) {
@@ -85,7 +85,7 @@ function ActionBadge({ action }: { action: string }) {
   else if (action.includes('.updated')) variant = 'blue';
   else if (action.includes('.deleted') || action.includes('.voided')) variant = 'red';
   else if (action.includes('settings')) variant = 'purple';
-  return <Badge variant={variant}>{formatAction(action)}</Badge>;
+  return <StatusLabel tone={variant}>{formatAction(action)}</StatusLabel>;
 }
 
 function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {

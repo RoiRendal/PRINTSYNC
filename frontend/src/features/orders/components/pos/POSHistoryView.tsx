@@ -1,6 +1,6 @@
 import { Printer, Search, Trash2 } from 'lucide-react';
 import type { Transaction, Order } from '../../types';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Modal } from '../../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Modal, StatusLabel } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import type { CombinedHistoryRow } from '../../hooks/usePOSHistory';
@@ -71,7 +71,7 @@ export function POSHistoryView({
                           {trx.items.map((i) => i.name).join(', ')}
                         </div>
                       </TableCell>
-                      <TableCell><Badge variant={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</Badge></TableCell>
+                      <TableCell><StatusLabel tone={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
                       <TableCell className="text-right font-mono text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         {row.source === 'trx' ? (
