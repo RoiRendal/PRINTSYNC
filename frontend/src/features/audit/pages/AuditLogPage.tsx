@@ -77,7 +77,7 @@ function formatAction(action: string): string {
  * `BadgeVariant` is the only valid set of values — the previous local union
  * declared `'default'` and `'yellow'`, neither of which exists. `StatusLabel`
  * looks its tone up in a record, so an unknown value resolved to `undefined` and
- * the dot rendered with no colour at all. Typing the variable as `BadgeVariant`
+ * the label rendered with no colour at all. Typing the variable as `BadgeVariant`
  * makes that class of mistake a compile error.
  */
 function ActionBadge({ action }: { action: string }) {
