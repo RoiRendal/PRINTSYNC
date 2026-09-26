@@ -231,7 +231,7 @@ export default function AuditLogPage() {
                   <TableBody>
                     {filteredItems.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">
+                        <TableCell className="text-macos-text-muted dark:text-zinc-500">
                           {formatTimestamp(log.createdAt)}
                         </TableCell>
                         <TableCell>
@@ -242,12 +242,12 @@ export default function AuditLogPage() {
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
-                            <span className="ml-1.5 font-mono text-macos-text-muted dark:text-zinc-500">
+                            <span className="ml-1.5 text-macos-text-muted dark:text-zinc-500">
                               {log.entityId.slice(0, 8)}...
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-macos-text dark:text-zinc-200">
+                        <TableCell className="text-macos-text dark:text-zinc-200">
                           {log.actorId ? log.actorId.slice(0, 8) + '...' : 'System'}
                         </TableCell>
                         <TableCell>

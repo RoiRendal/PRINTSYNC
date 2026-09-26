@@ -135,13 +135,13 @@ export function InventoryTable({
                         aria-label={`Select ${item.sku}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
+                    <TableCell className="text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
                     <TableCell className="text-macos-text dark:text-zinc-100">{item.name}</TableCell>
                     <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
-                    <TableCell className="text-right font-mono">
+                    <TableCell className="text-right tabular-nums">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                   </TableRow>
                 );
               })}

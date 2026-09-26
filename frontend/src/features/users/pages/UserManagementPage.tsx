@@ -365,11 +365,11 @@ export default function UserManagement() {
                             <span className="leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono">{user.email}</TableCell>
-                        <TableCell className="font-mono">{user.phone}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone}</TableCell>
                         <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
                         <TableCell className="text-macos-text dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell className="text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (

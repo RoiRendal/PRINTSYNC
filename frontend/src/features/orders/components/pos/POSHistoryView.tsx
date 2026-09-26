@@ -62,13 +62,13 @@ export function POSHistoryView({
                   const refDisplay = row.source === 'trx' ? `#${row.trx!.id.replace('TRX-', '').slice(-8)}` : row.order!.id;
                   return (
                     <TableRow key={key} className="cursor-pointer" onClick={() => onSelectTransaction(trx)}>
-                      <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
-                      <TableCell className="font-mono text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
+                      <TableCell className="text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
+                      <TableCell className="text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
                       <TableCell>
                         <span className="tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                       </TableCell>
                       <TableCell><StatusLabel tone={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
-                      <TableCell className="text-right font-mono text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
+                      <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         {row.source === 'trx' ? (
                           <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onVoidTransaction(row.trx!.id); }} title="Void" className="h-8 w-8 text-macos-red hover:text-macos-red">

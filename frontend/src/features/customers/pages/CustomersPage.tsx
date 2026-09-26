@@ -352,10 +352,10 @@ export default function CustomersPage() {
                             <span className="leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono">{customer.phone || '—'}</TableCell>
-                        <TableCell className="font-mono">{customer.email || '—'}</TableCell>
+                        <TableCell>{customer.phone || '—'}</TableCell>
+                        <TableCell>{customer.email || '—'}</TableCell>
                         <TableCell className="max-w-[200px] truncate text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
-                        <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
+                        <TableCell className="text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
