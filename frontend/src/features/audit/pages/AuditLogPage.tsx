@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, RefreshCw, Search, ScrollText } from 'lucide-react';
+import { RefreshCw, Search, ScrollText } from 'lucide-react';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -11,7 +10,9 @@ import {
   CardHeader,
   CardTitle,
   Input,
+  Pagination,
   Select,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -74,9 +75,9 @@ function formatAction(action: string): string {
 
 /**
  * `BadgeVariant` is the only valid set of values — the previous local union
- * declared `'default'` and `'yellow'`, neither of which exists. `Badge` looks its
- * variant up in a record, so an unknown value resolved to `undefined` and the
- * badge rendered with no colour at all. Typing the variable as `BadgeVariant`
+ * declared `'default'` and `'yellow'`, neither of which exists. `StatusLabel`
+ * looks its tone up in a record, so an unknown value resolved to `undefined` and
+ * the label rendered with no colour at all. Typing the variable as `BadgeVariant`
  * makes that class of mistake a compile error.
  */
 function ActionBadge({ action }: { action: string }) {
@@ -85,13 +86,13 @@ function ActionBadge({ action }: { action: string }) {
   else if (action.includes('.updated')) variant = 'blue';
   else if (action.includes('.deleted') || action.includes('.voided')) variant = 'red';
   else if (action.includes('settings')) variant = 'purple';
-  return <Badge variant={variant}>{formatAction(action)}</Badge>;
+  return <StatusLabel tone={variant}>{formatAction(action)}</StatusLabel>;
 }
 
 function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
   const [expanded, setExpanded] = useState(false);
   const entries = Object.entries(metadata);
-  if (entries.length === 0) return <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">—</span>;
+  if (entries.length === 0) return <span className="text-macos-text-muted dark:text-zinc-500">—</span>;
 
   const preview = entries.slice(0, 2).map(([k, v]) => `${k}: ${String(v).slice(0, 20)}`).join(', ');
 
@@ -99,10 +100,10 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
     <button
       type="button"
       onClick={() => setExpanded(!expanded)}
-      className="text-left text-[10px] text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
+      className="text-left text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
     >
       {expanded ? (
-        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 text-[10px] dark:bg-[#373739]">
+        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 dark:bg-[#373739]">
           {JSON.stringify(metadata, null, 2)}
         </pre>
       ) : (
@@ -118,6 +119,7 @@ export default function AuditLogPage() {
     isLoading,
     error,
     page,
+    pageSize,
     total,
     totalPages,
     actionFilter,
@@ -142,9 +144,6 @@ export default function AuditLogPage() {
       );
     });
   }, [items, search]);
-
-  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
-  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
 
   if (isLoading && items.length === 0) return <LoadingState label="Loading audit logs" className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
@@ -192,11 +191,7 @@ export default function AuditLogPage() {
 
         <div className="space-y-3 lg:col-span-3">
           <Card padding="none" className="overflow-hidden">
-            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Event Log</CardTitle>
-                <CardDescription>{filteredItems.length} matching events across the system.</CardDescription>
-              </div>
+            <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative w-full sm:max-w-xs">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
@@ -231,23 +226,23 @@ export default function AuditLogPage() {
                   <TableBody>
                     {filteredItems.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                        <TableCell className="text-macos-text-muted dark:text-zinc-500">
                           {formatTimestamp(log.createdAt)}
                         </TableCell>
                         <TableCell>
                           <ActionBadge action={log.action} />
                         </TableCell>
                         <TableCell>
-                          <span className="text-[10px] font-semibold text-macos-text dark:text-zinc-200">
+                          <span className="text-macos-text dark:text-zinc-200">
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
-                            <span className="ml-1.5 font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">
+                            <span className="ml-1.5 text-macos-text-muted dark:text-zinc-500">
                               {log.entityId.slice(0, 8)}...
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text dark:text-zinc-200">
+                        <TableCell className="text-macos-text dark:text-zinc-200">
                           {log.actorId ? log.actorId.slice(0, 8) + '...' : 'System'}
                         </TableCell>
                         <TableCell>
@@ -266,24 +261,12 @@ export default function AuditLogPage() {
                 </Table>
               </TableContainer>
 
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-3">
-                  <span className="text-[10px] text-macos-text-muted dark:text-zinc-500">
-                    Showing {items.length} of {total} events
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="ghost" size="sm" onClick={handlePrevPage} disabled={page <= 1}>
-                      <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                    <span className="text-xs font-semibold text-macos-text dark:text-zinc-200">
-                      Page {page} of {totalPages}
-                    </span>
-                    <Button type="button" variant="ghost" size="sm" onClick={handleNextPage} disabled={page >= totalPages}>
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="space-y-2 border-t px-4 py-3">
+                <span className="block text-macos-text-muted dark:text-zinc-500">
+                  Showing {items.length} of {total} events
+                </span>
+                <Pagination page={page} limit={pageSize} total={total} onPageChange={setPage} />
+              </div>
             </CardContent>
           </Card>
         </div>

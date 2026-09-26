@@ -1,13 +1,14 @@
+import type { ReactNode } from 'react';
 import { Package, Plus, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
   CardHeader,
   Checkbox,
   Input,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -37,6 +38,8 @@ interface InventoryTableProps {
   onDeleteSelected: () => void;
   /** Tick state, owned by the page. See `useRowSelection`. */
   selection: RowSelection;
+  /** Rendered inside the card, below the table — the shared pagination control. */
+  footer?: ReactNode;
 }
 
 export function InventoryTable({
@@ -48,6 +51,7 @@ export function InventoryTable({
   onEditItem,
   onDeleteSelected,
   selection,
+  footer,
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
@@ -135,14 +139,13 @@ export function InventoryTable({
                         aria-label={`Select ${item.sku}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
-                    <TableCell className="font-bold text-macos-text dark:text-zinc-100">{item.name}</TableCell>
-                    <TableCell className="text-center"><Badge variant="gray">{item.category}</Badge></TableCell>
-                    <TableCell className="text-right font-mono font-bold">
+                    <TableCell className="text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
+                    <TableCell className="text-macos-text dark:text-zinc-100">{item.name}</TableCell>
+                    <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
+                    <TableCell className="text-right tabular-nums">
                       <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
-                      <span className="ml-1 text-[9px] text-macos-text-muted">Units</span>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                   </TableRow>
                 );
               })}
@@ -158,10 +161,11 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-4 py-3 text-[10px] font-bold text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-4 py-3 text-macos-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
       </div>
+      {footer ? <div className="border-t px-4 py-3">{footer}</div> : null}
     </Card>
   );
 }

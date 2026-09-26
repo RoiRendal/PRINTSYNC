@@ -6,7 +6,6 @@ import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -20,6 +19,7 @@ import {
   Modal,
   Pagination,
   Select,
+  StatusLabel,
   Table,
   TableBody,
   TableCell,
@@ -359,17 +359,17 @@ export default function UserManagement() {
                         </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] font-bold text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-[10px] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
                               {initials(user.name)}
                             </div>
-                            <span className="text-[11px] font-bold leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
+                            <span className="leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-[10px]">{user.email}</TableCell>
-                        <TableCell className="font-mono text-[10px]">{user.phone}</TableCell>
-                        <TableCell><Badge variant={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</Badge></TableCell>
-                        <TableCell className="text-[10px] font-semibold text-macos-text dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="font-mono text-[10px] text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone}</TableCell>
+                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
+                        <TableCell className="text-macos-text dark:text-zinc-200">{user.position}</TableCell>
+                        <TableCell className="text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
@@ -380,7 +380,7 @@ export default function UserManagement() {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <div className="p-3">
+              <div className="border-t px-4 py-3">
                 <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
               </div>
             </CardContent>

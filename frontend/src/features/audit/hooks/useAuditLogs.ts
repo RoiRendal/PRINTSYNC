@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { auditApi } from '../api/auditApi';
 import { subscribeToDataChanges } from '../../../shared/store/dataEvents';
+import { DEFAULT_PAGE_SIZE } from '../../../shared/store/createListStore';
 import type { AuditLogListResult, AuditLogRecord } from '../types';
 
 /** Coalesces a burst of mutations into one refetch. */
@@ -12,7 +13,7 @@ export function useAuditLogs() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [actionFilter, setActionFilter] = useState('');
   const [entityTypeFilter, setEntityTypeFilter] = useState('');
 

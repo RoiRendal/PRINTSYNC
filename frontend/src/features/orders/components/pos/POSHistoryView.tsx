@@ -1,9 +1,18 @@
+import { useEffect, useState } from 'react';
 import { Printer, Search, Trash2 } from 'lucide-react';
 import type { Transaction, Order } from '../../types';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Modal } from '../../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, Input, Modal, Pagination, StatusLabel } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
+import { DEFAULT_PAGE_SIZE } from '../../../../shared/store/createListStore';
 import type { CombinedHistoryRow } from '../../hooks/usePOSHistory';
+
+/**
+ * Rows per page in the history table. Tied to the shared store default so every
+ * table in the app pages at the same size — this list is paged in the browser
+ * (it is one combined in-memory list), so it does not read the store's own limit.
+ */
+const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 interface POSHistoryViewProps {
   filteredHistoryRows: CombinedHistoryRow[];
@@ -29,14 +38,35 @@ export function POSHistoryView({
   onOpenReceipt,
   orderToHistoryTransaction,
 }: POSHistoryViewProps) {
+  /*
+   * Client-side paging. The history is one combined in-memory list (sales plus
+   * custom orders), so there is no server page to ask for — the whole list is
+   * already here and was previously rendered in a single pass. Paging it keeps
+   * the card a fixed height, like every other table.
+   */
+  const [historyPage, setHistoryPage] = useState(1);
+  const totalRows = filteredHistoryRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / HISTORY_PAGE_SIZE));
+
+  // A new search term is a new result set, so start it from the top.
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [historySearchTerm]);
+
+  // The list can shrink under the current page (search, void); never sit past the end.
+  useEffect(() => {
+    setHistoryPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const pagedRows = filteredHistoryRows.slice(
+    (historyPage - 1) * HISTORY_PAGE_SIZE,
+    historyPage * HISTORY_PAGE_SIZE,
+  );
+
   return (
     <>
       <Card padding="none" className="overflow-hidden">
-        <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>POS &amp; Order History</CardTitle>
-            <CardDescription>Retail transactions and custom orders in one audit trail.</CardDescription>
-          </div>
+        <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
           <div className="relative w-full md:max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
             <Input type="text" aria-label="Filter transaction history" className="pl-8 text-[11px]" value={historySearchTerm} onChange={(e) => onHistorySearchChange(e.target.value)} />
@@ -56,29 +86,25 @@ export function POSHistoryView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredHistoryRows.map((row) => {
+                {pagedRows.map((row) => {
                   const trx = row.source === 'trx' ? row.trx! : orderToHistoryTransaction(row.order!);
                   const key = row.source === 'trx' ? row.trx!.id : row.order!.id;
                   const refDisplay = row.source === 'trx' ? `#${row.trx!.id.replace('TRX-', '').slice(-8)}` : row.order!.id;
                   return (
                     <TableRow key={key} className="cursor-pointer" onClick={() => onSelectTransaction(trx)}>
-                      <TableCell className="font-mono text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
-                      <TableCell className="font-mono text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
+                      <TableCell className="text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
+                      <TableCell className="text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
                       <TableCell>
-                        <span className="font-medium tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
-                        <div className="max-w-[240px] truncate text-[9px] text-macos-text-muted dark:text-zinc-500">
-                          {row.source === 'order' ? <span>{row.order!.customer} — </span> : null}
-                          {trx.items.map((i) => i.name).join(', ')}
-                        </div>
+                        <span className="tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                       </TableCell>
-                      <TableCell><Badge variant={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</Badge></TableCell>
-                      <TableCell className="text-right font-mono font-bold text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
+                      <TableCell><StatusLabel tone={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
+                      <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
                         {row.source === 'trx' ? (
                           <Button type="button" variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); onVoidTransaction(row.trx!.id); }} title="Void" className="h-8 w-8 text-macos-red hover:text-macos-red">
                             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                           </Button>
-                        ) : <span className="px-1 text-[8px] font-bold text-macos-text-muted">—</span>}
+                        ) : <span className="px-1 text-macos-text-muted">—</span>}
                       </TableCell>
                     </TableRow>
                   );
@@ -94,6 +120,9 @@ export function POSHistoryView({
             </Table>
           </TableContainer>
         </CardContent>
+        <div className="border-t px-4 py-3">
+          <Pagination page={historyPage} limit={HISTORY_PAGE_SIZE} total={totalRows} onPageChange={setHistoryPage} />
+        </div>
       </Card>
 
       <Modal isOpen={!!selectedTransaction} onClose={onCloseTransactionDetail} title="Transaction Details" maxWidth="max-w-sm">
