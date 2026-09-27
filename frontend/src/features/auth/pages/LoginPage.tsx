@@ -37,7 +37,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <SurfaceCard className="p-5 sm:p-6">
+        <SurfaceCard className="p-4 sm:p-5">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="email" className="text-xs font-bold text-macos-text-muted dark:text-zinc-500">

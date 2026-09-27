@@ -162,7 +162,7 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-4 py-3 text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-3 py-2 text-macos-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
       </div>

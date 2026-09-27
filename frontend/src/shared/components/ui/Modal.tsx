@@ -35,7 +35,7 @@ export const Modal: React.FC<ModalProps> = ({
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[var(--app-scrim)] p-4 sm:p-6 lg:p-10"
+          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[var(--app-scrim)] p-3 sm:p-4 lg:p-6"
           onClick={onClose}
           role="presentation"
         >
@@ -49,7 +49,7 @@ export const Modal: React.FC<ModalProps> = ({
             aria-modal="true"
             aria-label={title}
           >
-            <div className="surface-toolbar flex min-h-12 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-4 py-3">
+            <div className="surface-toolbar flex min-h-10 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-3 py-2">
               <div className="flex min-w-0 items-center gap-3">
                 <h3 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">
                   {title}
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <div className="overflow-y-auto p-4 text-macos-text dark:text-zinc-100 sm:p-5">
+            <div className="overflow-y-auto p-3 text-macos-text dark:text-zinc-100 sm:p-4">
               {children}
             </div>
           </div>

@@ -177,7 +177,7 @@ export default function Settings() {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-6 pt-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
+        <CardContent className="grid gap-4 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
             <label className="block space-y-1.5" htmlFor="company-display-name">
               <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Company name</span>
