@@ -1,4 +1,4 @@
-import { Inbox } from 'lucide-react';
+import { Inbox } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 

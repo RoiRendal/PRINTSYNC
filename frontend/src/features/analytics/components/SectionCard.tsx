@@ -1,9 +1,9 @@
-import type { LucideIcon } from 'lucide-react';
+import type { IconComponent } from '../../../shared/components/ui/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../shared/components/ui';
 
 interface SectionCardProps {
   children: React.ReactNode;
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   description: string;
   controls?: React.ReactNode;

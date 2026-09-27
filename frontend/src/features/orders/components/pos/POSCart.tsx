@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, ShoppingBag, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';

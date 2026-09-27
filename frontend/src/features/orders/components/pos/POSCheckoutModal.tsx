@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-import { AlertTriangle, Banknote, CheckCircle2, CreditCard, Printer, ShieldCheck } from 'lucide-react';
+import type { IconComponent } from '../../../../shared/components/ui/icons';
+import { AlertTriangle, Banknote, CheckCircle2, CreditCard, Printer, ShieldCheck } from '../../../../shared/components/ui/icons';
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -65,7 +65,7 @@ export interface CheckoutError {
  */
 const RECONCILIATION_PANEL: Record<
   CheckoutFailureOutcome['kind'],
-  { heading: string; tone: InlineAlertTone; Icon: LucideIcon }
+  { heading: string; tone: InlineAlertTone; Icon: IconComponent }
 > = {
   'not-committed': {
     heading: 'Nothing was charged — safe to try again',

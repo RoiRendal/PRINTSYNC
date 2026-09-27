@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Wallet } from 'lucide-react';
+import { Wallet } from '../../../shared/components/ui/icons';
 import type { SalesTimeline } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

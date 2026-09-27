@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from './icons';
 import { cn } from '../../lib/cn';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';

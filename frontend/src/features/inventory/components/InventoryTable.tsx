@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Package, Plus, Search, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Trash2 } from '../../../shared/components/ui/icons';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Button,

@@ -1,4 +1,4 @@
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from '../ui/icons';
 import { Button } from '../ui';
 import { cn } from '../../lib/cn';
 

@@ -10,7 +10,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { TrendingUp } from 'lucide-react';
+import { TrendingUp } from '../../../shared/components/ui/icons';
 import type { ProductTrends } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

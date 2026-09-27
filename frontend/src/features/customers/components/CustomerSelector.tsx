@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { User, X } from 'lucide-react';
+import { User, X } from '../../../shared/components/ui/icons';
 import { Input } from '../../../shared/components/ui';
 import type { Customer } from '../types';
 

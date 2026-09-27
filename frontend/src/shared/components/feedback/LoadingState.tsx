@@ -1,4 +1,4 @@
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from '../ui/icons';
 import { cn } from '../../lib/cn';
 
 interface LoadingStateProps {

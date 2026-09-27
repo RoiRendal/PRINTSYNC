@@ -8,7 +8,7 @@ import {
   ClipboardList,
   Settings as SettingsIcon,
   ScrollText,
-} from 'lucide-react';
+} from '../components/ui/icons';
 import type { ComponentType } from 'react';
 
 export type PageAccessKey =

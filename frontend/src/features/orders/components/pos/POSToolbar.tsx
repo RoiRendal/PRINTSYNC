@@ -1,4 +1,4 @@
-import { History, ReceiptText, ShoppingBag } from 'lucide-react';
+import { History, ReceiptText, ShoppingBag } from '../../../../shared/components/ui/icons';
 import { Button, SurfaceCard } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import type { PosMode } from '../../hooks/usePOSCart';

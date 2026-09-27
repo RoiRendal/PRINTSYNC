@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail } from '../../../shared/components/ui/icons';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, SurfaceCard, Input } from '../../../shared/components/ui';
 import { useAuth } from '../../../app/stores/useAuthStore';

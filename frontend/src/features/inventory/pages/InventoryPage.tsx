@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Box, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, Box, Image as ImageIcon } from '../../../shared/components/ui/icons';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

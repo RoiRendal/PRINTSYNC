@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Sidebar } from './AppSidebar';
 import { useLocation } from 'react-router-dom';
-import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from 'lucide-react';
+import { Bell, ChevronLeft, Monitor, Moon, PanelLeft, Sun } from '../../shared/components/ui/icons';
 import { useTheme } from '../providers/ThemeProvider';
 import { useNotifications } from '../providers/NotificationProvider';
 import { NotificationPanel } from '../components/NotificationPanel';

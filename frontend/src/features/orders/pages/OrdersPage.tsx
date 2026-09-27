@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Calendar } from 'lucide-react';
+import { ArrowRight, Calendar } from '../../../shared/components/ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

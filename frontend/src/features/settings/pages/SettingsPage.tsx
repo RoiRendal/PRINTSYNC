@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from 'lucide-react';
+import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from '../../../shared/components/ui/icons';
 
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';

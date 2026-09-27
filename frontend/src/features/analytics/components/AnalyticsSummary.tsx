@@ -1,4 +1,4 @@
-import { Activity } from 'lucide-react';
+import { Activity } from '../../../shared/components/ui/icons';
 import type { AnalyticsSummary as AnalyticsSummaryData } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

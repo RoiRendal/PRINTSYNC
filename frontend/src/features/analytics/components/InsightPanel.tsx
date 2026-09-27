@@ -1,4 +1,4 @@
-import { Brain } from 'lucide-react';
+import { Brain } from '../../../shared/components/ui/icons';
 import { Badge, Button, SurfaceCard } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { formatInsightTime, type InsightState } from './analytics-types';

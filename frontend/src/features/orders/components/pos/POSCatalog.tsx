@@ -1,4 +1,4 @@
-import { Plus, Search, ShoppingBag } from 'lucide-react';
+import { Plus, Search, ShoppingBag } from '../../../../shared/components/ui/icons';
 import type { InventoryItem } from '../../../inventory/types';
 import { Badge, Card, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';

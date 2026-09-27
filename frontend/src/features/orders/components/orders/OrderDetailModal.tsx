@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from 'lucide-react';
+import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from '../../../../shared/components/ui/icons';
 import {
   Badge,
   Button,
