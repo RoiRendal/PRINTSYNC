@@ -1,9 +1,14 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
+import { DeleteConfirmModal } from '../../../shared/components/ui';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
+import { usePaymentStore } from '../../../app/stores/usePaymentStore';
+import type { Transaction } from '../types';
+import { DEFAULT_PAGE_SIZE } from '../../../shared/store/createListStore';
 import { paymentsApi } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
@@ -24,6 +29,13 @@ import { usePOSTransactions } from '../hooks/usePOSTransactions';
 import { usePOSCheckout } from '../hooks/usePOSCheckout';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange } from '../../../shared/store/dataEvents';
+
+/**
+ * Rows per page in the history table. Tied to the shared store default so every
+ * table in the app pages at the same size — this list is paged in the browser
+ * (it is one combined in-memory list), so it does not read the store's own limit.
+ */
+const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 
 export default function POS() {
@@ -99,7 +111,39 @@ export default function POS() {
   const { beginAttempt, peekAttempt, completeAttempt } = useCheckoutAttemptKey(cartSignature);
 
   /** Sales and custom orders merged into one searchable timeline. */
-  const history = usePOSHistory({ transactions, orders, inventory });
+  /*
+   * The browser page of the history list, owned here rather than inside the
+   * view. It has to live above both the rows and the tick set: the rows are cut
+   * to the page, and the tick set is scoped to those rows, so if the page and
+   * the selection were owned in different places they could disagree about what
+   * is on screen — which is exactly how a bulk action ends up pointed at rows
+   * nobody looked at.
+   */
+  const [historyPage, setHistoryPage] = useState(1);
+  const history = usePOSHistory({
+    transactions,
+    orders,
+    inventory,
+    page: historyPage,
+    pageSize: HISTORY_PAGE_SIZE,
+  });
+
+  const selection = useRowSelection(
+    useMemo(() => history.selectableRows.map((row) => (row.source === 'trx' ? row.trx!.id : row.order!.id)), [history.selectableRows]),
+  );
+
+  const [salesToVoid, setSalesToVoid] = useState<Transaction[]>([]);
+  const [isVoiding, setIsVoiding] = useState(false);
+  /** Which of a batch could not be reversed. Distinct from the store's own
+   *  `transactionError`, which reports a load/void failure generically. */
+  const [voidError, setVoidError] = useState<string | null>(null);
+
+  // A new search term is a new result set, so go back to its first page. The
+  // hook clamps anyway; this is what *returns* the user to page 1 rather than
+  // leaving them on a page number that happens to still exist.
+  useEffect(() => {
+    setHistoryPage(1);
+  }, [history.historySearchTerm]);
 
   const editOrderId = (location.state as { editOrderId?: string } | null)?.editOrderId ?? null;
 
@@ -146,6 +190,64 @@ export default function POS() {
     setIsCheckoutModalOpen(true);
   };
 
+  /**
+   * Captures the ticked sales and opens the confirmation.
+   *
+   * The rows are snapshotted here rather than read back off `selection` when the
+   * user confirms: the list can refresh underneath an open dialog, and the
+   * dialog has to name the sales that were actually ticked, not whatever happens
+   * to be selected by the time Confirm gets clicked.
+   */
+  const openVoidConfirm = () => {
+    const ids = selection.selectedIds;
+    if (ids.size === 0) return;
+    setSalesToVoid(transactions.filter((trx) => ids.has(trx.id)));
+  };
+
+  /**
+   * Reverses every sale named in the confirmation, one at a time.
+   *
+   * `voidTransaction` is a single-row endpoint and adding a bulk route would be
+   * a backend change this screen does not need. Void is not a delete — the sale
+   * and the stock it moved stay on the record, marked reversed — which is why
+   * the modal's wording is changed and why a partial failure is reported by
+   * reference rather than by customer.
+   *
+   * `voidTransaction` swallows its own error and reports through the store, so
+   * the failure branch here cannot observe it. It re-reads the list instead: a
+   * sale still `completed` after the attempt did not reverse, and naming it is
+   * what lets the user retry the one that failed rather than all of them.
+   */
+  const confirmVoidSelected = async () => {
+    if (salesToVoid.length === 0 || isVoiding) return;
+    const targets = salesToVoid;
+    setIsVoiding(true);
+    try {
+      for (const sale of targets) {
+        await voidTransaction(sale.id);
+      }
+    } finally {
+      // A throw before the close below would otherwise leave Confirm spinning on
+      // a dialog that never goes away.
+      setIsVoiding(false);
+    }
+    setSalesToVoid([]);
+    selection.clear();
+
+    const stillCompleted = new Set(
+      usePaymentStore.getState().items.filter((item) => item.status === 'completed').map((item) => item.id),
+    );
+    const failed = targets.filter((sale) => stillCompleted.has(sale.id));
+    if (failed.length > 0) {
+      const names = failed.map((sale) => `#${sale.id.replace('TRX-', '').slice(-8)}`).join(', ');
+      setVoidError(
+        `${failed.length} of ${targets.length} sales could not be voided: ${names}. ${failed.length === 1 ? 'It is' : 'They are'} still completed — try again.`,
+      );
+      return;
+    }
+    setVoidError(null);
+  };
+
   usePOSKeyboardShortcuts({
     searchRef: searchInputRef,
     enabled: !isCheckoutModalOpen && !basket.isDesignModalOpen,
@@ -182,6 +284,12 @@ export default function POS() {
       {transactionError && (
         <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
           {transactionError}
+        </div>
+      )}
+
+      {voidError && (
+        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
+          {voidError}
         </div>
       )}
 
@@ -239,11 +347,15 @@ export default function POS() {
       ) : (
         <POSHistoryView
           filteredHistoryRows={history.filteredRows}
+          totalRows={history.totalRows}
+          historyPage={historyPage}
+          onHistoryPageChange={setHistoryPage}
           historySearchTerm={history.historySearchTerm}
           selectedTransaction={history.selectedTransaction}
           onHistorySearchChange={history.setHistorySearchTerm}
           onSelectTransaction={history.selectTransaction}
-          onVoidTransaction={voidTransaction}
+          onVoidSelected={openVoidConfirm}
+          selection={selection}
           onCloseTransactionDetail={() => history.selectTransaction(null)}
           onOpenReceipt={receipts.openHistoricalReceipt}
           orderToHistoryTransaction={history.orderToHistoryTransaction}
@@ -289,6 +401,28 @@ export default function POS() {
         document={receipts.receipt}
         onPrint={() => receipts.receipt && printDocument(receipts.receipt)}
       />
+
+      {/*
+        Reversing a sale is not a delete: the record stays, marked voided, and
+        the stock it consumed goes back on the shelf. The shared dialog says
+        "This action cannot be undone", which is true of a void but reads at
+        first glance like the row is about to be destroyed — and a cashier who
+        believes that will not use the control when they should. The extra line
+        says what actually happens, and the reference ids are named rather than
+        the totals, because the id is what the slip in the customer's hand
+        carries.
+      */}
+      <DeleteConfirmModal
+        isOpen={salesToVoid.length > 0}
+        itemLabels={salesToVoid.map((sale) => `#${sale.id.replace('TRX-', '').slice(-8)}`)}
+        isBusy={isVoiding}
+        onClose={() => setSalesToVoid([])}
+        onConfirm={confirmVoidSelected}
+      >
+        <p className="text-sm text-macos-text dark:text-zinc-100">
+          The sale is voided and the stock it used is returned to inventory. The record itself stays in the history, marked voided.
+        </p>
+      </DeleteConfirmModal>
     </div>
   );
 }

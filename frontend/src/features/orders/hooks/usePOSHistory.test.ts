@@ -31,9 +31,14 @@ function makeTransaction(overrides: Partial<Transaction> = {}): Transaction {
   };
 }
 
-function renderHistory(transactions: Transaction[], orders = [makeOrder()]) {
+function renderHistory(
+  transactions: Transaction[],
+  orders = [makeOrder()],
+  page = 1,
+  pageSize = 20,
+) {
   return renderHook(() =>
-    usePOSHistory({ transactions, orders, inventory: CATALOGUE }),
+    usePOSHistory({ transactions, orders, inventory: CATALOGUE, page, pageSize }),
   );
 }
 
@@ -205,5 +210,103 @@ describe('usePOSHistory', () => {
 
     act(() => result.current.selectTransaction(null));
     expect(result.current.selectedTransaction).toBeNull();
+  });
+
+  /**
+   * The paging and the tick set share one list, and the reason is safety: a
+   * bulk void acts on `selectableRows`, so if that list reached past the page
+   * being rendered the action could take rows the user never saw. These pin the
+   * two rules that keep it honest — the list is cut to whole pages, and a page
+   * past the end is pulled back rather than left empty.
+   */
+  describe('paging', () => {
+    const many = Array.from({ length: 25 }, (_, i) =>
+      makeTransaction({ id: `TRX-${String(i).padStart(2, '0')}`, date: `2026-09-${String(25 - i).padStart(2, '0')}T10:00:00.000Z` }),
+    );
+
+    it('cuts the list to whole pages, so the last page has no overhang', () => {
+      const { result } = renderHistory(many, [], 2, 20);
+
+      expect(result.current.totalRows).toBe(25);
+      expect(result.current.totalPages).toBe(2);
+      // 25 rows over pages of 20: the second page holds 5, not 20.
+      expect(result.current.filteredRows).toHaveLength(5);
+    });
+
+    it('never returns more rows than a page holds', () => {
+      const { result } = renderHistory(many, [], 1, 20);
+
+      expect(result.current.filteredRows).toHaveLength(20);
+    });
+
+    it('pulls a page past the end back onto the last real page', () => {
+      const { result } = renderHistory(many, [], 9, 20);
+
+      expect(result.current.filteredRows).toHaveLength(5);
+      expect(result.current.filteredRows.map((row) => row.trx?.id)).toEqual([
+        'TRX-20',
+        'TRX-21',
+        'TRX-22',
+        'TRX-23',
+        'TRX-24',
+      ]);
+    });
+
+    it('comes back to page one rather than an empty list when the search shortens it', () => {
+      const { result } = renderHistory(many, [], 2, 20);
+
+      act(() => result.current.setHistorySearchTerm('TRX-01'));
+
+      // One match, and the caller is still asking for page 2.
+      expect(result.current.totalPages).toBe(1);
+      expect(result.current.filteredRows).toHaveLength(1);
+      expect(result.current.filteredRows[0]?.trx?.id).toBe('TRX-01');
+    });
+  });
+
+  /**
+   * Only a completed sale has a reversal to offer. A custom order is a
+   * production job, and a voided sale is already reversed — the RPC refuses it.
+   * Offering either a tick would let a bulk void fail on a row the user chose
+   * in good faith, so they are withheld from the selectable list instead.
+   */
+  describe('what a bulk action may act on', () => {
+    it('offers only completed sales', () => {
+      const { result } = renderHistory(
+        [
+          makeTransaction({ id: 'TRX-ok', status: 'completed' }),
+          makeTransaction({ id: 'TRX-void', status: 'voided' }),
+        ],
+        [makeOrder({ id: 'order-1' })],
+      );
+
+      expect(result.current.filteredRows).toHaveLength(3);
+      expect(result.current.selectableRows.map((row) => row.trx?.id)).toEqual(['TRX-ok']);
+    });
+
+    it('treats a sale with no status as not selectable', () => {
+      const { result } = renderHistory([makeTransaction({ id: 'TRX-nostatus', status: undefined })], []);
+
+      expect(result.current.filteredRows).toHaveLength(1);
+      expect(result.current.selectableRows).toEqual([]);
+    });
+
+    it('never offers a custom order, whatever else it looks like', () => {
+      const { result } = renderHistory([], [makeOrder({ id: 'order-1' })]);
+
+      expect(result.current.filteredRows).toHaveLength(1);
+      expect(result.current.selectableRows).toEqual([]);
+    });
+
+    it('scopes the offer to the page being rendered', () => {
+      const many = Array.from({ length: 25 }, (_, i) =>
+        makeTransaction({ id: `TRX-${String(i).padStart(2, '0')}`, status: 'completed' }),
+      );
+
+      const { result } = renderHistory(many, [], 1, 20);
+
+      // 25 completed sales exist, but only the 20 on screen may be ticked.
+      expect(result.current.selectableRows).toHaveLength(20);
+    });
   });
 });
