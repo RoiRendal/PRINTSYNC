@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { TransactionStatus } from '@printsync/shared-types';
 import type { InventoryItem } from '../../inventory/types';
 import type { CartItem, Order, Transaction } from '../types';
 
@@ -13,6 +14,16 @@ export interface CombinedHistoryRow {
   source: 'trx' | 'order';
   trx?: Transaction;
   order?: Order;
+  /**
+   * The record's own state, carried up from the cursor.
+   *
+   * Deliberately read here rather than re-derived by the table: a custom order
+   * has no status at all (it has not been voided or completed — it is a
+   * production job), and a sale that has been voided must never be selectable
+   * again, because `void_transaction` refuses anything not still `completed`
+   * and would fail the row.
+   */
+  status: TransactionStatus | null;
 }
 
 export interface UsePOSHistoryOptions {
@@ -22,6 +33,10 @@ export interface UsePOSHistoryOptions {
   orders: Order[];
   /** Used to put a price and a category back on a line the record only names. */
   inventory: InventoryItem[];
+  /** Which browser page of the combined list is on screen. 1-based. */
+  page: number;
+  /** Rows per browser page. Also decides where the list is cut off. */
+  pageSize: number;
 }
 
 export interface POSHistoryController {
@@ -33,8 +48,30 @@ export interface POSHistoryController {
   orderToHistoryTransaction: (order: Order) => Transaction;
   /** Sales and orders together, newest first. */
   rows: CombinedHistoryRow[];
-  /** `rows` narrowed by the search box. */
+  /**
+   * `rows` narrowed by the search box, and then cut down to whole pages.
+   *
+   * Paged here rather than in the component because the tick set has to be
+   * scoped to what is actually on screen. The store hands back a server page
+   * (`limit`, default 20) and this list is paged again in the browser, so the
+   * tail of the store's page is reachable by a page whose rows are not
+   * rendered — selecting it and then deleting would act on rows the user was
+   * never shown. Trimming the overhang here makes the last page exact, so
+   * "select all" can only ever mean the rows on the page in front of you.
+   */
   filteredRows: CombinedHistoryRow[];
+  /**
+   * The subset of `filteredRows` a bulk action may legitimately act on.
+   *
+   * This is what feeds `useRowSelection`, not `filteredRows`: a call to action
+   * cannot be offered on a row it would refuse, and the void RPC rejects
+   * anything no longer `completed`. Excluding those rows here means "select
+   * all" never claims them and the count beside the button always matches the
+   * number of rows the action will really take.
+   */
+  selectableRows: CombinedHistoryRow[];
+  totalRows: number;
+  totalPages: number;
 }
 
 /**
@@ -51,6 +88,8 @@ export function usePOSHistory({
   transactions,
   orders,
   inventory,
+  page,
+  pageSize,
 }: UsePOSHistoryOptions): POSHistoryController {
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -136,8 +175,10 @@ export function usePOSHistory({
 
   const rows = useMemo((): CombinedHistoryRow[] => {
     const combined: CombinedHistoryRow[] = [
-      ...transactions.map((trx) => ({ source: 'trx' as const, trx })),
-      ...orders.map((order) => ({ source: 'order' as const, order })),
+      // A custom order carries no `status` — the field describes a sale, and an
+      // order is a production job — so it is `null` rather than guessed at.
+      ...transactions.map((trx) => ({ source: 'trx' as const, trx, status: trx.status ?? null })),
+      ...orders.map((order) => ({ source: 'order' as const, order, status: null })),
     ];
     combined.sort((a, b) => {
       const da = a.source === 'trx' ? a.trx!.date : a.order!.date;
@@ -147,7 +188,7 @@ export function usePOSHistory({
     return combined;
   }, [transactions, orders]);
 
-  const filteredRows = useMemo(() => {
+  const matchedRows = useMemo(() => {
     const q = historySearchTerm.toLowerCase().trim();
     if (!q) return rows;
     return rows.filter((row) => {
@@ -166,6 +207,34 @@ export function usePOSHistory({
     });
   }, [rows, historySearchTerm]);
 
+  /*
+   * The page is clamped here rather than trusted from the caller. A search that
+   * shortens the list, or a void that removes the last row on the final page,
+   * can leave the caller asking for a page that no longer exists — and a caller
+   * free to hold a stale page is free to hand the tick set rows that are not on
+   * screen. Clamping in one place means the component renders exactly what this
+   * says is on the page, and never has to defend itself.
+   */
+  const totalRows = matchedRows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+
+  const filteredRows = useMemo(
+    () => matchedRows.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [matchedRows, currentPage, pageSize],
+  );
+
+  /**
+   * Only a completed sale can be reversed.
+   *
+   * A voided sale is already reversed and the RPC refuses it; a custom order is
+   * not a sale at all, so there is nothing for a payment reversal to do to it.
+   */
+  const selectableRows = useMemo(
+    () => filteredRows.filter((row) => row.source === 'trx' && row.status === 'completed'),
+    [filteredRows],
+  );
+
   return {
     historySearchTerm,
     setHistorySearchTerm,
@@ -174,5 +243,8 @@ export function usePOSHistory({
     orderToHistoryTransaction,
     rows,
     filteredRows,
+    selectableRows,
+    totalRows,
+    totalPages,
   };
 }

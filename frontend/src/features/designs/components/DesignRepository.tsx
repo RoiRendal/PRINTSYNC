@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Search, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
+import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -10,7 +10,7 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
@@ -188,10 +188,7 @@ export function DesignRepository() {
             <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-              <Input className="pl-9 text-xs" placeholder="Search designs by name, category or tag..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            </div>
+            <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             <Button onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
           </div>
         </CardHeader>

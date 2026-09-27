@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Package, Plus, Search, Trash2 } from '../../../shared/components/ui/icons';
+import { Package, Plus, Trash2 } from '../../../shared/components/ui/icons';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Button,
@@ -7,7 +7,7 @@ import {
   CardContent,
   CardHeader,
   Checkbox,
-  Input,
+  SearchInput,
   StatusLabel,
   Table,
   TableBody,
@@ -57,10 +57,11 @@ export function InventoryTable({
     <Card padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-            <Input className="pl-9 text-xs" placeholder="Search SKU, material or category..." value={searchTerm} onChange={(e) => onSearchTermChange(e.target.value)} />
-          </div>
+          <SearchInput
+            className="flex-1"
+            value={searchTerm}
+            onChange={(e) => onSearchTermChange(e.target.value)}
+          />
           {/*
             Icon-only, gray, square — the same tone as Cancel. The hover title is
             the only place the user sees *why* it is disabled, so the affordance

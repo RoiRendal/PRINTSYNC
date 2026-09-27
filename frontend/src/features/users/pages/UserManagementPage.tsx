@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { KeyRound, Plus, Search, Shield, Trash2, UserSquare } from '../../../shared/components/ui/icons';
+import { KeyRound, Plus, Shield, Trash2, UserSquare } from '../../../shared/components/ui/icons';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -18,6 +18,7 @@ import {
   Input,
   Modal,
   Pagination,
+  SearchInput,
   Select,
   StatusLabel,
   Table,
@@ -272,10 +273,7 @@ export default function UserManagement() {
           <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
-                <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                  <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search users..." />
-                </div>
+                <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
                 {/*
                   The table's only delete control. Icon-only and gray (the same
                   tone as Cancel) so it does not advertise itself as destructive
