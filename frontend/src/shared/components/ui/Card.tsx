@@ -30,7 +30,7 @@ const paddingClasses: Record<CardPadding, string> = {
   none: '',
   sm: 'p-3',
   md: 'p-4',
-  lg: 'p-5 lg:p-6',
+  lg: 'p-4 lg:p-5',
 };
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -81,7 +81,7 @@ CardContent.displayName = 'CardContent';
 
 export const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-[var(--app-border-hairline)] pt-4', className)} {...props} />
+    <div ref={ref} className={cn('mt-4 flex items-center justify-end gap-2 border-t border-[var(--app-border-hairline)] pt-3', className)} {...props} />
   ),
 );
 

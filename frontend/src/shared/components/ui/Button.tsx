@@ -27,10 +27,10 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-xs',
-  md: 'h-9 px-4 text-xs',
-  lg: 'h-11 px-5 text-sm',
-  icon: 'h-9 w-9 p-0',
+  sm: 'h-6 px-2 text-xs',
+  md: 'h-7 px-2 text-xs',
+  lg: 'h-9 px-3 text-sm',
+  icon: 'h-7 w-7 p-0',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

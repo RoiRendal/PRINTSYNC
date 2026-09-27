@@ -147,7 +147,7 @@ export function POSHistoryView({
                     <TableCell>
                       <span className="tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                     </TableCell>
-                    <TableCell><StatusLabel tone={row.source === 'trx' ? 'blue' : 'purple'}>{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
+                    <TableCell><StatusLabel tone="blue">{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
                     <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                   </TableRow>
                 );

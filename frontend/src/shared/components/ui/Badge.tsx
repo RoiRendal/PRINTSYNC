@@ -24,7 +24,7 @@ const variantClasses: Record<BadgeVariant, string> = {
 
 const sizeClasses: Record<BadgeSize, string> = {
   sm: 'px-2 py-0.5 text-2xs',
-  md: 'px-2.5 py-1 text-2xs',
+  md: 'px-2 py-0.5 text-2xs',
 };
 
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(({ className, variant = 'neutral', size = 'sm', ...props }, ref) => (
@@ -46,7 +46,7 @@ export function getStatusBadgeVariant(status: string): BadgeVariant {
   const normalized = status.toLowerCase();
   if (normalized.includes('ready') || normalized.includes('completed') || normalized.includes('delivered') || normalized.includes('online')) return 'green';
   if (normalized.includes('pending') || normalized.includes('warning') || normalized.includes('critical')) return 'orange';
-  if (normalized.includes('design') || normalized.includes('custom')) return 'purple';
+  if (normalized.includes('design') || normalized.includes('custom')) return 'blue';
   if (normalized.includes('production') || normalized.includes('active')) return 'blue';
   if (normalized.includes('error') || normalized.includes('delete') || normalized.includes('failed')) return 'red';
   return 'neutral';

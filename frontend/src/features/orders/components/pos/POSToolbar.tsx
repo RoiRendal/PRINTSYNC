@@ -73,7 +73,7 @@ export function POSToolbar({
           className={cn(
             'h-7 cursor-pointer rounded-full px-3 text-2xs font-bold',
             posMode === 'custom'
-              ? 'bg-macos-purple text-white'
+              ? 'bg-macos-blue text-[var(--app-accent-ink)]'
               : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
           )}
         >

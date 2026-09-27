@@ -156,7 +156,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
       maxWidth="max-w-5xl"
     >
       {order && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Badge variant={getStatusBadgeVariant(order.status)} size="md" className="mb-2">{order.status}</Badge>
@@ -184,7 +184,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-4">
               <section className="space-y-2">
                 <h4 className="flex items-center gap-2 label-caps text-macos-text-muted dark:text-zinc-500">

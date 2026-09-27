@@ -286,7 +286,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               highlight to this card's border 8px as well: one number on both
               axes. Raising this back toward 12px is the first thing to try if the
               two columns ever read as cramped rather than joined. */}
-          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pl-1 lg:pt-2 xl:p-6 xl:pl-1 xl:pt-2">
+          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-4 lg:pl-1 lg:pt-2 xl:p-5 xl:pl-1 xl:pt-2">
             <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
               {children}
             </section>

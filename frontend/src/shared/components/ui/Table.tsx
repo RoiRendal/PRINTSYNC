@@ -57,13 +57,13 @@ export const TableRow = forwardRef<HTMLTableRowElement, HTMLAttributes<HTMLTable
 TableRow.displayName = 'TableRow';
 
 export const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
-  <th ref={ref} className={cn('px-4 py-2.5 text-xs font-semibold', className)} {...props} />
+  <th ref={ref} className={cn('px-2 py-1.5 text-xs font-semibold', className)} {...props} />
 ));
 
 TableHead.displayName = 'TableHead';
 
 export const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn('px-4 py-2.5 align-middle text-gray-700 dark:text-zinc-300', className)} {...props} />
+  <td ref={ref} className={cn('px-2 py-1.5 align-middle text-gray-700 dark:text-zinc-300', className)} {...props} />
 ));
 
 TableCell.displayName = 'TableCell';
@@ -81,20 +81,20 @@ TableCaption.displayName = 'TableCaption';
  * The column is defined here rather than written out in each table for the same
  * reason the rest of this file exists — four hand-rolled copies drift, and a
  * column that is 40px wide in one table and 56px in another reads as a mistake.
- * It is deliberately narrower than a data cell (`w-10`, tighter padding) so it
+ * It is deliberately narrower than a data cell (`w-10`) so it
  * reads as table chrome rather than as a field, and the header carries no label:
  * the box is its own label.
  *
  * Pair it with `useRowSelection` for the state and `Checkbox` for the control.
  */
 export const TableSelectHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
-  <th ref={ref} scope="col" className={cn('w-10 px-3 py-2.5', className)} {...props} />
+  <th ref={ref} scope="col" className={cn('w-10 px-2 py-1.5', className)} {...props} />
 ));
 
 TableSelectHead.displayName = 'TableSelectHead';
 
 export const TableSelectCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(({ className, ...props }, ref) => (
-  <td ref={ref} className={cn('w-10 px-3 py-2.5 align-middle', className)} {...props} />
+  <td ref={ref} className={cn('w-10 px-2 py-1.5 align-middle', className)} {...props} />
 ));
 
 TableSelectCell.displayName = 'TableSelectCell';

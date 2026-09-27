@@ -3,7 +3,7 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from '../../lib/cn';
 
 const fieldBaseClasses =
-  'w-full rounded-[var(--radius-button)] !border-transparent bg-[var(--app-surface-sub)] px-3 text-sm text-macos-text placeholder:text-[var(--app-text-muted)] focus:!border-transparent focus:!bg-[var(--app-state-hover-sub)] dark:focus:!bg-[var(--app-state-hover-sub)] focus:outline-none !ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500';
+  'w-full rounded-[var(--radius-button)] !border-transparent bg-[var(--app-surface-sub)] px-2 text-sm text-macos-text placeholder:text-[var(--app-text-muted)] focus:!border-transparent focus:!bg-[var(--app-state-hover-sub)] dark:focus:!bg-[var(--app-state-hover-sub)] focus:outline-none !ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500';
 
 /*
   These are ERPNext's form fields, not macOS ones.
@@ -29,8 +29,11 @@ const fieldBaseClasses =
   entirely. Ring utilities are permitted by check-flat-ui: a ring is pure spread,
   i.e. a focus indicator, not an elevation.
 
-  Height, font size and padding are deliberately NOT changed to ERPNext's 28px /
-  13px — this is a colour, border and shape match only, so no layout shifts.
+  R5 was a colour, border and shape match only — height, font size and padding
+  were deliberately left at PrintSync's 36px / 14px. R9 then tightened them to
+  ERPNext: inputs/selects default to h-7 (28px) with 8px side padding, textareas
+  and buttons shrank to match. Font size is the one thing still unchanged. The
+  `!` on ring/border remains load-bearing (see above), not decoration.
 */
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -38,9 +41,9 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const inputSizeClasses: Record<NonNullable<InputProps['fieldSize']>, string> = {
-  sm: 'h-8 text-xs',
-  md: 'h-9 text-sm',
-  lg: 'h-11 text-base',
+  sm: 'h-6 text-xs',
+  md: 'h-7 text-sm',
+  lg: 'h-9 text-base',
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, fieldSize = 'md', ...props }, ref) => (
@@ -54,9 +57,9 @@ export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
 }
 
 const textareaSizeClasses: Record<NonNullable<TextareaProps['fieldSize']>, string> = {
-  sm: 'min-h-20 py-2 text-xs',
-  md: 'min-h-28 py-2.5 text-sm',
-  lg: 'min-h-36 py-3 text-base',
+  sm: 'min-h-16 py-1.5 text-xs',
+  md: 'min-h-20 py-2 text-sm',
+  lg: 'min-h-28 py-2.5 text-base',
 };
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, fieldSize = 'md', ...props }, ref) => (

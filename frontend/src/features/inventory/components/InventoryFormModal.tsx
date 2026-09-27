@@ -100,15 +100,15 @@ export function InventoryFormModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editingItem ? 'Edit Stock Item' : 'Add New Stock'} maxWidth="max-w-3xl">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
           <div className="space-y-3">
             <label className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Item Image</label>
             <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border">
               {formData.imageUrl ? (
                 <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
               ) : (
-                <div className="flex flex-col items-center gap-2 p-6 text-center text-macos-text-muted dark:text-zinc-500">
+                <div className="flex flex-col items-center gap-2 p-5 text-center text-macos-text-muted dark:text-zinc-500">
                   <ImageIcon className="h-14 w-14 opacity-40" aria-hidden="true" />
                   <span className="text-2xs font-bold">No image yet</span>
                 </div>

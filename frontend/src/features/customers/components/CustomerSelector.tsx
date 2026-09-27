@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { User, X } from '../../../shared/components/ui/icons';
+import { X } from '../../../shared/components/ui/icons';
 import { Input } from '../../../shared/components/ui';
 import type { Customer } from '../types';
 
@@ -62,10 +62,9 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
-        <User className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-purple" aria-hidden="true" />
         <Input
           fieldSize="sm"
-          className="pl-8 pr-8 text-xs"
+          className="pl-2 pr-8 text-xs"
           value={query}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => setIsOpen(true)}
@@ -92,7 +91,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
               key={customer.id}
               type="button"
               onClick={() => handleSelect(customer)}
-              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-xs hover:bg-[var(--app-tint-purple)] dark:hover:bg-[var(--app-tint-purple)]"
+              className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-xs hover:bg-[var(--app-state-hover)]"
             >
               <span className="font-bold text-macos-text dark:text-zinc-100">{customer.name}</span>
               {(customer.phone || customer.email) && (
@@ -112,8 +111,8 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {selectedCustomer && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-2xs font-bold text-macos-purple dark:text-purple-300">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-macos-purple" />
+        <div className="mt-1.5 flex items-center gap-1.5 text-2xs font-bold text-macos-blue dark:text-macos-cyan">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-macos-blue" />
           Linked to customer record
         </div>
       )}

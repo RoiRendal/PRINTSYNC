@@ -139,7 +139,7 @@ export function POSCheckoutModal({
 
   return (
     <Modal isOpen={isOpen} onClose={() => !checkoutSuccess && !isSubmitting && onClose()} title="Process Checkout">
-      <div className="space-y-6">
+      <div className="space-y-4">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-macos-green">
