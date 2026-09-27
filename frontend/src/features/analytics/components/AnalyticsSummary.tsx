@@ -1,4 +1,4 @@
-import { Activity, BarChart3, LineChart as LineChartIcon, TrendingUp, Wallet } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import type { AnalyticsSummary as AnalyticsSummaryData } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -24,11 +24,11 @@ export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummary
       {isLoading ? <LoadingState label="Loading report" /> : error ? <ErrorState message={error} /> : summary ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <MetricTile label="Revenue" value={money.format(summary.revenue)} tone="blue" icon={Wallet} />
-            <MetricTile label="Transactions" value={summary.transactionCount.toLocaleString()} icon={Activity} />
-            <MetricTile label="Orders" value={summary.orderCount.toLocaleString()} tone="purple" icon={BarChart3} />
-            <MetricTile label="Avg ticket" value={money.format(summary.averageTransactionValue)} tone="green" icon={TrendingUp} />
-            <MetricTile label="Inventory alerts" value={summary.inventoryAlerts.toLocaleString()} tone={summary.inventoryAlerts > 0 ? 'orange' : 'neutral'} icon={LineChartIcon} />
+            <MetricTile label="Revenue" value={money.format(summary.revenue)} tone="blue" />
+            <MetricTile label="Transactions" value={summary.transactionCount.toLocaleString()} />
+            <MetricTile label="Orders" value={summary.orderCount.toLocaleString()} tone="purple" />
+            <MetricTile label="Avg ticket" value={money.format(summary.averageTransactionValue)} tone="green" />
+            <MetricTile label="Inventory alerts" value={summary.inventoryAlerts.toLocaleString()} tone={summary.inventoryAlerts > 0 ? 'orange' : 'neutral'} />
           </div>
           {summary.topItems.length > 0 && (
             <div className="mt-4 border-t pt-3">
