@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X } from './icons';
 import { cn } from '../../lib/cn';
 
 interface ModalProps {

@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-import { AlertTriangle, ArrowRight, Clock, Hammer, PackageCheck, PenTool } from 'lucide-react';
+import type { IconComponent } from '../../../shared/components/ui/icons';
+import { AlertTriangle, ArrowRight, Clock, Hammer, PackageCheck, PenTool } from '../../../shared/components/ui/icons';
 import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -32,7 +32,7 @@ interface WorkspaceTileProps {
   /** The unit word shown beside the count, e.g. "orders" or "items". */
   unit: string;
   to: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   detail: string;
   /** Draws attention (red) when the queue needs action, e.g. Low stock above zero. */
   alert?: boolean;

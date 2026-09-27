@@ -1,4 +1,4 @@
-import { Printer, X } from 'lucide-react';
+import { Printer, X } from '../../../../shared/components/ui/icons';
 import { Button, Modal } from '../../../../shared/components/ui';
 import { PrintableDocumentView } from './PrintableDocumentView';
 import type { PrintableDocument } from '../../types/printableDocument';

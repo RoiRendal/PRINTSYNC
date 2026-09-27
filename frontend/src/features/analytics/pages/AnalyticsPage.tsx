@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarRange } from 'lucide-react';
+import { CalendarRange } from '../../../shared/components/ui/icons';
 import { SurfaceCard } from '../../../shared/components/ui';
 import { AnalyticsSummary } from '../components/AnalyticsSummary';
 import { ForecastSection } from '../components/ForecastSection';

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Mail, Phone, Plus, Search, Trash2, Users } from 'lucide-react';
+import { Mail, Phone, Plus, Search, Trash2, Users } from '../../../shared/components/ui/icons';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';

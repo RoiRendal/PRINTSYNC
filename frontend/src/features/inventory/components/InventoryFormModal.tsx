@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Image as ImageIcon } from 'lucide-react';
+import { AlertTriangle, Image as ImageIcon } from '../../../shared/components/ui/icons';
 import {
   Button,
   Input,

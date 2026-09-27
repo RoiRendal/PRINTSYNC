@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Box, PackageSearch, X, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, Box, PackageSearch, X, CheckCheck, Trash2 } from '../../shared/components/ui/icons';
 import { useNotifications, type Notification } from '../providers/NotificationProvider';
 import { cn } from '../../shared/lib/cn';
 

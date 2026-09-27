@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RotateCw } from 'lucide-react';
+import { AlertTriangle, RotateCw } from '../ui/icons';
 import { Button, SurfaceCard } from '../ui';
 
 interface ErrorBoundaryState {

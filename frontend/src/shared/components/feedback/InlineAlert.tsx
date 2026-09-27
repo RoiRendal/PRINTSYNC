@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
+import type { IconComponent } from '../ui/icons';
+import { AlertCircle, AlertTriangle } from '../ui/icons';
 import { cn } from '../../lib/cn';
 
 export type InlineAlertTone = 'error' | 'warning';
@@ -12,7 +12,7 @@ export type InlineAlertTone = 'error' | 'warning';
  * and a component that can also say "all good" invites the message that matters
  * to be rendered in the reassuring style by mistake.
  */
-const TONE_STYLES: Record<InlineAlertTone, { panel: string; Icon: LucideIcon }> = {
+const TONE_STYLES: Record<InlineAlertTone, { panel: string; Icon: IconComponent }> = {
   error: {
     panel:
       'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
@@ -36,7 +36,7 @@ interface InlineAlertProps {
    */
   title?: string;
   /** Overrides the tone's default icon. */
-  icon?: LucideIcon;
+  icon?: IconComponent;
   onDismiss?: () => void;
   className?: string;
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Printer, Search, Trash2 } from 'lucide-react';
+import { Printer, Search, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Transaction, Order } from '../../types';
 import { Badge, Button, Card, CardContent, CardHeader, Input, Modal, Pagination, StatusLabel } from '../../../../shared/components/ui';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow } from '../../../../shared/components/ui/Table';

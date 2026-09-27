@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RefreshCw, Search, ScrollText } from 'lucide-react';
+import { RefreshCw, Search, ScrollText } from '../../../shared/components/ui/icons';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {

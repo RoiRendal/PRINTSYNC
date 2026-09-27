@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { KeyRound, Plus, Search, Shield, Trash2, UserSquare } from 'lucide-react';
+import { KeyRound, Plus, Search, Shield, Trash2, UserSquare } from '../../../shared/components/ui/icons';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';

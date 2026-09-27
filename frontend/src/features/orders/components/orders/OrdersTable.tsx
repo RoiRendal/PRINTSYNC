@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LoaderCircle, Search, Trash2 } from 'lucide-react';
+import { LoaderCircle, Search, Trash2 } from '../../../../shared/components/ui/icons';
 import {
   Button,
   Card,

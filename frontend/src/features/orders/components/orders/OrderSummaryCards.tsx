@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react';
-import { CheckCircle2, ClipboardList, Eye, Printer } from 'lucide-react';
+import type { IconComponent } from '../../../../shared/components/ui/icons';
+import { CheckCircle2, ClipboardList, Eye, Printer } from '../../../../shared/components/ui/icons';
 import { SurfaceCard } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import type { Order } from '../../types';
@@ -8,7 +8,7 @@ type SummaryTone = 'purple' | 'blue' | 'green' | 'orange';
 
 interface SummaryCardProps {
   label: string;
-  icon: LucideIcon;
+  icon: IconComponent;
   count: number;
   tone: SummaryTone;
 }
