@@ -51,7 +51,7 @@ function WorkspaceTile({ label, count, unit, to, icon: Icon, detail, alert = fal
             <p className="mt-2 flex items-baseline gap-1.5">
               <span
                 className={cn(
-                  'text-3xl font-bold tracking-tight text-macos-text dark:text-zinc-100',
+                  'text-3xl font-bold tabular-nums tracking-tight text-macos-text dark:text-zinc-100',
                   alert && 'text-macos-red dark:text-red-300',
                 )}
               >

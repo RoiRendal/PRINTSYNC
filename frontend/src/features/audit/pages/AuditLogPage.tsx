@@ -182,7 +182,7 @@ export default function AuditLogPage() {
                     </span>
                     <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
                   </div>
-                  <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
+                  <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
                 </div>
               ))}
             </div>
