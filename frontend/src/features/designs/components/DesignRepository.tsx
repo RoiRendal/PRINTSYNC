@@ -208,7 +208,7 @@ export function DesignRepository() {
                           <Download className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
-                      <div className="absolute left-2 top-2"><Badge variant="purple">{design.category}</Badge></div>
+                      <div className="absolute left-2 top-2"><Badge variant="blue">{design.category}</Badge></div>
                     </div>
                     <div className="space-y-3 p-3">
                       <div className="flex items-start justify-between gap-2">
@@ -259,7 +259,7 @@ export function DesignRepository() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
-              <div><h4 className="mb-1 label-caps text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="purple" className="mt-2">{selectedDesign.category}</Badge></div>
+              <div><h4 className="mb-1 label-caps text-macos-text-muted">Design Information</h4><p className="text-xl font-bold text-macos-text dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="blue" className="mt-2">{selectedDesign.category}</Badge></div>
               <SurfaceCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-2xs text-macos-text-muted">Reference ID</p><p className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-2xs text-macos-text-muted">Created Date</p><p className="text-sm font-bold text-macos-text dark:text-zinc-200">{selectedDesign.createdAt}</p></div></SurfaceCard>
               <div className="space-y-2"><h4 className="label-caps text-macos-text-muted">Tags</h4><div className="flex flex-wrap gap-1.5">{selectedDesign.tags.map((tag) => <Badge key={tag} variant="gray">{tag}</Badge>)}</div></div>
               <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')} leftIcon={<Download className="h-4 w-4" aria-hidden="true" />}>Download Assets</Button>

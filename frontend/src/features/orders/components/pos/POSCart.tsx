@@ -72,15 +72,15 @@ export function POSCart({
             </h2>
             <p className="mt-1 text-xs text-macos-text-muted dark:text-zinc-500">Checkout panel</p>
           </div>
-          <Badge variant={posMode === 'retail' ? 'blue' : 'purple'}>{cart.length} items</Badge>
+          <Badge variant="blue">{cart.length} items</Badge>
         </div>
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-hide">
         {posMode === 'custom' && (
-          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-purple)] p-3">
+          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] p-3">
             <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-purple-700 dark:text-purple-300">Customer</span>
+              <span className="text-3xs font-bold text-macos-blue dark:text-macos-cyan">Customer</span>
               <CustomerSelector
                 customers={customers}
                 customerId={customerId}
@@ -89,9 +89,9 @@ export function POSCart({
               />
             </label>
             <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-purple-700 dark:text-purple-300">Production Notes</span>
+              <span className="text-3xs font-bold text-macos-blue dark:text-macos-cyan">Production Notes</span>
               <div className="relative">
-                <FileText className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-purple" aria-hidden="true" />
+                <FileText className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-blue" aria-hidden="true" />
                 <Input fieldSize="sm" className="pl-8 text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
               </div>
             </label>
@@ -156,11 +156,11 @@ export function POSCart({
           <div className="flex justify-between text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
           <div className="mt-2 flex justify-between border-t pt-3 text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">
             <span>{posMode === 'retail' ? 'Total' : 'Order value'}</span>
-            <span className={cn('tabular-nums', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-purple dark:text-purple-300')}>{currencySymbol}{total.toFixed(2)}</span>
+            <span className={cn('tabular-nums', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-blue dark:text-macos-cyan')}>{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
 
-        {posMode === 'custom' && editingOrderId && <div className="text-center text-3xs font-bold text-macos-purple dark:text-purple-300">Editing Order: {editingOrderId}</div>}
+        {posMode === 'custom' && editingOrderId && <div className="text-center text-3xs font-bold text-macos-blue dark:text-macos-cyan">Editing Order: {editingOrderId}</div>}
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="secondary" onClick={onReset}>Reset</Button>
           <Button type="button" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
