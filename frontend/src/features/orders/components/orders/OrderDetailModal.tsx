@@ -161,7 +161,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
             <div>
               <Badge variant={getStatusBadgeVariant(order.status)} size="md" className="mb-2">{order.status}</Badge>
               <h3 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{order.customer}</h3>
-              <p className="font-mono text-xs text-macos-text-muted dark:text-zinc-500">#{order.id}</p>
+              <p className="tabular-nums text-xs text-macos-text-muted dark:text-zinc-500">#{order.id}</p>
             </div>
             <div className="flex flex-col gap-2 sm:text-right">
               <div>
@@ -215,21 +215,21 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="text-macos-text-muted dark:text-zinc-500">Unit Price</span>
-                    <span className="font-mono font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
+                    <span className="tabular-nums font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
                     <span className="font-bold text-macos-text-muted dark:text-zinc-500">Total Value</span>
-                    <span className="font-mono font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
+                    <span className="tabular-nums font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
                   </div>
                   {selectedOrderIsCustom && (
                     <>
                       <div className="flex justify-between py-2 text-xs">
                         <span className="font-bold text-macos-text-muted dark:text-zinc-500">Total Paid</span>
-                        <span className="font-mono font-bold text-macos-green dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
+                        <span className="tabular-nums font-bold text-macos-green dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between py-2 text-xs">
                         <span className="font-bold text-macos-text-muted dark:text-zinc-500">Balance Due</span>
-                        <span className={cn('font-mono font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
+                        <span className={cn('tabular-nums font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
                           {currencySymbol}{balanceDue.toFixed(2)}
                         </span>
                       </div>
@@ -318,7 +318,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                           <p className="text-2xs text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
                         </div>
                       </div>
-                      <span className="font-mono text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
+                      <span className="tabular-nums text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>

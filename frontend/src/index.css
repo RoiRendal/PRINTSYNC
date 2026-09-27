@@ -84,11 +84,12 @@
      it is the thing that breaks that; tabular figures already line the digits
      up. Frappe does the same: its list view sets `font-variant-numeric:
      tabular-nums` on a row's figures (frappe/public/scss/desk/list.scss) and
-     keeps monospace for code alone (.diffview). The one place a figure MAY stay
-     mono is the POS panel and the printed receipt, where the digits are part of
-     a transaction slip that is meant to look like a till roll, plus bare
-     identifiers and URLs (order #id, SKU, reference id, BRAND_LOGO_URL) and
-     code, which have to be told apart one character at a time. */
+     keeps monospace for code alone (.diffview). Mono now survives in exactly two
+     places — code (the ErrorBoundary stack block) and URLs (the
+     `BRAND_LOGO_URL` display in Settings). Everywhere else, including the POS
+     panel, the printed receipt, and bare identifiers (order #id, SKU, reference
+     id), figures and ids are Geist + `tabular-nums`: on 2026-09-27 the Boss
+     overrode the earlier till-roll / one-character-at-a-time rationale. */
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The size ramp, added so a screen can no longer invent a text size.

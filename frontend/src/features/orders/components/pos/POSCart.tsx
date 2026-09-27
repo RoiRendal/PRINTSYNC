@@ -121,10 +121,10 @@ export function POSCart({
                   <div className="mt-2 flex items-end justify-between">
                     <div className="flex overflow-hidden rounded-full bg-[#f2f2f2] dark:bg-[#414143]">
                       <button type="button" onClick={() => onUpdateQty(idx, -1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Decrease ${item.name}`}><Minus className="h-2.5 w-2.5" aria-hidden="true" /></button>
-                      <span className="w-7 select-none py-1.5 text-center font-mono text-2xs">{item.qty}</span>
+                      <span className="w-7 select-none py-1.5 text-center tabular-nums text-2xs">{item.qty}</span>
                       <button type="button" onClick={() => onUpdateQty(idx, 1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Increase ${item.name}`}><Plus className="h-2.5 w-2.5" aria-hidden="true" /></button>
                     </div>
-                    <span className="font-mono text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
+                    <span className="tabular-nums text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -143,20 +143,20 @@ export function POSCart({
 
       <div className="space-y-3 border-t p-4">
         <div className="space-y-1.5">
-          <div className="flex justify-between text-2xs font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
-          <div className="flex items-center justify-between gap-2 text-2xs font-mono text-macos-text-muted dark:text-zinc-500">
+          <div className="flex justify-between text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
+          <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500">
             <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
-            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right font-mono text-2xs" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
+            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right tabular-nums text-2xs" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
           </div>
-          {appliedDiscount > 0 && <div className="flex justify-between text-2xs font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">After discount</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
-          <div className="flex items-center justify-between gap-2 text-2xs font-mono text-macos-text-muted dark:text-zinc-500">
+          {appliedDiscount > 0 && <div className="flex justify-between text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500"><span className="font-bold">After discount</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
+          <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500">
             <span className="shrink-0 font-bold">VAT rate (%)</span>
-            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right font-mono text-2xs" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
+            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right tabular-nums text-2xs" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
           </div>
-          <div className="flex justify-between text-2xs font-mono text-macos-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
+          <div className="flex justify-between text-2xs tabular-nums text-macos-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-macos-text dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
           <div className="mt-2 flex justify-between border-t pt-3 text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">
             <span>{posMode === 'retail' ? 'Total' : 'Order value'}</span>
-            <span className={cn('font-mono', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-purple dark:text-purple-300')}>{currencySymbol}{total.toFixed(2)}</span>
+            <span className={cn('tabular-nums', posMode === 'retail' ? 'text-macos-text dark:text-zinc-100' : 'text-macos-purple dark:text-purple-300')}>{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
 
