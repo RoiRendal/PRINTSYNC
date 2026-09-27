@@ -290,8 +290,8 @@ export default function Settings() {
             <SurfaceCard className="space-y-4 p-4">
               <h3 className="label-caps text-macos-text-muted dark:text-zinc-500">Current Defaults</h3>
               <div className="space-y-3 text-2xs">
-                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">VAT Rate</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
-                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">Currency</span><span className="font-mono font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">VAT Rate</span><span className="tabular-nums font-bold text-macos-text dark:text-zinc-200">{vatRate}%</span></div>
+                <div className="flex justify-between gap-3"><span className="font-bold text-macos-text-muted">Currency</span><span className="tabular-nums font-bold text-macos-text dark:text-zinc-200">{currencySymbol}</span></div>
               </div>
             </SurfaceCard>
           </CardContent>

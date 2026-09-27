@@ -174,7 +174,7 @@ export function POSHistoryView({
             <div className="flex items-start justify-between border-b pb-3">
               <div className="space-y-0.5">
                 <p className="text-3xs font-bold text-macos-text-muted">Reference ID</p>
-                <p className="font-mono text-2xs font-bold">#{selectedTransaction.id}</p>
+                <p className="tabular-nums text-2xs font-bold">#{selectedTransaction.id}</p>
               </div>
               <div className="space-y-0.5 text-right">
                 <p className="text-3xs font-bold text-macos-text-muted">Date &amp; Time</p>
@@ -191,19 +191,19 @@ export function POSHistoryView({
                       <p className="truncate font-bold text-macos-text dark:text-zinc-100">{item.name}</p>
                       <p className="text-3xs text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
                     </div>
-                    <p className="shrink-0 font-mono font-bold">₱{(item.price * item.qty).toFixed(2)}</p>
+                    <p className="shrink-0 tabular-nums font-bold">₱{(item.price * item.qty).toFixed(2)}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="space-y-1 border-t pt-3 text-2xs text-macos-text-muted">
-              <div className="flex justify-between"><span>Subtotal</span><span className="font-mono">₱{selectedTransaction.subtotal.toFixed(2)}</span></div>
-              {(selectedTransaction.discount ?? 0) > 0 && <div className="flex justify-between"><span>Discount</span><span className="font-mono">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span></div>}
-              <div className="flex justify-between"><span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span><span className="font-mono">₱{selectedTransaction.tax.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Subtotal</span><span className="tabular-nums">₱{selectedTransaction.subtotal.toFixed(2)}</span></div>
+              {(selectedTransaction.discount ?? 0) > 0 && <div className="flex justify-between"><span>Discount</span><span className="tabular-nums">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span></div>}
+              <div className="flex justify-between"><span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span><span className="tabular-nums">₱{selectedTransaction.tax.toFixed(2)}</span></div>
               <div className="mt-2 flex items-center justify-between border-t pt-2">
                 <span className="text-2xs font-bold text-macos-text dark:text-zinc-100">Total Amount</span>
-                <span className="font-mono text-sm font-bold text-macos-text dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
+                <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
                 <span className="text-3xs font-bold text-macos-text dark:text-zinc-100">Payment</span>

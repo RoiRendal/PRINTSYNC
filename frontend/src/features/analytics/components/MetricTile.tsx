@@ -19,7 +19,7 @@ export function MetricTile({ label, value, tone = 'neutral' }: MetricTileProps) 
   return (
     <SurfaceCard className="p-3">
       <p className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</p>
-      <p className={cn('mt-1 font-mono text-sm font-bold text-macos-text dark:text-zinc-100', tone === 'blue' && 'text-macos-blue dark:text-macos-cyan', tone === 'green' && 'text-green-700 dark:text-green-300', tone === 'red' && 'text-red-700 dark:text-red-300', tone === 'orange' && 'text-orange-700 dark:text-orange-300', tone === 'purple' && 'text-purple-700 dark:text-purple-300')}>{value}</p>
+      <p className={cn('mt-1 tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100', tone === 'blue' && 'text-macos-blue dark:text-macos-cyan', tone === 'green' && 'text-green-700 dark:text-green-300', tone === 'red' && 'text-red-700 dark:text-red-300', tone === 'orange' && 'text-orange-700 dark:text-orange-300', tone === 'purple' && 'text-purple-700 dark:text-purple-300')}>{value}</p>
     </SurfaceCard>
   );
 }

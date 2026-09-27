@@ -30,7 +30,7 @@ function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
           </div>
           <span className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
         </div>
-        <span className="font-mono text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
+        <span className="tabular-nums text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
       </SurfaceCard>
     </div>
   );

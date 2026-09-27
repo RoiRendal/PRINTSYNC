@@ -76,14 +76,20 @@
      placeholder in the POS catalogue and a design name in the POS cart — and
      both are Geist again now.
 
-     Inside a data TABLE, a figure is Geist + `tabular-nums`, not mono. A row
-     has to read as one uniform line, and a second family in the middle of it is
-     the thing that breaks that; tabular figures already line the digits up.
-     Frappe does the same: its list view sets `font-variant-numeric:
+     A figure is Geist + `tabular-nums`, not mono, wherever it sits in a data
+     TABLE or in a card / tile — the analytics MetricTiles, the inventory and
+     order-summary stat cards, the dashboard WorkspaceTiles, the audit / customer
+     / user stat tiles, and the Settings "Current Defaults" figures. A row or a
+     tile has to read as one uniform block, and a second family in the middle of
+     it is the thing that breaks that; tabular figures already line the digits
+     up. Frappe does the same: its list view sets `font-variant-numeric:
      tabular-nums` on a row's figures (frappe/public/scss/desk/list.scss) and
-     keeps monospace for code alone (.diffview). Outside a table — a modal, a
-     tile, the POS panel, the receipt — there is no row to keep uniform, so a
-     figure there may be mono. */
+     keeps monospace for code alone (.diffview). Mono now survives in exactly two
+     places — code (the ErrorBoundary stack block) and URLs (the
+     `BRAND_LOGO_URL` display in Settings). Everywhere else, including the POS
+     panel, the printed receipt, and bare identifiers (order #id, SKU, reference
+     id), figures and ids are Geist + `tabular-nums`: on 2026-09-27 the Boss
+     overrode the earlier till-roll / one-character-at-a-time rationale. */
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* The size ramp, added so a screen can no longer invent a text size.

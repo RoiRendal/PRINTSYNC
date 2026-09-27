@@ -91,7 +91,7 @@ export function POSCatalog({
             </div>
             <h3 className="line-clamp-2 text-xs font-bold tracking-tight text-macos-text dark:text-zinc-100 xl:text-xs">{product.name}</h3>
             <div className="mt-2 flex items-center justify-between">
-              <p className="font-mono text-2xs font-bold text-macos-text dark:text-zinc-100 xl:text-xs">{currencySymbol}{product.price.toFixed(2)}</p>
+              <p className="tabular-nums text-2xs font-bold text-macos-text dark:text-zinc-100 xl:text-xs">{currencySymbol}{product.price.toFixed(2)}</p>
               <Plus className="h-3.5 w-3.5 text-macos-text-muted group-hover:text-macos-blue dark:text-zinc-500 dark:group-hover:text-macos-cyan" aria-hidden="true" />
             </div>
           </button>

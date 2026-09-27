@@ -184,9 +184,9 @@ export function POSCheckoutModal({
             <div className="space-y-4">
               <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
                 <span className="text-2xs font-bold">Amount to Pay</span>
-                <span className="font-mono text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
+                <span className="tabular-nums text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="space-y-1 border-b pb-3 font-mono text-2xs text-macos-text-muted dark:text-zinc-500">
+              <div className="space-y-1 border-b pb-3 tabular-nums text-2xs text-macos-text-muted dark:text-zinc-500">
                 <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
                 {appliedDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>−{currencySymbol}{appliedDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between"><span>VAT ({totals.vatRatePercent}%)</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>
@@ -212,7 +212,7 @@ export function POSCheckoutModal({
                       <span className={cn('font-medium', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
                         {item.qty}x {item.name}
                       </span>
-                      <span className={cn('font-mono', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-300')}>
+                      <span className={cn('tabular-nums', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-300')}>
                         {currencySymbol}{(item.price * item.qty).toFixed(2)}
                       </span>
                     </div>

@@ -98,7 +98,7 @@ export function POSToolbar({
             className="max-w-[240px]"
           >
             <span className="truncate">
-              Last receipt · <span className="font-mono">{lastDocument.label}</span>
+              Last receipt · <span className="tabular-nums">{lastDocument.label}</span>
             </span>
           </Button>
         )}

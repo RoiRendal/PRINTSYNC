@@ -65,33 +65,33 @@ export function PrintableDocumentView({ document, reprintNote }: PrintableDocume
                 {line.qty}x {line.name}
                 {line.designId && <span className="ml-1 text-zinc-500">(Design {line.designId})</span>}
               </span>
-              <span className="shrink-0 font-mono">{money(line.unitPrice * line.qty)}</span>
+              <span className="shrink-0 tabular-nums">{money(line.unitPrice * line.qty)}</span>
             </div>
           ))}
         </div>
       </div>
 
       <div className="space-y-1 text-[10px]">
-        <div className="flex justify-between"><span>Subtotal</span><span className="font-mono">{money(totals.subtotal)}</span></div>
+        <div className="flex justify-between"><span>Subtotal</span><span className="tabular-nums">{money(totals.subtotal)}</span></div>
         {totals.discount > 0 && (
           <div className="flex justify-between">
             <span>Discount</span>
-            <span className="font-mono">&minus;{money(totals.discount)}</span>
+            <span className="tabular-nums">&minus;{money(totals.discount)}</span>
           </div>
         )}
         {totals.taxLabel && (
-          <div className="flex justify-between"><span>{totals.taxLabel}</span><span className="font-mono">{money(totals.tax)}</span></div>
+          <div className="flex justify-between"><span>{totals.taxLabel}</span><span className="tabular-nums">{money(totals.tax)}</span></div>
         )}
         <div className="flex justify-between border-t border-dashed border-black/20 pt-1.5 text-sm font-bold dark:border-zinc-400">
           <span>{isOrder ? 'ORDER TOTAL' : 'TOTAL'}</span>
-          <span className="font-mono">{money(totals.total)}</span>
+          <span className="tabular-nums">{money(totals.total)}</span>
         </div>
 
         {balance && (
           <>
             <div className="flex justify-between pt-1.5">
               <span>Amount Paid</span>
-              <span className="font-mono">{money(balance.totalPaid)}</span>
+              <span className="tabular-nums">{money(balance.totalPaid)}</span>
             </div>
             {/*
               The balance line is dropped once nothing is owed. A settled job
@@ -101,7 +101,7 @@ export function PrintableDocumentView({ document, reprintNote }: PrintableDocume
             {balance.balanceDue > 0 && (
               <div className="flex justify-between text-sm font-bold">
                 <span>BALANCE DUE</span>
-                <span className="font-mono">{money(balance.balanceDue)}</span>
+                <span className="tabular-nums">{money(balance.balanceDue)}</span>
               </div>
             )}
           </>
