@@ -123,7 +123,7 @@ export function PrintableDocumentView({ document, reprintNote }: PrintableDocume
 
       {isOrder && (
         <div className="text-center text-[10px]">
-          <p className="font-bold uppercase text-macos-purple">
+          <p className="font-bold uppercase text-macos-text">
             {payment.settled ? 'Custom Order — Fully Paid' : 'Custom Order — Balance due on pickup'}
           </p>
           <p className="mt-2 text-zinc-500">Please keep this summary for your records.</p>

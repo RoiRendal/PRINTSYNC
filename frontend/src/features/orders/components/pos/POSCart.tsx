@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, CreditCard, Edit, FileText, Minus, Plus, ShoppingBag, Trash2 } from '../../../../shared/components/ui/icons';
+import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -62,9 +62,6 @@ export function POSCart({
   return (
     <SurfaceCard className="flex w-full flex-col overflow-hidden p-0 xl:sticky xl:top-4 xl:w-[23rem] xl:self-start">
       <div className="relative p-4">
-        <div className="pointer-events-none absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 p-8 opacity-[0.04]">
-          <ShoppingBag className="h-48 w-48" aria-hidden="true" />
-        </div>
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
           <div>
             <h2 className="label-caps text-macos-text dark:text-zinc-100">
@@ -90,10 +87,7 @@ export function POSCart({
             </label>
             <label className="block space-y-1.5">
               <span className="text-3xs font-bold text-macos-blue dark:text-macos-cyan">Production Notes</span>
-              <div className="relative">
-                <FileText className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-blue" aria-hidden="true" />
-                <Input fieldSize="sm" className="pl-8 text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
-              </div>
+              <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
             </label>
           </div>
         )}

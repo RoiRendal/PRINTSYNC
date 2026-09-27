@@ -130,7 +130,7 @@ describe('the printed receipt is self-contained', () => {
  *
  * `--app-hairline` was the token that actually broke, but the same class of bug
  * lurks in any utility that resolves through a token redefined under `.dark`.
- * `text-zinc-500` and `text-macos-purple` are fixed palette values that are not
+ * `text-zinc-500` and `text-macos-text` are fixed palette values that are not
  * redefined per theme, and the slip's own `dark:` variants are overridden by the
  * print block's `!important` rules. This pins that reasoning: if someone later
  * adds a `text-app-*`-style token to the slip, this fails on the way in rather
@@ -141,7 +141,7 @@ describe('the slip does not inherit a theme-dependent colour utility', () => {
 
   it('uses no app-theme text or border token', () => {
     // Global tokens, as opposed to Tailwind's fixed palette (`text-zinc-500`)
-    // and the app's fixed brand colours (`text-macos-purple`, a literal hex).
+    // and the app's fixed brand colours (`text-macos-text`, a literal hex).
     expect(view).not.toMatch(/text-app-/);
     expect(view).not.toMatch(/border-app-/);
     expect(view).not.toMatch(/bg-app-/);
