@@ -1,6 +1,6 @@
-import { Printer, Search, Trash2 } from '../../../../shared/components/ui/icons';
+import { Printer, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Transaction, Order } from '../../types';
-import { Badge, Button, Card, CardContent, CardHeader, Checkbox, Input, Modal, Pagination, StatusLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow, TableSelectCell, TableSelectHead } from '../../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardHeader, Checkbox, Modal, Pagination, SearchInput, StatusLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow, TableSelectCell, TableSelectHead } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { formatSelectedCount } from '../../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
@@ -51,10 +51,7 @@ export function POSHistoryView({
       <Card padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-macos-text-muted" aria-hidden="true" />
-              <Input type="text" aria-label="Filter transaction history" className="pl-8 text-xs" value={historySearchTerm} onChange={(e) => onHistorySearchChange(e.target.value)} />
-            </div>
+            <SearchInput className="flex-1" aria-label="Filter transaction history" value={historySearchTerm} onChange={(e) => onHistorySearchChange(e.target.value)} />
             {/*
               The table's only reversal control, and the same icon-only gray
               square the other list tables use. It is disabled until something is

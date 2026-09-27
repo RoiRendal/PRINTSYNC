@@ -1,6 +1,6 @@
-import { Plus, Search, ShoppingBag } from '../../../../shared/components/ui/icons';
+import { Plus, ShoppingBag } from '../../../../shared/components/ui/icons';
 import type { InventoryItem } from '../../../inventory/types';
-import { Badge, Card, Input } from '../../../../shared/components/ui';
+import { Badge, Card, SearchInput } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { cn } from '../../../../shared/lib/cn';
 
@@ -34,18 +34,13 @@ export function POSCatalog({
     <div className="flex min-w-0 flex-1 flex-col gap-3">
       <Card padding="md">
         <div className="flex flex-col gap-3">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-            <Input
-              ref={searchRef}
-              type="text"
-              aria-label="Search catalog"
-              className="pl-9 text-xs"
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              autoFocus
-            />
-          </div>
+          <SearchInput
+            ref={searchRef}
+            aria-label="Search catalog"
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            autoFocus
+          />
 
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {categories.map(cat => (

@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react';
-import { LoaderCircle, Search, Trash2 } from '../../../../shared/components/ui/icons';
+import { LoaderCircle, Trash2 } from '../../../../shared/components/ui/icons';
 import {
   Button,
   Card,
   CardContent,
   CardHeader,
   Checkbox,
-  Input,
+  SearchInput,
   StatusLabel,
   Table,
   TableBody,
@@ -71,16 +71,11 @@ export function OrdersTable({
       */}
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-xl">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-            <Input
-              type="text"
-              placeholder="Filter active orders / client data..."
-              className="pl-9 text-xs"
-              value={searchTerm}
-              onChange={(e) => onSearchTermChange(e.target.value)}
-            />
-          </div>
+          <SearchInput
+            className="flex-1"
+            value={searchTerm}
+            onChange={(e) => onSearchTermChange(e.target.value)}
+          />
           {/*
             The table's only delete control. It is icon-only and gray (the same
             tone as Cancel) so it does not advertise itself as a destructive

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RefreshCw, Search, ScrollText } from '../../../shared/components/ui/icons';
+import { RefreshCw, ScrollText } from '../../../shared/components/ui/icons';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
@@ -9,8 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
   Pagination,
+  SearchInput,
   Select,
   StatusLabel,
   Table,
@@ -193,9 +193,8 @@ export default function AuditLogPage() {
           <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="relative w-full sm:max-w-xs">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-                  <Input className="pl-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search events..." />
+                <div className="w-full sm:max-w-xs">
+                  <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
                 <div className="flex gap-2">
                   <Select value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>
