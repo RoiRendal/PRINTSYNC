@@ -148,6 +148,13 @@
   color-scheme: light;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
+  /* The sidebar's own step off the page: one small step darker in BOTH modes, so
+     the left column reads as its own panel before its right border is even
+     considered. Deliberately much smaller than the -sub step (#ececef) — this is
+     a tint, not a raised or sunken surface. It does sit between the page and
+     --app-state-hover, which makes nav hover slightly gentler than it was; that
+     was measured and accepted rather than changed. */
+  --app-surface-sidebar: #f2f2f4;
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
   /* The default border colour for every element, so it is the largest single source
@@ -206,6 +213,9 @@
   color-scheme: dark;
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
+  /* Dark partner for the sidebar tint — the same "one small step off the page"
+     role, stepped darker rather than lighter so the direction matches light. */
+  --app-surface-sidebar: #171719;
   --app-text: #f5f5f7;
   --app-text-muted: #98989d;
   --app-hairline: #48484a;

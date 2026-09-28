@@ -55,7 +55,7 @@ export const Sidebar = ({
         /* Full-height column on the left edge of the shell. It carries the
            right border that separates it from the header/toolbar/body stack, so
            it runs edge to edge rather than sitting in an inset rounded panel. */
-        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface)] text-macos-text dark:text-zinc-100',
+        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface-sidebar)] text-macos-text dark:text-zinc-100',
         'border-r border-[var(--app-border-frame)]',
         className,
       )}
@@ -80,11 +80,11 @@ export const Sidebar = ({
           )}
         >
           {logoFailed ? (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-macos-blue dark:text-macos-cyan">
               {APP_NAME.charAt(0)}
             </div>
           ) : (
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#f9f9fa] ring-1 ring-[var(--app-border-hairline)] dark:bg-[#4e4e50]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
               <img
                 src={effectiveBusinessLogoUrl}
                 alt=""
@@ -154,18 +154,18 @@ export const Sidebar = ({
         {/* Minimize. Placed in the sidebar itself, not in the page toolbar: the
             toolbar's chevron hides the sidebar outright, whereas this collapses it
             to an icon rail and leaves it on screen. It sits at the foot of the
-            column so it stays in the same place in both widths. */}
+            column so it stays in the same place in both widths — centred in the
+            rail, pushed to the outer edge when expanded.
+
+            No divider above it and no text label: the chevron alone, which is what
+            keeps a layout control quiet until it is looked for. Its name still
+            says what it does, via `aria-label` and `title`. */}
         <div
           className={cn(
-            'flex shrink-0 items-center border-t border-[var(--app-border-frame)] p-2',
-            isMinimized ? 'justify-center' : 'justify-between',
+            'flex shrink-0 items-center p-2',
+            isMinimized ? 'justify-center' : 'justify-end',
           )}
         >
-          {!isMinimized && (
-            <span className="pl-1 text-2xs font-bold text-macos-text-muted dark:text-zinc-500">
-              Minimize
-            </span>
-          )}
           <Button
             size="icon"
             variant="ghost"
