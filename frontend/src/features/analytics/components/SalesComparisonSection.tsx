@@ -9,7 +9,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { BarChart3, LineChart as LineChartIcon } from '../../../shared/components/ui/icons';
 import type { SalesTimeline } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -77,7 +76,6 @@ export function SalesComparisonSection({
   return (
     <div className="space-y-5">
       <SectionCard
-        icon={LineChartIcon}
         title="Comparative Sales Performance"
         description={`Compare two time periods by ${periodLabel[salesPeriod].toLowerCase()} sales using real transaction data.`}
         controls={<PeriodSelector value={salesPeriod} onChange={onSalesPeriodChange} prefix="sales" />}
@@ -94,7 +92,7 @@ export function SalesComparisonSection({
       </SectionCard>
 
       {salesBucketLabels.length > 0 && !isLoading && !error && (
-        <SectionCard icon={BarChart3} title="Sales Comparison Chart" description="Revenue split between the selected timelines.">
+        <SectionCard title="Sales Comparison Chart" description="Revenue split between the selected timelines.">
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricTile label="Total A" value={money.format(totals.totalA)} />
             <MetricTile label="Total B" value={money.format(totals.totalB)} />

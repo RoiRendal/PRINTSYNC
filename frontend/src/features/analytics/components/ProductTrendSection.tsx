@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { TrendingUp } from '../../../shared/components/ui/icons';
 import type { ProductTrends } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -83,7 +82,6 @@ export function ProductTrendSection({
 
   return (
     <SectionCard
-      icon={TrendingUp}
       title="Product Trend Identification"
       description={`Per-product demand by ${periodLabel[trendPeriod].toLowerCase()} segment with total volume tracking.`}
       controls={<div className="space-y-2"><PeriodSelector value={trendPeriod} onChange={onTrendPeriodChange} prefix="trend" />{trendBucketLabels.length > 0 && <Select fieldSize="sm" value={safeTrendSelection} onChange={(event) => setTrendSelection(event.target.value)}>{trendBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select>}</div>}

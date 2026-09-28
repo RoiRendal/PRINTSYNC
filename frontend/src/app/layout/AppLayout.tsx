@@ -258,8 +258,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             Its left and right margins track the content area's horizontal inset at
             each breakpoint (12 / 20 / 24), so the bar's edges land on the body
             card's edges. The horizontal padding is a flat 8px, which is what sets
-            the chevron's left edge just inside the bar's own border. */}
-        <div className="relative z-[40] mx-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
+            the chevron's left edge just inside the bar's own border.
+
+            It is 32px tall, down from 40px. The bar's only contents are one icon
+            button and one line of 10px text, so the extra 8px was empty space
+            above and below them. The collapse button also drops its `h-8 w-8`
+            override and takes the standard 28px icon size — that override existed
+            to fill the taller bar, and keeping it at 32px inside a 32px box would
+            leave the hover circle touching the bar's own border. */}
+        <div className="relative z-[40] mx-3 mt-2 flex h-8 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
           <div className="flex min-w-0 items-center gap-3">
             <Button
               size="icon"
@@ -267,7 +274,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={toggleCollapse}
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-              className="h-8 w-8 rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
@@ -276,7 +283,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
             </div>
           </div>
-          <ConnectionStatus className="shrink-0 px-2 py-0.5 text-2xs" />
+          <ConnectionStatus className="shrink-0" />
         </div>
 
         {/* Main Content Area. The body card sits in the same 12 / 20 / 24 gutter

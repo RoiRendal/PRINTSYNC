@@ -14,18 +14,29 @@ import { cn } from '../../shared/lib/cn';
  * built to remove.
  *
  * The wording is deliberately non-technical: "Live", not "SSE connected".
+ *
+ * It renders as plain coloured text. It used to be a tinted pill with a pulsing
+ * dot, which made a one-word status read as a button in the toolbar and cost the
+ * bar height it could not spare. The colour still carries the state (green when
+ * live, orange while reconnecting, red when offline), the hover tooltip still
+ * says what to do about it, and the full sentence still lives in the `aria-label`
+ * — so nothing informational was dropped with the chrome.
  */
 
 type VisibleStatus = Exclude<RealtimeStatus, 'idle'>;
 
 interface StatusPresentation {
   label: string;
-  /** Solid dot colour. */
-  dot: string;
-  /** Chip border + background + text. */
-  chip: string;
-  /** Whether the dot should pulse. */
-  pulse: boolean;
+  /**
+   * Text colour only — no fill, no border.
+   *
+   * These are the same steps the pill used, re-checked against the toolbar's own
+   * fill (`--app-surface`) rather than against the tint the pill used to sit on.
+   * That matters for the gray: `text-gray-500` cleared 4.47:1 on the neutral
+   * tint, but on the lighter surface it drops to about 4.29:1 — under the floor
+   * for a 10px label — so it steps up to `gray-600`.
+   */
+  text: string;
   /** Plain-language explanation shown on hover. */
   hint: string;
 }
@@ -33,39 +44,27 @@ interface StatusPresentation {
 /**
  * Hover text is kept short on purpose: `Tooltip` renders it in a
  * `whitespace-nowrap` pill, so a full sentence would run off the edge of the
- * screen. The longer explanation lives in the chip's `aria-label`.
+ * screen. The longer explanation lives in the status's `aria-label`.
  */
 const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
     label: 'Live',
-    dot: 'bg-macos-green',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
-    pulse: true,
+    text: 'text-green-700 dark:text-green-300',
     hint: 'Updating automatically',
   },
   connecting: {
     label: 'Connecting',
-    dot: 'bg-macos-gray',
-    /* Gray tint rather than neutral: `text-gray-500` measures 4.47:1 on the
-       neutral tint — just under the floor — and the dark text has to take the
-       same step up the gray badge already took, because zinc-400 is only
-       4.23:1 on this fill. */
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-gray)] text-gray-500 dark:text-zinc-300',
-    pulse: true,
+    text: 'text-gray-600 dark:text-zinc-300',
     hint: 'Starting live updates',
   },
   reconnecting: {
     label: 'Reconnecting',
-    dot: 'bg-macos-orange',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
-    pulse: true,
+    text: 'text-orange-700 dark:text-orange-300',
     hint: 'Restoring live updates',
   },
   offline: {
     label: 'Offline',
-    dot: 'bg-macos-red',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
-    pulse: false,
+    text: 'text-red-700 dark:text-red-300',
     hint: 'May be out of date',
   },
 };
@@ -91,9 +90,7 @@ const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
  */
 const SYNCING_PRESENTATION: StatusPresentation = {
   label: 'Syncing',
-  dot: 'bg-macos-blue',
-  chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-blue-700 dark:text-blue-300',
-  pulse: true,
+  text: 'text-blue-700 dark:text-blue-300',
   hint: 'Fetching the latest data',
 };
 
@@ -104,7 +101,7 @@ export function ConnectionStatus({ className }: { className?: string }) {
   const { status } = useRealtimeStatus();
   const isSyncing = useIsSyncing();
 
-  // Nothing is running before sign-in, and an "idle" chip would be noise on a
+  // Nothing is running before sign-in, and an "idle" label would be noise on a
   // login screen.
   if (status === 'idle') return null;
 
@@ -119,15 +116,11 @@ export function ConnectionStatus({ className }: { className?: string }) {
         aria-live="polite"
         aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
-          'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-2xs font-bold',
-          presentation.chip,
+          'inline-flex select-none items-center whitespace-nowrap text-2xs font-bold',
+          presentation.text,
           className,
         )}
       >
-        <span
-          aria-hidden="true"
-          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', presentation.dot, presentation.pulse && '')}
-        />
         {presentation.label}
       </span>
     </Tooltip>
