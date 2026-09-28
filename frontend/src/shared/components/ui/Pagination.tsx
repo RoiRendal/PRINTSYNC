@@ -30,7 +30,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
 
   return (
     <div className={cn('flex items-center justify-between gap-3', className)}>
-      <span className="text-macos-text-muted dark:text-zinc-500">
+      <span className="text-app-text-muted dark:text-zinc-500">
         Page {page} of {totalPages} ({total} total)
       </span>
       <div className="flex items-center gap-1">
@@ -39,9 +39,9 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page - 1)}
           disabled={!canGoPrevious}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-macos-text dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-app-ink dark:text-zinc-200',
             !canGoPrevious && 'cursor-not-allowed opacity-40',
-            canGoPrevious && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
+            canGoPrevious && 'hover:border-app-accent hover:bg-[var(--app-state-hover)]',
           )}
           aria-label="Previous page"
         >
@@ -49,7 +49,7 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
         </button>
         {getVisiblePages().map((p, index) => (
           p === '...' ? (
-            <span key={`ellipsis-${index}`} className="px-1 text-macos-text-muted dark:text-zinc-500">...</span>
+            <span key={`ellipsis-${index}`} className="px-1 text-app-text-muted dark:text-zinc-500">...</span>
           ) : (
             <button
               key={p}
@@ -58,8 +58,8 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               className={cn(
                 'flex h-7 min-w-[2rem] items-center justify-center rounded-lg border px-1.5',
                 page === p
-                  ? 'border-macos-blue bg-macos-blue text-[var(--app-accent-ink)] dark:border-macos-blue-dark dark:bg-macos-blue-dark'
-                  : 'border-[var(--app-border-hairline)] text-macos-text hover:border-macos-blue hover:bg-[var(--app-state-hover)] dark:text-zinc-200',
+                  ? 'border-app-accent bg-app-accent text-[var(--app-accent-ink)] dark:border-app-accent-hover dark:bg-app-accent-hover'
+                  : 'border-[var(--app-border-hairline)] text-app-ink hover:border-app-accent hover:bg-[var(--app-state-hover)] dark:text-zinc-200',
               )}
             >
               {p}
@@ -71,9 +71,9 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page + 1)}
           disabled={!canGoNext}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-macos-text dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-app-ink dark:text-zinc-200',
             !canGoNext && 'cursor-not-allowed opacity-40',
-            canGoNext && 'hover:border-macos-blue hover:bg-[var(--app-state-hover)]',
+            canGoNext && 'hover:border-app-accent hover:bg-[var(--app-state-hover)]',
           )}
           aria-label="Next page"
         >

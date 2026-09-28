@@ -26,7 +26,7 @@ const ThemeIcon: React.FC<{ theme: 'light' | 'dark' | 'system'; isDark: boolean 
     <Monitor
       className={cn(
         'h-4 w-4',
-        isDark ? 'text-macos-blue' : 'text-macos-text',
+        isDark ? 'text-app-accent' : 'text-app-ink',
       )}
     />
   );
@@ -156,7 +156,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 onClick={toggleTheme}
                 title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
                 aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
-                className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="rounded-full text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 <ThemeIcon theme={theme} isDark={isDark} />
               </Button>
@@ -171,7 +171,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 variant="ghost"
                 aria-label="Notifications"
                 aria-expanded={isNotificationsOpen}
-                className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="relative rounded-full text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 <Bell className="h-4 w-4" />
                 {/* The count used to sit at `right-1.5 top-1.5` at 16px square —
@@ -182,7 +182,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     the bell's box. `px-0.5` is deliberate: at `px-1` the "9+"
                     label alone widens the pill back across the icon. */}
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border border-white bg-macos-red px-0.5 text-2xs font-bold text-white dark:border-zinc-950">
+                  <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border border-white bg-app-danger px-0.5 text-2xs font-bold text-white dark:border-zinc-950">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -204,14 +204,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   pointer cursor, the press animation, and the focus ring. */}
               <button
                 type="button"
-                className="flex cursor-pointer items-center rounded-[var(--radius-button)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue active:scale-[0.98]"
+                className="flex cursor-pointer items-center rounded-[var(--radius-button)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent active:scale-[0.98]"
                 aria-expanded={isProfileOpen}
                 aria-label={`Account menu for ${currentUser?.name ?? 'Admin'}`}
               >
                 {/* A rounded SQUARE, not a circle: `--radius-button` is the 8px
                     corner every other control in the app uses (Button, Input), so
                     the avatar reads as the same family rather than a one-off. */}
-                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
+                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-app-accent text-2xs font-bold text-[var(--app-accent-ink)]">
                   {initials}
                 </div>
               </button>
@@ -225,10 +225,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   onClick={(e) => e.stopPropagation()}
                 >
                     <div className="border-b px-4 py-3">
-                      <p className="text-sm font-bold leading-tight text-macos-text dark:text-zinc-100">
+                      <p className="text-sm font-bold leading-tight text-app-ink dark:text-zinc-100">
                         {currentUser?.name ?? 'Admin'}
                       </p>
-                      <p className="mt-1 text-2xs font-semibold text-macos-text-muted dark:text-zinc-500">
+                      <p className="mt-1 text-2xs font-semibold text-app-text-muted dark:text-zinc-500">
                         {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                       </p>
                       {/* `truncate` is load-bearing: the panel is a fixed 256px,
@@ -244,7 +244,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                     <button
                       type="button"
                       onClick={logout}
-                      /* `text-macos-red` (#ff3b30) measured 3.55:1 at rest on the
+                      /* `text-app-danger` (#ff3b30) measured 3.55:1 at rest on the
                          raised panel and 3.01:1 on the red hover tint — and 3.93 /
                          3.37 in dark. This label is 12px, so it needs the full
                          4.5:1, not the 3:1 large-text allowance. red-700 / red-300
@@ -284,12 +284,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={toggleCollapse}
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="rounded-full text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
             <div className="min-w-0">
-              <span className="block truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">{currentLabel}</span>
+              <span className="block truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
 
             </div>
           </div>

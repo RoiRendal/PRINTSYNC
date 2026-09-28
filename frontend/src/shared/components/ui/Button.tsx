@@ -17,13 +17,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-macos-blue text-[var(--app-accent-ink)] hover:bg-macos-blue-dark active:bg-macos-blue-dark dark:bg-macos-blue-dark dark:hover:bg-macos-blue',
+    'bg-app-accent text-[var(--app-accent-ink)] hover:bg-app-accent-hover active:bg-app-accent-hover dark:bg-app-accent-hover dark:hover:bg-app-accent',
   secondary:
-    'bg-[var(--app-surface-sub)] text-macos-text ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
+    'bg-[var(--app-surface-sub)] text-app-ink ring-1 ring-[var(--app-border-hairline)] hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-100',
   ghost:
     'bg-transparent text-gray-700 hover:bg-[var(--app-state-hover)] active:bg-[var(--app-state-hover-sub)] dark:text-zinc-200',
   danger:
-    'bg-macos-red text-white hover:bg-red-500 active:bg-red-600',
+    'bg-app-danger text-white hover:bg-red-500 active:bg-red-600',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

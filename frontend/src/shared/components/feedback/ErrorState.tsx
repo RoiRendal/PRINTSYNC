@@ -17,12 +17,12 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-center', className)}>
-      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-macos-red dark:text-red-300">
+      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-app-danger dark:text-red-300">
         <AlertCircle className="h-6 w-6" aria-hidden="true" />
       </div>
       <div className="space-y-1">
-        <p className="text-xs font-bold text-macos-text dark:text-zinc-100">{title}</p>
-        <p className="max-w-sm text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{message}</p>
+        <p className="text-xs font-bold text-app-ink dark:text-zinc-100">{title}</p>
+        <p className="max-w-sm text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{message}</p>
       </div>
       {onRetry && (
         <Button type="button" variant="secondary" size="sm" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}>

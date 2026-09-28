@@ -86,7 +86,7 @@ export function ProductTrendSection({
       description={`Per-product demand by ${periodLabel[trendPeriod].toLowerCase()} segment with total volume tracking.`}
       controls={<div className="space-y-2"><PeriodSelector value={trendPeriod} onChange={onTrendPeriodChange} prefix="trend" />{trendBucketLabels.length > 0 && <Select fieldSize="sm" value={safeTrendSelection} onChange={(event) => setTrendSelection(event.target.value)}>{trendBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select>}</div>}
     >
-      {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
+      {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
         <>
           <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -112,7 +112,7 @@ export function ProductTrendSection({
           <TableContainer className="mt-4">
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Rank</TableHead><TableHead>Product</TableHead><TableHead className="text-right">Units</TableHead></TableRow></TableHeader>
-              <TableBody>{productTrendSummary.ranked.map((item, index) => <TableRow key={item.label}><TableCell>{index + 1}</TableCell><TableCell className="text-macos-text dark:text-zinc-100">{item.label}</TableCell><TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">{item.units.toLocaleString()}</TableCell></TableRow>)}</TableBody>
+              <TableBody>{productTrendSummary.ranked.map((item, index) => <TableRow key={item.label}><TableCell>{index + 1}</TableCell><TableCell className="text-app-ink dark:text-zinc-100">{item.label}</TableCell><TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{item.units.toLocaleString()}</TableCell></TableRow>)}</TableBody>
             </Table>
           </TableContainer>
         </>

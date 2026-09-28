@@ -3,7 +3,7 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from '../../lib/cn';
 
 const fieldBaseClasses =
-  'w-full rounded-[var(--radius-button)] !border-transparent bg-[var(--app-surface-sub)] px-2 text-sm text-macos-text placeholder:text-[var(--app-text-muted)] focus:!border-transparent focus:!bg-[var(--app-state-hover-sub)] dark:focus:!bg-[var(--app-state-hover-sub)] focus:outline-none !ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500';
+  'w-full rounded-[var(--radius-button)] !border-transparent bg-[var(--app-surface-sub)] px-2 text-sm text-app-ink placeholder:text-[var(--app-text-muted)] focus:!border-transparent focus:!bg-[var(--app-state-hover-sub)] dark:focus:!bg-[var(--app-state-hover-sub)] focus:outline-none !ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500';
 
 /*
   These are ERPNext's form fields, not macOS ones.

@@ -18,8 +18,8 @@ export function InventoryStats({ stats }: InventoryStatsProps) {
       {cards.map(([label, value, tone]) => (
         <div key={label}>
           <SurfaceCard className="p-4">
-            <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</p>
-            <p className={cn('mt-2 tabular-nums text-xl font-bold', tone === 'blue' && 'text-macos-blue dark:text-macos-cyan', tone === 'green' && 'text-green-700 dark:text-green-300', tone === 'orange' && 'text-orange-700 dark:text-orange-300', tone === 'gray' && 'text-macos-text dark:text-zinc-100')}>{value}</p>
+            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
+            <p className={cn('mt-2 tabular-nums text-xl font-bold', tone === 'blue' && 'text-app-accent dark:text-app-accent-soft', tone === 'green' && 'text-green-700 dark:text-green-300', tone === 'orange' && 'text-orange-700 dark:text-orange-300', tone === 'gray' && 'text-app-ink dark:text-zinc-100')}>{value}</p>
           </SurfaceCard>
         </div>
       ))}

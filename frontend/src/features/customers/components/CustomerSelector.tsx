@@ -76,7 +76,7 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-macos-text-muted hover:text-macos-text dark:text-zinc-500 dark:hover:text-zinc-300"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-app-text-muted hover:text-app-ink dark:text-zinc-500 dark:hover:text-zinc-300"
             aria-label="Clear customer"
           >
             <X className="h-3 w-3" aria-hidden="true" />
@@ -93,9 +93,9 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
               onClick={() => handleSelect(customer)}
               className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-xs hover:bg-[var(--app-state-hover)]"
             >
-              <span className="font-bold text-macos-text dark:text-zinc-100">{customer.name}</span>
+              <span className="font-bold text-app-ink dark:text-zinc-100">{customer.name}</span>
               {(customer.phone || customer.email) && (
-                <span className="text-2xs text-macos-text-muted dark:text-zinc-400">
+                <span className="text-2xs text-app-text-muted dark:text-zinc-400">
                   {customer.phone}{customer.phone && customer.email ? ' · ' : ''}{customer.email}
                 </span>
               )}
@@ -105,14 +105,14 @@ export function CustomerSelector({ customers, customerId, customerName, onChange
       )}
 
       {isOpen && query && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-xs text-macos-text-muted dark:bg-[#1a1a1d] dark:text-zinc-400">
+        <div className="absolute z-50 mt-1 w-full rounded-[var(--radius-card)] border bg-[var(--app-surface-raised)] px-3 py-2 text-xs text-app-text-muted dark:bg-[#1a1a1d] dark:text-zinc-400">
           No matching customers. Type to create a new one.
         </div>
       )}
 
       {selectedCustomer && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-2xs font-bold text-macos-blue dark:text-macos-cyan">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-macos-blue" />
+        <div className="mt-1.5 flex items-center gap-1.5 text-2xs font-bold text-app-accent dark:text-app-accent-soft">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-app-accent" />
           Linked to customer record
         </div>
       )}

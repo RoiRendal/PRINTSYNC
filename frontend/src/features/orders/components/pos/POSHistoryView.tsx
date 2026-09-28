@@ -103,7 +103,7 @@ export function POSHistoryView({
                     <TableHead className="text-right">Total</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
+                  <TableHead colSpan={5} className="font-semibold text-app-ink dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -142,13 +142,13 @@ export function POSHistoryView({
                         <span aria-hidden="true" className="block h-4 w-4" />
                       )}
                     </TableSelectCell>
-                    <TableCell className="text-macos-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
-                    <TableCell className="text-macos-text-muted dark:text-zinc-400">{trx.date}</TableCell>
+                    <TableCell className="text-app-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
+                    <TableCell className="text-app-text-muted dark:text-zinc-400">{trx.date}</TableCell>
                     <TableCell>
-                      <span className="tabular-nums text-macos-text dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
+                      <span className="tabular-nums text-app-ink dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                     </TableCell>
                     <TableCell><StatusLabel tone="blue">{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
-                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                   </TableRow>
                 );
               })}
@@ -173,23 +173,23 @@ export function POSHistoryView({
           <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-1 scrollbar-hide">
             <div className="flex items-start justify-between border-b pb-3">
               <div className="space-y-0.5">
-                <p className="text-3xs font-bold text-macos-text-muted">Reference ID</p>
+                <p className="text-3xs font-bold text-app-text-muted">Reference ID</p>
                 <p className="tabular-nums text-2xs font-bold">#{selectedTransaction.id}</p>
               </div>
               <div className="space-y-0.5 text-right">
-                <p className="text-3xs font-bold text-macos-text-muted">Date &amp; Time</p>
+                <p className="text-3xs font-bold text-app-text-muted">Date &amp; Time</p>
                 <p className="text-2xs font-medium">{selectedTransaction.date}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="text-3xs font-bold text-macos-text-muted">Items Purchased</p>
+              <p className="text-3xs font-bold text-app-text-muted">Items Purchased</p>
               <div className="max-h-36 space-y-1 overflow-y-auto pr-1 scrollbar-hide">
                 {selectedTransaction.items.map((item, idx) => (
                   <div key={`${item.id}-${idx}`} className="flex items-center justify-between rounded-xl border p-2 text-2xs">
                     <div className="min-w-0 flex-1 pr-2">
-                      <p className="truncate font-bold text-macos-text dark:text-zinc-100">{item.name}</p>
-                      <p className="text-3xs text-macos-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
+                      <p className="truncate font-bold text-app-ink dark:text-zinc-100">{item.name}</p>
+                      <p className="text-3xs text-app-text-muted">{item.qty} × ₱{item.price.toFixed(2)}</p>
                     </div>
                     <p className="shrink-0 tabular-nums font-bold">₱{(item.price * item.qty).toFixed(2)}</p>
                   </div>
@@ -197,16 +197,16 @@ export function POSHistoryView({
               </div>
             </div>
 
-            <div className="space-y-1 border-t pt-3 text-2xs text-macos-text-muted">
+            <div className="space-y-1 border-t pt-3 text-2xs text-app-text-muted">
               <div className="flex justify-between"><span>Subtotal</span><span className="tabular-nums">₱{selectedTransaction.subtotal.toFixed(2)}</span></div>
               {(selectedTransaction.discount ?? 0) > 0 && <div className="flex justify-between"><span>Discount</span><span className="tabular-nums">−₱{(selectedTransaction.discount ?? 0).toFixed(2)}</span></div>}
               <div className="flex justify-between"><span>VAT ({selectedTransaction.vatRatePercent ?? 12}%)</span><span className="tabular-nums">₱{selectedTransaction.tax.toFixed(2)}</span></div>
               <div className="mt-2 flex items-center justify-between border-t pt-2">
-                <span className="text-2xs font-bold text-macos-text dark:text-zinc-100">Total Amount</span>
-                <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
+                <span className="text-2xs font-bold text-app-ink dark:text-zinc-100">Total Amount</span>
+                <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
-                <span className="text-3xs font-bold text-macos-text dark:text-zinc-100">Payment</span>
+                <span className="text-3xs font-bold text-app-ink dark:text-zinc-100">Payment</span>
                 <Badge variant="blue">{selectedTransaction.paymentMethod}</Badge>
               </div>
             </div>

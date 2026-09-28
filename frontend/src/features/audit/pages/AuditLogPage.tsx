@@ -92,7 +92,7 @@ function ActionBadge({ action }: { action: string }) {
 function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
   const [expanded, setExpanded] = useState(false);
   const entries = Object.entries(metadata);
-  if (entries.length === 0) return <span className="text-macos-text-muted dark:text-zinc-500">—</span>;
+  if (entries.length === 0) return <span className="text-app-text-muted dark:text-zinc-500">—</span>;
 
   const preview = entries.slice(0, 2).map(([k, v]) => `${k}: ${String(v).slice(0, 20)}`).join(', ');
 
@@ -100,7 +100,7 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
     <button
       type="button"
       onClick={() => setExpanded(!expanded)}
-      className="text-left text-macos-text-muted hover:text-macos-blue dark:text-zinc-400 dark:hover:text-macos-cyan"
+      className="text-left text-app-text-muted hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft"
     >
       {expanded ? (
         <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 dark:bg-[#373739]">
@@ -152,8 +152,8 @@ export default function AuditLogPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Audit Log</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Audit Log</h1>
+          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
             Review system activity, who changed what, and when.
           </p>
         </div>
@@ -177,12 +177,12 @@ export default function AuditLogPage() {
               ].map(({ label, value, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <ScrollText className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   </div>
-                  <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
+                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}
             </div>
@@ -225,23 +225,23 @@ export default function AuditLogPage() {
                   <TableBody>
                     {filteredItems.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="text-macos-text-muted dark:text-zinc-500">
+                        <TableCell className="text-app-text-muted dark:text-zinc-500">
                           {formatTimestamp(log.createdAt)}
                         </TableCell>
                         <TableCell>
                           <ActionBadge action={log.action} />
                         </TableCell>
                         <TableCell>
-                          <span className="text-macos-text dark:text-zinc-200">
+                          <span className="text-app-ink dark:text-zinc-200">
                             {log.entityType.replace(/_/g, ' ')}
                           </span>
                           {log.entityId && (
-                            <span className="ml-1.5 text-macos-text-muted dark:text-zinc-500">
+                            <span className="ml-1.5 text-app-text-muted dark:text-zinc-500">
                               {log.entityId.slice(0, 8)}...
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="text-macos-text dark:text-zinc-200">
+                        <TableCell className="text-app-ink dark:text-zinc-200">
                           {log.actorId ? log.actorId.slice(0, 8) + '...' : 'System'}
                         </TableCell>
                         <TableCell>
@@ -251,7 +251,7 @@ export default function AuditLogPage() {
                     ))}
                     {filteredItems.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={5} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">
+                        <TableCell colSpan={5} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">
                           No audit events match your filters.
                         </TableCell>
                       </TableRow>
@@ -261,7 +261,7 @@ export default function AuditLogPage() {
               </TableContainer>
 
               <div className="space-y-2 border-t px-4 py-3">
-                <span className="block text-macos-text-muted dark:text-zinc-500">
+                <span className="block text-app-text-muted dark:text-zinc-500">
                   Showing {items.length} of {total} events
                 </span>
                 <Pagination page={page} limit={pageSize} total={total} onPageChange={setPage} />

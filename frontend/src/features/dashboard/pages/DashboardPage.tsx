@@ -52,22 +52,22 @@ function WorkspaceTile({ label, count, unit, to, detail, alert = false }: Worksp
   return (
     <Link
       to={to}
-      className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue"
+      className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
     >
       <SurfaceCard className="h-full p-4">
-        <p className="label-caps text-macos-text-muted dark:text-zinc-500">{label}</p>
+        <p className="label-caps text-app-text-muted dark:text-zinc-500">{label}</p>
         <p className="mt-2 flex items-baseline gap-1.5">
           <span
             className={cn(
-              'text-3xl font-bold tabular-nums tracking-tight text-macos-text dark:text-zinc-100',
-              alert && 'text-macos-red dark:text-red-300',
+              'text-3xl font-bold tabular-nums tracking-tight text-app-ink dark:text-zinc-100',
+              alert && 'text-app-danger dark:text-red-300',
             )}
           >
             {count}
           </span>
-          <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
+          <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{unit}</span>
         </p>
-        <p className="mt-1 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
+        <p className="mt-1 text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{detail}</p>
       </SurfaceCard>
     </Link>
   );
@@ -76,8 +76,8 @@ function WorkspaceTile({ label, count, unit, to, detail, alert = false }: Worksp
 function DashboardHeader() {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Dashboard</h1>
-      <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+      <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Dashboard</h1>
+      <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
         What needs your attention today — every count opens the list behind it.
       </p>
     </div>
@@ -169,7 +169,7 @@ export default function Dashboard() {
       </div>
 
       {workWaiting === 0 && (
-        <p className="text-xs text-macos-text-muted dark:text-zinc-400">
+        <p className="text-xs text-app-text-muted dark:text-zinc-400">
           Nothing is waiting right now — every queue is clear.
         </p>
       )}

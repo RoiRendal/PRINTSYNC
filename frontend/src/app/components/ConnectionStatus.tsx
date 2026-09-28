@@ -118,7 +118,7 @@ export function ConnectionStatus({ className }: { className?: string }) {
         aria-live="polite"
         aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
-          'inline-flex select-none items-center gap-1.5 whitespace-nowrap text-2xs font-bold text-macos-text dark:text-zinc-100',
+          'inline-flex select-none items-center gap-1.5 whitespace-nowrap text-2xs font-bold text-app-ink dark:text-zinc-100',
           className,
         )}
       >

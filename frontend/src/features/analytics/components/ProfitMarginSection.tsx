@@ -87,7 +87,7 @@ export function ProfitMarginSection({
       description={`Revenue vs COGS with margin trend across all ${periodLabel[profitPeriod].toLowerCase()} buckets.`}
       controls={<PeriodSelector value={profitPeriod} onChange={onProfitPeriodChange} prefix="profit" />}
     >
-      {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-macos-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
+      {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
         <>
           <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -111,13 +111,13 @@ export function ProfitMarginSection({
               </ComposedChart>
             </ResponsiveContainer>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-macos-text-muted dark:text-zinc-400">
+          <div className="mt-4 flex flex-wrap gap-2 text-xs text-app-text-muted dark:text-zinc-400">
             <Badge variant="green">Best: {profitMarginStats.bestPoint.label} ({profitMarginStats.bestPoint.margin.toFixed(1)}%)</Badge>
             <Badge variant="orange">Lowest: {profitMarginStats.lowestPoint.label} ({profitMarginStats.lowestPoint.margin.toFixed(1)}%)</Badge>
           </div>
           <TableContainer className="mt-4">
             <div className="flex items-center justify-between border-b p-3">
-              <p className="text-xs font-bold text-macos-text dark:text-zinc-100">Margin Ranking Table</p>
+              <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Margin Ranking Table</p>
               <Select fieldSize="sm" className="w-44" value={marginSortOrder} onChange={(event) => setMarginSortOrder(event.target.value as 'desc' | 'asc')}>
                 <option value="desc">Highest to Lowest</option>
                 <option value="asc">Lowest to Highest</option>
@@ -125,7 +125,7 @@ export function ProfitMarginSection({
             </div>
             <Table>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Segment</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">COGS</TableHead><TableHead className="text-right">Profit</TableHead><TableHead className="text-right">Margin</TableHead></TableRow></TableHeader>
-              <TableBody>{sortedMarginRows.map((row) => <TableRow key={row.label}><TableCell className="text-macos-text dark:text-zinc-100">{row.label}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.revenue)}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.expenses)}</TableCell><TableCell className="text-right tabular-nums text-green-700 dark:text-green-300">{money.format(row.profit)}</TableCell><TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">{row.margin.toFixed(1)}%</TableCell></TableRow>)}</TableBody>
+              <TableBody>{sortedMarginRows.map((row) => <TableRow key={row.label}><TableCell className="text-app-ink dark:text-zinc-100">{row.label}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.revenue)}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.expenses)}</TableCell><TableCell className="text-right tabular-nums text-green-700 dark:text-green-300">{money.format(row.profit)}</TableCell><TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{row.margin.toFixed(1)}%</TableCell></TableRow>)}</TableBody>
             </Table>
           </TableContainer>
         </>

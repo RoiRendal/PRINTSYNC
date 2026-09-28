@@ -60,7 +60,7 @@ export const Sidebar = ({
         /* Full-height column on the left edge of the shell. It carries the
            right border that separates it from the header/toolbar/body stack, so
            it runs edge to edge rather than sitting in an inset rounded panel. */
-        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface-sidebar)] text-macos-text dark:text-zinc-100',
+        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface-sidebar)] text-app-ink dark:text-zinc-100',
         'border-r border-[var(--app-border-frame)]',
         className,
       )}
@@ -91,7 +91,7 @@ export const Sidebar = ({
           )}
         >
           {logoFailed ? (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-macos-blue dark:text-macos-cyan">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-app-accent dark:text-app-accent-soft">
               {APP_NAME.charAt(0)}
             </div>
           ) : (
@@ -108,7 +108,7 @@ export const Sidebar = ({
           )}
           <div className={isMinimized ? 'sr-only' : 'min-w-0'}>
             <h1
-              className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white"
+              className="truncate text-sm font-bold tracking-tight text-app-ink dark:text-white"
               title={APP_NAME}
             >
               {businessDisplayName}
@@ -184,7 +184,7 @@ export const Sidebar = ({
             title={isMinimized ? 'Show sidebar labels' : 'Minimize sidebar to icons'}
             aria-label={isMinimized ? 'Restore sidebar' : 'Minimize sidebar'}
             aria-expanded={!isMinimized}
-            className="h-7 w-7 rounded-lg text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="h-7 w-7 rounded-lg text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             {isMinimized ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </Button>

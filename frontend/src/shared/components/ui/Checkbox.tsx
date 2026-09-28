@@ -39,7 +39,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         }}
         type="checkbox"
         className={cn(
-          'h-3.5 w-3.5 cursor-pointer accent-macos-blue',
+          'h-3.5 w-3.5 cursor-pointer accent-app-accent',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)]',
           'disabled:cursor-not-allowed disabled:opacity-40',
           className,

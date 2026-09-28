@@ -51,20 +51,20 @@ export const Modal: React.FC<ModalProps> = ({
           >
             <div className="surface-toolbar flex min-h-10 items-center justify-between gap-3 border-b border-[var(--app-border-hairline)] px-3 py-2">
               <div className="flex min-w-0 items-center gap-3">
-                <h3 className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-zinc-100">
+                <h3 className="truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">
                   {title}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)] dark:text-zinc-400 dark:hover:text-zinc-100"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-            <div className="overflow-y-auto p-3 text-macos-text dark:text-zinc-100 sm:p-4">
+            <div className="overflow-y-auto p-3 text-app-ink dark:text-zinc-100 sm:p-4">
               {children}
             </div>
           </div>

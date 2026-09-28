@@ -142,18 +142,18 @@ export function POSCheckoutModal({
       <div className="space-y-4">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-macos-green">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-app-success">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </div>
             <div>
-              <h4 className="text-lg font-bold text-macos-text dark:text-zinc-100">
+              <h4 className="text-lg font-bold text-app-ink dark:text-zinc-100">
                 {posMode === 'retail' ? 'Transaction Successful' : 'Order Created'}
               </h4>
-              <p className="text-xs text-macos-text-muted dark:text-zinc-400">
+              <p className="text-xs text-app-text-muted dark:text-zinc-400">
                 {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
               </p>
               {recovered && (
-                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-2xs font-semibold leading-relaxed text-macos-blue dark:text-macos-cyan">
+                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-2xs font-semibold leading-relaxed text-app-accent dark:text-app-accent-soft">
                   This sale had already been saved — the earlier attempt did go through. Do not ring it up again.
                 </p>
               )}
@@ -182,11 +182,11 @@ export function POSCheckoutModal({
             ))}
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-macos-text-muted dark:text-zinc-400">
+              <div className="flex items-center justify-between text-app-text-muted dark:text-zinc-400">
                 <span className="text-2xs font-bold">Amount to Pay</span>
-                <span className="tabular-nums text-xl font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
+                <span className="tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{currencySymbol}{total.toFixed(2)}</span>
               </div>
-              <div className="space-y-1 border-b pb-3 tabular-nums text-2xs text-macos-text-muted dark:text-zinc-500">
+              <div className="space-y-1 border-b pb-3 tabular-nums text-2xs text-app-text-muted dark:text-zinc-500">
                 <div className="flex justify-between"><span>Subtotal</span><span>{currencySymbol}{subtotal.toFixed(2)}</span></div>
                 {appliedDiscount > 0 && <div className="flex justify-between"><span>Discount</span><span>−{currencySymbol}{appliedDiscount.toFixed(2)}</span></div>}
                 <div className="flex justify-between"><span>VAT ({totals.vatRatePercent}%)</span><span>{currencySymbol}{tax.toFixed(2)}</span></div>
@@ -195,7 +195,7 @@ export function POSCheckoutModal({
 
             {posMode === 'retail' && (
               <div className="space-y-2">
-                <label className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">Payment Method</label>
+                <label className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">Payment Method</label>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
                   <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
@@ -209,10 +209,10 @@ export function POSCheckoutModal({
                 return (
                   <div key={`${item.id}-${idx}`} className="space-y-0.5">
                     <div className="flex justify-between text-2xs">
-                      <span className={cn('font-medium', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text-muted')}>
+                      <span className={cn('font-medium', shortfall ? 'text-red-700 dark:text-red-300' : 'text-app-text-muted')}>
                         {item.qty}x {item.name}
                       </span>
-                      <span className={cn('tabular-nums', shortfall ? 'text-red-700 dark:text-red-300' : 'text-macos-text dark:text-zinc-300')}>
+                      <span className={cn('tabular-nums', shortfall ? 'text-red-700 dark:text-red-300' : 'text-app-ink dark:text-zinc-300')}>
                         {currencySymbol}{(item.price * item.qty).toFixed(2)}
                       </span>
                     </div>

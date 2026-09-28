@@ -12,7 +12,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 const variantClasses: Record<BadgeVariant, string> = {
   neutral: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-neutral)] text-gray-700 dark:text-zinc-300',
-  blue: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan',
+  blue: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft',
   green: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
   red: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
   orange: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
