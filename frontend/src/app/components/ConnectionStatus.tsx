@@ -1,3 +1,5 @@
+import type { IconComponent } from '../../shared/components/ui/icons';
+import { AlertCircle, CheckCircle2, Clock, Download, RefreshCw } from '../../shared/components/ui/icons';
 import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
 import { useIsSyncing } from '../hooks/useIsSyncing';
 import type { RealtimeStatus } from '../../shared/realtime/eventStream';
@@ -14,58 +16,56 @@ import { cn } from '../../shared/lib/cn';
  * built to remove.
  *
  * The wording is deliberately non-technical: "Live", not "SSE connected".
+ *
+ * The state is carried by the GLYPH, not by colour. It used to be a tinted pill
+ * with a pulsing dot, then plain coloured text; both asked staff to read a hue to
+ * know whether the screen was current, which is the one thing a colour-blind user
+ * cannot do reliably. The label now takes the app's ordinary text colour and a
+ * distinct outline glyph sits to its right, so the state reads the same to
+ * everyone. The hover tooltip and the `aria-label` are unchanged.
  */
 
 type VisibleStatus = Exclude<RealtimeStatus, 'idle'>;
 
 interface StatusPresentation {
   label: string;
-  /** Solid dot colour. */
-  dot: string;
-  /** Chip border + background + text. */
-  chip: string;
-  /** Whether the dot should pulse. */
-  pulse: boolean;
+  icon: IconComponent;
   /** Plain-language explanation shown on hover. */
   hint: string;
 }
 
 /**
+ * Every glyph is drawn in the same box by `ICON_CLASS` below, so swapping one
+ * state for another never moves the text or resizes the toolbar. The icons are
+ * also deliberately distinct in SHAPE, because shape is now the only channel
+ * carrying the state: a tick, a clock, a circular arrow, a warning, a download.
+ */
+const ICON_CLASS = 'h-3.5 w-3.5 shrink-0';
+
+/**
  * Hover text is kept short on purpose: `Tooltip` renders it in a
  * `whitespace-nowrap` pill, so a full sentence would run off the edge of the
- * screen. The longer explanation lives in the chip's `aria-label`.
+ * screen. The longer explanation lives in the status's `aria-label`.
  */
 const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
     label: 'Live',
-    dot: 'bg-macos-green',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
-    pulse: true,
+    icon: CheckCircle2,
     hint: 'Updating automatically',
   },
   connecting: {
     label: 'Connecting',
-    dot: 'bg-macos-gray',
-    /* Gray tint rather than neutral: `text-gray-500` measures 4.47:1 on the
-       neutral tint — just under the floor — and the dark text has to take the
-       same step up the gray badge already took, because zinc-400 is only
-       4.23:1 on this fill. */
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-gray)] text-gray-500 dark:text-zinc-300',
-    pulse: true,
+    icon: Clock,
     hint: 'Starting live updates',
   },
   reconnecting: {
     label: 'Reconnecting',
-    dot: 'bg-macos-orange',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
-    pulse: true,
+    icon: RefreshCw,
     hint: 'Restoring live updates',
   },
   offline: {
     label: 'Offline',
-    dot: 'bg-macos-red',
-    chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
-    pulse: false,
+    icon: AlertCircle,
     hint: 'May be out of date',
   },
 };
@@ -91,9 +91,7 @@ const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
  */
 const SYNCING_PRESENTATION: StatusPresentation = {
   label: 'Syncing',
-  dot: 'bg-macos-blue',
-  chip: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-blue-700 dark:text-blue-300',
-  pulse: true,
+  icon: Download,
   hint: 'Fetching the latest data',
 };
 
@@ -104,13 +102,14 @@ export function ConnectionStatus({ className }: { className?: string }) {
   const { status } = useRealtimeStatus();
   const isSyncing = useIsSyncing();
 
-  // Nothing is running before sign-in, and an "idle" chip would be noise on a
+  // Nothing is running before sign-in, and an "idle" label would be noise on a
   // login screen.
   if (status === 'idle') return null;
 
   const syncing = status === 'live' && isSyncing;
   const presentation = syncing ? SYNCING_PRESENTATION : STATUS_PRESENTATION[status];
   const description = syncing ? SYNCING_DESCRIPTION : STATUS_DESCRIPTION[status];
+  const StatusIcon = presentation.icon;
 
   return (
     <Tooltip content={presentation.hint}>
@@ -119,16 +118,12 @@ export function ConnectionStatus({ className }: { className?: string }) {
         aria-live="polite"
         aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
-          'inline-flex select-none items-center gap-1.5 rounded-[var(--radius-pill)] border px-2.5 py-1 text-2xs font-bold',
-          presentation.chip,
+          'inline-flex select-none items-center gap-1.5 whitespace-nowrap text-2xs font-bold text-macos-text dark:text-zinc-100',
           className,
         )}
       >
-        <span
-          aria-hidden="true"
-          className={cn('h-1.5 w-1.5 shrink-0 rounded-full', presentation.dot, presentation.pulse && '')}
-        />
         {presentation.label}
+        <StatusIcon className={ICON_CLASS} aria-hidden="true" />
       </span>
     </Tooltip>
   );

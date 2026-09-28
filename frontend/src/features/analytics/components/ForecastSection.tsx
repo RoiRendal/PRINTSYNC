@@ -9,7 +9,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Brain } from '../../../shared/components/ui/icons';
 import type { InventoryForecast } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -96,7 +95,6 @@ export function ForecastSection({
 
   return (
     <SectionCard
-      icon={Brain}
       title="Financial Forecasting"
       description="Forecasted inventory requirements using moving-average demand projection with confidence bounds."
       controls={<div className="space-y-2"><div className="flex rounded-full border p-1"><button type="button" onClick={() => setForecastMetric('income')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'income' ? 'bg-macos-green text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}>Income</button><button type="button" onClick={() => setForecastMetric('expenses')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'expenses' ? 'bg-macos-orange text-white' : 'text-macos-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}>Expenses</button></div><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}

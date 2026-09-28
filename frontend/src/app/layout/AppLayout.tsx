@@ -195,32 +195,33 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="relative"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              {/* The pill's fill is token-driven, never a literal. It used to be
-                  `bg-[#f4f4f6]` — the one hardcoded light fill in the app with no
-                  `dark:` partner — so in dark mode a near-white pill carried a
-                  near-white name (`dark:text-zinc-100`) at about 1.02:1 and the
-                  button read as a blank white blob. `-sub` already means "a
-                  control resting on the header": its dark step (#3a3a3c) puts the
-                  name at 10.3:1. Light shifts one shade (#f4f4f6 -> #ececef) to
-                  match every other resting control, and hover now darkens
-                  (#dedee3) rather than lightening (#f9f9fa) — the direction the
-                  rest of the app already uses. */}
+              {/* Just the avatar now — no pill, no border, no name beside it.
+                  The name was the button's only accessible text, so it is carried
+                  over into `aria-label`: without it the control would announce as
+                  a bare "button" to a screen reader. The pill's old hover fill is
+                  gone with the pill, because the avatar is opaque and would have
+                  hidden it anyway; what is left to signal the control is the
+                  pointer cursor, the press animation, and the focus ring. */}
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] py-1 pl-1 pr-2 text-left hover:bg-[var(--app-state-hover-sub)] active:scale-[0.98]"
+                className="flex cursor-pointer items-center rounded-[var(--radius-button)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue active:scale-[0.98]"
                 aria-expanded={isProfileOpen}
+                aria-label={`Account menu for ${currentUser?.name ?? 'Admin'}`}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
+                {/* A rounded SQUARE, not a circle: `--radius-button` is the 8px
+                    corner every other control in the app uses (Button, Input), so
+                    the avatar reads as the same family rather than a one-off. */}
+                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
                   {initials}
                 </div>
-                <span className="hidden max-w-28 truncate text-xs font-semibold text-[var(--app-text)] sm:inline">
-                  {currentUser?.name ?? 'Admin'}
-                </span>
               </button>
 
               {isProfileOpen && (
                 <div
-                  className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
+                  /* Same fix as the notification panel: `surface-panel` has no
+                     background of its own, which is correct for a card on the
+                     page and wrong for a menu floating over it. */
+                  className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl bg-[var(--app-surface-raised)] py-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                     <div className="border-b px-4 py-3">
@@ -230,6 +231,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                       <p className="mt-1 text-2xs font-semibold text-macos-text-muted dark:text-zinc-500">
                         {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                       </p>
+                      {/* `truncate` is load-bearing: the panel is a fixed 256px,
+                          and an address can be longer than that. Rendered only
+                          when there is one, so the block does not leave a blank
+                          line for a session that has no email. */}
+                      {currentUser?.email && (
+                        <p className="mt-1 truncate text-2xs text-[var(--app-text-muted)]" title={currentUser.email}>
+                          {currentUser.email}
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -258,8 +268,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             Its left and right margins track the content area's horizontal inset at
             each breakpoint (12 / 20 / 24), so the bar's edges land on the body
             card's edges. The horizontal padding is a flat 8px, which is what sets
-            the chevron's left edge just inside the bar's own border. */}
-        <div className="relative z-[40] mx-3 mt-2 flex h-10 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
+            the chevron's left edge just inside the bar's own border.
+
+            It is 32px tall, down from 40px. The bar's only contents are one icon
+            button and one line of 10px text, so the extra 8px was empty space
+            above and below them. The collapse button also drops its `h-8 w-8`
+            override and takes the standard 28px icon size — that override existed
+            to fill the taller bar, and keeping it at 32px inside a 32px box would
+            leave the hover circle touching the bar's own border. */}
+        <div className="relative z-[40] mx-3 mt-2 flex h-8 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
           <div className="flex min-w-0 items-center gap-3">
             <Button
               size="icon"
@@ -267,7 +284,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               onClick={toggleCollapse}
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
               aria-label={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-              className="h-8 w-8 rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+              className="rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
@@ -276,7 +293,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
             </div>
           </div>
-          <ConnectionStatus className="shrink-0 px-2 py-0.5 text-2xs" />
+          <ConnectionStatus className="shrink-0" />
         </div>
 
         {/* Main Content Area. The body card sits in the same 12 / 20 / 24 gutter

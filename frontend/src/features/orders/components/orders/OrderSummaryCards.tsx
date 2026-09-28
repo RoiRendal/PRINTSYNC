@@ -1,35 +1,26 @@
-import type { IconComponent } from '../../../../shared/components/ui/icons';
-import { CheckCircle2, ClipboardList, Eye, Printer } from '../../../../shared/components/ui/icons';
 import { SurfaceCard } from '../../../../shared/components/ui';
-import { cn } from '../../../../shared/lib/cn';
 import type { Order } from '../../types';
 
-type SummaryTone = 'purple' | 'blue' | 'green' | 'orange';
-
+/**
+ * A phase count: label on the left, figure on the right.
+ *
+ * No icon and no ringed frame — the same ERPNext rule the analytics cards and
+ * the dashboard tiles already follow: a card carries its figure, not ornament.
+ * The glyph sat in a 40px ringed box that also carried the card's colour, so
+ * removing it removes the per-phase tint with it; nothing on the card takes the
+ * colour over, because the tint was decoration on the badge rather than
+ * information the label does not already state.
+ */
 interface SummaryCardProps {
   label: string;
-  icon: IconComponent;
   count: number;
-  tone: SummaryTone;
 }
 
-const summaryToneClasses: Record<SummaryTone, string> = {
-  purple: 'text-purple-700 ring-[var(--app-border-hairline)] dark:text-purple-300',
-  blue: 'text-macos-blue ring-[var(--app-border-hairline)] dark:text-macos-cyan',
-  green: 'text-green-700 ring-[var(--app-border-hairline)] dark:text-green-300',
-  orange: 'text-orange-700 ring-[var(--app-border-hairline)] dark:text-orange-300',
-};
-
-function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
+function SummaryCard({ label, count }: SummaryCardProps) {
   return (
     <div>
       <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] ring-1', summaryToneClasses[tone])}>
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <span className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
-        </div>
+        <span className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
         <span className="tabular-nums text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
       </SurfaceCard>
     </div>
@@ -38,10 +29,10 @@ function SummaryCard({ label, icon: Icon, count, tone }: SummaryCardProps) {
 
 export function OrderSummaryCards({ orders }: { orders: Order[] }) {
   const orderSummary = [
-    { label: 'Designing', icon: Eye, count: orders.filter((o) => o.status === 'Designing').length, tone: 'purple' as const },
-    { label: 'In Production', icon: Printer, count: orders.filter((o) => o.status === 'In Production').length, tone: 'blue' as const },
-    { label: 'Ready', icon: CheckCircle2, count: orders.filter((o) => o.status === 'Ready for Pickup').length, tone: 'green' as const },
-    { label: 'Total Active', icon: ClipboardList, count: orders.filter((o) => o.status !== 'Completed').length, tone: 'orange' as const },
+    { label: 'Designing', count: orders.filter((o) => o.status === 'Designing').length },
+    { label: 'In Production', count: orders.filter((o) => o.status === 'In Production').length },
+    { label: 'Ready', count: orders.filter((o) => o.status === 'Ready for Pickup').length },
+    { label: 'Total Active', count: orders.filter((o) => o.status !== 'Completed').length },
   ];
 
   return (

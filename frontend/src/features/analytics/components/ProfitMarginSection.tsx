@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Wallet } from '../../../shared/components/ui/icons';
 import type { SalesTimeline } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -84,7 +83,6 @@ export function ProfitMarginSection({
 
   return (
     <SectionCard
-      icon={Wallet}
       title="Profit Margin Analysis"
       description={`Revenue vs COGS with margin trend across all ${periodLabel[profitPeriod].toLowerCase()} buckets.`}
       controls={<PeriodSelector value={profitPeriod} onChange={onProfitPeriodChange} prefix="profit" />}

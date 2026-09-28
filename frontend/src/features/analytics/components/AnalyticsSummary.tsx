@@ -1,4 +1,3 @@
-import { Activity } from '../../../shared/components/ui/icons';
 import type { AnalyticsSummary as AnalyticsSummaryData } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -16,7 +15,6 @@ interface AnalyticsSummaryProps {
 export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummaryProps) {
   return (
     <SectionCard
-      icon={Activity}
       title="Operational Summary"
       description="Live reporting snapshot from current year-to-date data."
       controls={summary && <Badge variant="blue">{summary.range.from} → {summary.range.to}</Badge>}

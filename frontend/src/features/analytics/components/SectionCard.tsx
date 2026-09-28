@@ -1,26 +1,30 @@
-import type { IconComponent } from '../../../shared/components/ui/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../../shared/components/ui';
 
+/**
+ * A titled section of the analytics page: heading, one-line description, optional
+ * controls on the right, then the body.
+ *
+ * No icon. The heading used to lead with a ringed badge holding a Lucide glyph,
+ * and the ring around it was the only thing giving the badge a shape — so the
+ * glyph and its frame were one ornament, not two. Neither carried meaning the
+ * title did not already state, and both pushed the heading off the card's own
+ * left edge. Same rule the number cards follow: a card carries its figure, not
+ * decoration.
+ */
 interface SectionCardProps {
   children: React.ReactNode;
-  icon: IconComponent;
   title: string;
   description: string;
   controls?: React.ReactNode;
 }
 
-export function SectionCard({ children, icon: Icon, title, description, controls }: SectionCardProps) {
+export function SectionCard({ children, title, description, controls }: SectionCardProps) {
   return (
     <Card padding="lg" className="overflow-hidden">
       <CardHeader className="gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
-            <Icon className="h-5 w-5" aria-hidden="true" />
-          </div>
-          <div>
-            <CardTitle>{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </div>
+        <div>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
         </div>
         {controls && <div className="shrink-0">{controls}</div>}
       </CardHeader>

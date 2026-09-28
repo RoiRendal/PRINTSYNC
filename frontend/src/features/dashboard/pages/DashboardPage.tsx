@@ -1,5 +1,3 @@
-import type { IconComponent } from '../../../shared/components/ui/icons';
-import { AlertTriangle, ArrowRight, Clock, Hammer, PackageCheck, PenTool } from '../../../shared/components/ui/icons';
 import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -26,53 +24,50 @@ import type { OrderStatus, OrdersSummary } from '../../orders/types';
  * from page 1 of a 20-row list is the defect this page used to carry.
  */
 
+/**
+ * A triage tile: label, count, unit, and what it means.
+ *
+ * No icon — the same ERPNext rule the analytics number cards follow: a card
+ * carries its figure, not ornament. The muted glyph that used to sit top-right
+ * restated the label beside it and was the only reason the tile needed a
+ * two-column flex row.
+ *
+ * The "View list →" row is gone too, and the tile no longer darkens on hover.
+ * The whole tile is still the link, so it still opens the list behind its count
+ * — it just carries no ornament and no hover fill. What remains to signal that
+ * is the pointer cursor and the keyboard focus ring.
+ */
 interface WorkspaceTileProps {
   label: string;
   count: number;
   /** The unit word shown beside the count, e.g. "orders" or "items". */
   unit: string;
   to: string;
-  icon: IconComponent;
   detail: string;
   /** Draws attention (red) when the queue needs action, e.g. Low stock above zero. */
   alert?: boolean;
 }
 
-function WorkspaceTile({ label, count, unit, to, icon: Icon, detail, alert = false }: WorkspaceTileProps) {
+function WorkspaceTile({ label, count, unit, to, detail, alert = false }: WorkspaceTileProps) {
   return (
     <Link
       to={to}
       className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue"
     >
-      <SurfaceCard className="h-full p-4 hover:bg-[var(--app-state-hover)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="label-caps text-macos-text-muted dark:text-zinc-500">{label}</p>
-            <p className="mt-2 flex items-baseline gap-1.5">
-              <span
-                className={cn(
-                  'text-3xl font-bold tabular-nums tracking-tight text-macos-text dark:text-zinc-100',
-                  alert && 'text-macos-red dark:text-red-300',
-                )}
-              >
-                {count}
-              </span>
-              <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
-          </div>
-          <Icon
+      <SurfaceCard className="h-full p-4">
+        <p className="label-caps text-macos-text-muted dark:text-zinc-500">{label}</p>
+        <p className="mt-2 flex items-baseline gap-1.5">
+          <span
             className={cn(
-              'h-5 w-5 shrink-0 text-macos-text-muted dark:text-zinc-500',
+              'text-3xl font-bold tabular-nums tracking-tight text-macos-text dark:text-zinc-100',
               alert && 'text-macos-red dark:text-red-300',
             )}
-            aria-hidden="true"
-          />
-        </div>
-        <div className="mt-4 flex items-center gap-1 text-2xs font-bold text-macos-blue dark:text-macos-cyan">
-          <span>View list</span>
-          <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </div>
+          >
+            {count}
+          </span>
+          <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
       </SurfaceCard>
     </Link>
   );
@@ -124,7 +119,6 @@ export default function Dashboard() {
       count: countFor(summary, 'Pending'),
       unit: 'orders',
       to: '/orders?status=Pending',
-      icon: Clock,
       detail: 'New jobs not yet started.',
     },
     {
@@ -132,7 +126,6 @@ export default function Dashboard() {
       count: countFor(summary, 'Designing'),
       unit: 'orders',
       to: '/orders?status=Designing',
-      icon: PenTool,
       detail: 'Artwork in progress.',
     },
     {
@@ -140,7 +133,6 @@ export default function Dashboard() {
       count: countFor(summary, 'In Production'),
       unit: 'orders',
       to: `/orders?status=${encodeURIComponent('In Production')}`,
-      icon: Hammer,
       detail: 'On the press right now.',
     },
     {
@@ -148,7 +140,6 @@ export default function Dashboard() {
       count: countFor(summary, 'Ready for Pickup'),
       unit: 'orders',
       to: `/orders?status=${encodeURIComponent('Ready for Pickup')}`,
-      icon: PackageCheck,
       detail: 'Printed and waiting for collection.',
     },
     {
@@ -156,7 +147,6 @@ export default function Dashboard() {
       count: summary.lowStock,
       unit: 'items',
       to: '/inventory?lowStock=1',
-      icon: AlertTriangle,
       detail: 'Materials at or below reorder level.',
       alert: summary.lowStock > 0,
     },
