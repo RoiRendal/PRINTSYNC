@@ -1,3 +1,5 @@
+import type { IconComponent } from '../../shared/components/ui/icons';
+import { AlertCircle, CheckCircle2, Clock, Download, RefreshCw } from '../../shared/components/ui/icons';
 import { useRealtimeStatus } from '../hooks/useRealtimeStatus';
 import { useIsSyncing } from '../hooks/useIsSyncing';
 import type { RealtimeStatus } from '../../shared/realtime/eventStream';
@@ -15,31 +17,30 @@ import { cn } from '../../shared/lib/cn';
  *
  * The wording is deliberately non-technical: "Live", not "SSE connected".
  *
- * It renders as plain coloured text. It used to be a tinted pill with a pulsing
- * dot, which made a one-word status read as a button in the toolbar and cost the
- * bar height it could not spare. The colour still carries the state (green when
- * live, orange while reconnecting, red when offline), the hover tooltip still
- * says what to do about it, and the full sentence still lives in the `aria-label`
- * — so nothing informational was dropped with the chrome.
+ * The state is carried by the GLYPH, not by colour. It used to be a tinted pill
+ * with a pulsing dot, then plain coloured text; both asked staff to read a hue to
+ * know whether the screen was current, which is the one thing a colour-blind user
+ * cannot do reliably. The label now takes the app's ordinary text colour and a
+ * distinct outline glyph sits to its right, so the state reads the same to
+ * everyone. The hover tooltip and the `aria-label` are unchanged.
  */
 
 type VisibleStatus = Exclude<RealtimeStatus, 'idle'>;
 
 interface StatusPresentation {
   label: string;
-  /**
-   * Text colour only — no fill, no border.
-   *
-   * These are the same steps the pill used, re-checked against the toolbar's own
-   * fill (`--app-surface`) rather than against the tint the pill used to sit on.
-   * That matters for the gray: `text-gray-500` cleared 4.47:1 on the neutral
-   * tint, but on the lighter surface it drops to about 4.29:1 — under the floor
-   * for a 10px label — so it steps up to `gray-600`.
-   */
-  text: string;
+  icon: IconComponent;
   /** Plain-language explanation shown on hover. */
   hint: string;
 }
+
+/**
+ * Every glyph is drawn in the same box by `ICON_CLASS` below, so swapping one
+ * state for another never moves the text or resizes the toolbar. The icons are
+ * also deliberately distinct in SHAPE, because shape is now the only channel
+ * carrying the state: a tick, a clock, a circular arrow, a warning, a download.
+ */
+const ICON_CLASS = 'h-3.5 w-3.5 shrink-0';
 
 /**
  * Hover text is kept short on purpose: `Tooltip` renders it in a
@@ -49,22 +50,22 @@ interface StatusPresentation {
 const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
     label: 'Live',
-    text: 'text-green-700 dark:text-green-300',
+    icon: CheckCircle2,
     hint: 'Updating automatically',
   },
   connecting: {
     label: 'Connecting',
-    text: 'text-gray-600 dark:text-zinc-300',
+    icon: Clock,
     hint: 'Starting live updates',
   },
   reconnecting: {
     label: 'Reconnecting',
-    text: 'text-orange-700 dark:text-orange-300',
+    icon: RefreshCw,
     hint: 'Restoring live updates',
   },
   offline: {
     label: 'Offline',
-    text: 'text-red-700 dark:text-red-300',
+    icon: AlertCircle,
     hint: 'May be out of date',
   },
 };
@@ -90,7 +91,7 @@ const STATUS_DESCRIPTION: Record<VisibleStatus, string> = {
  */
 const SYNCING_PRESENTATION: StatusPresentation = {
   label: 'Syncing',
-  text: 'text-blue-700 dark:text-blue-300',
+  icon: Download,
   hint: 'Fetching the latest data',
 };
 
@@ -108,6 +109,7 @@ export function ConnectionStatus({ className }: { className?: string }) {
   const syncing = status === 'live' && isSyncing;
   const presentation = syncing ? SYNCING_PRESENTATION : STATUS_PRESENTATION[status];
   const description = syncing ? SYNCING_DESCRIPTION : STATUS_DESCRIPTION[status];
+  const StatusIcon = presentation.icon;
 
   return (
     <Tooltip content={presentation.hint}>
@@ -116,12 +118,12 @@ export function ConnectionStatus({ className }: { className?: string }) {
         aria-live="polite"
         aria-label={`Live updates: ${presentation.label}. ${description}`}
         className={cn(
-          'inline-flex select-none items-center whitespace-nowrap text-2xs font-bold',
-          presentation.text,
+          'inline-flex select-none items-center gap-1.5 whitespace-nowrap text-2xs font-bold text-macos-text dark:text-zinc-100',
           className,
         )}
       >
         {presentation.label}
+        <StatusIcon className={ICON_CLASS} aria-hidden="true" />
       </span>
     </Tooltip>
   );

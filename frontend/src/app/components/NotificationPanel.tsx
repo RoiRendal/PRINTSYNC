@@ -39,9 +39,15 @@ export const NotificationPanel = React.forwardRef<
   } = useNotifications();
 
   return (
+    /* `surface-panel` deliberately carries no background — a panel is a group and
+       is shown by its outline. That is right for a card sitting ON the page, but
+       wrong for this one: it floats OVER the page, so with no fill the table
+       underneath read straight through it. Floating surfaces keep a fill
+       (`surface-modal`, tooltips, this one), and `--app-surface-raised` is the
+       token they share. */
     <div
       ref={ref}
-      className="surface-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl sm:w-96"
+      className="surface-panel absolute right-0 top-full z-[100] mt-2 w-80 overflow-hidden rounded-2xl bg-[var(--app-surface-raised)] sm:w-96"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

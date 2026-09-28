@@ -1,4 +1,3 @@
-import { ArrowRight } from '../../../shared/components/ui/icons';
 import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -31,8 +30,12 @@ import type { OrderStatus, OrdersSummary } from '../../orders/types';
  * No icon — the same ERPNext rule the analytics number cards follow: a card
  * carries its figure, not ornament. The muted glyph that used to sit top-right
  * restated the label beside it and was the only reason the tile needed a
- * two-column flex row. The "View list" arrow stays: it signals that the card
- * navigates, which is information the label does not carry.
+ * two-column flex row.
+ *
+ * The "View list →" row is gone too, and the tile no longer darkens on hover.
+ * The whole tile is still the link, so it still opens the list behind its count
+ * — it just carries no ornament and no hover fill. What remains to signal that
+ * is the pointer cursor and the keyboard focus ring.
  */
 interface WorkspaceTileProps {
   label: string;
@@ -51,7 +54,7 @@ function WorkspaceTile({ label, count, unit, to, detail, alert = false }: Worksp
       to={to}
       className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue"
     >
-      <SurfaceCard className="h-full p-4 hover:bg-[var(--app-state-hover)]">
+      <SurfaceCard className="h-full p-4">
         <p className="label-caps text-macos-text-muted dark:text-zinc-500">{label}</p>
         <p className="mt-2 flex items-baseline gap-1.5">
           <span
@@ -65,10 +68,6 @@ function WorkspaceTile({ label, count, unit, to, detail, alert = false }: Worksp
           <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{unit}</span>
         </p>
         <p className="mt-1 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">{detail}</p>
-        <div className="mt-4 flex items-center gap-1 text-2xs font-bold text-macos-blue dark:text-macos-cyan">
-          <span>View list</span>
-          <ArrowRight className="h-3 w-3" aria-hidden="true" />
-        </div>
       </SurfaceCard>
     </Link>
   );

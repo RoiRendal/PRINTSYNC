@@ -220,7 +220,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
               {isProfileOpen && (
                 <div
-                  className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl py-1"
+                  /* Same fix as the notification panel: `surface-panel` has no
+                     background of its own, which is correct for a card on the
+                     page and wrong for a menu floating over it. */
+                  className="surface-panel absolute right-0 top-full z-[100] mt-2 w-64 overflow-hidden rounded-2xl bg-[var(--app-surface-raised)] py-1"
                   onClick={(e) => e.stopPropagation()}
                 >
                     <div className="border-b px-4 py-3">
