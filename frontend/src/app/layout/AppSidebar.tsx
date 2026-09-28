@@ -75,7 +75,13 @@ export const Sidebar = ({
             (`sr-only`, not removed), so the brand still has a name. */}
         <div
           className={cn(
-            'flex items-center gap-2 border-b border-[var(--app-border-frame)] px-3 py-2.5',
+            /* `h-12` matches the header's `h-12`, so the brand's bottom border and
+               the header's bottom border land on the same line across the whole
+               width. Both are border-box, so the 1px border sits INSIDE the 48px
+               on each. Sizing this row from its padding instead (py-2.5 plus a
+               28px logo = 48px of *content*) made it 49px tall and put its border
+               1px below the header's. */
+            'flex h-12 shrink-0 items-center gap-2 border-b border-[var(--app-border-frame)] px-3',
             isMinimized && 'justify-center px-0',
           )}
         >
@@ -127,7 +133,7 @@ export const Sidebar = ({
                      own fill moves. Hover is a fill for the same reason: there is
                      no colour left to change. */
                   'text-[var(--app-text)]',
-                  !isActive && 'hover:bg-[var(--app-state-hover)]',
+                  !isActive && 'hover:bg-[var(--app-state-hover-sidebar)]',
                   isMinimized && 'justify-center gap-0 px-0',
                 )
               }
@@ -135,7 +141,7 @@ export const Sidebar = ({
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected)]" />
+                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected-sidebar)]" />
                   )}
                   {/* An alignment box only. It paints nothing and takes its colour
                       from the row, so the icon and the label can never drift apart. */}
