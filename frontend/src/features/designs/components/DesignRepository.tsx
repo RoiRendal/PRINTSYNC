@@ -208,7 +208,7 @@ export function DesignRepository() {
                           <Download className="h-4 w-4" aria-hidden="true" />
                         </Button>
                       </div>
-                      <div className="absolute left-2 top-2"><Badge variant="blue">{design.category}</Badge></div>
+                      <div className="absolute left-2 top-2"><Badge variant="accent">{design.category}</Badge></div>
                     </div>
                     <div className="space-y-3 p-3">
                       <div className="flex items-start justify-between gap-2">
@@ -248,7 +248,7 @@ export function DesignRepository() {
           <div className="space-y-2">
             <span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-500">Tags</span>
             <div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())} /><Button type="button" variant="secondary" onClick={handleAddTag}>Add</Button></div>
-            <div className="flex flex-wrap gap-1.5">{newDesign.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div>
+            <div className="flex flex-wrap gap-1.5">{newDesign.tags.map((tag) => <Badge key={tag} variant="accent" className="gap-1">{tag}<button type="button" onClick={() => removeTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div>
           </div>
           <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsAddModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading} leftIcon={<UploadCloud className="h-3.5 w-3.5" aria-hidden="true" />}>{isUploading ? 'Uploading...' : 'Upload Design'}</Button></div>
         </form>
@@ -259,7 +259,7 @@ export function DesignRepository() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
-              <div><h4 className="mb-1 label-caps text-app-text-muted">Design Information</h4><p className="text-xl font-bold text-app-ink dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="blue" className="mt-2">{selectedDesign.category}</Badge></div>
+              <div><h4 className="mb-1 label-caps text-app-text-muted">Design Information</h4><p className="text-xl font-bold text-app-ink dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="accent" className="mt-2">{selectedDesign.category}</Badge></div>
               <SurfaceCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-2xs text-app-text-muted">Reference ID</p><p className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-2xs text-app-text-muted">Created Date</p><p className="text-sm font-bold text-app-ink dark:text-zinc-200">{selectedDesign.createdAt}</p></div></SurfaceCard>
               <div className="space-y-2"><h4 className="label-caps text-app-text-muted">Tags</h4><div className="flex flex-wrap gap-1.5">{selectedDesign.tags.map((tag) => <Badge key={tag} variant="gray">{tag}</Badge>)}</div></div>
               <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')} leftIcon={<Download className="h-4 w-4" aria-hidden="true" />}>Download Assets</Button>
@@ -274,7 +274,7 @@ export function DesignRepository() {
             <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
             <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
             <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Image URL</span><Input type="text" value={editDesignData.imageUrl} onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })} /></label>
-            <div className="space-y-2"><span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-500">Tags</span><div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={editTagInput} onChange={(e) => setEditTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())} /><Button type="button" variant="secondary" onClick={handleEditAddTag}>Add</Button></div><div className="flex flex-wrap gap-1.5">{editDesignData.tags.map((tag) => <Badge key={tag} variant="blue" className="gap-1">{tag}<button type="button" onClick={() => removeEditTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div></div>
+            <div className="space-y-2"><span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-500">Tags</span><div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={editTagInput} onChange={(e) => setEditTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleEditAddTag())} /><Button type="button" variant="secondary" onClick={handleEditAddTag}>Add</Button></div><div className="flex flex-wrap gap-1.5">{editDesignData.tags.map((tag) => <Badge key={tag} variant="accent" className="gap-1">{tag}<button type="button" onClick={() => removeEditTag(tag)} className="cursor-pointer"><Plus className="h-3 w-3 rotate-45" aria-hidden="true" /></button></Badge>)}</div></div>
             <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth>Save Changes</Button></div>
           </form>
         )}

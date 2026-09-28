@@ -69,13 +69,13 @@ export function POSCart({
             </h2>
             <p className="mt-1 text-xs text-app-text-muted dark:text-zinc-500">Checkout panel</p>
           </div>
-          <Badge variant="blue">{cart.length} items</Badge>
+          <Badge variant="accent">{cart.length} items</Badge>
         </div>
       </div>
 
       <div className="max-h-[60vh] overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-hide">
         {posMode === 'custom' && (
-          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] p-3">
+          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-accent)] p-3">
             <label className="block space-y-1.5">
               <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Customer</span>
               <CustomerSelector

@@ -248,13 +248,13 @@ export default function CustomersPage() {
             </CardHeader>
             <div className="space-y-2.5">
               {[
-                { label: 'Total Customers', value: customers.length, icon: Users, tone: 'blue' as const },
+                { label: 'Total Customers', value: customers.length, icon: Users, tone: 'accent' as const },
                 { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
                 { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
               ].map(({ label, value, icon: Icon, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>

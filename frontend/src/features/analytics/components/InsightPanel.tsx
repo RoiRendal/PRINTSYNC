@@ -36,7 +36,7 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
           </div>
           <p><span className="font-bold text-app-ink dark:text-zinc-100">Risk / Watchout:</span> {state.report.riskWatchout}</p>
           <p><span className="font-bold text-app-ink dark:text-zinc-100">Recommended Action:</span> {state.report.recommendedAction}</p>
-          <Badge variant="blue">Confidence {Math.max(0, Math.min(100, state.report.confidence)).toFixed(1)}%</Badge>
+          <Badge variant="accent">Confidence {Math.max(0, Math.min(100, state.report.confidence)).toFixed(1)}%</Badge>
         </div>
       ) : (
         <p className="mt-4 text-xs text-app-text-muted dark:text-zinc-500">Generate insights to view a fixed mini-report.</p>

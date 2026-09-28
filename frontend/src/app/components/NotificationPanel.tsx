@@ -124,7 +124,7 @@ export const NotificationPanel = React.forwardRef<
                   className={cn(
                     'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-2xs font-bold',
                     /* Amber and gray map onto the tint tokens. The blue chip does
-                       not: --app-tint-blue is the composite of app-accent, which
+                       not: --app-tint-accent is the composite of app-accent, which
                        is a grey in this palette, so using it here would turn a
                        blue chip grey. Its dark values are the composite of the
                        real Tailwind blue this chip actually paints with. */

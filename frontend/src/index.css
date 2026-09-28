@@ -237,12 +237,6 @@
      Once the fill is solid, the BORDER carries the separation: a card is 1.09:1
      from the page no matter what it is filled with. Ratios below are measured. */
   --app-surface-sub: #ececef;        /* toolbars, table headers, segmented tracks */
-  /* The same value as --app-surface-sub above on purpose: both are "one step in
-     from the page". They are kept as separate names because they mean different
-     things — a sunken well is recessed INTO the page, a -sub surface is a region
-     laid OVER it. Tone and hue shift independently of --app-surface via
-     --app-filter-tone / --app-filter-saturate below. */
-  --app-surface-sunken: #e3e3e8;     /* inset wells */
   --app-state-hover: #ececef;        /* 1.18:1 on raised — stronger than the 1.12:1 of the old 5%-black hover tint */
   --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
   /* The selected nav row. Deliberately not the accent colour: the row's own fill
@@ -255,24 +249,17 @@
      than it in dark. The single structural colour to cross over like this, which
      is why it carries its own name rather than a shared -strong / -weak variant. */
   --app-border-frame: #bbbbbb;
-  /* The two muted steps carry the same value as the default --app-text-muted, but
-     only in light mode. In dark each steps UP (see `.dark`) because the default
-     3.95:1 / 3.18:1 readings on -sub / -sunken fall under the 4.5:1 floor. That
-     divergence is the whole reason these are separate tokens, so they are not
-     flattened to a single name. */
-  --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
-  --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
 
-  /* NOT DEAD YET, but nothing reads them — flagging rather than deleting.
-     `--app-surface-sunken`, `--app-text-muted-sub` and `--app-text-muted-sunken`
-     are declared in both themes and referenced by no rule and no component:
-     `grep -rn "sunken\|muted-sub" src/` returns hits in this file only. They are
-     the last of the ladder that existed for a `surface-sunken` well that was
-     never built. The contrast work behind their dark steps (see `.dark`) is
-     still correct and worth keeping if the well is ever added, so they are left
-     in place with this note instead of being deleted the way `macos-bg` was.
-     Anyone who adds a sunken surface should wire these up rather than invent a
-     new name — or delete all three pairs and the note together. */
+  /* Muted text. `--app-text-muted` (#555558) is the source of truth; the -sub
+     step carries the same light value and is the one a muted label on a -sub
+     surface must use in dark, where the default measures 3.95:1 — under the
+     4.5:1 floor — and steps UP to #aeaeb2 (5.13:1). There is no -sunken step:
+     the `--app-surface-sunken` / `--app-text-muted-sunken` tokens were deleted
+     (declared in both themes, read by nothing), so those surfaces do not exist.
+
+     Contrast numbers kept for a sunken surface, if one is ever built: a muted
+     label on -sunken measured 3.18:1 in light (the dark step would be #c7c7cc,
+     5.42:1). Preserved here so the work is not rediscovered. */
 
   /* Text and icons sitting ON the accent fill. This cannot be written literally
      as `text-white`: the accent inverts in dark mode (see `.dark` below), and
@@ -284,28 +271,17 @@
      white card, so the badges look the same and stop being translucent. Every
      pairing with its badge text was measured; all clear 4.5:1.
 
-     Naming trap: `--app-tint-blue` is NOT a blue. It is the neutral grey that
-     the `accent` badge and the accent-tinted rows use, and it holds exactly the
-     same value as --app-surface-sub. It is left named for the badge ROLE it
-     serves — the badge role is `blue` in `Badge.tsx` / `StatusLabel.tsx` and is
-     backed by the accent, which is grey. Renaming it `--app-tint-accent` would
-     be more accurate but would touch every badge call site; a literal blue
-     badge would need a genuinely blue value, not this one.
-
-     The four non-grey tints have the opposite problem, and it is unresolved:
-     they are named `-blue` / `-green` / `-red` / `-orange` / `-purple` after the
-     badging role, while the text tokens they are always paired with are now
-     named after the role too (`app-accent` / `app-success` / `app-danger` /
-     `app-warning` / `app-violet`). So a call site reads
-     `bg-[var(--app-tint-blue)] text-app-accent`, and a future reader will
-     reasonably ask why a blue fill sits under a grey accent. `-neutral` and
-     `-gray` are also two different greys for two roles that render the same
-     three border classes. Renaming these to match the role names was left out
-     of this pass deliberately — it is not a typo fix but a decision about the
-     badge vocabulary, and it touches `Badge.tsx`, `StatusLabel.tsx`,
-     `getStatusBadgeVariant` and every call site. */
+     A tint name matches the badging ROLE it backs, so the name and the
+     `variant` / `tone` key in `Badge.tsx` / `StatusLabel.tsx` always agree:
+     `accent` is the grey fill behind the accent badge and the accent-tinted
+     rows — it is `#ebebeb`, the same value as `--app-surface-sub`, and the only
+     grey here that is NOT a hue (the accent is grey by design); `green`, `red`,
+     `orange` and `purple` are the status hues and are fixed across both themes;
+     `neutral` and `gray` are the two greys for the two neutral buckets (neutral
+     = the default pill, gray = the tag/secondary pill) and render the same
+     border classes but different fills. */
   --app-tint-neutral: #f5f6f8;
-  --app-tint-blue: #ebebeb;
+  --app-tint-accent: #ebebeb;
   --app-tint-green: #e7f8eb;
   --app-tint-red: #ffe7e6;
   --app-tint-orange: #fff0db;
@@ -333,28 +309,25 @@
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
 
-  /* Dark partners for the flat ladder. Note the muted-text steps: the default
-     --app-text-muted (#98989d) measures 3.95:1 on -sub and 3.18:1 on -sunken,
-     both below the 4.5:1 floor, so a muted label on those surfaces must use the
-     lighter step below rather than the default. */
+  /* Dark partners for the flat ladder. The default --app-text-muted (#98989d)
+     measures 3.95:1 on -sub, below the 4.5:1 floor, so a muted label on a -sub
+     surface uses #aeaeb2 (5.13:1). The -sub muted step lives as this bare value
+     rather than a token because nothing reads it yet. */
   --app-surface-sub: #3a3a3c;
-  --app-surface-sunken: #48484a;
   --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
   --app-state-hover-sub: #48484a;
   --app-state-selected: #48484a;     /* dark step — one step up from the surface, never the light value */
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
   --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */
-  --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
-  --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
 
   /* Dark badge tints, composited over the raised surface. The gray one is the
      reason the gray badge's dark text had to move up a step: the old text measured
      4.23:1 on this fill, under the 4.5:1 floor for 9px type.
-     `-tint-blue` tracks --app-surface-sub in dark as well as in light — the two
+     `-tint-accent` tracks --app-surface-sub in dark as well as in light — the two
      are the same value in both themes. */
   --app-tint-neutral: #414143;
-  --app-tint-blue: #3e3e40;
+  --app-tint-accent: #3e3e40;
   --app-tint-green: #2d4535;
   --app-tint-red: #4e2e2e;
   --app-tint-orange: #4e3d27;

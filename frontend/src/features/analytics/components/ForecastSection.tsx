@@ -104,7 +104,7 @@ export function ForecastSection({
           <InsightPanel state={forecastInsight} onToggleAutoGenerate={() => setForecastInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateForecastInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <MetricTile label={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.actual)} />
-            <MetricTile label={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.forecast)} tone="blue" />
+            <MetricTile label={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.forecast)} tone="accent" />
             <MetricTile label="Expected Growth" value={`${financialForecastStats.expectedGrowth.toFixed(1)}%`} tone={financialForecastStats.expectedGrowth >= 0 ? 'green' : 'red'} />
             <MetricTile label="Forecast Confidence" value={`${Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy)).toFixed(1)}%`} tone="purple" />
           </div>

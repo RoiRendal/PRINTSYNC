@@ -153,7 +153,7 @@ export function POSCheckoutModal({
                 {posMode === 'retail' ? 'Inventory updated and record saved.' : 'Custom job entered into production pipeline.'}
               </p>
               {recovered && (
-                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-blue)] px-3 py-2 text-2xs font-semibold leading-relaxed text-app-accent dark:text-app-accent-soft">
+                <p className="mt-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-accent)] px-3 py-2 text-2xs font-semibold leading-relaxed text-app-accent dark:text-app-accent-soft">
                   This sale had already been saved — the earlier attempt did go through. Do not ring it up again.
                 </p>
               )}

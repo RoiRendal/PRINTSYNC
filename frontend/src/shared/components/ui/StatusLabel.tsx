@@ -16,7 +16,7 @@ import type { BadgeVariant } from './Badge';
 const toneClasses: Record<BadgeVariant, string> = {
   neutral: 'text-app-text-muted dark:text-zinc-400',
   gray: 'text-app-text-muted dark:text-zinc-400',
-  blue: 'text-app-accent dark:text-app-accent-soft',
+  accent: 'text-app-accent dark:text-app-accent-soft',
   green: 'text-green-700 dark:text-green-300',
   red: 'text-app-danger dark:text-red-300',
   orange: 'text-orange-700 dark:text-orange-300',

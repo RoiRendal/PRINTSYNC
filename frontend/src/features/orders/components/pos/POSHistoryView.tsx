@@ -147,7 +147,7 @@ export function POSHistoryView({
                     <TableCell>
                       <span className="tabular-nums text-app-ink dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
                     </TableCell>
-                    <TableCell><StatusLabel tone="blue">{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
+                    <TableCell><StatusLabel tone="accent">{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
                     <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
                   </TableRow>
                 );
@@ -207,7 +207,7 @@ export function POSHistoryView({
               </div>
               <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
                 <span className="text-3xs font-bold text-app-ink dark:text-zinc-100">Payment</span>
-                <Badge variant="blue">{selectedTransaction.paymentMethod}</Badge>
+                <Badge variant="accent">{selectedTransaction.paymentMethod}</Badge>
               </div>
             </div>
 

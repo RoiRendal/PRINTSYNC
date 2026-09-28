@@ -83,7 +83,7 @@ function formatAction(action: string): string {
 function ActionBadge({ action }: { action: string }) {
   let variant: BadgeVariant = 'neutral';
   if (action.includes('.created')) variant = 'green';
-  else if (action.includes('.updated')) variant = 'blue';
+  else if (action.includes('.updated')) variant = 'accent';
   else if (action.includes('.deleted') || action.includes('.voided')) variant = 'red';
   else if (action.includes('settings')) variant = 'purple';
   return <StatusLabel tone={variant}>{formatAction(action)}</StatusLabel>;
@@ -171,13 +171,13 @@ export default function AuditLogPage() {
             </CardHeader>
             <div className="space-y-2.5">
               {[
-                { label: 'Total Events', value: total, tone: 'blue' as const },
+                { label: 'Total Events', value: total, tone: 'accent' as const },
                 { label: 'Current Page', value: `${page} / ${totalPages || 1}`, tone: 'purple' as const },
                 { label: 'Shown', value: items.length, tone: 'green' as const },
               ].map(({ label, value, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <ScrollText className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>

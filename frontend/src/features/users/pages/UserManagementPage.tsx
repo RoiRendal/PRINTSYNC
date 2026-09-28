@@ -252,12 +252,12 @@ export default function UserManagement() {
             <div className="space-y-2.5">
               {[
                 { label: 'Admin', value: adminCount, icon: Shield, tone: 'purple' },
-                { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
+                { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'accent' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
                     <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
@@ -365,7 +365,7 @@ export default function UserManagement() {
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone}</TableCell>
-                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
+                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
                         <TableCell className="text-app-ink dark:text-zinc-200">{user.position}</TableCell>
                         <TableCell className="text-app-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>

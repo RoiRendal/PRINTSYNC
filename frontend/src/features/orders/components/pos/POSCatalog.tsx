@@ -84,7 +84,7 @@ export function POSCatalog({
                 </div>
               )}
               <div className="absolute right-1.5 top-1.5">
-                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'blue'} className="bg-[var(--app-surface-raised)] dark:bg-[#141416]">
+                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'accent'} className="bg-[var(--app-surface-raised)] dark:bg-[#141416]">
                   {product.stock} stock
                 </Badge>
               </div>

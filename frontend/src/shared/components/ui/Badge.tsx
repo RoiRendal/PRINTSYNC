@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import type { HTMLAttributes } from 'react';
 import { cn } from '../../lib/cn';
 
-export type BadgeVariant = 'neutral' | 'blue' | 'green' | 'red' | 'orange' | 'purple' | 'gray';
+export type BadgeVariant = 'neutral' | 'accent' | 'green' | 'red' | 'orange' | 'purple' | 'gray';
 export type BadgeSize = 'sm' | 'md';
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -12,7 +12,7 @@ export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 
 const variantClasses: Record<BadgeVariant, string> = {
   neutral: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-neutral)] text-gray-700 dark:text-zinc-300',
-  blue: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-blue)] text-app-accent dark:text-app-accent-soft',
+  accent: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft',
   green: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-green)] text-green-700 dark:text-green-300',
   red: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
   orange: 'border-[var(--app-border-hairline)] bg-[var(--app-tint-orange)] text-orange-700 dark:text-orange-300',
@@ -46,8 +46,8 @@ export function getStatusBadgeVariant(status: string): BadgeVariant {
   const normalized = status.toLowerCase();
   if (normalized.includes('ready') || normalized.includes('completed') || normalized.includes('delivered') || normalized.includes('online')) return 'green';
   if (normalized.includes('pending') || normalized.includes('warning') || normalized.includes('critical')) return 'orange';
-  if (normalized.includes('design') || normalized.includes('custom')) return 'blue';
-  if (normalized.includes('production') || normalized.includes('active')) return 'blue';
+  if (normalized.includes('design') || normalized.includes('custom')) return 'accent';
+  if (normalized.includes('production') || normalized.includes('active')) return 'accent';
   if (normalized.includes('error') || normalized.includes('delete') || normalized.includes('failed')) return 'red';
   return 'neutral';
 }

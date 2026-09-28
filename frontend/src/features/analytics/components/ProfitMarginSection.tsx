@@ -91,7 +91,7 @@ export function ProfitMarginSection({
         <>
           <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label="Revenue" value={money.format(profitMarginStats.totalRevenue)} tone="blue" />
+            <MetricTile label="Revenue" value={money.format(profitMarginStats.totalRevenue)} tone="accent" />
             <MetricTile label="COGS" value={money.format(profitMarginStats.totalExpenses)} tone="orange" />
             <MetricTile label="Gross Profit" value={money.format(profitMarginStats.totalProfit)} tone="green" />
             <MetricTile label="Avg Margin" value={`${profitMarginStats.averageMargin.toFixed(1)}%`} />

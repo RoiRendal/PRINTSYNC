@@ -77,7 +77,7 @@ describe('OrdersPage — URL status filter', () => {
 
   it('marks the active filter pill from the URL on arrival', () => {
     renderAt('/orders?status=Designing');
-    // The "Designing" pill carries the active (blue) style; the accessible name
+    // The "Designing" pill carries the active (accent) style; the accessible name
     // is enough to prove the derived value tracked the URL.
     expect(screen.getByRole('button', { name: 'Designing' })).toBeInTheDocument();
   });

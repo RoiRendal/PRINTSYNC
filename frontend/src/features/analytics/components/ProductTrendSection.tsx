@@ -90,7 +90,7 @@ export function ProductTrendSection({
         <>
           <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
           <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} tone="blue" />
+            <MetricTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} tone="accent" />
             <MetricTile label="Leading Product" value={`${productTrendSummary.leadingProduct?.label ?? '-'} (${(productTrendSummary.leadingProduct?.units ?? 0).toLocaleString()})`} tone="green" />
             <MetricTile label="Lowest Product" value={`${productTrendSummary.lowestProduct?.label ?? '-'} (${(productTrendSummary.lowestProduct?.units ?? 0).toLocaleString()})`} tone="orange" />
             <MetricTile label="Products" value={productTrendData.length.toLocaleString()} />
