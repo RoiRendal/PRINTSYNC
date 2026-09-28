@@ -195,27 +195,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="relative"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              {/* The pill's fill is token-driven, never a literal. It used to be
-                  `bg-[#f4f4f6]` — the one hardcoded light fill in the app with no
-                  `dark:` partner — so in dark mode a near-white pill carried a
-                  near-white name (`dark:text-zinc-100`) at about 1.02:1 and the
-                  button read as a blank white blob. `-sub` already means "a
-                  control resting on the header": its dark step (#3a3a3c) puts the
-                  name at 10.3:1. Light shifts one shade (#f4f4f6 -> #ececef) to
-                  match every other resting control, and hover now darkens
-                  (#dedee3) rather than lightening (#f9f9fa) — the direction the
-                  rest of the app already uses. */}
+              {/* Just the avatar now — no pill, no border, no name beside it.
+                  The name was the button's only accessible text, so it is carried
+                  over into `aria-label`: without it the control would announce as
+                  a bare "button" to a screen reader. The pill's old hover fill is
+                  gone with the pill, because the avatar is opaque and would have
+                  hidden it anyway; what is left to signal the control is the
+                  pointer cursor, the press animation, and the focus ring. */}
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] py-1 pl-1 pr-2 text-left hover:bg-[var(--app-state-hover-sub)] active:scale-[0.98]"
+                className="flex cursor-pointer items-center rounded-[var(--radius-button)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-macos-blue active:scale-[0.98]"
                 aria-expanded={isProfileOpen}
+                aria-label={`Account menu for ${currentUser?.name ?? 'Admin'}`}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
+                {/* A rounded SQUARE, not a circle: `--radius-button` is the 8px
+                    corner every other control in the app uses (Button, Input), so
+                    the avatar reads as the same family rather than a one-off. */}
+                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
                   {initials}
                 </div>
-                <span className="hidden max-w-28 truncate text-xs font-semibold text-[var(--app-text)] sm:inline">
-                  {currentUser?.name ?? 'Admin'}
-                </span>
               </button>
 
               {isProfileOpen && (
@@ -233,6 +231,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                       <p className="mt-1 text-2xs font-semibold text-macos-text-muted dark:text-zinc-500">
                         {(currentUser?.role ?? 'admin').replace(/_/g, ' ')}
                       </p>
+                      {/* `truncate` is load-bearing: the panel is a fixed 256px,
+                          and an address can be longer than that. Rendered only
+                          when there is one, so the block does not leave a blank
+                          line for a session that has no email. */}
+                      {currentUser?.email && (
+                        <p className="mt-1 truncate text-2xs text-[var(--app-text-muted)]" title={currentUser.email}>
+                          {currentUser.email}
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
