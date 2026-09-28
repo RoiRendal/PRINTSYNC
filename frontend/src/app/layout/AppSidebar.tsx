@@ -2,11 +2,30 @@ import { useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
+import { ChevronLeft, ChevronRight } from '../../shared/components/ui/icons';
+import { Button } from '../../shared/components/ui';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../../app/providers/BusinessBrandingProvider';
 
-export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
+/** Width of the minimized rail: the logo tile and the nav icon boxes are both
+ *  28px, so 64 gives them a centred column with room to breathe on either side. */
+const MINIMIZED_WIDTH = 64;
+const EXPANDED_WIDTH = 196;
+
+export const Sidebar = ({
+  isCollapsed,
+  isMinimized,
+  onToggleMinimize,
+  className,
+  onNavigate,
+}: {
+  isCollapsed: boolean;
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
+  className?: string;
+  onNavigate?: () => void;
+}) => {
   const { currentUser } = useAuth();
   const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
   const [logoFailed, setLogoFailed] = useState(false);
@@ -26,11 +45,12 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
 
   return (
     <aside
-      /* The width used to be driven by a spring-animated width prop. The
-         library wrote it as an inline style, so the static equivalent is an
-         inline style too — a class would fight the responsive `hidden lg:flex`
-         the parent passes for the collapsed mobile case. */
-      style={{ width: isCollapsed ? 0 : 196 }}
+      /* Three widths, in precedence order: collapsed (hidden) wins over
+         minimized (icon rail), which wins over expanded. It is written as an
+         inline style rather than a class because a class would fight the
+         responsive `hidden lg:flex` the parent passes for the collapsed mobile
+         case. */
+      style={{ width: isCollapsed ? 0 : isMinimized ? MINIMIZED_WIDTH : EXPANDED_WIDTH }}
       className={cn(
         /* Full-height column on the left edge of the shell. It carries the
            right border that separates it from the header/toolbar/body stack, so
@@ -40,12 +60,25 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
         className,
       )}
     >
-      <div className="flex h-full min-w-[196px] flex-col">
+      {/* The 196px floor stops the brand and the nav labels from being squeezed
+          during a width change. It has to be dropped while minimized, or it would
+          hold the rail open at the expanded width. Written as a literal class
+          string, not interpolated — Tailwind scans source text, so a built
+          `min-w-[196px]` would never be generated. */}
+      <div className={cn('flex h-full flex-col', !isMinimized && 'min-w-[196px]')}>
         {/* Brand. The logo and the business name live here now — they used to sit
             in the top header, which is left empty on its left side so the brand
             reads as belonging to the sidebar. The border under this block is what
-            separates the brand from the navigation list. */}
-        <div className="flex items-center gap-2 border-b border-[var(--app-border-frame)] px-3 py-2.5">
+            separates the brand from the navigation list.
+
+            Minimized, the name is hidden but kept in the accessibility tree
+            (`sr-only`, not removed), so the brand still has a name. */}
+        <div
+          className={cn(
+            'flex items-center gap-2 border-b border-[var(--app-border-frame)] px-3 py-2.5',
+            isMinimized && 'justify-center px-0',
+          )}
+        >
           {logoFailed ? (
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
               {APP_NAME.charAt(0)}
@@ -62,7 +95,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               />
             </span>
           )}
-          <div className="min-w-0">
+          <div className={isMinimized ? 'sr-only' : 'min-w-0'}>
             <h1
               className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white"
               title={APP_NAME}
@@ -73,13 +106,19 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
         </div>
 
         {/* Navigation. The top padding is the gap between the brand border and the
-            first tab; it stays small so the list starts tight under the brand. */}
+            first tab; it stays small so the list starts tight under the brand.
+
+            Minimized, each row is just its icon, centred. The label is kept as
+            `sr-only` — removing it would leave the links with no accessible name
+            at all — and repeated as a `title` so a pointer user can still read
+            what an icon is. */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-3 pt-2 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onNavigate}
+              title={isMinimized ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
                   'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 text-sm font-semibold',
@@ -89,6 +128,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                      no colour left to change. */
                   'text-[var(--app-text)]',
                   !isActive && 'hover:bg-[var(--app-state-hover)]',
+                  isMinimized && 'justify-center gap-0 px-0',
                 )
               }
             >
@@ -102,7 +142,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
                   <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center">
                     <item.icon className="h-4 w-4" />
                   </span>
-                  <span className="relative z-10 truncate whitespace-nowrap">
+                  <span className={cn('truncate whitespace-nowrap', isMinimized ? 'sr-only' : 'relative z-10')}>
                     {item.label}
                   </span>
                 </>
@@ -110,6 +150,34 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
             </NavLink>
           ))}
         </nav>
+
+        {/* Minimize. Placed in the sidebar itself, not in the page toolbar: the
+            toolbar's chevron hides the sidebar outright, whereas this collapses it
+            to an icon rail and leaves it on screen. It sits at the foot of the
+            column so it stays in the same place in both widths. */}
+        <div
+          className={cn(
+            'flex shrink-0 items-center border-t border-[var(--app-border-frame)] p-2',
+            isMinimized ? 'justify-center' : 'justify-between',
+          )}
+        >
+          {!isMinimized && (
+            <span className="pl-1 text-2xs font-bold text-macos-text-muted dark:text-zinc-500">
+              Minimize
+            </span>
+          )}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onToggleMinimize}
+            title={isMinimized ? 'Show sidebar labels' : 'Minimize sidebar to icons'}
+            aria-label={isMinimized ? 'Restore sidebar' : 'Minimize sidebar'}
+            aria-expanded={!isMinimized}
+            className="h-7 w-7 rounded-lg text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            {isMinimized ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </aside>
   );

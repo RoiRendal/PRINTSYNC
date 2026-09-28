@@ -56,6 +56,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('sidebar-collapsed', String(isCollapsed));
   }, [isCollapsed]);
 
+  /* Kept deliberately independent of `isCollapsed`. Collapsed hides the sidebar
+     outright (width 0); minimized keeps it on screen as an icon rail — logo plus
+     icons, no labels. Remembering the two separately is what lets someone hide
+     the sidebar and come back to the width they had chosen. */
+  const [isMinimized, setIsMinimized] = useState(() => {
+    return localStorage.getItem('sidebar-minimized') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-minimized', String(isMinimized));
+  }, [isMinimized]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -85,6 +97,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [isProfileOpen, isNotificationsOpen]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleMinimize = () => setIsMinimized(!isMinimized);
   const closeSidebar = () => {
     if (window.innerWidth < 1024) {
       setIsCollapsed(true);
@@ -114,6 +127,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           z-index does not apply and the two never overlap horizontally. */}
       <Sidebar
         isCollapsed={isCollapsed}
+        isMinimized={isMinimized}
+        onToggleMinimize={toggleMinimize}
         onNavigate={closeSidebar}
         className={cn(
           'absolute bottom-0 left-0 top-0 z-[70] lg:static',
