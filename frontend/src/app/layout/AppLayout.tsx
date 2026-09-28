@@ -56,6 +56,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('sidebar-collapsed', String(isCollapsed));
   }, [isCollapsed]);
 
+  /* Kept deliberately independent of `isCollapsed`. Collapsed hides the sidebar
+     outright (width 0); minimized keeps it on screen as an icon rail — logo plus
+     icons, no labels. Remembering the two separately is what lets someone hide
+     the sidebar and come back to the width they had chosen. */
+  const [isMinimized, setIsMinimized] = useState(() => {
+    return localStorage.getItem('sidebar-minimized') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-minimized', String(isMinimized));
+  }, [isMinimized]);
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -85,6 +97,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   }, [isProfileOpen, isNotificationsOpen]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleMinimize = () => setIsMinimized(!isMinimized);
   const closeSidebar = () => {
     if (window.innerWidth < 1024) {
       setIsCollapsed(true);
@@ -114,6 +127,8 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
           z-index does not apply and the two never overlap horizontally. */}
       <Sidebar
         isCollapsed={isCollapsed}
+        isMinimized={isMinimized}
+        onToggleMinimize={toggleMinimize}
         onNavigate={closeSidebar}
         className={cn(
           'absolute bottom-0 left-0 top-0 z-[70] lg:static',
@@ -159,8 +174,15 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                 className="relative rounded-full text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 <Bell className="h-4 w-4" />
+                {/* The count used to sit at `right-1.5 top-1.5` at 16px square —
+                    which is the exact 16px box the bell occupies inside this 28px
+                    button, so it covered the icon outright rather than annotating
+                    it. It now hangs off the button's top-right corner (negative
+                    offsets) and is a step smaller, so only its own corner meets
+                    the bell's box. `px-0.5` is deliberate: at `px-1` the "9+"
+                    label alone widens the pill back across the icon. */}
                 {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-white bg-macos-red px-1 text-2xs font-bold text-white dark:border-zinc-950">
+                  <span className="absolute -right-1 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full border border-white bg-macos-red px-0.5 text-2xs font-bold text-white dark:border-zinc-950">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -173,15 +195,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
               className="relative"
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
+              {/* The pill's fill is token-driven, never a literal. It used to be
+                  `bg-[#f4f4f6]` — the one hardcoded light fill in the app with no
+                  `dark:` partner — so in dark mode a near-white pill carried a
+                  near-white name (`dark:text-zinc-100`) at about 1.02:1 and the
+                  button read as a blank white blob. `-sub` already means "a
+                  control resting on the header": its dark step (#3a3a3c) puts the
+                  name at 10.3:1. Light shifts one shade (#f4f4f6 -> #ececef) to
+                  match every other resting control, and hover now darkens
+                  (#dedee3) rather than lightening (#f9f9fa) — the direction the
+                  rest of the app already uses. */}
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[#f4f4f6] py-1 pl-1 pr-2 text-left hover:bg-[#f9f9fa] active:scale-[0.98]"
+                className="flex cursor-pointer items-center gap-2 rounded-full border border-[var(--app-border-hairline)] bg-[var(--app-surface-sub)] py-1 pl-1 pr-2 text-left hover:bg-[var(--app-state-hover-sub)] active:scale-[0.98]"
                 aria-expanded={isProfileOpen}
               >
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
                   {initials}
                 </div>
-                <span className="hidden max-w-28 truncate text-xs font-semibold text-macos-text dark:text-zinc-100 sm:inline">
+                <span className="hidden max-w-28 truncate text-xs font-semibold text-[var(--app-text)] sm:inline">
                   {currentUser?.name ?? 'Admin'}
                 </span>
               </button>

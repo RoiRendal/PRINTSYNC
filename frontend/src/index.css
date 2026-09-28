@@ -148,6 +148,20 @@
   color-scheme: light;
   --app-surface: #f5f5f7;
   --app-surface-raised: #ffffff;
+  /* The sidebar's own step off the page — one clear step darker in BOTH modes, so
+     the left column reads as its own panel before its right border is even
+     considered.
+
+     Light is now dark enough that it sits BELOW --app-state-hover (#ececef).
+     Reusing that token here would make a hovered row *lighter* than the sidebar
+     it sits on, at 1.008:1 — invisible, and backwards. So the sidebar carries
+     its own hover/selected steps, stepped from the sidebar rather than from the
+     page. Measured: sidebar vs page 1.09:1, vs hover ~1.09:1, vs selected
+     ~1.18:1 — a visible tint AND better feedback than the previous, lighter
+     sidebar managed. Dark keeps the global values exactly, so dark is untouched. */
+  --app-surface-sidebar: #ebebee;
+  --app-state-hover-sidebar: #e2e2e6;
+  --app-state-selected-sidebar: #d9d9de;
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
   /* The default border colour for every element, so it is the largest single source
@@ -206,6 +220,13 @@
   color-scheme: dark;
   --app-surface: #1c1c1e;
   --app-surface-raised: #2c2c2e;
+  /* Dark partner for the sidebar tint — the same "one small step off the page"
+     role, stepped darker rather than lighter so the direction matches light. */
+  --app-surface-sidebar: #171719;
+  /* Dark is already right, so these deliberately repeat the global values: the
+     sidebar's own steps exist for light mode's sake, and dark must not shift. */
+  --app-state-hover-sidebar: #3a3a3c;
+  --app-state-selected-sidebar: #48484a;
   --app-text: #f5f5f7;
   --app-text-muted: #98989d;
   --app-hairline: #48484a;

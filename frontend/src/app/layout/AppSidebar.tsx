@@ -2,11 +2,35 @@ import { useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
+import { ChevronLeft, ChevronRight } from '../../shared/components/ui/icons';
+import { Button } from '../../shared/components/ui';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../../app/providers/BusinessBrandingProvider';
 
-export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: boolean, className?: string, onNavigate?: () => void }) => {
+/** Width of the minimized rail: the logo tile and the nav icon boxes are both
+ *  28px, so 56 leaves 14px of clearance on either side of them and still reads
+ *  as a deliberate column rather than a strip. */
+const MINIMIZED_WIDTH = 56;
+/** Trimmed from 196. The column only has to be as wide as its widest row plus
+ *  the gutters that frame it, and those gutters were tightened at the same time
+ *  — so the visible inset stays comfortable while the column itself gets 20px
+ *  narrower. Keep this in step with the `min-w-[176px]` floor below. */
+const EXPANDED_WIDTH = 176;
+
+export const Sidebar = ({
+  isCollapsed,
+  isMinimized,
+  onToggleMinimize,
+  className,
+  onNavigate,
+}: {
+  isCollapsed: boolean;
+  isMinimized: boolean;
+  onToggleMinimize: () => void;
+  className?: string;
+  onNavigate?: () => void;
+}) => {
   const { currentUser } = useAuth();
   const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
   const [logoFailed, setLogoFailed] = useState(false);
@@ -26,32 +50,52 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
 
   return (
     <aside
-      /* The width used to be driven by a spring-animated width prop. The
-         library wrote it as an inline style, so the static equivalent is an
-         inline style too — a class would fight the responsive `hidden lg:flex`
-         the parent passes for the collapsed mobile case. */
-      style={{ width: isCollapsed ? 0 : 196 }}
+      /* Three widths, in precedence order: collapsed (hidden) wins over
+         minimized (icon rail), which wins over expanded. It is written as an
+         inline style rather than a class because a class would fight the
+         responsive `hidden lg:flex` the parent passes for the collapsed mobile
+         case. */
+      style={{ width: isCollapsed ? 0 : isMinimized ? MINIMIZED_WIDTH : EXPANDED_WIDTH }}
       className={cn(
         /* Full-height column on the left edge of the shell. It carries the
            right border that separates it from the header/toolbar/body stack, so
            it runs edge to edge rather than sitting in an inset rounded panel. */
-        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface)] text-macos-text dark:text-zinc-100',
+        'flex shrink-0 flex-col overflow-hidden bg-[var(--app-surface-sidebar)] text-macos-text dark:text-zinc-100',
         'border-r border-[var(--app-border-frame)]',
         className,
       )}
     >
-      <div className="flex h-full min-w-[196px] flex-col">
+      {/* The 176px floor stops the brand and the nav labels from being squeezed
+          during a width change. It has to be dropped while minimized, or it would
+          hold the rail open at the expanded width. Written as a literal class
+          string, not interpolated — Tailwind scans source text, so a built
+          `min-w-[176px]` would never be generated. */}
+      <div className={cn('flex h-full flex-col', !isMinimized && 'min-w-[176px]')}>
         {/* Brand. The logo and the business name live here now — they used to sit
             in the top header, which is left empty on its left side so the brand
-            reads as belonging to the sidebar. The border under this block is what
-            separates the brand from the navigation list. */}
-        <div className="flex items-center gap-2 border-b border-[var(--app-border-frame)] px-3 py-2.5">
+            reads as belonging to the sidebar.
+
+            The rule that used to sit under this block is gone. It was there to
+            separate the brand from the navigation, but the sidebar already has
+            its own tint and its own right border, so the line was doing no
+            separating work — it just cut the column in two. The row keeps the
+            header's `h-12` so the navigation still starts on the same line as the
+            toolbar in the column beside it.
+
+            Minimized, the name is hidden but kept in the accessibility tree
+            (`sr-only`, not removed), so the brand still has a name. */}
+        <div
+          className={cn(
+            'flex h-12 shrink-0 items-center gap-2 px-2.5',
+            isMinimized && 'justify-center px-0',
+          )}
+        >
           {logoFailed ? (
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-macos-blue text-2xs font-bold text-[var(--app-accent-ink)]">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-macos-blue dark:text-macos-cyan">
               {APP_NAME.charAt(0)}
             </div>
           ) : (
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-[#f9f9fa] ring-1 ring-[var(--app-border-hairline)] dark:bg-[#4e4e50]">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center">
               <img
                 src={effectiveBusinessLogoUrl}
                 alt=""
@@ -62,7 +106,7 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
               />
             </span>
           )}
-          <div className="min-w-0">
+          <div className={isMinimized ? 'sr-only' : 'min-w-0'}>
             <h1
               className="truncate text-sm font-bold tracking-tight text-macos-text dark:text-white"
               title={APP_NAME}
@@ -72,37 +116,44 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
           </div>
         </div>
 
-        {/* Navigation. The top padding is the gap between the brand border and the
-            first tab; it stays small so the list starts tight under the brand. */}
+        {/* Navigation. The top padding is the gap between the brand and the first
+            tab; it stays small so the list starts tight under the brand.
+
+            Minimized, each row is just its icon, centred. The label is kept as
+            `sr-only` — removing it would leave the links with no accessible name
+            at all — and repeated as a `title` so a pointer user can still read
+            what an icon is. */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-3 pt-2 scrollbar-hide">
           {visibleItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={onNavigate}
+              title={isMinimized ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 text-sm font-semibold',
+                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2 text-sm font-semibold',
                   /* One colour for both states, and the icon inherits it, so
                      selecting an item never recolours anything — only the row's
                      own fill moves. Hover is a fill for the same reason: there is
                      no colour left to change. */
                   'text-[var(--app-text)]',
-                  !isActive && 'hover:bg-[var(--app-state-hover)]',
+                  !isActive && 'hover:bg-[var(--app-state-hover-sidebar)]',
+                  isMinimized && 'justify-center gap-0 px-0',
                 )
               }
             >
               {({ isActive }) => (
                 <>
                   {isActive && (
-                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected)]" />
+                    <span className="absolute inset-0 rounded-xl bg-[var(--app-state-selected-sidebar)]" />
                   )}
                   {/* An alignment box only. It paints nothing and takes its colour
                       from the row, so the icon and the label can never drift apart. */}
                   <span className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center">
                     <item.icon className="h-4 w-4" />
                   </span>
-                  <span className="relative z-10 truncate whitespace-nowrap">
+                  <span className={cn('truncate whitespace-nowrap', isMinimized ? 'sr-only' : 'relative z-10')}>
                     {item.label}
                   </span>
                 </>
@@ -110,6 +161,34 @@ export const Sidebar = ({ isCollapsed, className, onNavigate }: { isCollapsed: b
             </NavLink>
           ))}
         </nav>
+
+        {/* Minimize. Placed in the sidebar itself, not in the page toolbar: the
+            toolbar's chevron hides the sidebar outright, whereas this collapses it
+            to an icon rail and leaves it on screen. It sits at the foot of the
+            column so it stays in the same place in both widths — centred in the
+            rail, pushed to the outer edge when expanded.
+
+            No divider above it and no text label: the chevron alone, which is what
+            keeps a layout control quiet until it is looked for. Its name still
+            says what it does, via `aria-label` and `title`. */}
+        <div
+          className={cn(
+            'flex shrink-0 items-center p-1.5',
+            isMinimized ? 'justify-center' : 'justify-end',
+          )}
+        >
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={onToggleMinimize}
+            title={isMinimized ? 'Show sidebar labels' : 'Minimize sidebar to icons'}
+            aria-label={isMinimized ? 'Restore sidebar' : 'Minimize sidebar'}
+            aria-expanded={!isMinimized}
+            className="h-7 w-7 rounded-lg text-macos-text-muted hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+          >
+            {isMinimized ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
       </div>
     </aside>
   );
