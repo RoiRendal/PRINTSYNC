@@ -9,9 +9,14 @@ import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../../app/providers/BusinessBrandingProvider';
 
 /** Width of the minimized rail: the logo tile and the nav icon boxes are both
- *  28px, so 64 gives them a centred column with room to breathe on either side. */
-const MINIMIZED_WIDTH = 64;
-const EXPANDED_WIDTH = 196;
+ *  28px, so 56 leaves 14px of clearance on either side of them and still reads
+ *  as a deliberate column rather than a strip. */
+const MINIMIZED_WIDTH = 56;
+/** Trimmed from 196. The column only has to be as wide as its widest row plus
+ *  the gutters that frame it, and those gutters were tightened at the same time
+ *  — so the visible inset stays comfortable while the column itself gets 20px
+ *  narrower. Keep this in step with the `min-w-[176px]` floor below. */
+const EXPANDED_WIDTH = 176;
 
 export const Sidebar = ({
   isCollapsed,
@@ -60,28 +65,28 @@ export const Sidebar = ({
         className,
       )}
     >
-      {/* The 196px floor stops the brand and the nav labels from being squeezed
+      {/* The 176px floor stops the brand and the nav labels from being squeezed
           during a width change. It has to be dropped while minimized, or it would
           hold the rail open at the expanded width. Written as a literal class
           string, not interpolated — Tailwind scans source text, so a built
-          `min-w-[196px]` would never be generated. */}
-      <div className={cn('flex h-full flex-col', !isMinimized && 'min-w-[196px]')}>
+          `min-w-[176px]` would never be generated. */}
+      <div className={cn('flex h-full flex-col', !isMinimized && 'min-w-[176px]')}>
         {/* Brand. The logo and the business name live here now — they used to sit
             in the top header, which is left empty on its left side so the brand
-            reads as belonging to the sidebar. The border under this block is what
-            separates the brand from the navigation list.
+            reads as belonging to the sidebar.
+
+            The rule that used to sit under this block is gone. It was there to
+            separate the brand from the navigation, but the sidebar already has
+            its own tint and its own right border, so the line was doing no
+            separating work — it just cut the column in two. The row keeps the
+            header's `h-12` so the navigation still starts on the same line as the
+            toolbar in the column beside it.
 
             Minimized, the name is hidden but kept in the accessibility tree
             (`sr-only`, not removed), so the brand still has a name. */}
         <div
           className={cn(
-            /* `h-12` matches the header's `h-12`, so the brand's bottom border and
-               the header's bottom border land on the same line across the whole
-               width. Both are border-box, so the 1px border sits INSIDE the 48px
-               on each. Sizing this row from its padding instead (py-2.5 plus a
-               28px logo = 48px of *content*) made it 49px tall and put its border
-               1px below the header's. */
-            'flex h-12 shrink-0 items-center gap-2 border-b border-[var(--app-border-frame)] px-3',
+            'flex h-12 shrink-0 items-center gap-2 px-2.5',
             isMinimized && 'justify-center px-0',
           )}
         >
@@ -111,8 +116,8 @@ export const Sidebar = ({
           </div>
         </div>
 
-        {/* Navigation. The top padding is the gap between the brand border and the
-            first tab; it stays small so the list starts tight under the brand.
+        {/* Navigation. The top padding is the gap between the brand and the first
+            tab; it stays small so the list starts tight under the brand.
 
             Minimized, each row is just its icon, centred. The label is kept as
             `sr-only` — removing it would leave the links with no accessible name
@@ -127,7 +132,7 @@ export const Sidebar = ({
               title={isMinimized ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2.5 text-sm font-semibold',
+                  'group relative flex items-center gap-1.5 overflow-hidden rounded-xl px-2 text-sm font-semibold',
                   /* One colour for both states, and the icon inherits it, so
                      selecting an item never recolours anything — only the row's
                      own fill moves. Hover is a fill for the same reason: there is
@@ -168,7 +173,7 @@ export const Sidebar = ({
             says what it does, via `aria-label` and `title`. */}
         <div
           className={cn(
-            'flex shrink-0 items-center p-2',
+            'flex shrink-0 items-center p-1.5',
             isMinimized ? 'justify-center' : 'justify-end',
           )}
         >
