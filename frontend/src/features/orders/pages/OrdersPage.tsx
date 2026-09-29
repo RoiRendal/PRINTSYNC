@@ -218,7 +218,7 @@ export default function Orders() {
                   'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                   isActive
                     ? 'bg-app-accent text-[var(--app-accent-ink)]'
-                    : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
+                    : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
                 )}
               >
                 {filter.label}

@@ -12,6 +12,8 @@ export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 export { SearchInput } from './SearchInput';
 export type { SearchInputProps } from './SearchInput';
+export { SegmentedControl } from './SegmentedControl';
+export type { SegmentedControlOption, SegmentedControlProps } from './SegmentedControl';
 export { StatusLabel } from './StatusLabel';
 export type { StatusLabelProps } from './StatusLabel';
 export { Modal } from './Modal';

@@ -25,6 +25,27 @@
  * to forget to run it and no test runtime to pay for. Deleting an assertion here
  * is the only way to silence it, and that is a visible diff.
  *
+ * ### Where it lives, and why not `shared/`
+ *
+ * `src/contracts/` — a sibling of `app/`, `features/` and `shared/`. This is the
+ * one module that legitimately knows every feature *and* the published package,
+ * so it cannot live inside any one of them.
+ *
+ * It is deliberately **not** under `src/shared/`. `shared/` is the layer everyone
+ * may depend on; a file inside it that reaches back up into `features/` makes the
+ * layering a lie and licenses the next person to do the same. With this file moved
+ * out, `shared/` imports nothing from `features/` or `app/` — an invariant anyone
+ * can re-check in one line:
+ *
+ * ```
+ * grep -rn "from '\.\./\.\./\(features\|app\)/" src/shared/   # must print nothing
+ * ```
+ *
+ * Nothing imports this file, and nothing has to. `tsconfig.json` declares no
+ * `include`, so `tsc --noEmit` type-checks every file under `frontend/`. The
+ * assertions run by being present; the file can move without breaking a single
+ * call site, because it has none.
+ *
  * ### What it cannot see
  *
  * It checks types, not values. A module that re-exports the contract but mangles
@@ -65,20 +86,20 @@ import type {
   UserSummary as SharedUserSummary,
 } from '@printsync/shared-types';
 
-import type { AuditLogListResult, AuditLogRecord, ListAuditLogsResult } from '../../features/audit/types';
-import type { Customer, CreateCustomer, UpdateCustomer } from '../../features/customers/types';
-import type { CreateDesign, Design, UpdateDesign } from '../../features/designs/types';
+import type { AuditLogListResult, AuditLogRecord, ListAuditLogsResult } from '../features/audit/types';
+import type { Customer, CreateCustomer, UpdateCustomer } from '../features/customers/types';
+import type { CreateDesign, Design, UpdateDesign } from '../features/designs/types';
 import type {
   CreateInventoryItem,
   InventoryItem,
   UpdateInventoryItem,
-} from '../../features/inventory/types';
-import type { CreateOrderPayment, OrderPayment } from '../../features/orders/api/orderPaymentsApi';
+} from '../features/inventory/types';
+import type { CreateOrderPayment, OrderPayment } from '../features/orders/api/orderPaymentsApi';
 import type {
   CreatePaymentTransaction,
   PaymentTransaction,
   PaymentTransactionItem,
-} from '../../features/orders/api/paymentsApi';
+} from '../features/orders/api/paymentsApi';
 import type {
   CartItem,
   CreateOrder,
@@ -89,7 +110,7 @@ import type {
   OrdersSummary,
   PaymentMethod,
   UpdateOrder,
-} from '../../features/orders/types';
+} from '../features/orders/types';
 import type {
   AuthResponse,
   AuthUser,
@@ -99,7 +120,7 @@ import type {
   UpdateUserInput,
   UserRole,
   UserSummary,
-} from '../../features/users/types';
+} from '../features/users/types';
 
 /**
  * `true` only when `A` and `B` are the *same* type — not merely assignable to one

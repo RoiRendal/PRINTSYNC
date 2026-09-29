@@ -1,6 +1,5 @@
 import { History, ReceiptText, ShoppingBag } from '../../../../shared/components/ui/icons';
-import { Button, SurfaceCard } from '../../../../shared/components/ui';
-import { cn } from '../../../../shared/lib/cn';
+import { Button, SegmentedControl, SurfaceCard } from '../../../../shared/components/ui';
 import type { PosMode } from '../../hooks/usePOSCart';
 import type { PrintableDocument } from '../../types/printableDocument';
 
@@ -54,32 +53,16 @@ export function POSToolbar({
         </Button>
       </div>
 
-      <div className="flex items-center rounded-full border p-1">
-        <button
-          type="button"
-          onClick={() => onSelectMode('retail')}
-          className={cn(
-            'h-7 cursor-pointer rounded-full px-3 text-2xs font-bold',
-            posMode === 'retail'
-              ? 'bg-app-accent text-[var(--app-accent-ink)]'
-              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
-          )}
-        >
-          Retail
-        </button>
-        <button
-          type="button"
-          onClick={() => onSelectMode('custom')}
-          className={cn(
-            'h-7 cursor-pointer rounded-full px-3 text-2xs font-bold',
-            posMode === 'custom'
-              ? 'bg-app-accent text-[var(--app-accent-ink)]'
-              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
-          )}
-        >
-          Custom
-        </button>
-      </div>
+      <SegmentedControl
+        aria-label="Order mode"
+        size="sm"
+        value={posMode}
+        onChange={onSelectMode}
+        options={[
+          { value: 'retail', label: 'Retail' },
+          { value: 'custom', label: 'Custom' },
+        ]}
+      />
 
       <div className="flex items-center gap-2">
         {/*

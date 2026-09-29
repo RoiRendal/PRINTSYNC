@@ -42,7 +42,7 @@ function printDocument(document: PrintableDocument) {
 
 function ImageFallback({ label }: { label: string }) {
   return (
-    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[#f7f7f7] text-app-text-muted dark:bg-[#373739] dark:text-zinc-500">
+    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[var(--app-state-hover)] text-app-text-muted dark:bg-[var(--app-state-hover)] dark:text-zinc-500">
       <ImageIcon className="h-8 w-8 opacity-35" aria-hidden="true" />
       <p className="px-3 text-center text-2xs font-bold">{label}</p>
     </div>

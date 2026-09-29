@@ -13,6 +13,7 @@ import type { InventoryForecast } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
+  SegmentedControl,
   StatusLabel,
   Table,
   TableBody,
@@ -22,11 +23,11 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
-import { cn } from '../../../shared/lib/cn';
 import {
   chartTooltipStyle,
   generateInsight,
   createEmptyInsightState,
+  getChartColors,
   money,
   type InsightState,
   type Period,
@@ -53,6 +54,7 @@ export function ForecastSection({
 }: ForecastSectionProps) {
   const [forecastMetric, setForecastMetric] = useState<'income' | 'expenses'>('income');
   const [forecastInsight, setForecastInsight] = useState<InsightState>(createEmptyInsightState());
+  const colors = getChartColors();
 
   const financialForecastChartData = useMemo(() => {
     if (!inventoryForecast) return [];
@@ -97,7 +99,7 @@ export function ForecastSection({
     <SectionCard
       title="Financial Forecasting"
       description="Forecasted inventory requirements using moving-average demand projection with confidence bounds."
-      controls={<div className="space-y-2"><div className="flex rounded-full border p-1"><button type="button" onClick={() => setForecastMetric('income')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'income' ? 'bg-app-success text-white' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}>Income</button><button type="button" onClick={() => setForecastMetric('expenses')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'expenses' ? 'bg-app-warning text-white' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}>Expenses</button></div><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}
+      controls={<div className="space-y-2"><SegmentedControl aria-label="Forecast metric" value={forecastMetric} onChange={setForecastMetric} options={[{ value: 'income', label: 'Income', selectedClassName: 'bg-app-success text-white' }, { value: 'expenses', label: 'Expenses', selectedClassName: 'bg-app-warning text-white' }]} /><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}
     >
       {isLoading ? <LoadingState label="Loading inventory forecast" /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
         <>
@@ -112,12 +114,12 @@ export function ForecastSection({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={financialForecastChartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(142,142,147,0.24)" strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="amount" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: '#86868B' }} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
+                <YAxis yAxisId="amount" axisLine={false} tickLine={false} tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: colors.axis }} />
                 <RechartsTooltip formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]} labelStyle={{ color: 'var(--app-text)', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Line yAxisId="amount" type="monotone" dataKey="actualSeries" name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />
-                <Line yAxisId="amount" type="monotone" dataKey="forecastSeries" name={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />
+                <Line yAxisId="amount" type="monotone" dataKey="actualSeries" name={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke={colors.neutral} strokeWidth={3} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />
+                <Line yAxisId="amount" type="monotone" dataKey="forecastSeries" name={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} stroke={colors.positive} strokeWidth={3} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>

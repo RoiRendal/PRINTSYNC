@@ -17,6 +17,7 @@ import {
   chartTooltipStyle,
   generateInsight,
   createEmptyInsightState,
+  getChartColors,
   money,
   periodLabel,
   type InsightState,
@@ -45,6 +46,7 @@ export function SalesComparisonSection({
   const [selectionA, setSelectionA] = useState('');
   const [selectionB, setSelectionB] = useState('');
   const [salesInsight, setSalesInsight] = useState<InsightState>(createEmptyInsightState());
+  const colors = getChartColors();
 
   const salesBucketLabels = useMemo(() => salesTimeline?.buckets.map((b) => b.label) ?? [], [salesTimeline]);
   const safeSelectionA = salesBucketLabels.includes(selectionA) ? selectionA : salesBucketLabels[0] ?? '';
@@ -103,12 +105,12 @@ export function SalesComparisonSection({
             <ResponsiveContainer width="100%" height="100%">
               <RechartsLineChart data={comparisonData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(142,142,147,0.24)" strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
+                <YAxis tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
                 <RechartsTooltip formatter={(value, name) => [money.format(Number(value ?? 0)), String(name)]} labelStyle={{ color: 'var(--app-text)', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Line type="monotone" dataKey="timelineA" name={safeSelectionA} stroke="#555558" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
-                <Line type="monotone" dataKey="timelineB" name={safeSelectionB} stroke="#AF52DE" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="timelineA" name={safeSelectionA} stroke={colors.neutral} strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="timelineB" name={safeSelectionB} stroke={colors.secondary} strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
               </RechartsLineChart>
             </ResponsiveContainer>
           </div>

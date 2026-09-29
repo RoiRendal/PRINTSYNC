@@ -21,7 +21,7 @@ export function POSDesignSelectorModal({ isOpen, designs, onSelect, onClose }: P
               onClick={() => onSelect(design.id)}
               className="overflow-hidden rounded-[var(--radius-card)] border text-left hover:border-[var(--app-border-control)]"
             >
-              <div className="aspect-square border-b bg-[#f7f7f7] dark:bg-[#373739]">
+              <div className="aspect-square border-b bg-[var(--app-state-hover)] dark:bg-[var(--app-state-hover)]">
                 <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
               </div>
               <div className="p-2">
