@@ -245,9 +245,31 @@
      mode — same role, opposite steps, and deliberately not the same value. */
   --app-state-selected: #e3e3e8;     /* light step */
   --app-border-hairline: #d5d5da;    /* internal dividers */
-  /* One step darker than --app-border-control in light mode, one step LIGHTER
-     than it in dark. The single structural colour to cross over like this, which
-     is why it carries its own name rather than a shared -strong / -weak variant. */
+  /* The control edge — the border on a focusable control, and the colour of the
+     focus ring itself.
+
+     THIS LIGHT DECLARATION WAS MISSING. The token was declared only inside
+     `.dark`, so in light mode `var(--app-border-control)` was undefined and every
+     declaration that read it became invalid at computed-value time: a
+     `box-shadow: … 2px var(--app-border-control)` resolved to `box-shadow: none`,
+     which silently removed the focus ring from Button, Checkbox and the Modal
+     close button for every light-theme user — a WCAG 2.4.7 failure on the app's
+     main interactive controls. A `border: 1px solid var(…)` shorthand resolved to
+     no border at all, and the five `hover:border-[var(…)]` sites fell back to
+     `currentColor` instead of a grey. Verified in Chromium: with the variable
+     undefined the ring computes to `none`; with this value it computes to
+     `rgb(142, 142, 147) 0 0 0 2px`.
+
+     #8e8e93 is the intended value in both themes, which is why dark already
+     carried it: it measures 3.26:1 on a white card and 4.27:1 on the dark raised
+     surface, both clearing the 3:1 floor for a control edge. */
+  --app-border-control: #8e8e93;
+  /* One step LIGHTER than --app-border-control in light mode, one step DARKER
+     than it in dark. (The direction was documented backwards: #bbbbbb against
+     #8e8e93 is lighter, not darker, and #4a4a4a against #8e8e93 is darker, not
+     lighter — the values were always right, the sentence was not.) The single
+     structural colour that crosses over like this, which is why it carries its
+     own name rather than a shared -strong / -weak variant. */
   --app-border-frame: #bbbbbb;
 
   /* Muted text. `--app-text-muted` (#555558) is the source of truth; the -sub
