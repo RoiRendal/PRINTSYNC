@@ -124,7 +124,19 @@ export function POSCart({
               </div>
               {posMode === 'custom' && (
                 <div className="mt-2 flex gap-2 border-t pt-2">
-                  <Button type="button" variant={item.designId ? 'primary' : 'secondary'} size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
+                  {/*
+                    This button's fill used to BE the status readout — dark once a
+                    design was attached, grey before that. That is the inversion
+                    the whole round is about: a button's fill says "press me",
+                    not "this line is done", and spending the darkest value on a
+                    per-row state left nothing for the one real action below.
+
+                    The state is still legible without it, and in words rather
+                    than in colour: the label swaps Select/Change Design, the
+                    glyph swaps Edit/CheckCircle2, and the chip beside it names
+                    the design that is set. No cue was dropped, only recoloured.
+                  */}
+                  <Button type="button" variant="secondary" size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
                   {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[var(--app-state-hover)] px-2 py-2 text-3xs dark:bg-[var(--app-tint-neutral)]">{designs.find(d => d.id === item.designId)?.name}</div>}
@@ -157,7 +169,7 @@ export function POSCart({
         {posMode === 'custom' && editingOrderId && <div className="text-center text-3xs font-bold text-app-accent dark:text-app-accent-soft">Editing Order: {editingOrderId}</div>}
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="secondary" onClick={onReset}>Reset</Button>
-          <Button type="button" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
+          <Button type="button" variant="primary" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
             {posMode === 'retail' ? 'Quick Pay' : editingOrderId ? 'Update Order' : 'Create Order'}
           </Button>
         </div>

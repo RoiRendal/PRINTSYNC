@@ -198,7 +198,7 @@ export default function Orders() {
             Track active jobs, phase movement, customer artwork, and production-ready details.
           </p>
         </div>
-        <Button onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
+        <Button variant="primary" onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
           New POS Order
         </Button>
       </div>
@@ -216,8 +216,15 @@ export default function Orders() {
                 onClick={() => setStatusParam(filter.value)}
                 className={cn(
                   'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
+                  /*
+                    The active chip is a grey step, not the accent. ERPNext's own
+                    active filter chip (`.btn-primary-light`) is `#e2e2e2` with
+                    dark ink — it never spends the dark fill on "which filter am
+                    I on". Inactive chips are untouched: only the selected state
+                    was inverted, so only the selected state changes.
+                  */
                   isActive
-                    ? 'bg-app-accent text-[var(--app-accent-ink)]'
+                    ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
                     : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
                 )}
               >

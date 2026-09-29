@@ -168,7 +168,7 @@ export function InventoryFormModal({
 
         <div className="flex gap-3 border-t pt-4">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button type="submit" fullWidth>{editingItem ? 'Save Changes' : 'Create Item'}</Button>
+          <Button type="submit" variant="primary" fullWidth>{editingItem ? 'Save Changes' : 'Create Item'}</Button>
         </div>
       </form>
     </Modal>

@@ -2,7 +2,7 @@ import { Banknote, CheckCircle2, CreditCard, Printer } from '../../../../shared/
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
-import { Button, Modal } from '../../../../shared/components/ui';
+import { Button, Modal, SegmentedControl } from '../../../../shared/components/ui';
 import { InlineAlert, type InlineAlertTone } from '../../../../shared/components/feedback/InlineAlert';
 import { cn } from '../../../../shared/lib/cn';
 
@@ -196,11 +196,27 @@ export function POSCheckoutModal({
 
             {posMode === 'retail' && (
               <div className="space-y-2">
-                <label className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">Payment Method</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" variant={paymentMethod === 'Cash' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Cash')} leftIcon={<Banknote className="h-3.5 w-3.5" aria-hidden="true" />}>Cash</Button>
-                  <Button type="button" variant={paymentMethod === 'Card' ? 'primary' : 'secondary'} disabled={isSubmitting} onClick={() => onPaymentMethodChange('Card')} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>Card</Button>
-                </div>
+                <span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-400">Payment Method</span>
+                {/*
+                  Cash/Card was a Button pair with `variant` keyed off the
+                  selection, so one of the two was always the darkest thing in
+                  the dialog — competing with "Confirm & Pay" directly beneath
+                  it for the same attention. As a segmented control the choice
+                  reads as a choice and the confirm button keeps the one dark
+                  slot. `disabled` keeps the lock the Buttons had while a sale
+                  is in flight.
+                */}
+                <SegmentedControl
+                  aria-label="Payment method"
+                  fill
+                  disabled={isSubmitting}
+                  value={paymentMethod}
+                  onChange={onPaymentMethodChange}
+                  options={[
+                    { value: 'Cash', label: 'Cash', icon: <Banknote className="h-3.5 w-3.5" aria-hidden="true" /> },
+                    { value: 'Card', label: 'Card', icon: <CreditCard className="h-3.5 w-3.5" aria-hidden="true" /> },
+                  ]}
+                />
               </div>
             )}
 
@@ -236,7 +252,7 @@ export function POSCheckoutModal({
                 makes a repeat harmless, but stopping the second request at the
                 button is what keeps a double-click from looking like a hang.
               */}
-              <Button type="button" fullWidth isLoading={isSubmitting} onClick={onConfirm}>
+              <Button type="button" variant="primary" fullWidth isLoading={isSubmitting} onClick={onConfirm}>
                 {isSubmitting ? 'Processing…' : posMode === 'retail' ? 'Confirm & Pay' : 'Create Order'}
               </Button>
             </div>

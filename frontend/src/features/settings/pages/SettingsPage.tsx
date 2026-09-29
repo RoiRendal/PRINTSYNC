@@ -3,26 +3,9 @@ import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select, SegmentedControl } from '../../../shared/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Checkbox, Input, Select, SegmentedControl } from '../../../shared/components/ui';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
-
-function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle?: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={enabled}
-      onClick={onToggle}
-      className="flex w-full cursor-pointer items-center justify-between rounded-[var(--radius-card)] border p-3 text-left hover:border-[var(--app-border-control)] hover:bg-[var(--app-state-hover)] dark:hover:bg-[var(--app-tint-neutral)]"
-    >
-      <span className="text-xs font-semibold text-app-ink dark:text-zinc-200">{label}</span>
-      <span className={cn('relative h-5 w-9 rounded-full p-0.5', enabled ? 'bg-app-success' : 'bg-[var(--app-state-selected)] dark:bg-[var(--app-state-hover-sub)]')}>
-        <span className={cn('block h-4 w-4 rounded-full bg-white ring-1 ring-black/20', enabled && 'translate-x-4')} />
-      </span>
-    </button>
-  );
-}
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -342,9 +325,24 @@ export default function Settings() {
             <CardTitle>Notifications</CardTitle>
             <CardDescription>Control operational alerts across exports and stock.</CardDescription>
           </CardHeader>
+          {/*
+            Checkboxes, not switches. ERPNext ships no switch in any of its 900+
+            doctypes — `fieldtype: "Switch"` appears zero times across the whole
+            framework, while `Check` appears 926 times, and its own settings
+            screens are columns of plain checkboxes. The two toggles that used to
+            be here were the last ones in the app; `ToggleSwitch` was a local
+            function whose twelve lines had been copy-pasted into InsightPanel.
+            Both copies are gone, and this is the shared Checkbox.
+          */}
           <div className="space-y-3">
-            <ToggleSwitch label="Export Completion Alerts" enabled={settings.exportAlertsEnabled} onToggle={toggleExportAlerts} />
-            <ToggleSwitch label="Stock Level Critical Warnings" enabled={settings.stockAlertsEnabled} onToggle={toggleStockAlerts} />
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-app-ink dark:text-zinc-200">
+              <Checkbox checked={settings.exportAlertsEnabled} onChange={toggleExportAlerts} />
+              Export Completion Alerts
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold text-app-ink dark:text-zinc-200">
+              <Checkbox checked={settings.stockAlertsEnabled} onChange={toggleStockAlerts} />
+              Stock Level Critical Warnings
+            </label>
           </div>
         </Card>
       </div>

@@ -34,24 +34,23 @@ export function POSToolbar({
 }: POSToolbarProps) {
   return (
     <SurfaceCard className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant={view === 'pos' ? 'primary' : 'ghost'}
-          size="sm"
-          onClick={() => onViewChange('pos')}
-          leftIcon={<ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" />}
-        >
-          Terminal
-        </Button>
-        <Button
-          variant={view === 'history' ? 'primary' : 'ghost'}
-          size="sm"
-          onClick={() => onViewChange('history')}
-          leftIcon={<History className="h-3.5 w-3.5" aria-hidden="true" />}
-        >
-          History
-        </Button>
-      </div>
+      {/*
+        Terminal/History was two Buttons whose variant came from the current
+        view, so one of the pair was permanently dark — a two-state selector
+        wearing a button's clothes, sitting directly beside a real
+        SegmentedControl doing the same job for the order mode. It is now the
+        same component as its neighbour, which also means arrow keys move it.
+      */}
+      <SegmentedControl
+        aria-label="POS view"
+        size="sm"
+        value={view}
+        onChange={onViewChange}
+        options={[
+          { value: 'pos', label: 'Terminal', icon: <ShoppingBag className="h-3.5 w-3.5" aria-hidden="true" /> },
+          { value: 'history', label: 'History', icon: <History className="h-3.5 w-3.5" aria-hidden="true" /> },
+        ]}
+      />
 
       <SegmentedControl
         aria-label="Order mode"

@@ -26,6 +26,12 @@ export interface SegmentedControlProps<T extends string> {
   size?: 'sm' | 'md';
   /** Stretch the options evenly to fill the track (the theme switch). */
   fill?: boolean;
+  /**
+   * Locks the whole group. Needed by a control that sits inside a form being
+   * submitted — the payment-method switch in the POS checkout must not move
+   * once the sale is in flight.
+   */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -34,7 +40,21 @@ const sizeClasses: Record<'sm' | 'md', string> = {
   md: 'h-8',
 };
 
-const defaultSelected = 'bg-app-accent text-[var(--app-accent-ink)]';
+/*
+  The selected option is a ONE-STEP-DARKER GREY, not the accent.
+
+  ERPNext draws its active state this way — `.btn-primary-light` on the live demo
+  is `#e2e2e2` with `#171717` ink, never a dark fill. PrintSync's equivalent rung
+  on the flat ladder is `--app-state-hover-sub` (`#dedee3` light / `#48484a`
+  dark), which measures 1.34:1 against a white card: clearly a step, and darker
+  than the 1.18:1 resting button beside it, so it still reads as selected.
+
+  The accent was the wrong tool here. It is the app's single loudest value, and
+  spending it on "which tab am I on" left nothing to say "this is the one action
+  to press". Hue still wins where it carries meaning of its own — see the
+  `selectedClassName` escape hatch the forecast switch uses for Income/Expenses.
+*/
+const defaultSelected = 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100';
 
 const unselected =
   'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]';
@@ -56,11 +76,13 @@ export function SegmentedControl<T extends string>({
   'aria-label': ariaLabel,
   size = 'md',
   fill = false,
+  disabled = false,
   className,
 }: SegmentedControlProps<T>) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const move = (delta: number) => {
+    if (disabled) return;
     const index = options.findIndex((option) => option.value === value);
     if (index < 0) return;
     const next = (index + delta + options.length) % options.length;
@@ -99,10 +121,12 @@ export function SegmentedControl<T extends string>({
             type="button"
             role="radio"
             aria-checked={isSelected}
-            tabIndex={isSelected ? 0 : -1}
+            disabled={disabled}
+            tabIndex={isSelected && !disabled ? 0 : -1}
             onClick={() => onChange(option.value)}
             className={cn(
               'cursor-pointer rounded-full px-3 text-2xs font-bold',
+              'disabled:cursor-not-allowed disabled:opacity-55',
               sizeClasses[size],
               option.icon && 'flex items-center gap-2',
               fill && 'flex-1',

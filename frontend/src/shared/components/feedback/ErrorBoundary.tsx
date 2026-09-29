@@ -53,6 +53,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             <div className="mt-5 flex justify-center">
               <Button
                 type="button"
+                variant="primary"
                 onClick={() => window.location.reload()}
                 leftIcon={<RotateCw className="h-3.5 w-3.5" aria-hidden="true" />}
               >

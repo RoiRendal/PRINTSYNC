@@ -50,8 +50,11 @@ export function POSCatalog({
                 onClick={() => onCategoryChange(cat)}
                 className={cn(
                   'whitespace-nowrap rounded-full border px-3 py-1.5 text-2xs font-bold',
+                  // Active category: the grey "selected" step, matching the
+                  // status chips and the segmented control. Border keeps its 1px
+                  // box but takes the fill's colour, so only the hue changes.
                   activeCategory === cat
-                    ? 'border-app-accent bg-app-accent text-[var(--app-accent-ink)]'
+                    ? 'border-[var(--app-state-hover-sub)] bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
                     : 'text-app-text-muted hover:border-[var(--app-border-control)] hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft',
                 )}
               >

@@ -200,7 +200,20 @@ describe('custom orders are not sales', () => {
     renderModal({ posMode: 'retail' });
 
     expect(screen.getByText(/payment method/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /cash/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /card/i })).toBeInTheDocument();
+    /*
+     * A radio group, not two buttons.
+     *
+     * Cash/Card used to be a pair of Buttons whose `variant` was keyed off the
+     * selection, so one of them was always the darkest thing in the dialog —
+     * competing with "Confirm & Pay" directly beneath it. It is now a
+     * SegmentedControl, which is a radio group because "choose one of two" is
+     * what it is; the role is what tells a screen reader that, and it also gets
+     * arrow-key navigation for free. The assertions move from `button` to
+     * `radio` with it — the contract being pinned is still "a retail sale offers
+     * Cash and Card", only the mechanism that expresses it changed.
+     */
+    expect(screen.getByRole('radiogroup', { name: /payment method/i })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /cash/i })).toBeChecked();
+    expect(screen.getByRole('radio', { name: /card/i })).not.toBeChecked();
   });
 });
