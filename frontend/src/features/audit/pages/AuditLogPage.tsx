@@ -6,13 +6,12 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   Pagination,
   SearchInput,
   Select,
   StatusLabel,
+  SurfaceCard,
   Table,
   TableBody,
   TableCell,
@@ -161,37 +160,20 @@ export default function AuditLogPage() {
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="space-y-3 lg:col-span-1">
-          <Card variant="raised" padding="lg">
-            <CardHeader>
-              <CardTitle className="label-caps">Activity Overview</CardTitle>
-              <CardDescription>Summary of tracked events.</CardDescription>
-            </CardHeader>
-            <div className="space-y-2.5">
-              {/*
-                Label and figure, nothing else. The glyph used to sit in a 32px
-                tinted rounded tile; both the tile and the glyph are gone, because
-                the icon restated the label beside it and carried no meaning of
-                its own. Same ERPNext rule as the analytics and dashboard tiles:
-                a card carries its figure, not ornament.
-              */}
-              {[
-                { label: 'Total Events', value: total },
-                { label: 'Current Page', value: `${page} / ${totalPages || 1}` },
-                { label: 'Shown', value: items.length },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          { label: 'Total Events', value: total },
+          { label: 'Current Page', value: `${page} / ${totalPages || 1}` },
+          { label: 'Shown', value: items.length },
+        ].map(({ label, value }) => (
+          <SurfaceCard key={label} className="p-4">
+            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
+            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
+          </SurfaceCard>
+        ))}
+      </div>
 
-        <div className="space-y-3 lg:col-span-3">
-          <Card padding="none" className="overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="w-full sm:max-w-xs">
@@ -269,8 +251,6 @@ export default function AuditLogPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
     </div>
   );
 }
