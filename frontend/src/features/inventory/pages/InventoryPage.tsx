@@ -158,7 +158,7 @@ export default function Inventory() {
               className={cn(
                 'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                 lowStockOnly
-                  ? 'bg-orange-500 text-white dark:bg-orange-600'
+                  ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
                   : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
               )}
             >

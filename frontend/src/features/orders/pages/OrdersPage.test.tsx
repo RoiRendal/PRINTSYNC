@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import OrdersPage from './OrdersPage';
@@ -45,6 +45,24 @@ vi.mock('../../../app/providers/BusinessBrandingProvider', () => ({
     setCurrencySymbol: vi.fn(),
   }),
 }));
+
+// The Orders page renders `OrderSummaryCards`, which now reads the whole-table
+// summary through `useOrdersSummary`. Stub the hook so the test exercises the
+// page's URL wiring without a backend round trip to `/orders/summary`.
+const summaryHook = vi.hoisted(() => ({ useOrdersSummary: vi.fn() }));
+
+vi.mock('../hooks/useOrdersSummary', () => ({
+  useOrdersSummary: summaryHook.useOrdersSummary,
+}));
+
+beforeEach(() => {
+  summaryHook.useOrdersSummary.mockReturnValue({
+    summary: { total: 0, open: 0, byStatus: [], lowStock: 0 },
+    error: null,
+    isLoading: false,
+    refresh: vi.fn(),
+  });
+});
 
 function renderAt(path: string) {
   return render(

@@ -35,7 +35,7 @@ import {
   type Period,
 } from './analytics-types';
 import { InsightPanel } from './InsightPanel';
-import { MetricTile } from './MetricTile';
+import { StatTile, StatTileRow } from '../../../shared/components/ui';
 import { PeriodSelector } from './PeriodSelector';
 import { SectionCard } from './SectionCard';
 
@@ -92,11 +92,13 @@ export function ProfitMarginSection({
       {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
         <>
           <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
-          <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label="Revenue" value={money.format(profitMarginStats.totalRevenue)} tone="accent" />
-            <MetricTile label="COGS" value={money.format(profitMarginStats.totalExpenses)} tone="orange" />
-            <MetricTile label="Gross Profit" value={money.format(profitMarginStats.totalProfit)} tone="green" />
-            <MetricTile label="Avg Margin" value={`${profitMarginStats.averageMargin.toFixed(1)}%`} />
+          <div className="my-4">
+            <StatTileRow columns={4}>
+              <StatTile label="Revenue" value={money.format(profitMarginStats.totalRevenue)} />
+              <StatTile label="COGS" value={money.format(profitMarginStats.totalExpenses)} />
+              <StatTile label="Gross Profit" value={money.format(profitMarginStats.totalProfit)} />
+              <StatTile label="Avg Margin" value={`${profitMarginStats.averageMargin.toFixed(1)}%`} />
+            </StatTileRow>
           </div>
           <div className="h-[360px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">

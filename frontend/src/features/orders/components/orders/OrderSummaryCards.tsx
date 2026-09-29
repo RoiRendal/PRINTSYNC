@@ -1,43 +1,40 @@
-import { SurfaceCard } from '../../../../shared/components/ui';
-import type { Order } from '../../types';
+import { StatTile, StatTileRow } from '../../../../shared/components/ui';
+import { useOrdersSummary } from '../../hooks/useOrdersSummary';
+import type { OrderStatus, OrdersSummary } from '../../types';
+
+/** Reads one status's count from the zero-filled `byStatus` array. */
+function countFor(summary: OrdersSummary, status: OrderStatus): number {
+  return summary.byStatus.find((entry) => entry.status === status)?.count ?? 0;
+}
 
 /**
- * A phase count: label on the left, figure on the right.
+ * The four production-phase counts, as the app's one stat tile.
  *
- * No icon and no ringed frame — the same ERPNext rule the analytics cards and
- * the dashboard tiles already follow: a card carries its figure, not ornament.
- * The glyph sat in a 40px ringed box that also carried the card's colour, so
- * removing it removes the per-phase tint with it; nothing on the card takes the
- * colour over, because the tint was decoration on the badge rather than
- * information the label does not already state.
+ * This row used to derive its numbers from the orders loaded on the page — page 1 of
+ * a 20-row list — so "Designing" could read a different, lower number than the same
+ * tile on the Dashboard. It now reads `GET /orders/summary`, computed in the database
+ * over the whole table, so the two pages agree. The Orders and Dashboard counts are
+ * the same source on purpose (see the summary hook): one label, one truth.
+ *
+ * No icon and no tone — the same ERPNext rule the dashboard tiles follow: a card
+ * carries its figure, not ornament.
  */
-interface SummaryCardProps {
-  label: string;
-  count: number;
-}
+export function OrderSummaryCards() {
+  const { summary } = useOrdersSummary();
+  if (!summary) return null;
 
-function SummaryCard({ label, count }: SummaryCardProps) {
-  return (
-    <div>
-      <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
-        <span className="truncate text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</span>
-        <span className="tabular-nums text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{count}</span>
-      </SurfaceCard>
-    </div>
-  );
-}
-
-export function OrderSummaryCards({ orders }: { orders: Order[] }) {
-  const orderSummary = [
-    { label: 'Designing', count: orders.filter((o) => o.status === 'Designing').length },
-    { label: 'In Production', count: orders.filter((o) => o.status === 'In Production').length },
-    { label: 'Ready', count: orders.filter((o) => o.status === 'Ready for Pickup').length },
-    { label: 'Total Active', count: orders.filter((o) => o.status !== 'Completed').length },
+  const cards: Array<{ label: string; count: number }> = [
+    { label: 'Designing', count: countFor(summary, 'Designing') },
+    { label: 'In Production', count: countFor(summary, 'In Production') },
+    { label: 'Ready', count: countFor(summary, 'Ready for Pickup') },
+    { label: 'Total Active', count: summary.total - countFor(summary, 'Completed') },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:gap-4">
-      {orderSummary.map((card) => <SummaryCard key={card.label} {...card} />)}
-    </div>
+    <StatTileRow columns={4}>
+      {cards.map((card) => (
+        <StatTile key={card.label} label={card.label} value={card.count} />
+      ))}
+    </StatTileRow>
   );
 }

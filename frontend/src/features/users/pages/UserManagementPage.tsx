@@ -18,6 +18,8 @@ import {
   Pagination,
   SearchInput,
   Select,
+  StatTile,
+  StatTileRow,
   StatusLabel,
   Table,
   TableBody,
@@ -77,9 +79,6 @@ export default function UserManagement() {
    * closes — a reason left over from an earlier attempt would be worse than none.
    */
   const [actionError, setActionError] = useState<string | null>(null);
-
-  const adminCount = users.filter((user) => user.role === 'admin').length;
-  const staffCount = users.filter((user) => user.role === 'staff').length;
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -235,18 +234,9 @@ export default function UserManagement() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {[
-          { label: 'Admin', value: adminCount },
-          { label: 'Staff', value: staffCount },
-          { label: 'Total Users', value: users.length },
-        ].map(({ label, value }) => (
-          <SurfaceCard key={label} className="p-4">
-            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
-            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
-          </SurfaceCard>
-        ))}
-      </div>
+      <StatTileRow columns={1}>
+        <StatTile label="Total Users" value={users.length} />
+      </StatTileRow>
 
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">

@@ -33,7 +33,7 @@ import {
   type Period,
 } from './analytics-types';
 import { InsightPanel } from './InsightPanel';
-import { MetricTile } from './MetricTile';
+import { StatTile, StatTileRow } from '../../../shared/components/ui';
 import { PeriodSelector } from './PeriodSelector';
 import { SectionCard } from './SectionCard';
 
@@ -104,11 +104,13 @@ export function ForecastSection({
       {isLoading ? <LoadingState label="Loading inventory forecast" /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
         <>
           <InsightPanel state={forecastInsight} onToggleAutoGenerate={() => setForecastInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateForecastInsight} />
-          <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.actual)} />
-            <MetricTile label={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.forecast)} tone="accent" />
-            <MetricTile label="Expected Growth" value={`${financialForecastStats.expectedGrowth.toFixed(1)}%`} tone={financialForecastStats.expectedGrowth >= 0 ? 'green' : 'red'} />
-            <MetricTile label="Forecast Confidence" value={`${Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy)).toFixed(1)}%`} tone="purple" />
+          <div className="my-4">
+            <StatTileRow columns={4}>
+              <StatTile label={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.actual)} />
+              <StatTile label={`Forecast ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.forecast)} />
+              <StatTile label="Expected Growth" value={`${financialForecastStats.expectedGrowth.toFixed(1)}%`} />
+              <StatTile label="Forecast Confidence" value={`${Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy)).toFixed(1)}%`} />
+            </StatTileRow>
           </div>
           <div className="h-[390px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">

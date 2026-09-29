@@ -15,7 +15,8 @@ import {
   Modal,
   Pagination,
   SearchInput,
-  SurfaceCard,
+  StatTile,
+  StatTileRow,
   Table,
   TableBody,
   TableCell,
@@ -66,9 +67,6 @@ export default function CustomersPage() {
   const [isCheckingOrders, setIsCheckingOrders] = useState(false);
   /** Invalidates an in-flight order count so a late reply cannot land on a newer dialog. */
   const orderCountRequestRef = useRef(0);
-
-  const withPhone = customers.filter((c) => c.phone.trim()).length;
-  const withEmail = customers.filter((c) => c.email.trim()).length;
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -233,18 +231,9 @@ export default function CustomersPage() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {[
-          { label: 'Total Customers', value: customers.length },
-          { label: 'With Phone', value: withPhone },
-          { label: 'With Email', value: withEmail },
-        ].map(({ label, value }) => (
-          <SurfaceCard key={label} className="p-4">
-            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
-            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
-          </SurfaceCard>
-        ))}
-      </div>
+      <StatTileRow columns={1}>
+        <StatTile label="Total Customers" value={customers.length} />
+      </StatTileRow>
 
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">

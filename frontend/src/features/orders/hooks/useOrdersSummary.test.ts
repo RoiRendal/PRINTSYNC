@@ -7,8 +7,8 @@ import type { OrdersSummary } from '../../orders/types';
 
 const api = vi.hoisted(() => ({ summary: vi.fn() }));
 
-vi.mock('../api/dashboardApi', () => ({
-  dashboardApi: { summary: api.summary },
+vi.mock('../api/ordersSummaryApi', () => ({
+  ordersSummaryApi: { summary: api.summary },
 }));
 
 const SUMMARY: OrdersSummary = {
