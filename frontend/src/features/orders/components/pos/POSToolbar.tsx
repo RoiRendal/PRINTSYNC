@@ -62,7 +62,7 @@ export function POSToolbar({
             'h-7 cursor-pointer rounded-full px-3 text-2xs font-bold',
             posMode === 'retail'
               ? 'bg-app-accent text-[var(--app-accent-ink)]'
-              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
+              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]',
           )}
         >
           Retail
@@ -74,7 +74,7 @@ export function POSToolbar({
             'h-7 cursor-pointer rounded-full px-3 text-2xs font-bold',
             posMode === 'custom'
               ? 'bg-app-accent text-[var(--app-accent-ink)]'
-              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]',
+              : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]',
           )}
         >
           Custom

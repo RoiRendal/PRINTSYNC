@@ -98,7 +98,7 @@ export function POSCart({
           cart.map((item, idx) => (
             <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border p-2.5">
               <div className="flex gap-3">
-                <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-[#f5f5f5] dark:bg-[#3d3d3f]">
+                <div className="h-11 w-11 flex-shrink-0 overflow-hidden rounded-[0.75rem] bg-[var(--app-surface)] dark:bg-[var(--app-tint-gray)]">
                   {item.designId ? (
                     <img src={designs.find(d => d.id === item.designId)?.imageUrl} alt="Selected design" className="h-full w-full object-cover" />
                   ) : item.imageUrl ? (
@@ -113,7 +113,7 @@ export function POSCart({
                     </button>
                   </div>
                   <div className="mt-2 flex items-end justify-between">
-                    <div className="flex overflow-hidden rounded-full bg-[#f2f2f2] dark:bg-[#414143]">
+                    <div className="flex overflow-hidden rounded-full bg-[var(--app-state-hover)] dark:bg-[var(--app-tint-neutral)]">
                       <button type="button" onClick={() => onUpdateQty(idx, -1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Decrease ${item.name}`}><Minus className="h-2.5 w-2.5" aria-hidden="true" /></button>
                       <span className="w-7 select-none py-1.5 text-center tabular-nums text-2xs">{item.qty}</span>
                       <button type="button" onClick={() => onUpdateQty(idx, 1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Increase ${item.name}`}><Plus className="h-2.5 w-2.5" aria-hidden="true" /></button>
@@ -127,7 +127,7 @@ export function POSCart({
                   <Button type="button" variant={item.designId ? 'primary' : 'secondary'} size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
-                  {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[#f2f2f2] px-2 py-2 text-3xs dark:bg-[#414143]">{designs.find(d => d.id === item.designId)?.name}</div>}
+                  {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[var(--app-state-hover)] px-2 py-2 text-3xs dark:bg-[var(--app-tint-neutral)]">{designs.find(d => d.id === item.designId)?.name}</div>}
                 </div>
               )}
             </div>

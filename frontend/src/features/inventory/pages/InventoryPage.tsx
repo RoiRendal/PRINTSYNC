@@ -142,14 +142,14 @@ export default function Inventory() {
           <button
             type="button"
             onClick={() => setViewMode('inventory')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'inventory' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'inventory' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}
           >
             <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
           </button>
           <button
             type="button"
             onClick={() => setViewMode('designs')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'designs' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[#414143]')}
+            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'designs' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}
           >
             <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
           </button>
@@ -169,7 +169,7 @@ export default function Inventory() {
                 'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                 lowStockOnly
                   ? 'bg-orange-500 text-white dark:bg-orange-600'
-                  : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
+                  : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
               )}
             >
               Low stock only

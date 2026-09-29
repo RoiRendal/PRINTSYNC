@@ -117,7 +117,7 @@ export const NotificationPanel = React.forwardRef<
                 key={notification.id}
                 className={cn(
                   'group relative flex gap-3 border-b px-4 py-3 last:border-b-0',
-                  notification.read ? 'bg-transparent' : 'bg-[#f7f7f7] dark:bg-[#373739]'
+                  notification.read ? 'bg-transparent' : 'bg-[var(--app-state-hover)] dark:bg-[var(--app-state-hover)]'
                 )}
               >
                 <div

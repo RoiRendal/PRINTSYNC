@@ -74,7 +74,7 @@ export function POSCatalog({
               product.stock <= 0 && 'cursor-not-allowed opacity-50 grayscale',
             )}
           >
-            <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border bg-[#f7f7f7] dark:bg-[#373739] xl:h-32">
+            <div className="relative mb-2 flex h-28 items-center justify-center overflow-hidden rounded-[0.65rem] border bg-[var(--app-state-hover)] dark:bg-[var(--app-state-hover)] xl:h-32">
               {product.imageUrl ? (
                 <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
               ) : (

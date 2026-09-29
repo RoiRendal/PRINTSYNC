@@ -24,7 +24,7 @@ export function PhaseProgress({ status }: { status: Order['status'] }) {
             key={phase}
             className={cn(
               'h-1.5 flex-1 rounded-full',
-              isDone ? 'bg-app-accent' : 'bg-[#ebebeb] dark:bg-[#414143]',
+              isDone ? 'bg-app-accent' : 'bg-[var(--app-tint-accent)] dark:bg-[var(--app-tint-neutral)]',
             )}
           />
         );

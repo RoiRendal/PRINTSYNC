@@ -103,7 +103,7 @@ function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
       className="text-left text-app-text-muted hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft"
     >
       {expanded ? (
-        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[#f2f2f2] p-2 dark:bg-[#373739]">
+        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[var(--app-state-hover)] p-2 dark:bg-[var(--app-state-hover)]">
           {JSON.stringify(metadata, null, 2)}
         </pre>
       ) : (

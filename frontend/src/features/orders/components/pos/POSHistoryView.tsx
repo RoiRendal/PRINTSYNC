@@ -205,7 +205,7 @@ export function POSHistoryView({
                 <span className="text-2xs font-bold text-app-ink dark:text-zinc-100">Total Amount</span>
                 <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">₱{selectedTransaction.total.toFixed(2)}</span>
               </div>
-              <div className="mt-2 flex items-center justify-between rounded-xl bg-[#f2f2f2] p-2 dark:bg-[#3d3d3f]">
+              <div className="mt-2 flex items-center justify-between rounded-xl bg-[var(--app-state-hover)] p-2 dark:bg-[var(--app-tint-gray)]">
                 <span className="text-3xs font-bold text-app-ink dark:text-zinc-100">Payment</span>
                 <Badge variant="accent">{selectedTransaction.paymentMethod}</Badge>
               </div>
