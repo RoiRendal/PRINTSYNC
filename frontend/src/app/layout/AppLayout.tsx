@@ -288,11 +288,18 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
             That is why the line is not 10px. At `--text-2xs` it read as a caption
             for the collapse chevron rather than as the page's title — the two sat
-            on the same line and nothing said which one named the screen. It is a
-            step up at `text-sm`, which is what the collapsed-sidebar brand row
-            uses for the business name. Deliberately NOT `--text-title`: the old
-            page heading was 28px and the bar is 32px tall, so a title-sized line
-            would have no room to sit inside it without growing the bar back. */}
+            on the same line and nothing said which one named the screen. It stepped
+            up once to `text-sm` and then again to `text-xl` (20px): the page name
+            is now the screen's only heading, so it carries a little more weight
+            than a caption without going back to the 28px page heading it replaced.
+
+            Deliberately NOT `--text-title` (28px) or `text-2xl` (24px): the old
+            heading was 24px at narrow widths and 28px above `lg`, and both would
+            fill the 32px bar edge-to-edge or overflow it. `text-xl` sits at 20px
+            with a 28px line box, which leaves a couple of pixels either side and
+            never clips. The collapsed-sidebar brand row still uses `text-sm` for
+            the business name, so the two now differ on purpose — the bar names the
+            page, the rail names the business. */}
         <div className="relative z-[40] mx-3 mt-2 flex h-8 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
           <div className="flex min-w-0 items-center gap-3">
             <Button
@@ -308,7 +315,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             {/* No wrapper div: the span is the only child, so the flex row
                 already lays it out. The extra box was a leftover from the
                 two-line block (title + 10px sub-label) that used to sit here. */}
-            <span className="block min-w-0 truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
+            <span className="block min-w-0 truncate text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
           </div>
           <ConnectionStatus className="shrink-0" />
         </div>
