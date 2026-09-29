@@ -143,11 +143,6 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Settings</h1>
-        <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">Manage business identity, defaults, appearance, and data export.</p>
-      </div>
-
       <Card padding="lg" className="overflow-hidden">
         <CardHeader className="border-b pb-4">
           <CardTitle>Business identity</CardTitle>

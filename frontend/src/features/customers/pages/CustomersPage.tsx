@@ -224,10 +224,6 @@ export default function CustomersPage() {
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Customer Directory</h1>
-          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">Manage customer records, contact details, and order history links.</p>
-        </div>
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
 

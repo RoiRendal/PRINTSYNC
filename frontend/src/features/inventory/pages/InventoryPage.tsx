@@ -127,14 +127,6 @@ export default function Inventory() {
         <InlineAlert message={mutationError} onDismiss={() => setMutationError(null)} />
       )}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-
-          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Inventory Management</h1>
-          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
-            {viewMode === 'inventory' ? 'Manage raw materials, reorder thresholds, and stock valuation.' : 'Digital asset library for custom apparel designs.'}
-          </p>
-        </div>
-
         <SegmentedControl
           aria-label="Inventory view"
           value={viewMode}
