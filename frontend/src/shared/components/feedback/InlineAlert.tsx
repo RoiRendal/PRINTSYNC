@@ -1,28 +1,26 @@
-import type { IconComponent } from '../ui/icons';
-import { AlertCircle, AlertTriangle } from '../ui/icons';
 import { cn } from '../../lib/cn';
 
 export type InlineAlertTone = 'error' | 'warning';
 
 /**
- * The two tones this app needs, each with the icon it falls back to.
+ * The two tones this app needs, each with the dot that carries it.
  *
  * Deliberately only two. An informational tone was considered and left out: every
  * call site so far is reporting that something the user asked for did not happen,
  * and a component that can also say "all good" invites the message that matters
  * to be rendered in the reassuring style by mistake.
+ *
+ * **The dot is the only thing in a failure message with a hue.** The message used
+ * to be painted red (or amber) end to end, behind a matching tinted panel, with
+ * an alert icon in front of it — three cues saying one thing. The text colour and
+ * the fill were the loudest part of the screen and both are unreadable to a
+ * colour-blind user, so they were also the least reliable. A 6px dot carries the
+ * severity, the words carry the meaning, and everything else sits in the same ink
+ * as the copy around it.
  */
-const TONE_STYLES: Record<InlineAlertTone, { panel: string; Icon: IconComponent }> = {
-  error: {
-    panel:
-      'border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-red-700 dark:text-red-300',
-    Icon: AlertCircle,
-  },
-  warning: {
-    panel:
-      'border-[var(--app-border-hairline)] bg-[var(--app-tint-amber)] text-amber-700 dark:text-amber-300',
-    Icon: AlertTriangle,
-  },
+const TONE_DOT: Record<InlineAlertTone, string> = {
+  error: 'bg-app-danger',
+  warning: 'bg-app-warning',
 };
 
 interface InlineAlertProps {
@@ -35,8 +33,11 @@ interface InlineAlertProps {
    * the canonical example.
    */
   title?: string;
-  /** Overrides the tone's default icon. */
-  icon?: IconComponent;
+  /**
+   * `panel` draws the hairline box — use it where the message stands on its own.
+   * `inline` is a bare line — use it directly under the field it is about.
+   */
+  variant?: 'panel' | 'inline';
   onDismiss?: () => void;
   className?: string;
 }
@@ -48,7 +49,9 @@ interface InlineAlertProps {
  * the checkout modal and once on the orders page — and the Tier 5 work needed it
  * in three more places. A fourth copy would have been the point at which the
  * three drifted apart in tone or accessibility, so this is the one
- * implementation instead.
+ * implementation instead. R22 folded the last hand-rolled copies in: six one-off
+ * red boxes in Settings, Inventory, Designs, Orders and POS that each spelled the
+ * same idea slightly differently, and four bare red `<p>` errors.
  *
  * Renders `role="alert"` so the message is announced when it appears. The
  * page-level `ErrorState` is a different thing: that one replaces a whole view
@@ -59,37 +62,32 @@ export function InlineAlert({
   message,
   tone = 'error',
   title,
-  icon,
+  variant = 'panel',
   onDismiss,
   className,
 }: InlineAlertProps) {
-  const { panel, Icon: ToneIcon } = TONE_STYLES[tone];
-  const Icon = icon ?? ToneIcon;
-
   return (
     <div
       role="alert"
       className={cn(
-        'rounded-[var(--radius-card)] border px-3 py-2 text-xs font-semibold leading-relaxed',
-        panel,
-        onDismiss && 'flex items-start justify-between gap-3',
+        'flex items-start gap-2 text-xs leading-relaxed',
+        variant === 'panel' && 'rounded-[var(--radius-card)] border px-3 py-2',
         className,
       )}
     >
-      <div className={cn(title && 'space-y-1.5')}>
-        {title && (
-          <div className="flex items-center gap-1.5 font-bold">
-            <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>{title}</span>
-          </div>
-        )}
-        <p className={cn(title && 'font-normal')}>{message}</p>
+      <span
+        className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', TONE_DOT[tone])}
+        aria-hidden="true"
+      />
+      <div className={cn('min-w-0 flex-1', title && 'space-y-1')}>
+        {title && <p className="font-bold text-app-ink dark:text-zinc-100">{title}</p>}
+        <p className="font-medium text-app-text-muted dark:text-zinc-400">{message}</p>
       </div>
       {onDismiss && (
         <button
           type="button"
           onClick={onDismiss}
-          className="shrink-0 cursor-pointer text-2xs font-bold underline decoration-dotted underline-offset-2"
+          className="shrink-0 cursor-pointer text-2xs font-bold text-app-text-muted underline decoration-dotted underline-offset-2 hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
         >
           Dismiss
         </button>

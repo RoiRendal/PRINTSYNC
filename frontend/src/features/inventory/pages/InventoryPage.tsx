@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Box, Image as ImageIcon } from '../../../shared/components/ui/icons';
+import { Box, Image as ImageIcon } from '../../../shared/components/ui/icons';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -123,11 +124,7 @@ export default function Inventory() {
   return (
     <div className="space-y-5">
       {mutationError && (
-        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-3 text-xs font-medium text-red-700 dark:text-red-300">
-          <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{mutationError}</span>
-          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
-        </div>
+        <InlineAlert message={mutationError} onDismiss={() => setMutationError(null)} />
       )}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>

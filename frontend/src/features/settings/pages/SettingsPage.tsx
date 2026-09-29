@@ -1,21 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from '../../../shared/components/ui/icons';
-
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select, SegmentedControl } from '../../../shared/components/ui';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
-
-function SettingIcon({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
-      {children}
-    </div>
-  );
-}
 
 function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle?: () => void }) {
   return (
@@ -58,6 +49,13 @@ export default function Settings() {
   const [defaultsError, setDefaultsError] = useState('');
   const [exportError, setExportError] = useState('');
   const logoFileInputRef = useRef<HTMLInputElement>(null);
+  /**
+   * The logo row can fail from either side — the upload, or the branding
+   * provider behind it — and the banner shows whichever spoke. Hoisted out of
+   * the JSX so the guard and the message read the same value; `brandingError` is
+   * `string | null`, which the inline `||` could not narrow for the prop.
+   */
+  const logoError = logoUploadError || brandingError;
 
   useEffect(() => {
     setCompanyDraft(businessDisplayName);
@@ -169,13 +167,8 @@ export default function Settings() {
 
       <Card padding="lg" className="overflow-hidden">
         <CardHeader className="border-b pb-4">
-          <div className="flex items-start gap-3">
-            <SettingIcon><Building2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-            <div>
-              <CardTitle>Business identity</CardTitle>
-              <CardDescription>Company name and logo shown in the header, login screen, and reports.</CardDescription>
-            </div>
-          </div>
+          <CardTitle>Business identity</CardTitle>
+          <CardDescription>Company name and logo shown in the header, login screen, and reports.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
@@ -208,14 +201,12 @@ export default function Settings() {
 
           <SurfaceCard className="p-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border p-3">
-                <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
-              </div>
+              {/* The logo stands on its own — no 80px rounded bordered tile. It
+                  is the preview of what the sidebar and login screen print, not a
+                  badge, and it now matches how those two render it. */}
+              <img src={effectiveBusinessLogoUrl} alt="" className="h-14 w-14 shrink-0 object-contain" />
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <ImagePlus className="h-4 w-4 text-app-accent dark:text-app-accent-soft" aria-hidden="true" />
-                  <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
-                </div>
+                <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
                 <p className="text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">
                   Stored in Supabase Storage, up to{' '}
                   <span className="font-mono text-2xs">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
@@ -232,7 +223,7 @@ export default function Settings() {
                     </Button>
                   )}
                 </div>
-                {(logoUploadError || brandingError) && <p className="text-xs font-medium text-app-danger dark:text-red-300">{logoUploadError || brandingError}</p>}
+                {logoError && <InlineAlert variant="inline" message={logoError} />}
               </div>
             </div>
           </SurfaceCard>
@@ -242,13 +233,8 @@ export default function Settings() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
-            <div className="flex items-start gap-3">
-              <SettingIcon><Settings2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Business Defaults</CardTitle>
-                <CardDescription>System-wide values applied to POS transactions and reports.</CardDescription>
-              </div>
-            </div>
+          <CardTitle>Business Defaults</CardTitle>
+          <CardDescription>System-wide values applied to POS transactions and reports.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
             <div className="space-y-5">
@@ -284,7 +270,7 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleSaveDefaults}>Save defaults</Button>
               </div>
-              {defaultsError && <p className="text-xs font-medium text-app-danger dark:text-red-300">{defaultsError}</p>}
+              {defaultsError && <InlineAlert variant="inline" message={defaultsError} />}
             </div>
 
             <SurfaceCard className="space-y-4 p-4">
@@ -299,13 +285,8 @@ export default function Settings() {
 
         <Card variant="raised" padding="lg">
           <CardHeader>
-            <div className="flex items-start gap-3">
-              <SettingIcon><Palette className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Apply a persistent app color scheme.</CardDescription>
-              </div>
-            </div>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Apply a persistent app color scheme.</CardDescription>
           </CardHeader>
           <SegmentedControl
             aria-label="Color scheme"
@@ -324,16 +305,11 @@ export default function Settings() {
       <div className="grid gap-5 md:grid-cols-2">
         <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
-            <div className="flex items-start gap-3">
-              <SettingIcon><Download className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Data Export</CardTitle>
-                <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
-              </div>
-            </div>
+          <CardTitle>Data Export</CardTitle>
+          <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
-            {exportError && <p className="text-xs font-medium text-app-danger dark:text-red-300">{exportError}</p>}
+            {exportError && <InlineAlert variant="inline" message={exportError} />}
             <button
               type="button"
               onClick={handleExportOrders}
@@ -363,13 +339,8 @@ export default function Settings() {
 
         <Card variant="raised" padding="lg">
           <CardHeader>
-            <div className="flex items-start gap-3">
-              <SettingIcon><Bell className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>Control operational alerts across exports and stock.</CardDescription>
-              </div>
-            </div>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Control operational alerts across exports and stock.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             <ToggleSwitch label="Export Completion Alerts" enabled={settings.exportAlertsEnabled} onToggle={toggleExportAlerts} />

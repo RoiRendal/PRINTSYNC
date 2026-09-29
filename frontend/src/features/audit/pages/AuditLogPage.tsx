@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { RefreshCw, ScrollText } from '../../../shared/components/ui/icons';
+import { RefreshCw } from '../../../shared/components/ui/icons';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
@@ -22,7 +22,6 @@ import {
   TableRow,
 } from '../../../shared/components/ui';
 import type { BadgeVariant } from '../../../shared/components/ui';
-import { cn } from '../../../shared/lib/cn';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 
 const ACTION_OPTIONS = [
@@ -170,18 +169,20 @@ export default function AuditLogPage() {
               <CardDescription>Summary of tracked events.</CardDescription>
             </CardHeader>
             <div className="space-y-2.5">
+              {/*
+                Label and figure, nothing else. The glyph used to sit in a 32px
+                tinted rounded tile; both the tile and the glyph are gone, because
+                the icon restated the label beside it and carried no meaning of
+                its own. Same ERPNext rule as the analytics and dashboard tiles:
+                a card carries its figure, not ornament.
+              */}
               {[
-                { label: 'Total Events', value: total, tone: 'accent' as const },
-                { label: 'Current Page', value: `${page} / ${totalPages || 1}`, tone: 'purple' as const },
-                { label: 'Shown', value: items.length, tone: 'green' as const },
-              ].map(({ label, value, tone }) => (
+                { label: 'Total Events', value: total },
+                { label: 'Current Page', value: `${page} / ${totalPages || 1}` },
+                { label: 'Shown', value: items.length },
+              ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
-                      <ScrollText className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  </div>
+                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}

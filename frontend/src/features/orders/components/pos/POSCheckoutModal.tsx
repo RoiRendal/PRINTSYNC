@@ -1,5 +1,4 @@
-import type { IconComponent } from '../../../../shared/components/ui/icons';
-import { AlertTriangle, Banknote, CheckCircle2, CreditCard, Printer, ShieldCheck } from '../../../../shared/components/ui/icons';
+import { Banknote, CheckCircle2, CreditCard, Printer } from '../../../../shared/components/ui/icons';
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -65,12 +64,11 @@ export interface CheckoutError {
  */
 const RECONCILIATION_PANEL: Record<
   CheckoutFailureOutcome['kind'],
-  { heading: string; tone: InlineAlertTone; Icon: IconComponent }
+  { heading: string; tone: InlineAlertTone }
 > = {
   'not-committed': {
     heading: 'Nothing was charged — safe to try again',
     tone: 'error',
-    Icon: ShieldCheck,
   },
   unknown: {
     // Retrying is genuinely safe here, because the attempt key survives a
@@ -79,7 +77,6 @@ const RECONCILIATION_PANEL: Record<
     // would slow the till down for no benefit.
     heading: 'Could not confirm — retrying is safe',
     tone: 'warning',
-    Icon: AlertTriangle,
   },
 };
 
@@ -142,9 +139,14 @@ export function POSCheckoutModal({
       <div className="space-y-4">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-app-success">
+            {/* The tick is bare and carries no hue — the 64px ringed green tile
+                around it drew a box around an icon, and the green only repeated
+                what the check shape and the heading below it already say. It
+                takes the same muted ink as the rest of the feedback family, so a
+                success reads as a state the page is in rather than a status light. */}
+            <span className="text-app-text-muted dark:text-zinc-400">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
-            </div>
+            </span>
             <div>
               <h4 className="text-lg font-bold text-app-ink dark:text-zinc-100">
                 {posMode === 'retail' ? 'Transaction Successful' : 'Order Created'}
@@ -173,7 +175,6 @@ export function POSCheckoutModal({
               <InlineAlert
                 tone={panel.tone}
                 title={panel.heading}
-                icon={panel.Icon}
                 message={checkoutError.message}
                 className="text-2xs"
               />
@@ -217,9 +218,11 @@ export function POSCheckoutModal({
                       </span>
                     </div>
                     {shortfall && (
-                      <p className="text-2xs font-bold text-red-700 dark:text-red-300">
-                        Only {shortfall.available} left — {shortfall.requested} requested
-                      </p>
+                      <InlineAlert
+                        variant="inline"
+                        className="text-2xs"
+                        message={`Only ${shortfall.available} left — ${shortfall.requested} requested`}
+                      />
                     )}
                   </div>
                 );

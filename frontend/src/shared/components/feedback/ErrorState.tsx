@@ -17,9 +17,15 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className={cn('flex min-h-24 flex-col items-center justify-center gap-3 text-center', className)}>
-      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-app-danger dark:text-red-300">
+      {/*
+        The glyph is bare and carries no hue. It used to sit in a 56px red-tinted
+        rounded square; the alert-circle shape plus the sentence under it already
+        say what happened, so a second, colour-only cue was redundant. Muted,
+        like the copy beside it.
+      */}
+      <span className="text-app-text-muted dark:text-zinc-400">
         <AlertCircle className="h-6 w-6" aria-hidden="true" />
-      </div>
+      </span>
       <div className="space-y-1">
         <p className="text-xs font-bold text-app-ink dark:text-zinc-100">{title}</p>
         <p className="max-w-sm text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{message}</p>

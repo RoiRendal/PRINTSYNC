@@ -120,23 +120,17 @@ export const NotificationPanel = React.forwardRef<
                   notification.read ? 'bg-transparent' : 'bg-[var(--app-state-hover)] dark:bg-[var(--app-state-hover)]'
                 )}
               >
-                <div
-                  className={cn(
-                    'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-2xs font-bold',
-                    /* Amber and gray map onto the tint tokens. The blue chip does
-                       not: --app-tint-accent is the composite of app-accent, which
-                       is a grey in this palette, so using it here would turn a
-                       blue chip grey. Its dark values are the composite of the
-                       real Tailwind blue this chip actually paints with. */
-                    notification.type === 'stock'
-                      ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-[var(--app-border-hairline)] dark:bg-[var(--app-tint-amber)] dark:text-amber-400'
-                      : notification.type === 'order'
-                        ? 'border-blue-200 bg-blue-50 text-blue-600 dark:border-[#31466a] dark:bg-[#2e3542] dark:text-blue-400'
-                        : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-[var(--app-border-hairline)] dark:bg-[var(--app-tint-gray)] dark:text-gray-400'
-                  )}
-                >
+                {/*
+                  The glyph is bare. It used to sit in a 32px rounded box tinted
+                  per notification type — amber for stock, blue for orders, grey
+                  for system — which was a frame around an icon plus a second,
+                  colour-only cue. The three shapes already tell the types apart,
+                  so the tint added nothing and made the list read as a stack of
+                  badges. Muted, like the message beside it.
+                */}
+                <span className="mt-0.5 shrink-0 text-app-text-muted dark:text-zinc-400">
                   <NotificationIcon type={notification.type} />
-                </div>
+                </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
                     <p className={cn('text-xs font-bold', notification.read ? 'text-app-text-muted dark:text-zinc-500' : 'text-app-ink dark:text-zinc-100')}>

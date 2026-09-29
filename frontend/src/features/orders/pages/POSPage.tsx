@@ -5,6 +5,7 @@ import { useDesigns } from '../../../app/stores/useDesignStore';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
 import { DeleteConfirmModal } from '../../../shared/components/ui';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { usePaymentStore } from '../../../app/stores/usePaymentStore';
 import type { Transaction } from '../types';
@@ -281,17 +282,9 @@ export default function POS() {
 
   return (
     <div className="flex flex-col gap-5">
-      {transactionError && (
-        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
-          {transactionError}
-        </div>
-      )}
+      {transactionError && <InlineAlert message={transactionError} className="text-2xs" />}
 
-      {voidError && (
-        <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
-          {voidError}
-        </div>
-      )}
+      {voidError && <InlineAlert message={voidError} className="text-2xs" />}
 
       <POSToolbar
         view={view}

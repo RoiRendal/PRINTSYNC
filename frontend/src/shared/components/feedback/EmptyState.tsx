@@ -19,9 +19,12 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-3 text-center text-app-text-muted dark:text-zinc-500', className)}>
-      <div className="flex h-16 w-16 items-center justify-center rounded-[1.35rem] border border-[var(--app-border-hairline)] text-app-accent dark:text-app-accent-soft">
-        {icon}
-      </div>
+      {/*
+        No 64px ringed tile around the glyph, and no hue on the glyph itself —
+        the shape says "nothing here yet" and the sentence under it says what
+        that means. Colour would only restate it. Muted, like the copy beside it.
+      */}
+      <span className="text-app-text-muted dark:text-zinc-400">{icon}</span>
       <div className="space-y-1">
         <p className="text-xs font-bold text-app-ink dark:text-zinc-100">{title}</p>
         {message && <p className="max-w-sm text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{message}</p>}
