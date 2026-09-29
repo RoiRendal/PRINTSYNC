@@ -77,9 +77,9 @@
      both are Geist again now.
 
      A figure is Geist + `tabular-nums`, not mono, wherever it sits in a data
-     TABLE or in a card / tile — the analytics MetricTiles, the inventory and
-     order-summary stat cards, the dashboard WorkspaceTiles, the audit / customer
-     / user stat tiles, and the Settings "Current Defaults" figures. A row or a
+     TABLE or in a card / tile — the analytics MetricTiles, the shared StatTile
+     (inventory, orders, customers, users, audit, dashboard, design repository)
+     and the Settings "Current Defaults" figures. A row or a
      tile has to read as one uniform block, and a second family in the middle of
      it is the thing that breaks that; tabular figures already line the digits
      up. Frappe does the same: its list view sets `font-variant-numeric:

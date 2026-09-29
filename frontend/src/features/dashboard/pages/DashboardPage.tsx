@@ -1,9 +1,7 @@
-import { Link } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { SurfaceCard } from '../../../shared/components/ui';
-import { cn } from '../../../shared/lib/cn';
+import { StatTile, StatTileRow } from '../../../shared/components/ui';
 import { useOrdersSummary } from '../hooks/useOrdersSummary';
 import type { OrderStatus, OrdersSummary } from '../../orders/types';
 
@@ -25,54 +23,25 @@ import type { OrderStatus, OrdersSummary } from '../../orders/types';
  */
 
 /**
- * A triage tile: label, count, unit, and what it means.
+ * The Workspace tile is now the app's one `StatTile`, and two things about the
+ * old one are worth recording because neither is obvious from the result.
  *
- * No icon — the same ERPNext rule the analytics number cards follow: a card
- * carries its figure, not ornament. The muted glyph that used to sit top-right
- * restated the label beside it and was the only reason the tile needed a
- * two-column flex row.
+ * **The unit word moved into the label.** "Pending" plus a small "orders"
+ * beside the figure was the only tile in the app with three lines of content,
+ * so it stood taller than the Orders, Inventory and Customers rows — which is
+ * exactly the inconsistency this round exists to remove. The label is a noun
+ * phrase now ("Pending orders"), which is what `StatTile` documents it as.
  *
- * The "View list →" row is gone too, and the tile no longer darkens on hover.
- * The whole tile is still the link, so it still opens the list behind its count
- * — it just carries no ornament and no hover fill. What remains to signal that
- * is the pointer cursor and the keyboard focus ring.
+ * **The hint sentence is gone.** "New jobs not yet started." was orientation
+ * text, and dropping it costs that — but it was also the reason the Dashboard
+ * row was three lines while every other page is two, and the same information
+ * is one click away in the list the tile opens.
+ *
+ * **The red low-stock figure is gone too.** ERPNext never colours a number,
+ * and a red "5" said with colour what the label already says with words. Low
+ * stock above zero is still visible: the tile names it, and it links straight
+ * to the filtered inventory view that labels it.
  */
-interface WorkspaceTileProps {
-  label: string;
-  count: number;
-  /** The unit word shown beside the count, e.g. "orders" or "items". */
-  unit: string;
-  to: string;
-  detail: string;
-  /** Draws attention (red) when the queue needs action, e.g. Low stock above zero. */
-  alert?: boolean;
-}
-
-function WorkspaceTile({ label, count, unit, to, detail, alert = false }: WorkspaceTileProps) {
-  return (
-    <Link
-      to={to}
-      className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent"
-    >
-      <SurfaceCard className="h-full p-4">
-        <p className="label-caps text-app-text-muted dark:text-zinc-500">{label}</p>
-        <p className="mt-2 flex items-baseline gap-1.5">
-          <span
-            className={cn(
-              'text-3xl font-bold tabular-nums tracking-tight text-app-ink dark:text-zinc-100',
-              alert && 'text-app-danger dark:text-red-300',
-            )}
-          >
-            {count}
-          </span>
-          <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{unit}</span>
-        </p>
-        <p className="mt-1 text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{detail}</p>
-      </SurfaceCard>
-    </Link>
-  );
-}
-
 function DashboardHeader() {
   return (
     <div>
@@ -113,42 +82,31 @@ export default function Dashboard() {
     );
   }
 
-  const cards: WorkspaceTileProps[] = [
+  const cards: Array<{ label: string; count: number; to: string }> = [
     {
-      label: 'Pending',
+      label: 'Pending orders',
       count: countFor(summary, 'Pending'),
-      unit: 'orders',
       to: '/orders?status=Pending',
-      detail: 'New jobs not yet started.',
     },
     {
-      label: 'Designing',
+      label: 'Designing orders',
       count: countFor(summary, 'Designing'),
-      unit: 'orders',
       to: '/orders?status=Designing',
-      detail: 'Artwork in progress.',
     },
     {
-      label: 'In Production',
+      label: 'In Production orders',
       count: countFor(summary, 'In Production'),
-      unit: 'orders',
       to: `/orders?status=${encodeURIComponent('In Production')}`,
-      detail: 'On the press right now.',
     },
     {
-      label: 'Ready for Pickup',
+      label: 'Ready for Pickup orders',
       count: countFor(summary, 'Ready for Pickup'),
-      unit: 'orders',
       to: `/orders?status=${encodeURIComponent('Ready for Pickup')}`,
-      detail: 'Printed and waiting for collection.',
     },
     {
-      label: 'Low stock',
+      label: 'Low stock items',
       count: summary.lowStock,
-      unit: 'items',
       to: '/inventory?lowStock=1',
-      detail: 'Materials at or below reorder level.',
-      alert: summary.lowStock > 0,
     },
   ];
 
@@ -162,11 +120,11 @@ export default function Dashboard() {
           keep them, and say they may be behind. */}
       {error && <InlineAlert message={`${error} Showing the last known counts.`} />}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 xl:gap-4">
+      <StatTileRow columns={5}>
         {cards.map((card) => (
-          <WorkspaceTile key={card.label} {...card} />
+          <StatTile key={card.label} label={card.label} value={card.count} to={card.to} />
         ))}
-      </div>
+      </StatTileRow>
 
       {workWaiting === 0 && (
         <p className="text-xs text-app-text-muted dark:text-zinc-400">
