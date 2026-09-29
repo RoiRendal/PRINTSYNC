@@ -186,7 +186,7 @@ export function DesignRepository() {
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <Button onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
+            <Button variant="primary" onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
           </div>
         </CardHeader>
         <CardContent className="p-4">

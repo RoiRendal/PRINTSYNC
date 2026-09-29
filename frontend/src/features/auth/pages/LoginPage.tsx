@@ -82,7 +82,7 @@ export default function LoginPage() {
 
             {authError && <InlineAlert message={authError} />}
 
-            <Button type="submit" size="lg" fullWidth isLoading={isSessionLoading} disabled={isSessionLoading}>
+            <Button type="submit" variant="primary" size="lg" fullWidth isLoading={isSessionLoading} disabled={isSessionLoading}>
               Login
             </Button>
           </form>

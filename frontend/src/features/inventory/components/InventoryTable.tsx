@@ -80,7 +80,7 @@ export function InventoryTable({
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
-          <Button type="button" onClick={onAddItem} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn" className="shrink-0">
+          <Button type="button" variant="primary" onClick={onAddItem} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn" className="shrink-0">
             Add Stock
           </Button>
         </div>

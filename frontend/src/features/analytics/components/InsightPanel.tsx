@@ -1,6 +1,5 @@
 import { Brain } from '../../../shared/components/ui/icons';
-import { Badge, Button, SurfaceCard } from '../../../shared/components/ui';
-import { cn } from '../../../shared/lib/cn';
+import { Badge, Button, Checkbox, SurfaceCard } from '../../../shared/components/ui';
 import { formatInsightTime, type InsightState } from './analytics-types';
 
 interface InsightPanelProps {
@@ -13,12 +12,16 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
   return (
     <SurfaceCard className="mt-4 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button type="button" onClick={onToggleAutoGenerate} className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-app-ink dark:text-zinc-200" aria-pressed={state.autoGenerate}>
-          <span className={cn('relative h-5 w-9 rounded-full p-0.5', state.autoGenerate ? 'bg-app-success' : 'bg-[var(--app-state-selected)] dark:bg-[var(--app-state-hover-sub)]')}>
-            <span className={cn('block h-4 w-4 rounded-full bg-white ring-1 ring-black/20', state.autoGenerate && 'translate-x-4')} />
-          </span>
+        {/*
+          A checkbox, not a switch — and not a second copy of the one that used
+          to live in Settings. The two were byte-identical apart from the label,
+          which is the same drift `SegmentedControl`'s doc-comment describes for
+          the five hand-rolled radio groups it replaced.
+        */}
+        <label className="inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-app-ink dark:text-zinc-200">
+          <Checkbox checked={state.autoGenerate} onChange={onToggleAutoGenerate} />
           Auto-generate insights
-        </button>
+        </label>
         <Button type="button" size="sm" onClick={onGenerate} isLoading={state.isLoading} leftIcon={<Brain className="h-3.5 w-3.5" aria-hidden="true" />}>
           {state.isLoading ? 'Generating...' : 'Generate Insights'}
         </Button>

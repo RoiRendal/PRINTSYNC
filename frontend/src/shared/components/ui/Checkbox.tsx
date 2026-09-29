@@ -16,11 +16,20 @@ export interface CheckboxProps extends Omit<InputHTMLAttributes<HTMLInputElement
 }
 
 /**
- * A native checkbox, styled to the app's accent.
+ * A native checkbox, drawn to ERPNext's box.
  *
  * Native on purpose: it keeps the browser's own keyboard handling, form
  * semantics and screen-reader role. A styled `div` would have to rebuild all
  * three, and the tables it is used in are driven by keyboard as much as mouse.
+ * What changes here is only the PAINT — `appearance: none` plus the geometry and
+ * glyphs in `.app-checkbox`, which is ERPNext's own approach: 14px, 4px radius,
+ * a 1px control-edge outline when empty, and a solid accent fill with a centred
+ * tick at 57% when set.
+ *
+ * `indeterminate` needs the CSS as much as the DOM property. It is what the
+ * header box of a list table shows for "some rows are ticked", and a box with
+ * `appearance: none` paints nothing for that state unless a rule asks it to —
+ * the state would survive in the DOM and vanish from the screen.
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, indeterminate = false, ...props }, ref) => {
@@ -39,9 +48,8 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         }}
         type="checkbox"
         className={cn(
-          'h-3.5 w-3.5 cursor-pointer accent-app-accent',
+          'app-checkbox',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)]',
-          'disabled:cursor-not-allowed disabled:opacity-40',
           className,
         )}
         {...props}

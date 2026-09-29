@@ -33,15 +33,26 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
       <span className="text-app-text-muted dark:text-zinc-500">
         Page {page} of {totalPages} ({total} total)
       </span>
+      {/*
+        Paging is drawn as the same grey control fill the buttons use, with no
+        border, and the current page is one step darker rather than accent-dark.
+
+        ERPNext's pager does exactly this: every page is a `--control-bg` chip
+        with `border: 0px none`, and the current one is a lighter step (white
+        against `#f8f8f8`) rather than the darkest value on the page. The
+        bordered squares this replaces were the only outlined buttons left in the
+        app, and an outlined square beside a filled one reads as a different kind
+        of control for no reason.
+      */}
       <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={!canGoPrevious}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-app-ink dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-[var(--app-surface-sub)] text-app-ink dark:text-zinc-200',
             !canGoPrevious && 'cursor-not-allowed opacity-40',
-            canGoPrevious && 'hover:border-app-accent hover:bg-[var(--app-state-hover)]',
+            canGoPrevious && 'hover:bg-[var(--app-state-hover-sub)]',
           )}
           aria-label="Previous page"
         >
@@ -55,11 +66,12 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
               key={p}
               type="button"
               onClick={() => onPageChange(p as number)}
+              aria-current={page === p ? 'page' : undefined}
               className={cn(
-                'flex h-7 min-w-[2rem] items-center justify-center rounded-lg border px-1.5',
+                'flex h-7 min-w-[2rem] items-center justify-center rounded-[var(--radius-button)] px-1.5',
                 page === p
-                  ? 'border-app-accent bg-app-accent text-[var(--app-accent-ink)] dark:border-app-accent-hover dark:bg-app-accent-hover'
-                  : 'border-[var(--app-border-hairline)] text-app-ink hover:border-app-accent hover:bg-[var(--app-state-hover)] dark:text-zinc-200',
+                  ? 'bg-[var(--app-state-hover-sub)] font-semibold text-app-ink dark:text-zinc-100'
+                  : 'bg-[var(--app-surface-sub)] text-app-ink hover:bg-[var(--app-state-hover-sub)] dark:text-zinc-200',
               )}
             >
               {p}
@@ -71,9 +83,9 @@ export function Pagination({ page, limit, total, onPageChange, className }: Pagi
           onClick={() => onPageChange(page + 1)}
           disabled={!canGoNext}
           className={cn(
-            'flex h-7 w-7 items-center justify-center rounded-lg border border-[var(--app-border-hairline)] text-app-ink dark:text-zinc-200',
+            'flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-[var(--app-surface-sub)] text-app-ink dark:text-zinc-200',
             !canGoNext && 'cursor-not-allowed opacity-40',
-            canGoNext && 'hover:border-app-accent hover:bg-[var(--app-state-hover)]',
+            canGoNext && 'hover:bg-[var(--app-state-hover-sub)]',
           )}
           aria-label="Next page"
         >

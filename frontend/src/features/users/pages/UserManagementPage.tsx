@@ -234,7 +234,7 @@ export default function UserManagement() {
           <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">User Management</h1>
           <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">Manage staff profiles, RBAC roles, and default page access groups.</p>
         </div>
-        <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
+        <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4">
@@ -409,7 +409,15 @@ export default function UserManagement() {
                 if (!item) return null;
                 return (
                   <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-xs text-app-ink dark:text-zinc-300">
-                    <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-app-accent" />
+                    {/*
+                      The shared Checkbox, not a bare input. This was the last
+                      hand-rolled box in the app — it had drifted to `rounded
+                      border accent-app-accent`, a mix of Tailwind's default
+                      radius and a native accent, so it was already a different
+                      shape from every other box on screen. Read-only: the page
+                      access grid is derived from the role, not ticked by hand.
+                    */}
+                    <Checkbox checked={form.access.includes(key)} disabled readOnly />
                     {item.label}
                   </label>
                 );
@@ -419,7 +427,7 @@ export default function UserManagement() {
 
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button type="button" variant="secondary" onClick={closeModal} disabled={isSaving}>Cancel</Button>
-            <Button type="submit" isLoading={isSaving}>{editingUserId ? 'Save Changes' : 'Create User'}</Button>
+            <Button type="submit" variant="primary" isLoading={isSaving}>{editingUserId ? 'Save Changes' : 'Create User'}</Button>
           </div>
         </form>
       </Modal>

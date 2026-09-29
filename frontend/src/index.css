@@ -288,6 +288,32 @@
      white on the inverted light fill measures 1.09:1. Ink on it is 16.47:1. */
   --app-accent-ink: #ffffff;
 
+  /* The checkbox is DRAWN, not borrowed from the OS — see `.app-checkbox` in
+     the utilities layer. ERPNext paints its own box, and the two glyphs below
+     are the reason it has to: a background image cannot inherit `currentColor`,
+     so the tick must be a different colour in each theme rather than one asset
+     that follows the ink. ERPNext solves it the same way, with a `$check-icon`
+     and a `$check-icon-dark`.
+
+     The outline is deliberately NOT its own colour: it reads
+     `--app-border-control`, the same token the focus ring uses, so a box and its
+     own ring can never disagree about where the control edge is. (ERPNext uses
+     its `--gray-500`, `#999999`, which measures 2.85:1 on a white card — under
+     the 3:1 floor for a control edge that this file documents. `#8e8e93` is
+     3.26:1 and six units away, so the box matches ERPNext's geometry exactly and
+     its border value only to the nearest step that passes.) */
+  --app-checkbox-border: var(--app-border-control);
+  /* ERPNext's tick: an 8x7 viewBox at `background-size: 57%`, so it lands at
+     ~8x7px inside the 14px box. `stroke-width` is 1.5 here and 2 in dark, which
+     is what the reference ships. */
+  --app-checkbox-tick: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L2.66667 5.8L7 1.2' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* The indeterminate glyph. ERPNext has no equivalent — its grid draws its own
+     select-all — but every list table here drives `indeterminate` from
+     `useRowSelection`, and a checkbox with `appearance: none` paints NOTHING for
+     that state unless it is told to. The dash keeps "some rows are ticked"
+     visible instead of leaving the box looking empty. */
+  --app-checkbox-dash: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 4h5' stroke='white' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+
   /* Solid badge tints. Each is the flat composite of the translucent tint it
      replaces — the old 12%-opacity fills resolved to almost exactly these over a
      white card, so the badges look the same and stop being translucent. Every
@@ -383,6 +409,12 @@
      grey as their siblings. */
   --color-app-text-muted: #a1a1aa;
   --app-accent-ink: #171717;
+
+  /* The dark tick, black on the light fill. ERPNext ships exactly this pair
+     (`$check-icon` white / `$check-icon-dark` black) because the accent inverts
+     after dark — so the glyph has to invert with it. */
+  --app-checkbox-tick: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L2.66667 5.8L7 1.2' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --app-checkbox-dash: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 4h5' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
 }
 
 html {
@@ -558,6 +590,80 @@ html {
   .surface-modal {
     background: var(--app-surface-raised);
     border: 1px solid var(--app-border-hairline);
+  }
+
+  /*
+   * The checkbox, drawn rather than borrowed from the OS.
+   *
+   * ERPNext paints its own box instead of using the native control: 14px, a 4px
+   * radius, and a 1px outline when empty. When ticked it drops the outline,
+   * fills solid and centres the check glyph as a background image at 57% —
+   * measured on the live demo, and the reason a Frappe form and a PrintSync form
+   * should not disagree about what a checkbox is. `accent-color` got the checked
+   * FILL right in both themes; what it could not do is the geometry, which is
+   * why this is drawn rather than tinted.
+   *
+   * The glyph is a background image rather than a `::after` on the input. A
+   * replaced element does not reliably support generated content, and a checkbox
+   * that loses its tick in one engine is worse than one that needs a second data
+   * URI per theme.
+   *
+   * ERPNext's own `--checkbox-gradient` runs from a colour TO THE SAME COLOUR —
+   * a no-op its theme builder emits — so the checked fill here is flat.
+   * Reproducing that gradient would have been a visual no-op AND a violation of
+   * our flat-UI gate, which is the rare case where the gate and the reference
+   * agree.
+   *
+   * The disabled state keeps this app's convention (`opacity`, as Button does)
+   * rather than ERPNext's inset shadows, which the flat-UI gate bans outright.
+   */
+  .app-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    border: 1px solid var(--app-checkbox-border);
+    border-radius: 4px;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 57%;
+    cursor: pointer;
+    /* A checkbox is a printed form control on the receipt path as much as a
+       screen one, so the fill must survive the print pipeline. */
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .app-checkbox:checked,
+  .app-checkbox:indeterminate {
+    /* `--color-app-accent`, not `--app-accent`: the accent lives in the Tailwind
+       theme block, so its custom property carries the `color-` prefix that
+       `bg-app-accent` and `text-app-accent` are generated from. `--app-accent`
+       does not exist, and reading it here made the fill and the border invalid
+       at computed-value time — a checked box painted TRANSPARENT with a
+       currentColor outline. Caught by the Chromium census, which is the only
+       thing that would have caught it: the class name reads perfectly. */
+    background-color: var(--color-app-accent);
+    border-color: var(--color-app-accent);
+    background-image: var(--app-checkbox-tick);
+  }
+
+  /*
+   * `indeterminate` is a DOM property with no HTML attribute, so a pseudo-class
+   * is the only way to reach it — React cannot pass it through props. It must
+   * come after the `:checked` rule above, because a partially-selected header
+   * box is both `:checked`-adjacent and `:indeterminate`, and the dash is what
+   * should win.
+   */
+  .app-checkbox:indeterminate {
+    background-image: var(--app-checkbox-dash);
+  }
+
+  .app-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 40%;
   }
 
   /*
