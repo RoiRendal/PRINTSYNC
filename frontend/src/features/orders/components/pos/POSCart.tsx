@@ -6,6 +6,7 @@ import type { CartTotals } from '../../hooks/useCartTotals';
 import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
+import { POSItemDetails } from './POSItemDetails';
 import type { Customer } from '../../../customers/types';
 
 interface POSCartProps {
@@ -27,6 +28,7 @@ interface POSCartProps {
   onCartDiscountChange: (value: number) => void;
   onVatRatePercentChange: (value: number) => void;
   onUpdateQty: (index: number, delta: number) => void;
+  onSetLinePrice: (index: number, price: number) => void;
   onRemoveFromCart: (index: number) => void;
   onOpenDesignSelector: (index: number) => void;
   onReset: () => void;
@@ -52,6 +54,7 @@ export function POSCart({
   onCartDiscountChange,
   onVatRatePercentChange,
   onUpdateQty,
+  onSetLinePrice,
   onRemoveFromCart,
   onOpenDesignSelector,
   onReset,
@@ -61,6 +64,18 @@ export function POSCart({
   /** Whether the discount field is open. Local, because it is a property of this
    *  panel's layout, not of the sale. */
   const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  /**
+   * Which line is open in Item Details, if any.
+   *
+   * Owned here rather than by the page: it is a property of this panel's layout,
+   * not of the sale. `cart[selectedLine]` is read defensively below, so a line
+   * removed from under the view falls back to the list instead of rendering an
+   * empty detail — the index is only ever a pointer into `cart`, and the cart
+   * can change while the detail is open (the design modal, a background refresh
+   * of the catalogue).
+   */
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const detailItem = selectedLine !== null ? cart[selectedLine] : undefined;
 
   /*
    * Header and footer are `shrink-0`; only the list between them takes the
@@ -118,7 +133,26 @@ export function POSCart({
       )}
 
       <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
-        {cart.length === 0 ? (
+        {/*
+          One occupant at a time inside a fixed span — the list and Item Details
+          swap, they never stack. That is the mechanism ERPNext uses for its
+          right column, and it is why the panel's geometry does not move when
+          the cashier opens a line.
+        */}
+        {detailItem ? (
+          <POSItemDetails
+            item={detailItem}
+            index={selectedLine as number}
+            designs={designs}
+            posMode={posMode}
+            currencySymbol={currencySymbol}
+            onUpdateQty={onUpdateQty}
+            onSetLinePrice={onSetLinePrice}
+            onRemove={(idx) => { onRemoveFromCart(idx); setSelectedLine(null); }}
+            onOpenDesignSelector={onOpenDesignSelector}
+            onBack={() => setSelectedLine(null)}
+          />
+        ) : cart.length === 0 ? (
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
@@ -133,7 +167,23 @@ export function POSCart({
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="truncate text-2xs font-bold leading-tight text-app-ink dark:text-zinc-100">{item.name}</span>
+                    {/*
+                      The name is the way into Item Details. It is a real button
+                      rather than a click handler on the row because the row also
+                      contains a stepper and a trash control, and a button cannot
+                      contain buttons — wrapping the whole row would nest them.
+                      The stepper stays inline: bumping a quantity is the edit a
+                      cashier makes constantly, and sending it through a second
+                      screen to save one click would be a regression.
+                    */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLine(idx)}
+                      title={`Edit ${item.name}`}
+                      className="cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
+                    >
+                      {item.name}
+                    </button>
                     <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-app-text-muted hover:text-app-danger dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>

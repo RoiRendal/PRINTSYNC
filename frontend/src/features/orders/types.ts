@@ -24,6 +24,19 @@ export interface CartItem extends InventoryItem {
   isCustom?: boolean;
   designId?: string;
   notes?: string;
+  /**
+   * What the catalogue said this line's rate was when it was staged.
+   *
+   * `price` is the line's LIVE rate — the till can override it per line, and
+   * both checkout paths send it as `unitPrice`. Keeping the catalogue value
+   * alongside is what lets the item-details surface say "this was overridden"
+   * and offer a way back. Without it an override is invisible and irreversible,
+   * and a cashier who mistypes a rate has no way to notice or undo it.
+   *
+   * Client-only: it is never sent. The stored order carries `unitPrice`, which
+   * is the overridden figure — the right thing to persist.
+   */
+  cataloguePrice?: number;
 }
 
 export interface Transaction {

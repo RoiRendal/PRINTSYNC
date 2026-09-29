@@ -40,6 +40,16 @@ export interface POSCartController {
   addToCart: (product: InventoryItem, mode: PosMode) => void;
   removeFromCart: (cartIndex: number) => void;
   updateQty: (cartIndex: number, delta: number) => void;
+  /**
+   * Overrides one line's rate.
+   *
+   * The line's rate IS its `price` — `CartItem` extends `InventoryItem`, and
+   * `useCartTotals` already multiplies `price * qty`, so a per-line override
+   * needs no new field. It also needs no new plumbing downstream: both checkout
+   * paths already send `unitPrice: item.price`, and the sale/order RPCs store
+   * that value, so an overridden rate is persisted rather than recomputed.
+   */
+  setLinePrice: (cartIndex: number, price: number) => void;
   openDesignSelector: (cartIndex: number) => void;
   selectDesignForItem: (designId: string) => void;
   closeDesignSelector: () => void;
@@ -104,7 +114,7 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
           item.id === product.id && !item.isCustom ? { ...item, qty: item.qty + 1 } : item,
         );
       }
-      return [...previous, { ...product, qty: 1, isCustom: mode === 'custom' }];
+      return [...previous, { ...product, qty: 1, isCustom: mode === 'custom', cataloguePrice: product.price }];
     });
   }, []);
 
@@ -134,6 +144,22 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
     },
     [inventory],
   );
+
+  /**
+   * A rate is a money value, so it is clamped the same way every other money
+   * input in the cart is: never negative, never NaN. A blank field reads as 0
+   * rather than as "leave it alone" — the cashier clearing the box means free,
+   * and the alternative is a field that silently keeps a stale number.
+   */
+  const setLinePrice = useCallback((cartIndex: number, price: number) => {
+    setCart((previous) =>
+      previous.map((item, idx) => {
+        if (idx !== cartIndex) return item;
+        const next = Number.isFinite(price) ? Math.max(0, price) : 0;
+        return item.price === next ? item : { ...item, price: next };
+      }),
+    );
+  }, []);
 
   const openDesignSelector = useCallback((cartIndex: number) => {
     setCurrentItemToDesign(cartIndex.toString());
@@ -181,6 +207,20 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
         return {
           ...inventoryItem,
           qty: lineItem.quantity,
+          /*
+           * Honour the price the order was written with.
+           *
+           * This used to always re-price from the catalogue, which was harmless
+           * while every line was at the catalogue price — but the till can now
+           * override a line's rate, and re-pricing on reopen would silently undo
+           * the override and change what the order is worth. A stored price of 0
+           * still falls back to the catalogue: legacy orders carry no per-line
+           * price, and that is the case the fallback exists for.
+           */
+          price: lineItem.unitPrice > 0 ? lineItem.unitPrice : inventoryItem.price,
+          // The catalogue's own figure, so the details surface can still tell an
+          // order that was priced by hand from one that was not.
+          cataloguePrice: inventoryItem.price,
           isCustom: true,
           designId: lineItem.designId,
           notes: order.notes,
@@ -239,6 +279,7 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
     addToCart,
     removeFromCart,
     updateQty,
+    setLinePrice,
     openDesignSelector,
     selectDesignForItem,
     closeDesignSelector,
