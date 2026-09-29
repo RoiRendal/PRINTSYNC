@@ -193,8 +193,8 @@ export default function Orders() {
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Orders</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">
+          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Orders</h1>
+          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
             Track active jobs, phase movement, customer artwork, and production-ready details.
           </p>
         </div>
@@ -217,8 +217,8 @@ export default function Orders() {
                 className={cn(
                   'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
                   isActive
-                    ? 'bg-macos-blue text-[var(--app-accent-ink)]'
-                    : 'border text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
+                    ? 'bg-app-accent text-[var(--app-accent-ink)]'
+                    : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[#414143] dark:hover:text-zinc-200',
                 )}
               >
                 {filter.label}
@@ -227,7 +227,7 @@ export default function Orders() {
           })}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <Calendar className="h-3.5 w-3.5 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
           <Input
             type="date"
             value={dateFrom}
@@ -235,7 +235,7 @@ export default function Orders() {
             className="h-8 w-auto text-2xs"
             placeholder="From"
           />
-          <span className="text-2xs text-macos-text-muted dark:text-zinc-500">to</span>
+          <span className="text-2xs text-app-text-muted dark:text-zinc-500">to</span>
           <Input
             type="date"
             value={dateTo}

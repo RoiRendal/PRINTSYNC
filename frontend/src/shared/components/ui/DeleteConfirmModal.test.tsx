@@ -74,7 +74,7 @@ describe('DeleteConfirmModal', () => {
     render(<DeleteConfirmModal isOpen itemLabels={['Cap']} onClose={noop} onConfirm={noop} />);
 
     const intro = screen.getByText('Are you sure you want to delete:');
-    expect(intro.className).toContain('text-macos-text');
+    expect(intro.className).toContain('text-app-ink');
     expect(intro.className).not.toMatch(/text-red|app-tint-red/);
 
     const block = messageBlock();

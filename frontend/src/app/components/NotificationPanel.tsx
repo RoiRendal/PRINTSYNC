@@ -53,10 +53,10 @@ export const NotificationPanel = React.forwardRef<
       {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
-          <h3 className="text-sm font-bold text-macos-text dark:text-zinc-100">Notifications</h3>
+          <Bell className="h-4 w-4 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
+          <h3 className="text-sm font-bold text-app-ink dark:text-zinc-100">Notifications</h3>
           {unreadCount > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-macos-red px-1.5 text-2xs font-bold text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-app-danger px-1.5 text-2xs font-bold text-white">
               {unreadCount}
             </span>
           )}
@@ -68,7 +68,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={markAllAsRead}
                 title="Mark all as read"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
               >
                 <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -76,7 +76,7 @@ export const NotificationPanel = React.forwardRef<
                 type="button"
                 onClick={clearAll}
                 title="Clear all"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-400 dark:hover:text-red-300"
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-danger dark:text-zinc-400 dark:hover:text-red-300"
               >
                 <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
               </button>
@@ -91,7 +91,7 @@ export const NotificationPanel = React.forwardRef<
             onClick={onClose}
             title="Close"
             aria-label="Close notifications"
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-400 dark:hover:text-zinc-100"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
@@ -108,7 +108,7 @@ export const NotificationPanel = React.forwardRef<
               {/* Solid now: at 40% this icon measured 2.0:1 on the panel, and
                   zinc-600 measured 1.80:1 in dark — both under the 3:1 floor. */}
               <Bell className="h-8 w-8 text-[var(--app-text-muted)]" aria-hidden="true" />
-              <p className="text-xs font-semibold text-macos-text-muted dark:text-zinc-500">No notifications yet</p>
+              <p className="text-xs font-semibold text-app-text-muted dark:text-zinc-500">No notifications yet</p>
               <p className="text-2xs text-[var(--app-text-muted)]">Alerts for stock and orders appear here.</p>
             </div>
           ) : (
@@ -124,7 +124,7 @@ export const NotificationPanel = React.forwardRef<
                   className={cn(
                     'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-2xs font-bold',
                     /* Amber and gray map onto the tint tokens. The blue chip does
-                       not: --app-tint-blue is the composite of macos-blue, which
+                       not: --app-tint-accent is the composite of app-accent, which
                        is a grey in this palette, so using it here would turn a
                        blue chip grey. Its dark values are the composite of the
                        real Tailwind blue this chip actually paints with. */
@@ -139,14 +139,14 @@ export const NotificationPanel = React.forwardRef<
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <p className={cn('text-xs font-bold', notification.read ? 'text-macos-text-muted dark:text-zinc-500' : 'text-macos-text dark:text-zinc-100')}>
+                    <p className={cn('text-xs font-bold', notification.read ? 'text-app-text-muted dark:text-zinc-500' : 'text-app-ink dark:text-zinc-100')}>
                       {notification.title}
                     </p>
                     <span className="shrink-0 text-2xs text-[var(--app-text-muted)]">
                       {formatTimeAgo(notification.createdAt)}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-xs leading-relaxed text-macos-text-muted dark:text-zinc-400">
+                  <p className="mt-0.5 text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">
                     {notification.message}
                   </p>
                 </div>
@@ -156,7 +156,7 @@ export const NotificationPanel = React.forwardRef<
                       type="button"
                       onClick={() => markAsRead(notification.id)}
                       title="Mark as read"
-                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-text dark:text-zinc-500 dark:hover:text-zinc-100"
+                      className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-500 dark:hover:text-zinc-100"
                     >
                       <CheckCheck className="h-3 w-3" aria-hidden="true" />
                     </button>
@@ -165,7 +165,7 @@ export const NotificationPanel = React.forwardRef<
                     type="button"
                     onClick={() => dismissNotification(notification.id)}
                     title="Dismiss"
-                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-macos-text-muted hover:bg-[var(--app-state-hover)] hover:text-macos-red dark:text-zinc-500 dark:hover:text-red-300"
+                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-danger dark:text-zinc-500 dark:hover:text-red-300"
                   >
                     <X className="h-3 w-3" aria-hidden="true" />
                   </button>

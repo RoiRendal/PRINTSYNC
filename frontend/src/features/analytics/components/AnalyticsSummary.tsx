@@ -17,12 +17,12 @@ export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummary
     <SectionCard
       title="Operational Summary"
       description="Live reporting snapshot from current year-to-date data."
-      controls={summary && <Badge variant="blue">{summary.range.from} → {summary.range.to}</Badge>}
+      controls={summary && <Badge variant="accent">{summary.range.from} → {summary.range.to}</Badge>}
     >
       {isLoading ? <LoadingState label="Loading report" /> : error ? <ErrorState message={error} /> : summary ? (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <MetricTile label="Revenue" value={money.format(summary.revenue)} tone="blue" />
+            <MetricTile label="Revenue" value={money.format(summary.revenue)} tone="accent" />
             <MetricTile label="Transactions" value={summary.transactionCount.toLocaleString()} />
             <MetricTile label="Orders" value={summary.orderCount.toLocaleString()} tone="purple" />
             <MetricTile label="Avg ticket" value={money.format(summary.averageTransactionValue)} tone="green" />
@@ -30,7 +30,7 @@ export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummary
           </div>
           {summary.topItems.length > 0 && (
             <div className="mt-4 border-t pt-3">
-              <p className="mb-2 label-caps text-macos-text-muted dark:text-zinc-500">Top items by revenue</p>
+              <p className="mb-2 label-caps text-app-text-muted dark:text-zinc-500">Top items by revenue</p>
               <div className="flex flex-wrap gap-2">
                 {summary.topItems.slice(0, 5).map((item) => <Badge key={item.name} variant="gray">{item.name} · {money.format(item.revenue)}</Badge>)}
               </div>

@@ -140,7 +140,7 @@ export function OrdersTable({
                     <TableHead className="text-right">Balance</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={8} className="font-semibold text-macos-text dark:text-zinc-100">
+                  <TableHead colSpan={8} className="font-semibold text-app-ink dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -163,11 +163,11 @@ export function OrdersTable({
                         aria-label={`Select order ${order.id}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="text-macos-text dark:text-zinc-100">
+                    <TableCell className="text-app-ink dark:text-zinc-100">
                       #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
                     </TableCell>
                     <TableCell>
-                      <span className="text-macos-text dark:text-zinc-100">{order.customer}</span>
+                      <span className="text-app-ink dark:text-zinc-100">{order.customer}</span>
                     </TableCell>
                     <TableCell>
                       {isCustomOrder(order) ? 'Custom' : 'Retail'}
@@ -182,7 +182,7 @@ export function OrdersTable({
                         */}
                         {isPending && (
                           <span role="status" aria-label="Saving phase change" className="inline-flex">
-                            <LoaderCircle className="h-3 w-3 text-macos-text-muted dark:text-zinc-500" aria-hidden="true" />
+                            <LoaderCircle className="h-3 w-3 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
                           </span>
                         )}
                       </div>
@@ -190,23 +190,23 @@ export function OrdersTable({
                     <TableCell className="text-right tabular-nums">
                       {order.dueDate ? (
                         new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
-                          <span className="text-macos-red dark:text-red-300">{order.dueDate}</span>
+                          <span className="text-app-danger dark:text-red-300">{order.dueDate}</span>
                         ) : (
-                          <span className="text-macos-text-muted dark:text-zinc-500">{order.dueDate}</span>
+                          <span className="text-app-text-muted dark:text-zinc-500">{order.dueDate}</span>
                         )
                       ) : (
-                        <span className="text-macos-text-muted dark:text-zinc-500">—</span>
+                        <span className="text-app-text-muted dark:text-zinc-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-macos-text-muted dark:text-zinc-400">
+                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-app-text-muted dark:text-zinc-400">
                       {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
                         <StatusLabel tone="red">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
                       ) : (
-                        <span className="text-macos-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                        <span className="text-app-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -215,7 +215,7 @@ export function OrdersTable({
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={9} className="py-12">
-                    <div className="text-center text-sm text-macos-text-muted dark:text-zinc-500">No matching orders found.</div>
+                    <div className="text-center text-sm text-app-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>
               )}

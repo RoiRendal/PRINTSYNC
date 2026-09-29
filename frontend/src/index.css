@@ -116,31 +116,89 @@
   --text-2xs: 0.625rem;   /* 10px — absorbed the old 9px and 10px */
   --text-title: 1.75rem;  /* 28px — page titles at the lg breakpoint */
 
-  /* The accent. Near-black, not a hue: orange, purple, blue, green and red are
-     already spoken for as status colours, and an accent that reuses one of them
-     stops staff being able to tell "clickable" from "what state this job is in".
-     Frappe's own --primary is literally gray-900 for the same reason.
+  /* Every `--color-*` here is a Tailwind theme key, so it generates the
+     `text-*` / `bg-*` / `border-*` utilities of the same name.
+
+     These tokens used to carry a `macos-` prefix, after the macOS system
+     palette their values were originally taken from. That prefix was removed
+     because it had become actively misleading: the app has no macOS element,
+     `macos-blue` was not blue — it is near-black, the accent — and
+     `macos-blue-dark` was *lighter* than `macos-blue` in light mode, so the
+     name contradicted the value. Two dead tokens went with it: `macos-bg` and
+     `macos-bg-dark` restated `--app-surface` and its dark partner exactly and
+     were referenced nowhere.
+
+     Naming rule for anything added here: a name that describes the ROLE and
+     must stay true in both themes uses the `app-` prefix, which is the prefix
+     the `:root` / `.dark` tokens below already use; a name that describes the
+     HUE does not. So `--color-app-accent` may invert between themes (it does),
+     and `--color-app-violet` may not. */
+
+  /* The accent, and its two derived steps. Deliberately NOT a hue: orange,
+     violet, green and red are already spoken for as status colours, and an
+     accent that reuses one of them stops staff being able to tell "clickable"
+     from "what state this job is in". Frappe's own --primary is literally
+     gray-900 for the same reason.
      Measured: white on this fill is 17.93:1; the fill against the page is
      16.47:1 (the floor for a filled control is 3:1). The old value was a grey,
-     #a3a3a3, and white on it measured 2.52:1 — every primary button failed. */
-  --color-macos-blue: #171717;
-  --color-macos-blue-dark: #2f2f33;
-  --color-macos-cyan: #aeaeb2;
-  --color-macos-green: #34c759;
-  --color-macos-red: #ff3b30;
-  --color-macos-orange: #ff9500;
-  --color-macos-purple: #af52de;
-  --color-macos-gray: #8e8e93;
-  --color-macos-bg: #f5f5f7;
-  --color-macos-bg-dark: #1c1c1e;
-  --color-macos-text: #1d1d1f;
-  /* Darkened from #86868b to improve light-mode readability while keeping a muted hierarchy. */
-  --color-macos-text-muted: #555558;
+     #a3a3a3, and white on it measured 2.52:1 — every primary button failed.
 
+     -hover is one step stronger than -accent in BOTH themes, so the pair does
+     not have to be read as "light" and "dark" and does not invert in meaning
+     the way the old `macos-blue-dark` did. Ink on either step still clears
+     4.5:1.
+     -soft is the accent used as a FOREGROUND at the weakest readable weight —
+     the dark-mode partner the 57 `text-app-accent` sites switch to so a
+     near-black label does not vanish on a dark page. It is a separate token
+     rather than a `.dark` override of `-accent`, because certain fills are
+     legitimately painted with `bg-app-accent` in both themes. */
+  --color-app-accent: #171717;
+  --color-app-accent-hover: #2f2f33;
+  --color-app-accent-soft: #aeaeb2;
+
+  /* The status hues. Fixed across both themes: a status is a hue, and "green"
+     that becomes a different green is the same problem the old prefix caused.
+     Where a dark step is needed, the call site already pairs these with an
+     explicit `dark:text-*` utility rather than a token override.
+
+     There is deliberately no "neutral" or "gray" hue here. Both words are
+     bucket names inside `Badge.tsx` / `StatusLabel.tsx` / `MetricTile.tsx`, not
+     tokens: a neutral bucket is just body ink (which is `text-app-ink` plus a
+     `dark:` step), not a colour of its own. The `--color-app-neutral` token that
+     used to sit here held the grey border value #8e8e93, was referenced by no
+     utility anywhere, and Tailwind therefore tree-shook it out of every build —
+     it was already absent from the shipped CSS when it was deleted. */
+  --color-app-success: #34c759;
+  --color-app-danger: #ff3b30;
+  --color-app-warning: #ff9500;
+  --color-app-violet: #af52de;
+
+  /* Body ink and its muted step. `-ink` names the colour a FOREGROUND is set
+     in; the muted step describes its weight instead, because it is only ever
+     used as a less-prominent foreground. Both differ from the `:root`
+     `--app-text` / `--app-text-muted` pair below in coverage, not in value:
+     those two are the theme's raw source of truth and never move, whereas the
+     muted pair here is overridden in `.dark` so the 179 `text-app-text-muted`
+     sites inherit a dark-mode-safe grey without each carrying its own
+     `dark:` utility. */
+  --color-app-ink: #1d1d1f;
+  /* Darkened from #86868b to improve light-mode readability while keeping a muted hierarchy. */
+  --color-app-text-muted: #555558;
+
+  /* No `--color-*` token exists for a border. Borders come from the `--app-*`
+     tokens in `:root` / `.dark`, which the base layer applies as the default
+     element border colour — see the `@layer base` rule further down. */
+
+  /* The radius ladder. A token exists only where a utility actually reads it:
+     `--radius-button` is consumed by Button/Input and, through
+     `--radius-button`, by the profile avatar's square corners; `--radius-card`
+     and `--radius-modal` are read at their call sites; `--radius-pill` backs
+     the fully-rounded chips. There is deliberately no squircle step — the
+     `.app-squircle` utility and its 1.25rem token were both removed once
+     `grep` showed nothing had referenced either since the flat redesign. */
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
   --radius-modal: 1rem;
-  --radius-squircle: 1.25rem;
   --radius-pill: 9999px;
 }
 
@@ -164,9 +222,12 @@
   --app-state-selected-sidebar: #d9d9de;
   --app-text: #1d1d1f;
   --app-text-muted: #555558;
-  /* The default border colour for every element, so it is the largest single source
-     of translucency in the app — every divider inherits it. Solid now, and the same
-     value as the explicit hairline token. */
+  /* The default border colour for every element, so it is the largest single
+     source of borders in the app — every divider inherits it. Solid, and the
+     same value as the explicit hairline token. (It is also the only border
+     colour that exists: there is no `--color-*` pair for it, because borders
+     are painted through these `--app-*` tokens rather than through a Tailwind
+     `border-*` theme key.) */
   --app-hairline: #d5d5da;
   --app-selection-bg: rgb(110 110 115 / 0.16);
   --app-selection-text: #3a3a3c;
@@ -176,7 +237,6 @@
      Once the fill is solid, the BORDER carries the separation: a card is 1.09:1
      from the page no matter what it is filled with. Ratios below are measured. */
   --app-surface-sub: #ececef;        /* toolbars, table headers, segmented tracks */
-  --app-surface-sunken: #e3e3e8;     /* inset wells */
   --app-state-hover: #ececef;        /* 1.18:1 on raised — stronger than the 1.12:1 of the old 5%-black hover tint */
   --app-state-hover-sub: #dedee3;    /* hover on a -sub parent */
   /* The selected nav row. Deliberately not the accent colour: the row's own fill
@@ -185,15 +245,21 @@
      mode — same role, opposite steps, and deliberately not the same value. */
   --app-state-selected: #e3e3e8;     /* light step */
   --app-border-hairline: #d5d5da;    /* internal dividers */
-  --app-border-control: #8e8e93;     /* input/button edges — 3.26:1, meets WCAG 1.4.11 */
-  /* The shell's structural outline — the divider under the header and the page
-     toolbar, and the box around the page body. Now that every shell region is
-     filled with the same colour, this line is the only thing separating one from
-     the next, so it is deliberately stronger than the hairline it sits beside
-     (2.94:1 on the page, against the hairline's 1.34:1). */
+  /* One step darker than --app-border-control in light mode, one step LIGHTER
+     than it in dark. The single structural colour to cross over like this, which
+     is why it carries its own name rather than a shared -strong / -weak variant. */
   --app-border-frame: #bbbbbb;
-  --app-text-muted-sub: #555558;     /* 6.30:1 on -sub */
-  --app-text-muted-sunken: #555558;  /* 5.81:1 on -sunken */
+
+  /* Muted text. `--app-text-muted` (#555558) is the source of truth; the -sub
+     step carries the same light value and is the one a muted label on a -sub
+     surface must use in dark, where the default measures 3.95:1 — under the
+     4.5:1 floor — and steps UP to #aeaeb2 (5.13:1). There is no -sunken step:
+     the `--app-surface-sunken` / `--app-text-muted-sunken` tokens were deleted
+     (declared in both themes, read by nothing), so those surfaces do not exist.
+
+     Contrast numbers kept for a sunken surface, if one is ever built: a muted
+     label on -sunken measured 3.18:1 in light (the dark step would be #c7c7cc,
+     5.42:1). Preserved here so the work is not rediscovered. */
 
   /* Text and icons sitting ON the accent fill. This cannot be written literally
      as `text-white`: the accent inverts in dark mode (see `.dark` below), and
@@ -203,9 +269,19 @@
   /* Solid badge tints. Each is the flat composite of the translucent tint it
      replaces — the old 12%-opacity fills resolved to almost exactly these over a
      white card, so the badges look the same and stop being translucent. Every
-     pairing with its badge text was measured; all clear 4.5:1. */
+     pairing with its badge text was measured; all clear 4.5:1.
+
+     A tint name matches the badging ROLE it backs, so the name and the
+     `variant` / `tone` key in `Badge.tsx` / `StatusLabel.tsx` always agree:
+     `accent` is the grey fill behind the accent badge and the accent-tinted
+     rows — it is `#ebebeb`, the same value as `--app-surface-sub`, and the only
+     grey here that is NOT a hue (the accent is grey by design); `green`, `red`,
+     `orange` and `purple` are the status hues and are fixed across both themes;
+     `neutral` and `gray` are the two greys for the two neutral buckets (neutral
+     = the default pill, gray = the tag/secondary pill) and render the same
+     border classes but different fills. */
   --app-tint-neutral: #f5f6f8;
-  --app-tint-blue: #ebebeb;
+  --app-tint-accent: #ebebeb;
   --app-tint-green: #e7f8eb;
   --app-tint-red: #ffe7e6;
   --app-tint-orange: #fff0db;
@@ -233,26 +309,25 @@
   --app-selection-bg: rgb(142 142 147 / 0.24);
   --app-selection-text: #f5f5f7;
 
-  /* Dark partners for the flat ladder. Note the muted-text steps: the default
-     --app-text-muted (#98989d) measures 3.95:1 on -sub and 3.18:1 on -sunken,
-     both below the 4.5:1 floor, so a muted label on those surfaces must use the
-     lighter step below rather than the default. */
+  /* Dark partners for the flat ladder. The default --app-text-muted (#98989d)
+     measures 3.95:1 on -sub, below the 4.5:1 floor, so a muted label on a -sub
+     surface uses #aeaeb2 (5.13:1). The -sub muted step lives as this bare value
+     rather than a token because nothing reads it yet. */
   --app-surface-sub: #3a3a3c;
-  --app-surface-sunken: #48484a;
   --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
   --app-state-hover-sub: #48484a;
   --app-state-selected: #48484a;     /* dark step — one step up from the surface, never the light value */
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
   --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */
-  --app-text-muted-sub: #aeaeb2;     /* 5.13:1 — the default would fail here */
-  --app-text-muted-sunken: #c7c7cc;  /* 5.42:1 */
 
   /* Dark badge tints, composited over the raised surface. The gray one is the
      reason the gray badge's dark text had to move up a step: the old text measured
-     4.23:1 on this fill, under the 4.5:1 floor for 9px type. */
+     4.23:1 on this fill, under the 4.5:1 floor for 9px type.
+     `-tint-accent` tracks --app-surface-sub in dark as well as in light — the two
+     are the same value in both themes. */
   --app-tint-neutral: #414143;
-  --app-tint-blue: #3e3e40;
+  --app-tint-accent: #3e3e40;
   --app-tint-green: #2d4535;
   --app-tint-red: #4e2e2e;
   --app-tint-orange: #4e3d27;
@@ -262,17 +337,29 @@
 
   /* The accent inverts after dark. Near-black on this theme's #1c1c1e surface
      measures 1.05:1 — the fill would be invisible — so the accent becomes the
-     light step and the ink on it becomes dark. Every `bg-macos-blue` /
-     `text-macos-blue` utility follows these two variables, so the 58 usages
-     across the app invert without being touched one by one. */
-  --color-macos-blue: #f5f5f7;
-  --color-macos-blue-dark: #d8d8dc;
+     light step and the ink on it becomes dark. Every `bg-app-accent` /
+     `text-app-accent` utility follows these two variables, so the 57 usages
+     across the app invert without being touched one by one.
+     `-accent-hover` stays one step STRONGER than `-accent` here too: the
+     light-mode pair runs dark -> darker, this pair runs light -> less light. */
+  --color-app-accent: #f5f5f7;
+  --color-app-accent-hover: #d8d8dc;
+  /* Deliberately absent, and this is the one gap that matters.
+
+     `--color-app-accent-soft` is NOT redeclared here. It is the accent used as
+     a foreground at the weakest readable weight in dark mode, so it is only
+     ever written in a `dark:` variant and does not need a second definition.
+     Reaching for `text-app-accent-soft` without one would paint #aeaeb2 on the
+     dark page — 7.5:1, so legible, but not the intended pairing.
+
+     The status hues above are also absent: they are fixed, and dark call sites
+     pair them with an explicit `dark:text-*` step instead. */
   /* Dark partner for the muted-text token. Without this the token kept its light value (#555558) and
      rendered at 2.29:1 on the dark page — effectively invisible. zinc-400 clears the 4.5:1 floor
      (6.64:1 on the page, 5.44:1 on a raised card) and matches the `dark:text-zinc-400` the other 176
      uses already pair with this token, so the 10 labels that had no dark override now read the same
      grey as their siblings. */
-  --color-macos-text-muted: #a1a1aa;
+  --color-app-text-muted: #a1a1aa;
   --app-accent-ink: #171717;
 }
 
@@ -468,10 +555,6 @@ html {
     font-weight: 600;
     letter-spacing: 0.09em;
     text-transform: uppercase;
-  }
-
-  .macos-squircle {
-    border-radius: var(--radius-squircle);
   }
 
   .scrollbar-hide {

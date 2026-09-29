@@ -42,7 +42,7 @@ function printDocument(document: PrintableDocument) {
 
 function ImageFallback({ label }: { label: string }) {
   return (
-    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[#f7f7f7] text-macos-text-muted dark:bg-[#373739] dark:text-zinc-500">
+    <div className="flex aspect-square flex-col items-center justify-center gap-2 rounded-[var(--radius-card)] border border-dashed bg-[#f7f7f7] text-app-text-muted dark:bg-[#373739] dark:text-zinc-500">
       <ImageIcon className="h-8 w-8 opacity-35" aria-hidden="true" />
       <p className="px-3 text-center text-2xs font-bold">{label}</p>
     </div>
@@ -160,22 +160,22 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
           <div className="flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <Badge variant={getStatusBadgeVariant(order.status)} size="md" className="mb-2">{order.status}</Badge>
-              <h3 className="text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{order.customer}</h3>
-              <p className="tabular-nums text-xs text-macos-text-muted dark:text-zinc-500">#{order.id}</p>
+              <h3 className="text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{order.customer}</h3>
+              <p className="tabular-nums text-xs text-app-text-muted dark:text-zinc-500">#{order.id}</p>
             </div>
             <div className="flex flex-col gap-2 sm:text-right">
               <div>
-                <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Order Date</p>
-                <p className="text-sm font-bold text-macos-text dark:text-zinc-100">{order.date}</p>
+                <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Order Date</p>
+                <p className="text-sm font-bold text-app-ink dark:text-zinc-100">{order.date}</p>
               </div>
               {order.dueDate && (
                 <div>
-                  <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Due Date</p>
+                  <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Due Date</p>
                   <p className={cn(
                     'text-sm font-bold',
                     new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered'
-                      ? 'text-macos-red dark:text-red-300'
-                      : 'text-macos-text dark:text-zinc-100',
+                      ? 'text-app-danger dark:text-red-300'
+                      : 'text-app-ink dark:text-zinc-100',
                   )}>
                     {order.dueDate}
                   </p>
@@ -187,12 +187,12 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 label-caps text-macos-text-muted dark:text-zinc-500">
+                <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
                   <ClipboardList className="h-3 w-3" aria-hidden="true" /> Job Specifications
                 </h4>
                 <Card variant="raised" padding="sm" className="divide-y">
                   <div className="flex items-start justify-between gap-4 py-2 text-xs">
-                    <span className="pt-1 text-macos-text-muted dark:text-zinc-500">Item</span>
+                    <span className="pt-1 text-app-text-muted dark:text-zinc-500">Item</span>
                     <div className="space-y-1 text-right font-bold">
                       {selectedOrderLineItems.map((lineItem, index) => (
                         <button
@@ -201,7 +201,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                           onClick={() => setSelectedLineItemIndex(index)}
                           className={cn(
                             'block w-full cursor-pointer text-right underline-offset-2 hover:underline',
-                            selectedLineItemIndex === index ? 'text-macos-blue dark:text-macos-cyan' : 'text-macos-text dark:text-zinc-100',
+                            selectedLineItemIndex === index ? 'text-app-accent dark:text-app-accent-soft' : 'text-app-ink dark:text-zinc-100',
                           )}
                         >
                           {lineItem.name}
@@ -210,26 +210,26 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                     </div>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="text-macos-text-muted dark:text-zinc-500">Quantity</span>
+                    <span className="text-app-text-muted dark:text-zinc-500">Quantity</span>
                     <span className="font-bold tabular-nums">{order.quantity} Units</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="text-macos-text-muted dark:text-zinc-500">Unit Price</span>
+                    <span className="text-app-text-muted dark:text-zinc-500">Unit Price</span>
                     <span className="tabular-nums font-bold">{currencySymbol}{(order.amount / order.quantity).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between py-2 text-xs">
-                    <span className="font-bold text-macos-text-muted dark:text-zinc-500">Total Value</span>
-                    <span className="tabular-nums font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
+                    <span className="font-bold text-app-text-muted dark:text-zinc-500">Total Value</span>
+                    <span className="tabular-nums font-bold text-app-ink dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</span>
                   </div>
                   {selectedOrderIsCustom && (
                     <>
                       <div className="flex justify-between py-2 text-xs">
-                        <span className="font-bold text-macos-text-muted dark:text-zinc-500">Total Paid</span>
-                        <span className="tabular-nums font-bold text-macos-green dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
+                        <span className="font-bold text-app-text-muted dark:text-zinc-500">Total Paid</span>
+                        <span className="tabular-nums font-bold text-app-success dark:text-green-300">{currencySymbol}{totalPaid.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between py-2 text-xs">
-                        <span className="font-bold text-macos-text-muted dark:text-zinc-500">Balance Due</span>
-                        <span className={cn('tabular-nums font-bold', balanceDue > 0 ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100')}>
+                        <span className="font-bold text-app-text-muted dark:text-zinc-500">Balance Due</span>
+                        <span className={cn('tabular-nums font-bold', balanceDue > 0 ? 'text-app-danger dark:text-red-300' : 'text-app-ink dark:text-zinc-100')}>
                           {currencySymbol}{balanceDue.toFixed(2)}
                         </span>
                       </div>
@@ -240,10 +240,10 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
               {order.notes && (
                 <section className="space-y-2">
-                  <h4 className="flex items-center gap-2 label-caps text-macos-text-muted dark:text-zinc-500">
+                  <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
                     <MessageSquare className="h-3 w-3" aria-hidden="true" /> Production Notes
                   </h4>
-                  <div className="rounded-[var(--radius-card)] border p-3 text-xs italic text-macos-text dark:text-zinc-300">
+                  <div className="rounded-[var(--radius-card)] border p-3 text-xs italic text-app-ink dark:text-zinc-300">
                     &ldquo;{order.notes}&rdquo;
                   </div>
                 </section>
@@ -252,13 +252,13 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 label-caps text-macos-text-muted dark:text-zinc-500">
+                <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
                   <ImageIcon className="h-3 w-3" aria-hidden="true" /> Visual Assets
                 </h4>
                 {selectedOrderIsCustom ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                      <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
+                      <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Product</p>
                       {activeLineInventoryItem?.imageUrl ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border">
                           <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -266,7 +266,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                       ) : <ImageFallback label="No product image" />}
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Custom design</p>
+                      <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Custom design</p>
                       {activeLineItemDesign ? (
                         <div className="relative aspect-square overflow-hidden rounded-[var(--radius-card)] border">
                           <img src={activeLineItemDesign.imageUrl} alt="Custom design" className="h-full w-full object-contain" />
@@ -279,7 +279,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                   </div>
                 ) : (
                   <div className="space-y-1.5">
-                    <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Product</p>
+                    <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Product</p>
                     {activeLineInventoryItem?.imageUrl ? (
                       <div className="relative aspect-square max-w-md overflow-hidden rounded-[var(--radius-card)] border">
                         <img src={activeLineInventoryItem.imageUrl} alt={activeLineInventoryItem.name} className="h-full w-full object-contain" />
@@ -293,7 +293,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
           {selectedOrderIsCustom && (
             <Card variant="raised" padding="md" className="space-y-4">
-              <h4 className="flex items-center gap-2 label-caps text-macos-text-muted dark:text-zinc-500">
+              <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
               {paymentError && (
@@ -302,30 +302,30 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                 </div>
               )}
               {paymentsLoading ? (
-                <p className="text-xs text-macos-text-muted dark:text-zinc-500">Loading payments...</p>
+                <p className="text-xs text-app-text-muted dark:text-zinc-500">Loading payments...</p>
               ) : payments.length === 0 ? (
-                <p className="text-xs text-macos-text-muted dark:text-zinc-500">No payments recorded yet.</p>
+                <p className="text-xs text-app-text-muted dark:text-zinc-500">No payments recorded yet.</p>
               ) : (
                 <div className="space-y-2">
                   {payments.map((payment) => (
                     <div key={payment.id} className="flex items-center justify-between rounded-[var(--radius-card)] border p-2.5">
                       <div className="flex items-center gap-2">
-                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-2xs font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-macos-green' : payment.method === 'Card' ? 'bg-[var(--app-tint-blue)] text-macos-blue' : 'bg-[var(--app-tint-purple)] text-macos-purple')}>
+                        <span className={cn('flex h-6 w-6 items-center justify-center rounded-full text-2xs font-bold', payment.method === 'Cash' ? 'bg-[var(--app-tint-green)] text-app-success' : payment.method === 'Card' ? 'bg-[var(--app-tint-accent)] text-app-accent' : 'bg-[var(--app-tint-purple)] text-app-violet')}>
                           {payment.method[0]}
                         </span>
                         <div>
-                          <p className="text-2xs font-bold text-macos-text dark:text-zinc-100">{payment.method}</p>
-                          <p className="text-2xs text-macos-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
+                          <p className="text-2xs font-bold text-app-ink dark:text-zinc-100">{payment.method}</p>
+                          <p className="text-2xs text-app-text-muted dark:text-zinc-500">{payment.createdAt.slice(0, 10)}</p>
                         </div>
                       </div>
-                      <span className="tabular-nums text-2xs font-bold text-macos-text dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
+                      <span className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100">{currencySymbol}{payment.amount.toFixed(2)}</span>
                     </div>
                   ))}
                 </div>
               )}
 
               <form onSubmit={handleRecordPayment} className="space-y-2 border-t pt-3">
-                <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">Record Payment</p>
+                <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Record Payment</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Input type="number" min={0.01} step="0.01" fieldSize="sm" className="text-xs" placeholder="Amount" value={paymentAmount} onChange={(e) => setPaymentAmount(e.target.value)} required />
                   <Select fieldSize="sm" className="text-xs" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as 'Cash' | 'Card' | 'Other')}>
@@ -355,7 +355,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
           )}
 
           <Card variant="raised" padding="md">
-            <h4 className="mb-3 label-caps text-macos-text-muted dark:text-zinc-500">Update Work Phase</h4>
+            <h4 className="mb-3 label-caps text-app-text-muted dark:text-zinc-500">Update Work Phase</h4>
             <div className="flex items-center gap-3">
               <Button
                 type="button"

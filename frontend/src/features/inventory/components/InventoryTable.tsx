@@ -122,7 +122,7 @@ export function InventoryTable({
                     <TableHead className="text-right">Price</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
+                  <TableHead colSpan={5} className="font-semibold text-app-ink dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -140,13 +140,13 @@ export function InventoryTable({
                         aria-label={`Select ${item.sku}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="text-macos-text-muted dark:text-zinc-500">{item.sku}</TableCell>
-                    <TableCell className="text-macos-text dark:text-zinc-100">{item.name}</TableCell>
+                    <TableCell className="text-app-text-muted dark:text-zinc-500">{item.sku}</TableCell>
+                    <TableCell className="text-app-ink dark:text-zinc-100">{item.name}</TableCell>
                     <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
                     <TableCell className="text-right tabular-nums">
-                      <span className={isLowStock ? 'text-macos-red dark:text-red-300' : 'text-macos-text dark:text-zinc-100'}>{item.stock}</span>
+                      <span className={isLowStock ? 'text-app-danger dark:text-red-300' : 'text-app-ink dark:text-zinc-100'}>{item.stock}</span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-macos-text dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
                   </TableRow>
                 );
               })}
@@ -162,7 +162,7 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-3 py-2 text-macos-text-muted dark:text-zinc-500">
+      <div className="surface-toolbar flex justify-between px-3 py-2 text-app-text-muted dark:text-zinc-500">
         <span>Displaying {items.length} of {totalCount} items</span>
         <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
       </div>

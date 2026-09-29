@@ -236,8 +236,8 @@ export default function UserManagement() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">User Management</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage staff profiles, RBAC roles, and default page access groups.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">User Management</h1>
+          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">Manage staff profiles, RBAC roles, and default page access groups.</p>
         </div>
         <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
@@ -252,17 +252,17 @@ export default function UserManagement() {
             <div className="space-y-2.5">
               {[
                 { label: 'Admin', value: adminCount, icon: Shield, tone: 'purple' },
-                { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'blue' },
+                { label: 'Staff', value: staffCount, icon: UserSquare, tone: 'accent' },
                 { label: 'Total Users', value: users.length, icon: KeyRound, tone: 'green' },
               ].map(({ label, value, icon: Icon, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   </div>
-                  <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
+                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}
             </div>
@@ -331,7 +331,7 @@ export default function UserManagement() {
                           <TableHead>Date Created</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={6} className="font-semibold text-macos-text dark:text-zinc-100">
+                        <TableHead colSpan={6} className="font-semibold text-app-ink dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -357,22 +357,22 @@ export default function UserManagement() {
                         </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
                               {initials(user.name)}
                             </div>
-                            <span className="leading-none text-macos-text dark:text-zinc-100">{user.name}</span>
+                            <span className="leading-none text-app-ink dark:text-zinc-100">{user.name}</span>
                           </div>
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone}</TableCell>
-                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'blue'}>{user.role}</StatusLabel></TableCell>
-                        <TableCell className="text-macos-text dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="text-macos-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
+                        <TableCell className="text-app-ink dark:text-zinc-200">{user.position}</TableCell>
+                        <TableCell className="text-app-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={7} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -403,7 +403,7 @@ export default function UserManagement() {
           </div>
 
           <SurfaceCard className="space-y-3 p-3">
-            <p className="text-2xs font-bold text-macos-text-muted dark:text-zinc-500">
+            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">
               {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -411,8 +411,8 @@ export default function UserManagement() {
                 const item = NAV_ITEMS.find((nav) => nav.key === key);
                 if (!item) return null;
                 return (
-                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-xs text-macos-text dark:text-zinc-300">
-                    <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-macos-blue" />
+                  <label key={key} className="inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-xs text-app-ink dark:text-zinc-300">
+                    <input type="checkbox" checked={form.access.includes(key)} disabled className="h-3.5 w-3.5 rounded border accent-app-accent" />
                     {item.label}
                   </label>
                 );

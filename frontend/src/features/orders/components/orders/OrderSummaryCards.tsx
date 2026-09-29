@@ -20,8 +20,8 @@ function SummaryCard({ label, count }: SummaryCardProps) {
   return (
     <div>
       <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
-        <span className="truncate text-2xs font-bold text-macos-text-muted dark:text-zinc-500">{label}</span>
-        <span className="tabular-nums text-xl font-bold tracking-tight text-macos-text dark:text-zinc-100">{count}</span>
+        <span className="truncate text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</span>
+        <span className="tabular-nums text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{count}</span>
       </SurfaceCard>
     </div>
   );

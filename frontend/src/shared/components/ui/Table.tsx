@@ -33,7 +33,7 @@ export const Table = forwardRef<HTMLTableElement, TableHTMLAttributes<HTMLTableE
 Table.displayName = 'Table';
 
 export const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn('surface-toolbar text-macos-text-muted dark:text-zinc-400', className)} {...props} />
+  <thead ref={ref} className={cn('surface-toolbar text-app-text-muted dark:text-zinc-400', className)} {...props} />
 ));
 
 TableHeader.displayName = 'TableHeader';
@@ -69,7 +69,7 @@ export const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLT
 TableCell.displayName = 'TableCell';
 
 export const TableCaption = forwardRef<HTMLTableCaptionElement, HTMLAttributes<HTMLTableCaptionElement>>(({ className, ...props }, ref) => (
-  <caption ref={ref} className={cn('mt-3 text-2xs font-semibold text-macos-text-muted', className)} {...props} />
+  <caption ref={ref} className={cn('mt-3 text-2xs font-semibold text-app-text-muted', className)} {...props} />
 ));
 
 TableCaption.displayName = 'TableCaption';

@@ -43,7 +43,7 @@ export function DeleteConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Confirm Deletion" maxWidth="max-w-sm">
       <div className="space-y-4">
         <div className="space-y-3">
-          <p className="text-sm text-macos-text dark:text-zinc-100">Are you sure you want to delete:</p>
+          <p className="text-sm text-app-ink dark:text-zinc-100">Are you sure you want to delete:</p>
           {itemLabels.length > 0 && (
             <ul className="list-none space-y-1">
               {itemLabels.map((label, index) => (
@@ -51,14 +51,14 @@ export function DeleteConfirmModal({
                 // of the key rather than the label alone.
                 <li
                   key={`${label}-${index}`}
-                  className="text-sm font-bold text-macos-text dark:text-zinc-100"
+                  className="text-sm font-bold text-app-ink dark:text-zinc-100"
                 >
                   {label}
                 </li>
               ))}
             </ul>
           )}
-          <p className="text-sm text-macos-text dark:text-zinc-100">This action cannot be undone.</p>
+          <p className="text-sm text-app-ink dark:text-zinc-100">This action cannot be undone.</p>
           {children}
         </div>
         <div className="flex gap-2">

@@ -419,7 +419,7 @@ export default function POS() {
         onClose={() => setSalesToVoid([])}
         onConfirm={confirmVoidSelected}
       >
-        <p className="text-sm text-macos-text dark:text-zinc-100">
+        <p className="text-sm text-app-ink dark:text-zinc-100">
           The sale is voided and the stock it used is returned to inventory. The record itself stays in the history, marked voided.
         </p>
       </DeleteConfirmModal>

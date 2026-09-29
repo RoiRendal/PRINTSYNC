@@ -233,8 +233,8 @@ export default function CustomersPage() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-macos-text dark:text-zinc-100 lg:text-title">Customer Directory</h1>
-          <p className="mt-1 text-sm text-macos-text-muted dark:text-zinc-400">Manage customer records, contact details, and order history links.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Customer Directory</h1>
+          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">Manage customer records, contact details, and order history links.</p>
         </div>
         <Button onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
@@ -248,18 +248,18 @@ export default function CustomersPage() {
             </CardHeader>
             <div className="space-y-2.5">
               {[
-                { label: 'Total Customers', value: customers.length, icon: Users, tone: 'blue' as const },
+                { label: 'Total Customers', value: customers.length, icon: Users, tone: 'accent' as const },
                 { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
                 { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
               ].map(({ label, value, icon: Icon, tone }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-macos-purple', tone === 'blue' && 'bg-[var(--app-tint-blue)] text-macos-blue dark:text-macos-cyan', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
+                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
                     </span>
-                    <span className="text-2xs font-bold text-macos-text-muted dark:text-zinc-400">{label}</span>
+                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   </div>
-                  <span className="tabular-nums text-sm font-bold text-macos-text dark:text-zinc-100">{value}</span>
+                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}
             </div>
@@ -326,7 +326,7 @@ export default function CustomersPage() {
                           <TableHead>Date Created</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={5} className="font-semibold text-macos-text dark:text-zinc-100">
+                        <TableHead colSpan={5} className="font-semibold text-app-ink dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -344,21 +344,21 @@ export default function CustomersPage() {
                         </TableSelectCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-macos-blue ring-1 ring-[var(--app-border-hairline)] dark:text-macos-cyan">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
                               {initials(customer.name)}
                             </div>
-                            <span className="leading-none text-macos-text dark:text-zinc-100">{customer.name}</span>
+                            <span className="leading-none text-app-ink dark:text-zinc-100">{customer.name}</span>
                           </div>
                         </TableCell>
                         <TableCell>{customer.phone || '—'}</TableCell>
                         <TableCell>{customer.email || '—'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate text-macos-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
-                        <TableCell className="text-macos-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
+                        <TableCell className="max-w-[200px] truncate text-app-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
+                        <TableCell className="text-app-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={6} className="py-10 text-center text-sm text-macos-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={6} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -396,7 +396,7 @@ export default function CustomersPage() {
         onConfirm={confirmDelete}
       >
         {isCheckingOrders && (
-          <p className="text-2xs font-semibold text-macos-text-muted dark:text-zinc-500">
+          <p className="text-2xs font-semibold text-app-text-muted dark:text-zinc-500">
             Checking {customersToDelete.length > 1 ? 'these customers’' : "this customer's"} order history…
           </p>
         )}
