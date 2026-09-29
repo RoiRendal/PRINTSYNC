@@ -32,7 +32,6 @@ import { useCustomers } from '../../../app/stores/useCustomerStore';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { Customer } from '../types';
-import { cn } from '../../../shared/lib/cn';
 
 interface FormState {
   name: string;
@@ -247,16 +246,21 @@ export default function CustomersPage() {
               <CardDescription>Current customer database snapshot.</CardDescription>
             </CardHeader>
             <div className="space-y-2.5">
+              {/*
+                The glyph is bare. It used to sit in a 32px tinted rounded square
+                that carried a per-row colour, which made the colour decoration on
+                a frame rather than information — every row here states its own
+                label, so nothing is lost. Same ERPNext rule as the analytics and
+                dashboard tiles: a card carries its figure, not ornament.
+              */}
               {[
-                { label: 'Total Customers', value: customers.length, icon: Users, tone: 'accent' as const },
-                { label: 'With Phone', value: withPhone, icon: Phone, tone: 'green' as const },
-                { label: 'With Email', value: withEmail, icon: Mail, tone: 'purple' as const },
-              ].map(({ label, value, icon: Icon, tone }) => (
+                { label: 'Total Customers', value: customers.length, icon: Users },
+                { label: 'With Phone', value: withPhone, icon: Phone },
+                { label: 'With Email', value: withEmail, icon: Mail },
+              ].map(({ label, value, icon: Icon }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
                   <div className="flex items-center gap-2.5">
-                    <span className={cn('flex h-8 w-8 items-center justify-center rounded-[0.75rem]', tone === 'purple' && 'bg-[var(--app-tint-purple)] text-app-violet', tone === 'accent' && 'bg-[var(--app-tint-accent)] text-app-accent dark:text-app-accent-soft', tone === 'green' && 'bg-[var(--app-tint-green)] text-green-700 dark:text-green-300')}>
-                      <Icon className="h-4 w-4" aria-hidden="true" />
-                    </span>
+                    <Icon className="h-4 w-4 shrink-0 text-app-text-muted dark:text-zinc-400" aria-hidden="true" />
                     <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   </div>
                   <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>

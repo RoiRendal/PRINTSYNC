@@ -9,12 +9,16 @@ import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Surf
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
 
+/**
+ * The section glyph, bare.
+ *
+ * It used to sit in a 40px rounded square with a hairline ring. The ring drew a
+ * box around a glyph that already had a heading next to it, so it was ornament
+ * rather than structure — the same rule the card family follows. Only the accent
+ * colour survives, because that is what the ring's contents actually carried.
+ */
 function SettingIcon({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[0.95rem] text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
-      {children}
-    </div>
-  );
+  return <span className="shrink-0 text-app-accent dark:text-app-accent-soft">{children}</span>;
 }
 
 function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle?: () => void }) {

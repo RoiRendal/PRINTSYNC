@@ -30,9 +30,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-app-ink dark:text-zinc-100">
           <SurfaceCard className="relative w-full max-w-md p-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] border border-[var(--app-border-hairline)] bg-[var(--app-tint-red)] text-app-danger dark:text-red-300">
-              <AlertTriangle className="h-7 w-7" aria-hidden="true" />
-            </div>
+            {/* The glyph is bare — the 56px ringed red tile around it was a box
+                around an icon, not structure. The colour stays; the frame does
+                not. */}
+            <span className="block text-app-danger dark:text-red-300">
+              <AlertTriangle className="mx-auto h-7 w-7" aria-hidden="true" />
+            </span>
             <div className="mt-5 space-y-2">
               <p className="text-2xs font-bold text-app-danger dark:text-red-300">Application alert</p>
               <h1 className="text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">Something went wrong</h1>

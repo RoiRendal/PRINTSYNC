@@ -142,9 +142,12 @@ export function POSCheckoutModal({
       <div className="space-y-4">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] border bg-[var(--app-tint-green)] text-app-success">
+            {/* The tick is bare — the 64px ringed green tile around it drew a box
+                around an icon. The green stays because it is the success signal;
+                the frame was ornament. */}
+            <span className="text-app-success">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
-            </div>
+            </span>
             <div>
               <h4 className="text-lg font-bold text-app-ink dark:text-zinc-100">
                 {posMode === 'retail' ? 'Transaction Successful' : 'Order Created'}
