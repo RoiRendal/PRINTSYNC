@@ -9,6 +9,7 @@ import { ConnectionStatus } from '../components/ConnectionStatus';
 import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { useAuth } from '../../app/stores/useAuthStore';
+import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
 import { Button, Tooltip } from '../../shared/components/ui';
 
 const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
@@ -39,6 +40,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentLabel = currentItem?.label || 'Dashboard';
   const { theme, toggleTheme, isDark } = useTheme();
   const { currentUser, logout } = useAuth();
+  const { businessDisplayName } = useBusinessBranding();
   const { unreadCount } = useNotifications();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -118,13 +120,14 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
        reach from the top of the window to the bottom — it is never given a
        height of its own. */
     <div className="relative flex h-screen w-full overflow-hidden bg-[var(--app-surface)] text-[var(--app-text)] font-sans dark:text-zinc-100">
-      {/* Left sidebar — full height, and the only place the brand appears.
-          On small screens it becomes an overlay drawer. It has to sit ABOVE the
-          header (`z-[70]` vs the header's `z-[60]`): the drawer starts at y=0 and
-          spans the top of the window, and the header spans the full width, so at
-          a lower z the header would paint over the drawer's brand block — the
-          top 48px of the sidebar. On `lg` and up the sidebar is `static`, so this
-          z-index does not apply and the two never overlap horizontally. */}
+      {/* Left sidebar — full height, and the home of the business LOGO (the name
+          now lives in the top header's left). On small screens it becomes an
+          overlay drawer. It has to sit ABOVE the header (`z-[70]` vs the header's
+          `z-[60]`): the drawer starts at y=0 and spans the top of the window, and
+          the header spans the full width, so at a lower z the header would paint
+          over the drawer's logo block — the top 48px of the sidebar. On `lg` and
+          up the sidebar is `static`, so this z-index does not apply and the two
+          never overlap horizontally. */}
       <Sidebar
         isCollapsed={isCollapsed}
         isMinimized={isMinimized}
@@ -144,11 +147,20 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Right column — header, page toolbar and content, stacked top to bottom. */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {/* Global Top Header. The brand moved into the sidebar, so this bar is
-            deliberately empty on the left and carries only the global controls
-            on the right. */}
-        <header className="relative z-[60] flex h-12 shrink-0 items-center justify-end border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-5 xl:px-6">
-          <div className="flex items-center gap-2">
+        {/* Global Top Header. The business NAME now lives on the left here; the
+            business LOGO stays in the sidebar. The bar carries the name on the
+            left and the global controls on the right, so it is a justified row
+            rather than the old right-only one. */}
+        <header className="relative z-[60] flex h-12 shrink-0 items-center justify-between border-b border-[var(--app-border-frame)] bg-[var(--app-surface)] px-3 lg:px-5 xl:px-6">
+          <div className="flex min-w-0 items-center">
+            <span
+              className="truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100"
+              title={businessDisplayName}
+            >
+              {businessDisplayName}
+            </span>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
             <Tooltip content={`Theme: ${theme[0].toUpperCase()}${theme.slice(1)} (click for ${NEXT_THEME_LABEL[theme]})`}>
               <Button
                 size="icon"
@@ -297,9 +309,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             heading was 24px at narrow widths and 28px above `lg`, and both would
             fill the 32px bar edge-to-edge or overflow it. `text-xl` sits at 20px
             with a 28px line box, which leaves a couple of pixels either side and
-            never clips. The collapsed-sidebar brand row still uses `text-sm` for
-            the business name, so the two now differ on purpose — the bar names the
-            page, the rail names the business. */}
+            never clips. It is also NOT bold: the page name is a label for the
+            current screen, not a brand lockup, so it reads at the regular weight
+            while the business name in the header's left carries the bold. The two
+            are distinct on purpose — the bar names the page, the header names the
+            business. */}
         <div className="relative z-[40] mx-3 mt-2 flex h-8 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
           <div className="flex min-w-0 items-center gap-3">
             <Button
@@ -315,7 +329,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             {/* No wrapper div: the span is the only child, so the flex row
                 already lays it out. The extra box was a leftover from the
                 two-line block (title + 10px sub-label) that used to sit here. */}
-            <span className="block min-w-0 truncate text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
+            <span className="block min-w-0 truncate text-xl tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
           </div>
           <ConnectionStatus className="shrink-0" />
         </div>

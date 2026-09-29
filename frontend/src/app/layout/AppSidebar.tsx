@@ -32,7 +32,7 @@ export const Sidebar = ({
   onNavigate?: () => void;
 }) => {
   const { currentUser } = useAuth();
-  const { businessDisplayName, effectiveBusinessLogoUrl } = useBusinessBranding();
+  const { effectiveBusinessLogoUrl } = useBusinessBranding();
   const [logoFailed, setLogoFailed] = useState(false);
 
   const handleLogoError = useCallback(() => {
@@ -71,25 +71,18 @@ export const Sidebar = ({
           string, not interpolated — Tailwind scans source text, so a built
           `min-w-[176px]` would never be generated. */}
       <div className={cn('flex h-full flex-col', !isMinimized && 'min-w-[176px]')}>
-        {/* Brand. The logo and the business name live here now — they used to sit
-            in the top header, which is left empty on its left side so the brand
-            reads as belonging to the sidebar.
+        {/* Brand. The business NAME now lives in the top header's left; only the
+            logo stays here, centred in the brand row so it reads as a mark, not a
+            lockup. The logo is decorative (`alt=""`) — the accessible name is the
+            header's visible business name, so a screen reader never hears it twice.
 
             The rule that used to sit under this block is gone. It was there to
             separate the brand from the navigation, but the sidebar already has
             its own tint and its own right border, so the line was doing no
             separating work — it just cut the column in two. The row keeps the
             header's `h-12` so the navigation still starts on the same line as the
-            toolbar in the column beside it.
-
-            Minimized, the name is hidden but kept in the accessibility tree
-            (`sr-only`, not removed), so the brand still has a name. */}
-        <div
-          className={cn(
-            'flex h-12 shrink-0 items-center gap-2 px-2.5',
-            isMinimized && 'justify-center px-0',
-          )}
-        >
+            toolbar in the column beside it. */}
+        <div className="flex h-12 shrink-0 items-center justify-center px-2.5">
           {logoFailed ? (
             <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-app-accent dark:text-app-accent-soft">
               {APP_NAME.charAt(0)}
@@ -106,14 +99,6 @@ export const Sidebar = ({
               />
             </span>
           )}
-          <div className={isMinimized ? 'sr-only' : 'min-w-0'}>
-            <h1
-              className="truncate text-sm font-bold tracking-tight text-app-ink dark:text-white"
-              title={APP_NAME}
-            >
-              {businessDisplayName}
-            </h1>
-          </div>
         </div>
 
         {/* Navigation. The top padding is the gap between the brand and the first
