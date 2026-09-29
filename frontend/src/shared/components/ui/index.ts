@@ -14,6 +14,8 @@ export { SearchInput } from './SearchInput';
 export type { SearchInputProps } from './SearchInput';
 export { SegmentedControl } from './SegmentedControl';
 export type { SegmentedControlOption, SegmentedControlProps } from './SegmentedControl';
+export { StatTile, StatTileRow } from './StatTile';
+export type { StatTileProps, StatTileRowProps } from './StatTile';
 export { StatusLabel } from './StatusLabel';
 export type { StatusLabelProps } from './StatusLabel';
 export { Modal } from './Modal';
