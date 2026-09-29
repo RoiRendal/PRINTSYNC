@@ -145,9 +145,9 @@ export function POSCheckoutModal({
             {/* The tick is bare and carries no hue — the 64px ringed green tile
                 around it drew a box around an icon, and the green only repeated
                 what the check shape and the heading below it already say. It
-                takes the heading's own ink so it reads as part of the sentence
-                rather than as a status light. */}
-            <span className="text-app-ink dark:text-zinc-100">
+                takes the same muted ink as the rest of the feedback family, so a
+                success reads as a state the page is in rather than a status light. */}
+            <span className="text-app-text-muted dark:text-zinc-400">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </span>
             <div>

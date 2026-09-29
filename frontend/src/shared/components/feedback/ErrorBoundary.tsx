@@ -37,7 +37,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <AlertTriangle className="mx-auto h-7 w-7" aria-hidden="true" />
             </span>
             <div className="mt-5 space-y-2">
-              <p className="text-2xs font-bold text-app-danger dark:text-red-300">Application alert</p>
+              {/* No hue. The words say the severity; red only repeated them, and
+                  the label now takes the card's default ink like any other text. */}
+              <p className="text-2xs font-bold">Application alert</p>
               <h1 className="text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">Something went wrong</h1>
               <p className="text-sm leading-relaxed text-app-text-muted dark:text-zinc-400">
                 An unexpected error occurred while rendering this page. Reloading will restore a clean application state.

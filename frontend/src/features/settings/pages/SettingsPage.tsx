@@ -193,9 +193,10 @@ export default function Settings() {
 
           <SurfaceCard className="p-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.15rem] border p-3">
-                <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
-              </div>
+              {/* The logo stands on its own — no 80px rounded bordered tile. It
+                  is the preview of what the sidebar and login screen print, not a
+                  badge, and it now matches how those two render it. */}
+              <img src={effectiveBusinessLogoUrl} alt="" className="h-14 w-14 shrink-0 object-contain" />
               <div className="min-w-0 flex-1 space-y-2">
                 <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
                 <p className="text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">

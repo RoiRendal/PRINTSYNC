@@ -27,9 +27,13 @@ export default function LoginPage() {
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] px-4 py-10 text-app-ink dark:text-zinc-100">
       <section className="relative w-full max-w-md">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-[1.75rem] border">
-            <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="max-h-12 max-w-14 object-contain" />
-          </div>
+          {/*
+            The logo stands on its own. It used to sit in an 80px rounded bordered
+            tile, which was the same box the icon frames were; a logo is not a
+            badge and does not need one. Same bare treatment the sidebar brand
+            block already uses.
+          */}
+          <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="mb-4 h-14 w-14 object-contain" />
 
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-app-ink dark:text-zinc-100">Welcome back</h1>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-app-text-muted dark:text-zinc-400">
