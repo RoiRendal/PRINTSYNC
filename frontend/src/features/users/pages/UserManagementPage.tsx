@@ -80,9 +80,6 @@ export default function UserManagement() {
    */
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const adminCount = users.filter((user) => user.role === 'admin').length;
-  const staffCount = users.filter((user) => user.role === 'staff').length;
-
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return users;
@@ -237,9 +234,7 @@ export default function UserManagement() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
 
-      <StatTileRow columns={3}>
-        <StatTile label="Admin" value={adminCount} />
-        <StatTile label="Staff" value={staffCount} />
+      <StatTileRow columns={1}>
         <StatTile label="Total Users" value={users.length} />
       </StatTileRow>
 

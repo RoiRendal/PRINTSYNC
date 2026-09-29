@@ -120,7 +120,6 @@ export default function AuditLogPage() {
     page,
     pageSize,
     total,
-    totalPages,
     actionFilter,
     entityTypeFilter,
     setPage,
@@ -161,10 +160,8 @@ export default function AuditLogPage() {
         </Button>
       </div>
 
-      <StatTileRow columns={3}>
+      <StatTileRow columns={1}>
         <StatTile label="Total Events" value={total} />
-        <StatTile label="Current Page" value={`${page} / ${totalPages || 1}`} />
-        <StatTile label="Shown" value={items.length} />
       </StatTileRow>
 
       <Card padding="none" className="overflow-hidden">

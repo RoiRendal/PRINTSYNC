@@ -68,9 +68,6 @@ export default function CustomersPage() {
   /** Invalidates an in-flight order count so a late reply cannot land on a newer dialog. */
   const orderCountRequestRef = useRef(0);
 
-  const withPhone = customers.filter((c) => c.phone.trim()).length;
-  const withEmail = customers.filter((c) => c.email.trim()).length;
-
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return customers;
@@ -234,10 +231,8 @@ export default function CustomersPage() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
 
-      <StatTileRow columns={3}>
+      <StatTileRow columns={1}>
         <StatTile label="Total Customers" value={customers.length} />
-        <StatTile label="With Phone" value={withPhone} />
-        <StatTile label="With Email" value={withEmail} />
       </StatTileRow>
 
       <Card padding="none" className="overflow-hidden">
