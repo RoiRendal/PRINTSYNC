@@ -35,6 +35,41 @@ export const chartTooltipStyle = {
   background: 'var(--app-surface-raised)',
 };
 
+/**
+ * The one place a chart colour is written down.
+ *
+ * Recharts paints its lines, bars and axis labels as SVG attributes, and an SVG
+ * attribute cannot read a CSS variable the way a div's `background` can — so
+ * these are literal values rather than tokens, and they have to live somewhere.
+ * That place is here, not typed out at each `<Line>`/`<Bar>`/`<XAxis>`.
+ *
+ * `getChartColors()` is a FUNCTION on purpose. Today it simply returns the
+ * palette below, which is enough to remove the duplication. When the charts
+ * need to follow a theme change live, swap this body for the real token read
+ * (`getComputedStyle`) — every call site keeps working, because they already ask
+ * for the colours rather than importing frozen strings. That is the migration
+ * path from "written once" to "actually theme-driven".
+ */
+export interface ChartColors {
+  /** Neutral series — the "actual" / "revenue" / first-timeline line. */
+  neutral: string;
+  /** Positive series — success green. */
+  positive: string;
+  /** Secondary series — violet, for a second comparison line. */
+  secondary: string;
+  /** Axis tick labels. */
+  axis: string;
+}
+
+export function getChartColors(): ChartColors {
+  return {
+    neutral: '#555558', // --app-text-muted (light)
+    positive: '#34c759', // --app-success
+    secondary: '#af52de', // --app-violet
+    axis: '#86868B',
+  };
+}
+
 export type InsightFeature = 'sales' | 'profit' | 'trend' | 'forecast';
 
 export type InsightReport = {

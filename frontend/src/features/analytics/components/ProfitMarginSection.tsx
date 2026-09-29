@@ -28,6 +28,7 @@ import {
   chartTooltipStyle,
   generateInsight,
   createEmptyInsightState,
+  getChartColors,
   money,
   periodLabel,
   type InsightState,
@@ -55,6 +56,7 @@ export function ProfitMarginSection({
 }: ProfitMarginSectionProps) {
   const [marginSortOrder, setMarginSortOrder] = useState<'desc' | 'asc'>('desc');
   const [profitInsight, setProfitInsight] = useState<InsightState>(createEmptyInsightState());
+  const colors = getChartColors();
 
   const profitMarginData = useMemo(() => {
     if (!profitTimeline) return [];
@@ -100,14 +102,14 @@ export function ProfitMarginSection({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={profitMarginData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(142,142,147,0.24)" strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="amount" tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
-                <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#86868B' }} />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
+                <YAxis yAxisId="amount" tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
+                <YAxis yAxisId="margin" orientation="right" tickFormatter={(value) => `${value.toFixed(0)}%`} domain={[0, 50]} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: colors.axis }} />
                 <RechartsTooltip formatter={(value, name) => { const numericValue = Number(value ?? 0); const label = String(name); if (label === 'Margin %') return [`${numericValue.toFixed(1)}%`, label]; return [money.format(numericValue), label]; }} labelStyle={{ color: 'var(--app-text)', fontSize: 12 }} contentStyle={chartTooltipStyle} />
                 <Legend />
-                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill="#555558" radius={[8, 8, 0, 0]} isAnimationActive={false} />
-                <Bar yAxisId="amount" dataKey="expenses" name="COGS" fill="#AF52DE" radius={[8, 8, 0, 0]} isAnimationActive={false} />
-                <Line yAxisId="margin" type="monotone" dataKey="margin" name="Margin %" stroke="#34C759" strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
+                <Bar yAxisId="amount" dataKey="revenue" name="Revenue" fill={colors.neutral} radius={[8, 8, 0, 0]} isAnimationActive={false} />
+                <Bar yAxisId="amount" dataKey="expenses" name="COGS" fill={colors.secondary} radius={[8, 8, 0, 0]} isAnimationActive={false} />
+                <Line yAxisId="margin" type="monotone" dataKey="margin" name="Margin %" stroke={colors.positive} strokeWidth={3} dot={{ r: 4 }} isAnimationActive={false} />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
