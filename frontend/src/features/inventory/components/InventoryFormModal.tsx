@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { AlertTriangle, Image as ImageIcon } from '../../../shared/components/ui/icons';
+import { Image as ImageIcon } from '../../../shared/components/ui/icons';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
   Button,
   Input,
@@ -163,12 +164,7 @@ export function InventoryFormModal({
           </div>
         </div>
 
-        {mutationError && (
-          <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-3 text-xs font-medium text-red-700 dark:text-red-300">
-            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{mutationError}</span>
-          </div>
-        )}
+        {mutationError && <InlineAlert message={mutationError} />}
 
         <div className="flex gap-3 border-t pt-4">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>

@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { Lock, Mail } from '../../../shared/components/ui/icons';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, SurfaceCard, Input } from '../../../shared/components/ui';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { useAuth } from '../../../app/stores/useAuthStore';
 
 export default function LoginPage() {
@@ -79,11 +80,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {authError && (
-              <div className="rounded-xl border bg-[var(--app-tint-red)] px-3 py-2 text-xs font-medium text-red-700 dark:text-red-300">
-                {authError}
-              </div>
-            )}
+            {authError && <InlineAlert message={authError} />}
 
             <Button type="submit" size="lg" fullWidth isLoading={isSessionLoading} disabled={isSessionLoading}>
               Login

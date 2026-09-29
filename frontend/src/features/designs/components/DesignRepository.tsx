@@ -9,6 +9,7 @@ import { readFileAsDataUrl } from '../../../shared/lib/readFileAsDataUrl';
 import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
@@ -173,11 +174,7 @@ export function DesignRepository() {
     <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
       {mutationError && (
-        <div className="flex items-center gap-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] p-3 text-xs font-medium text-red-700 dark:text-red-300">
-          <Trash2 className="h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>{mutationError}</span>
-          <button type="button" onClick={() => setMutationError(null)} className="ml-auto text-red-500 hover:text-red-700 dark:text-red-300 dark:hover:text-red-200">Dismiss</button>
-        </div>
+        <InlineAlert message={mutationError} onDismiss={() => setMutationError(null)} />
       )}
 
       <Card padding="none" className="overflow-hidden">
@@ -244,7 +241,7 @@ export function DesignRepository() {
           <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={newDesign.category} onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
           <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Upload Image (Optional)</span><Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={(event) => handleAssetSelected(event.target.files?.[0])} />{selectedAsset && <p className="text-2xs text-app-text-muted dark:text-zinc-500">Selected: {selectedAsset.name}</p>}</label>
           <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Image URL (Optional)</span><Input type="text" placeholder="https://images.unsplash.com/..." value={newDesign.imageUrl} onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })} /></label>
-          {assetError && <p className="text-xs text-app-danger dark:text-red-300">{assetError}</p>}
+          {assetError && <InlineAlert variant="inline" message={assetError} />}
           <div className="space-y-2">
             <span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-500">Tags</span>
             <div className="flex gap-2"><Input type="text" placeholder="Add a tag..." value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())} /><Button type="button" variant="secondary" onClick={handleAddTag}>Add</Button></div>

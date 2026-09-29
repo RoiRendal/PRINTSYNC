@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { AlertCircle, Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from '../../../../shared/components/ui/icons';
+import { Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from '../../../../shared/components/ui/icons';
 import {
   Badge,
   Button,
@@ -10,6 +10,7 @@ import {
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
+import { InlineAlert } from '../../../../shared/components/feedback/InlineAlert';
 import { useDesigns } from '../../../../app/stores/useDesignStore';
 import { useInventory } from '../../../../app/stores/useInventoryStore';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
@@ -296,11 +297,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
               <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
                 <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
               </h4>
-              {paymentError && (
-                <div className="rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
-                  {paymentError}
-                </div>
-              )}
+              {paymentError && <InlineAlert message={paymentError} className="text-2xs" />}
               {paymentsLoading ? (
                 <p className="text-xs text-app-text-muted dark:text-zinc-500">Loading payments...</p>
               ) : payments.length === 0 ? (
@@ -341,17 +338,18 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
           )}
 
           {order.dueDate && new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-red)] px-3 py-2 text-2xs font-bold text-red-700 dark:text-red-300">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              This order is overdue (due {order.dueDate}). Prioritize completion or update the customer.
-            </div>
+            <InlineAlert
+              className="text-2xs"
+              message={`This order is overdue (due ${order.dueDate}). Prioritize completion or update the customer.`}
+            />
           )}
 
           {selectedOrderIsCustom && balanceDue > 0 && order.status === 'Ready for Pickup' && (
-            <div className="flex items-center gap-2 rounded-[var(--radius-card)] border bg-[var(--app-tint-orange)] px-3 py-2 text-2xs font-bold text-orange-700 dark:text-orange-300">
-              <AlertCircle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              Balance due of {currencySymbol}{balanceDue.toFixed(2)} remains unpaid. Confirm payment before delivery.
-            </div>
+            <InlineAlert
+              tone="warning"
+              className="text-2xs"
+              message={`Balance due of ${currencySymbol}${balanceDue.toFixed(2)} remains unpaid. Confirm payment before delivery.`}
+            />
           )}
 
           <Card variant="raised" padding="md">

@@ -4,6 +4,7 @@ import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProv
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select, SegmentedControl } from '../../../shared/components/ui';
+import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
 
@@ -48,6 +49,13 @@ export default function Settings() {
   const [defaultsError, setDefaultsError] = useState('');
   const [exportError, setExportError] = useState('');
   const logoFileInputRef = useRef<HTMLInputElement>(null);
+  /**
+   * The logo row can fail from either side — the upload, or the branding
+   * provider behind it — and the banner shows whichever spoke. Hoisted out of
+   * the JSX so the guard and the message read the same value; `brandingError` is
+   * `string | null`, which the inline `||` could not narrow for the prop.
+   */
+  const logoError = logoUploadError || brandingError;
 
   useEffect(() => {
     setCompanyDraft(businessDisplayName);
@@ -215,7 +223,7 @@ export default function Settings() {
                     </Button>
                   )}
                 </div>
-                {(logoUploadError || brandingError) && <p className="text-xs font-medium text-app-danger dark:text-red-300">{logoUploadError || brandingError}</p>}
+                {logoError && <InlineAlert variant="inline" message={logoError} />}
               </div>
             </div>
           </SurfaceCard>
@@ -262,7 +270,7 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 <Button type="button" onClick={handleSaveDefaults}>Save defaults</Button>
               </div>
-              {defaultsError && <p className="text-xs font-medium text-app-danger dark:text-red-300">{defaultsError}</p>}
+              {defaultsError && <InlineAlert variant="inline" message={defaultsError} />}
             </div>
 
             <SurfaceCard className="space-y-4 p-4">
@@ -301,7 +309,7 @@ export default function Settings() {
           <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
-            {exportError && <p className="text-xs font-medium text-app-danger dark:text-red-300">{exportError}</p>}
+            {exportError && <InlineAlert variant="inline" message={exportError} />}
             <button
               type="button"
               onClick={handleExportOrders}
