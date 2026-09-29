@@ -9,9 +9,7 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   Checkbox,
   DeleteConfirmModal,
   SurfaceCard,
@@ -237,37 +235,20 @@ export default function UserManagement() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="space-y-3 lg:col-span-1">
-          <Card variant="raised" padding="lg">
-            <CardHeader>
-              <CardTitle className="label-caps">Station Overview</CardTitle>
-              <CardDescription>Current account distribution.</CardDescription>
-            </CardHeader>
-            <div className="space-y-2.5">
-              {/*
-                Label and figure, nothing else. The glyph used to sit in a 32px
-                tinted rounded tile; both the tile and the glyph are gone, because
-                the icon restated the label beside it and carried no meaning of
-                its own. Same ERPNext rule as the analytics and dashboard tiles:
-                a card carries its figure, not ornament.
-              */}
-              {[
-                { label: 'Admin', value: adminCount },
-                { label: 'Staff', value: staffCount },
-                { label: 'Total Users', value: users.length },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          { label: 'Admin', value: adminCount },
+          { label: 'Staff', value: staffCount },
+          { label: 'Total Users', value: users.length },
+        ].map(({ label, value }) => (
+          <SurfaceCard key={label} className="p-4">
+            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
+            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
+          </SurfaceCard>
+        ))}
+      </div>
 
-        <div className="space-y-3 lg:col-span-3">
-          <Card padding="none" className="overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
                 <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -380,8 +361,6 @@ export default function UserManagement() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingUserId ? 'Edit User' : 'Create User'} maxWidth="max-w-2xl">
         <form onSubmit={submitForm} className="space-y-4">

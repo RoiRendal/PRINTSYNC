@@ -8,15 +8,14 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
   Checkbox,
   DeleteConfirmModal,
   Input,
   Modal,
   Pagination,
   SearchInput,
+  SurfaceCard,
   Table,
   TableBody,
   TableCell,
@@ -234,37 +233,20 @@ export default function CustomersPage() {
         <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add Customer</Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-4">
-        <div className="space-y-3 lg:col-span-1">
-          <Card variant="raised" padding="lg">
-            <CardHeader>
-              <CardTitle className="label-caps">Directory Overview</CardTitle>
-              <CardDescription>Current customer database snapshot.</CardDescription>
-            </CardHeader>
-            <div className="space-y-2.5">
-              {/*
-                Label and figure, nothing else. The glyph used to sit in a 32px
-                tinted rounded tile; both the tile and the glyph are gone, because
-                the icon restated the label beside it and carried no meaning of
-                its own. Same ERPNext rule as the analytics and dashboard tiles:
-                a card carries its figure, not ornament.
-              */}
-              {[
-                { label: 'Total Customers', value: customers.length },
-                { label: 'With Phone', value: withPhone },
-                { label: 'With Email', value: withEmail },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
+      <div className="grid gap-3 md:grid-cols-3">
+        {[
+          { label: 'Total Customers', value: customers.length },
+          { label: 'With Phone', value: withPhone },
+          { label: 'With Email', value: withEmail },
+        ].map(({ label, value }) => (
+          <SurfaceCard key={label} className="p-4">
+            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
+            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
+          </SurfaceCard>
+        ))}
+      </div>
 
-        <div className="space-y-3 lg:col-span-3">
-          <Card padding="none" className="overflow-hidden">
+      <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
                 <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -366,8 +348,6 @@ export default function CustomersPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
 
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingId ? 'Edit Customer' : 'Add Customer'} maxWidth="max-w-lg">
         <form onSubmit={submitForm} className="space-y-4">
