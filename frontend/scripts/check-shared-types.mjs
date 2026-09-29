@@ -2,7 +2,7 @@
 /**
  * Shared-contract drift gate — the source half.
  *
- * `src/shared/contracts/contract-guard.ts` asserts, at compile time, that each
+ * `src/contracts/contract-guard.ts` asserts, at compile time, that each
  * feature module's exported types *are* the ones `@printsync/shared-types`
  * publishes. This script catches the move that precedes a divergence: a frontend
  * file going back to *declaring* a type the package owns instead of re-exporting
