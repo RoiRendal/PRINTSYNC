@@ -10,8 +10,9 @@ import {
   Pagination,
   SearchInput,
   Select,
+  StatTile,
+  StatTileRow,
   StatusLabel,
-  SurfaceCard,
   Table,
   TableBody,
   TableCell,
@@ -160,18 +161,11 @@ export default function AuditLogPage() {
         </Button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        {[
-          { label: 'Total Events', value: total },
-          { label: 'Current Page', value: `${page} / ${totalPages || 1}` },
-          { label: 'Shown', value: items.length },
-        ].map(({ label, value }) => (
-          <SurfaceCard key={label} className="p-4">
-            <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</p>
-            <p className="mt-2 tabular-nums text-xl font-bold text-app-ink dark:text-zinc-100">{value}</p>
-          </SurfaceCard>
-        ))}
-      </div>
+      <StatTileRow columns={3}>
+        <StatTile label="Total Events" value={total} />
+        <StatTile label="Current Page" value={`${page} / ${totalPages || 1}`} />
+        <StatTile label="Shown" value={items.length} />
+      </StatTileRow>
 
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">

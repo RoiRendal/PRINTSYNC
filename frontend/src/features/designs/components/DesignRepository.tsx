@@ -11,7 +11,7 @@ import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
@@ -257,7 +257,10 @@ export function DesignRepository() {
             <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
             <div className="space-y-4">
               <div><h4 className="mb-1 label-caps text-app-text-muted">Design Information</h4><p className="text-xl font-bold text-app-ink dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="accent" className="mt-2">{selectedDesign.category}</Badge></div>
-              <SurfaceCard className="grid grid-cols-2 gap-4 p-3"><div><p className="text-2xs text-app-text-muted">Reference ID</p><p className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-200">#{selectedDesign.id}</p></div><div><p className="text-2xs text-app-text-muted">Created Date</p><p className="text-sm font-bold text-app-ink dark:text-zinc-200">{selectedDesign.createdAt}</p></div></SurfaceCard>
+              <StatTileRow columns={2}>
+                <StatTile label="Reference ID" value={`#${selectedDesign.id}`} />
+                <StatTile label="Created Date" value={selectedDesign.createdAt} />
+              </StatTileRow>
               <div className="space-y-2"><h4 className="label-caps text-app-text-muted">Tags</h4><div className="flex flex-wrap gap-1.5">{selectedDesign.tags.map((tag) => <Badge key={tag} variant="gray">{tag}</Badge>)}</div></div>
               <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')} leftIcon={<Download className="h-4 w-4" aria-hidden="true" />}>Download Assets</Button>
             </div>

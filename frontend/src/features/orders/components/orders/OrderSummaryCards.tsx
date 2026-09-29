@@ -1,32 +1,19 @@
-import { SurfaceCard } from '../../../../shared/components/ui';
+import { StatTile, StatTileRow } from '../../../../shared/components/ui';
 import type { Order } from '../../types';
 
 /**
- * A phase count: label on the left, figure on the right.
+ * The four production-phase counts, as the app's one stat tile.
  *
- * No icon and no ringed frame — the same ERPNext rule the analytics cards and
- * the dashboard tiles already follow: a card carries its figure, not ornament.
- * The glyph sat in a 40px ringed box that also carried the card's colour, so
- * removing it removes the per-phase tint with it; nothing on the card takes the
- * colour over, because the tint was decoration on the badge rather than
- * information the label does not already state.
+ * This row used to be the only one in the app laid out sideways — label on the
+ * left, figure on the right — and it was the odd one out for no reason the page
+ * could defend: the other six rows stacked their parts, and a reader moving
+ * between Orders and Inventory had to re-learn where to look for the number.
+ * The sideways layout was also the reason the label had to be `truncate`, which
+ * is a tile admitting it cannot fit its own text.
+ *
+ * No icon and no tone — the same ERPNext rule the dashboard tiles follow: a card
+ * carries its figure, not ornament.
  */
-interface SummaryCardProps {
-  label: string;
-  count: number;
-}
-
-function SummaryCard({ label, count }: SummaryCardProps) {
-  return (
-    <div>
-      <SurfaceCard className="flex items-center justify-between gap-3 p-3 md:p-4">
-        <span className="truncate text-2xs font-bold text-app-text-muted dark:text-zinc-500">{label}</span>
-        <span className="tabular-nums text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">{count}</span>
-      </SurfaceCard>
-    </div>
-  );
-}
-
 export function OrderSummaryCards({ orders }: { orders: Order[] }) {
   const orderSummary = [
     { label: 'Designing', count: orders.filter((o) => o.status === 'Designing').length },
@@ -36,8 +23,10 @@ export function OrderSummaryCards({ orders }: { orders: Order[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:gap-4">
-      {orderSummary.map((card) => <SummaryCard key={card.label} {...card} />)}
-    </div>
+    <StatTileRow columns={4}>
+      {orderSummary.map((card) => (
+        <StatTile key={card.label} label={card.label} value={card.count} />
+      ))}
+    </StatTileRow>
   );
 }
