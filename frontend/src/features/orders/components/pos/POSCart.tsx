@@ -1,10 +1,10 @@
+import { useState } from 'react';
 import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
-import { cn } from '../../../../shared/lib/cn';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
 import type { Customer } from '../../../customers/types';
 
@@ -58,6 +58,9 @@ export function POSCart({
   onCheckout,
 }: POSCartProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
+  /** Whether the discount field is open. Local, because it is a property of this
+   *  panel's layout, not of the sale. */
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
 
   /*
    * Header and footer are `shrink-0`; only the list between them takes the
@@ -83,25 +86,38 @@ export function POSCart({
         </div>
       </div>
 
-      <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
-        {posMode === 'custom' && (
-          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-accent)] p-3">
-            <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Customer</span>
-              <CustomerSelector
-                customers={customers}
-                customerId={customerId}
-                customerName={customerName}
-                onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
-              />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Production Notes</span>
-              <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
-            </label>
-          </div>
-        )}
+      {/*
+        The customer is the sale's header, not one of its lines — so it is its
+        own box above the list and never scrolls. It used to sit inside the
+        scrolling area, which meant the name of the person you are building the
+        job for scrolled away with the items. ERPNext puts the customer in its
+        own card at the top of the right column for the same reason: it is who
+        the sale is FOR, and everything below it is what they are buying.
 
+        The tint went with the move. The block used to be a rounded, filled
+        panel floating inside the cart; a rule under it separates just as
+        clearly, and a tint inside an already-bounded panel is a frame worn for
+        the sake of wearing one (R19–R21).
+      */}
+      {posMode === 'custom' && (
+        <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
+          <label className="block space-y-1.5">
+            <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Customer</span>
+            <CustomerSelector
+              customers={customers}
+              customerId={customerId}
+              customerName={customerName}
+              onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Production Notes</span>
+            <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
+          </label>
+        </div>
+      )}
+
+      <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
         {cart.length === 0 ? (
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
@@ -160,19 +176,56 @@ export function POSCart({
       <div className="shrink-0 space-y-3 border-t p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
-          <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
-            <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
-            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right tabular-nums text-2xs" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
-          </div>
+          {/*
+            ERPNext's `add-discount-wrapper`: the discount is a dashed button
+            until someone asks for one. Most sales have no discount, so a
+            permanently visible numeric field spends footer height — the height
+            the pinned totals need — on a control that is usually zero.
+
+            Once a discount exists the field stays open, so the number you typed
+            remains visible and editable; setting it back to 0 collapses it to
+            the button again.
+          */}
+          {isEditingDiscount || cartDiscount > 0 ? (
+            <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
+              <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                fieldSize="sm"
+                autoFocus
+                className="w-24 max-w-[40%] px-2 text-right tabular-nums text-2xs"
+                value={cartDiscount}
+                onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }}
+                onBlur={() => setIsEditingDiscount(false)}
+                aria-label="Cart discount"
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditingDiscount(true)}
+              className="w-full rounded-[var(--radius-button)] border border-dashed border-[var(--app-border-control)] py-1.5 text-2xs font-bold text-app-text-muted hover:border-[var(--app-border-frame)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Add Discount
+            </button>
+          )}
           {appliedDiscount > 0 && <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">After discount</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
           <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
             <span className="shrink-0 font-bold">VAT rate (%)</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right tabular-nums text-2xs" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
           </div>
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
+          {/*
+            R25, applied to the till: a figure is never coloured. This Total used
+            to be `text-app-accent` in custom mode, which made the amount the
+            one accented thing on a screen whose accent is supposed to mean
+            "press me". The label already says what kind of total it is.
+          */}
           <div className="mt-2 flex justify-between border-t pt-3 text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">
             <span>{posMode === 'retail' ? 'Total' : 'Order value'}</span>
-            <span className={cn('tabular-nums', posMode === 'retail' ? 'text-app-ink dark:text-zinc-100' : 'text-app-accent dark:text-app-accent-soft')}>{currencySymbol}{total.toFixed(2)}</span>
+            <span className="tabular-nums">{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
 
