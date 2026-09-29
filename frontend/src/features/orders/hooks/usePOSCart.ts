@@ -195,6 +195,9 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
               // the catalogue on hydration, so the contract's required field is
               // stated as zero rather than invented.
               unitPrice: 0,
+              // Likewise: a legacy order has no per-line discount to recover,
+              // and `0` is the "no discount" the column itself defaults to.
+              lineDiscount: 0,
             }));
 
     const hydratedCart: CartItem[] = sourceLineItems

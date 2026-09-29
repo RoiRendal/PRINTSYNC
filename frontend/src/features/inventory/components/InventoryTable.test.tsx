@@ -25,6 +25,7 @@ function item(id: string, sku: string): InventoryItem {
     reorderLevel: 5,
     price: 250,
     costPrice: 120,
+    uom: 'pc',
     imageUrl: null,
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',

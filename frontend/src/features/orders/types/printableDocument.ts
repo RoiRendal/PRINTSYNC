@@ -224,6 +224,10 @@ export function documentFromOrder(
             quantity: Math.max(1, Math.floor(order.quantity / Math.max(1, order.item.split(',').map((s) => s.trim()).filter(Boolean).length))),
             designId: order.designId,
             unitPrice: 0,
+            // A legacy order has no per-line discount to recover, and the line
+            // contract requires the field. Zero is the honest value: the slip
+            // prints a line total, not a discount breakdown.
+            lineDiscount: 0,
           }));
 
   const totalPaid = order.totalPaid ?? 0;

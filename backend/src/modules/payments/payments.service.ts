@@ -12,7 +12,19 @@ export interface TransactionItem {
   itemId?: string | undefined;
   name: string;
   quantity: number;
+  /**
+   * The rate actually charged for this line — NOT necessarily the catalogue
+   * price. The till can override a line's rate, and the sale RPC stores what it
+   * is given rather than re-pricing from the catalogue.
+   */
   unitPrice: number;
+  /**
+   * Discount applied to this line alone, in currency. Optional to match the
+   * contract: the RPC defaults it to 0, and a caller that predates per-line
+   * discounts is still correct. The read mapper always emits it, so on a
+   * response it is present — the optionality describes the wire, not the row.
+   */
+  lineDiscount?: number | undefined;
 }
 
 export interface TransactionRecord {
@@ -25,6 +37,9 @@ export interface TransactionRecord {
   total: number;
   paymentMethod: PaymentMethod;
   paymentAmount: number;
+  /** Empty string for an anonymous walk-in sale. */
+  customer: string;
+  customerId?: string | undefined;
   date: string;
 }
 
@@ -42,16 +57,20 @@ export interface TransactionInput {
    * double-click or a retry after a dropped response from charging twice.
    */
   idempotencyKey: string;
+  /** Optional: a retail sale is legitimately anonymous. */
+  customer?: string | undefined;
+  customerId?: string | undefined;
 }
 
-const transactionSelect = 'id, status, subtotal, discount, tax, total, payment_method, created_at';
+const transactionSelect =
+  'id, status, subtotal, discount, tax, total, payment_method, customer, customer_id, created_at';
 
 async function loadItems(supabase: SupabaseClient, transactionIds: string[]): Promise<Map<string, TransactionItem[]>> {
   const result = new Map<string, TransactionItem[]>();
   if (transactionIds.length === 0) return result;
   const { data, error } = await supabase
     .from('sales_transaction_items')
-    .select('transaction_id, inventory_item_id, name, quantity, unit_price')
+    .select('transaction_id, inventory_item_id, name, quantity, unit_price, line_discount')
     .in('transaction_id', transactionIds)
     .order('id');
   if (error) throw new AppError(503, 'TRANSACTION_ITEMS_LOOKUP_FAILED', 'Transaction items could not be loaded.');
@@ -62,6 +81,9 @@ async function loadItems(supabase: SupabaseClient, transactionIds: string[]): Pr
       name: String(row.name),
       quantity: Number(row.quantity),
       unitPrice: Number(row.unit_price),
+      // The column is `not null default 0`; the fallback covers a row read
+      // through a path that did not select it.
+      lineDiscount: Number(row.line_discount ?? 0),
     });
     result.set(String(row.transaction_id), items);
   }
@@ -98,6 +120,10 @@ async function mapTransactions(supabase: SupabaseClient, rows: Record<string, un
     total: Number(row.total),
     paymentMethod: String(row.payment_method) as PaymentMethod,
     paymentAmount: payments.get(String(row.id)) ?? 0,
+    // Empty string, never null: the column is `not null default ''` so an
+    // anonymous sale reads as "no customer" rather than as a missing field.
+    customer: String(row.customer ?? ''),
+    customerId: row.customer_id ? String(row.customer_id) : undefined,
     // The shop's calendar day. A sale rung up at 07:00 local is stored as the
     // previous day in UTC and used to read back as one.
     date: toShopDateKey(String(row.created_at), timeZone),
@@ -213,6 +239,10 @@ export async function createTransaction(supabase: SupabaseClient, input: Transac
     p_created_by: actorId,
     p_items: input.items,
     p_idempotency_key: input.idempotencyKey,
+    // Optional on the way in — a walk-in sale has no customer, and the RPC
+    // defaults both parameters to null.
+    p_customer: input.customer ?? null,
+    p_customer_id: input.customerId ?? null,
     // The RPC writes the `transaction.created` audit row inside the same
     // transaction, so a sale can no longer commit with its audit row lost. A
     // replayed key writes none: nothing moved, and the original attempt has one.

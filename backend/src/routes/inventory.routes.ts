@@ -26,6 +26,10 @@ const itemSchema = z.object({
   reorderLevel: z.number().int().min(0),
   price: z.number().min(0),
   costPrice: z.number().min(0).optional(),
+  // Optional so a client that predates units keeps working — the column
+  // defaults to 'pc'. Bounded because it is rendered inline beside a price, and
+  // a 200-character unit is a layout bug rather than a unit.
+  uom: z.string().trim().min(1).max(16).optional(),
   imageUrl: z.string().trim().nullable().optional(),
 });
 

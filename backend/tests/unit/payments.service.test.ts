@@ -81,9 +81,23 @@ describe('payments.service', () => {
       assert.equal(transaction.paymentMethod, 'Cash');
       assert.equal(transaction.paymentAmount, 204);
       assert.equal(transaction.date, '2026-09-15');
+      // `lineDiscount` joined the line contract, and the fixture rows predate the
+      // column — so this also asserts the "row written before per-line discounts
+      // existed" case defaults to 0 instead of leaking undefined.
       assert.deepEqual(transaction.items, [
-        { itemId: 'inv-1', name: 'Glossy Paper', quantity: 2, unitPrice: 100 },
+        { itemId: 'inv-1', name: 'Glossy Paper', quantity: 2, unitPrice: 100, lineDiscount: 0 },
       ]);
+    });
+
+    it('reads the customer off the sale, empty for an anonymous walk-in', async () => {
+      const db = createFakeSupabase();
+      queueTransactionList(db, [TRANSACTION_ROW]);
+
+      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 })).data;
+
+      // `TRANSACTION_ROW` carries no `customer`, which is the row written before
+      // the column existed. The contract promises a string, not null.
+      assert.equal(transaction?.customer, '');
     });
 
     it('only sums captured payments', async () => {

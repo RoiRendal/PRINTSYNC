@@ -179,8 +179,8 @@ describe('a job ticket carries the money still owed', () => {
         quantity: 600,
         amount: 6000,
         lineItems: [
-          { name: 'Business Cards', quantity: 500, unitPrice: 4 },
-          { name: 'Flyers', quantity: 100, unitPrice: 40 },
+          { name: 'Business Cards', quantity: 500, unitPrice: 4, lineDiscount: 0 },
+          { name: 'Flyers', quantity: 100, unitPrice: 40, lineDiscount: 0 },
         ],
       }),
     );
@@ -212,7 +212,7 @@ describe('a stored zero price is not a free item', () => {
       makeOrder({
         amount: 95.2,
         quantity: 1,
-        lineItems: [{ name: 'Acrylic Keychain', quantity: 1, unitPrice: 0 }],
+        lineItems: [{ name: 'Acrylic Keychain', quantity: 1, unitPrice: 0, lineDiscount: 0 }],
       }),
     );
 
@@ -225,8 +225,8 @@ describe('a stored zero price is not a free item', () => {
         amount: 1400,
         quantity: 100,
         lineItems: [
-          { name: 'Cards', quantity: 50, unitPrice: 4 },
-          { name: 'Flyers', quantity: 50, unitPrice: 24 },
+          { name: 'Cards', quantity: 50, unitPrice: 4, lineDiscount: 0 },
+          { name: 'Flyers', quantity: 50, unitPrice: 24, lineDiscount: 0 },
         ],
       }),
     );

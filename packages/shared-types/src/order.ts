@@ -11,7 +11,20 @@ export interface OrderLineItem {
   name: string;
   quantity: number;
   designId?: string;
+  /**
+   * The rate charged for this line — NOT necessarily the catalogue price. The
+   * till can override a line's rate and the order RPC stores what it is given.
+   */
   unitPrice: number;
+  /**
+   * Discount applied to this line alone, in currency.
+   *
+   * Optional rather than required, because the server defaults it to 0 and a
+   * caller that has never heard of per-line discounts is still correct. The API
+   * always *returns* it on a read — the order RPC writes the column — so a
+   * missing value on the wire means "no discount", never "unknown".
+   */
+  lineDiscount?: number;
 }
 
 export interface Order {
