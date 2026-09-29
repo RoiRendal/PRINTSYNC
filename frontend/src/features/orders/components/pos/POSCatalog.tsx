@@ -132,7 +132,16 @@ export function POSCatalog({
               pointing at the first one. ERPNext's tile carries no add control
               either.
             */}
-            <p className="mt-2 tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100 xl:text-xs">{currencySymbol}{product.price.toFixed(2)}</p>
+            {/*
+              The unit rides on the price, the way ERPNext prints it — the figure
+              and what it buys are one fact, so they read as one line. The unit
+              is part of the item, not of this tile, so it is set on the product
+              and not here.
+            */}
+            <p className="mt-2 tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100 xl:text-xs">
+              {currencySymbol}{product.price.toFixed(2)}
+              <span className="font-medium text-app-text-muted dark:text-zinc-400"> / {product.uom}</span>
+            </p>
           </button>
         ))}
         {filteredProducts.length === 0 && (

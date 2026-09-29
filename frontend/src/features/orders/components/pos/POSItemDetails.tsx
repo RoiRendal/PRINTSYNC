@@ -13,6 +13,7 @@ export interface POSItemDetailsProps {
   currencySymbol: string;
   onUpdateQty: (index: number, delta: number) => void;
   onSetLinePrice: (index: number, price: number) => void;
+  onSetLineDiscount: (index: number, amount: number) => void;
   onRemove: (index: number) => void;
   onOpenDesignSelector: (index: number) => void;
   onBack: () => void;
@@ -46,18 +47,28 @@ export function POSItemDetails({
   currencySymbol,
   onUpdateQty,
   onSetLinePrice,
+  onSetLineDiscount,
   onRemove,
   onOpenDesignSelector,
   onBack,
 }: POSItemDetailsProps) {
   const design = item.designId ? designs.find((d) => d.id === item.designId) : undefined;
   const image = design?.imageUrl ?? item.imageUrl;
-  const lineTotal = item.price * item.qty;
+  const lineGross = item.price * item.qty;
+  const lineDiscount = Math.min(item.lineDiscount ?? 0, lineGross);
+  const lineTotal = lineGross - lineDiscount;
   const cataloguePrice = item.cataloguePrice ?? item.price;
   const isOverridden = cataloguePrice !== item.price;
 
   return (
-    <div className="flex flex-col gap-4">
+    /*
+     * `gap-3`, not `gap-4`, and a shorter image: this pane shares its height
+     * with the cart footer, and at a 900px viewport the fields that matter —
+     * rate and discount — were falling below the fold. The pane scrolls, so
+     * nothing was unreachable, but a control you have to scroll to find on a
+     * till is a control that gets missed.
+     */
+    <div className="flex flex-col gap-3">
       <button
         type="button"
         onClick={onBack}
@@ -67,19 +78,27 @@ export function POSItemDetails({
         Back to cart
       </button>
 
-      <div className="flex items-center justify-center overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-state-hover)]">
-        {image ? (
-          <img src={image} alt={item.name} className="h-40 w-full object-contain" />
-        ) : (
-          <div className="flex h-40 w-full items-center justify-center text-3xs text-app-text-muted dark:text-zinc-500">No image</div>
-        )}
-      </div>
-
-      <div>
-        <h3 className="text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{item.name}</h3>
-        {design && (
-          <p className="mt-1 text-2xs text-app-text-muted dark:text-zinc-400">Design · {design.name}</p>
-        )}
+      {/*
+        Image and name share a row rather than stacking. Stacked, the picture
+        alone took a third of the pane and pushed the rate and discount fields
+        below the fold — the pane scrolls, so nothing was unreachable, but a
+        control you have to scroll to find is one that gets missed. Side by side
+        it still identifies the line at a glance.
+      */}
+      <div className="flex items-center gap-3">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--app-state-hover)]">
+          {image ? (
+            <img src={image} alt={item.name} className="h-full w-full object-contain" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-3xs text-app-text-muted dark:text-zinc-500">None</div>
+          )}
+        </div>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{item.name}</h3>
+          {design && (
+            <p className="mt-0.5 truncate text-2xs text-app-text-muted dark:text-zinc-400">Design · {design.name}</p>
+          )}
+        </div>
       </div>
 
       <label className="block space-y-1.5">
@@ -109,7 +128,14 @@ export function POSItemDetails({
 
       <div className="space-y-1.5">
         <label className="block space-y-1.5">
-          <span className="text-3xs font-bold text-app-text-muted dark:text-zinc-400">Rate ({currencySymbol})</span>
+          {/*
+            The unit rides on the rate, which is where ERPNext prints it too
+            (`250.00 / Nos`). It is a property of the item, so it is read-only
+            here — the till overrides the price, never the unit of measure.
+          */}
+          <span className="text-3xs font-bold text-app-text-muted dark:text-zinc-400">
+            Rate ({currencySymbol} / {item.uom})
+          </span>
           <Input
             type="number"
             min={0}
@@ -146,6 +172,35 @@ export function POSItemDetails({
           </div>
         )}
       </div>
+
+      {/*
+        The per-line discount. It could not exist before the column did — a
+        discount held only in the browser would print on the receipt and vanish
+        from the record the moment the order was reopened. The server now stores
+        it, so the field is honest.
+      */}
+      <label className="block space-y-1.5">
+        <span className="text-3xs font-bold text-app-text-muted dark:text-zinc-400">Discount ({currencySymbol})</span>
+        <Input
+          type="number"
+          min={0}
+          max={lineGross}
+          step="0.01"
+          fieldSize="sm"
+          className="w-32 text-right tabular-nums text-xs"
+          value={lineDiscount}
+          onChange={(e) => {
+            const v = parseFloat(e.target.value);
+            onSetLineDiscount(index, Number.isFinite(v) ? v : 0);
+          }}
+          aria-label={`Discount for ${item.name}`}
+        />
+        {lineGross > 0 && lineDiscount >= lineGross && (
+          <span className="block text-3xs text-app-text-muted dark:text-zinc-400">
+            Capped at the line value ({currencySymbol}{lineGross.toFixed(2)}).
+          </span>
+        )}
+      </label>
 
       <div className="flex items-center justify-between border-t pt-3">
         <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">Line total</span>

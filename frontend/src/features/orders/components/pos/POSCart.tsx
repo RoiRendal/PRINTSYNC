@@ -29,6 +29,7 @@ interface POSCartProps {
   onVatRatePercentChange: (value: number) => void;
   onUpdateQty: (index: number, delta: number) => void;
   onSetLinePrice: (index: number, price: number) => void;
+  onSetLineDiscount: (index: number, amount: number) => void;
   onRemoveFromCart: (index: number) => void;
   onOpenDesignSelector: (index: number) => void;
   onReset: () => void;
@@ -55,6 +56,7 @@ export function POSCart({
   onVatRatePercentChange,
   onUpdateQty,
   onSetLinePrice,
+  onSetLineDiscount,
   onRemoveFromCart,
   onOpenDesignSelector,
   onReset,
@@ -114,23 +116,36 @@ export function POSCart({
         clearly, and a tint inside an already-bounded panel is a frame worn for
         the sake of wearing one (R19–R21).
       */}
-      {posMode === 'custom' && (
-        <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
-          <label className="block space-y-1.5">
-            <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Customer</span>
-            <CustomerSelector
-              customers={customers}
-              customerId={customerId}
-              customerName={customerName}
-              onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
-            />
-          </label>
+      {/*
+        The customer is the sale's header, not one of its lines — so it is its
+        own box above the list and never scrolls. ERPNext puts it in its own card
+        at the top of the right column for the same reason: it is who the sale is
+        FOR, and everything below it is what they are buying.
+
+        Shown in BOTH modes now. A retail sale can name a customer; it simply
+        does not have to. The difference between the two modes is that a custom
+        order *requires* a name and a counter sale does not — which is enforced
+        at the button below, not by hiding the field.
+      */}
+      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
+        <label className="block space-y-1.5">
+          <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">
+            Customer{posMode === 'retail' && <span className="font-medium text-app-text-muted dark:text-zinc-400"> · optional</span>}
+          </span>
+          <CustomerSelector
+            customers={customers}
+            customerId={customerId}
+            customerName={customerName}
+            onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
+          />
+        </label>
+        {posMode === 'custom' && (
           <label className="block space-y-1.5">
             <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Production Notes</span>
             <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
           </label>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
         {/*
@@ -148,6 +163,7 @@ export function POSCart({
             currencySymbol={currencySymbol}
             onUpdateQty={onUpdateQty}
             onSetLinePrice={onSetLinePrice}
+            onSetLineDiscount={onSetLineDiscount}
             onRemove={(idx) => { onRemoveFromCart(idx); setSelectedLine(null); }}
             onOpenDesignSelector={onOpenDesignSelector}
             onBack={() => setSelectedLine(null)}
@@ -194,7 +210,9 @@ export function POSCart({
                       <span className="w-7 select-none py-1.5 text-center tabular-nums text-2xs">{item.qty}</span>
                       <button type="button" onClick={() => onUpdateQty(idx, 1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Increase ${item.name}`}><Plus className="h-2.5 w-2.5" aria-hidden="true" /></button>
                     </div>
-                    <span className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
+                    <span className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100">
+                      {currencySymbol}{(item.price * item.qty - Math.min(item.lineDiscount ?? 0, item.price * item.qty)).toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -226,6 +244,19 @@ export function POSCart({
       <div className="shrink-0 space-y-3 border-t p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
+          {/*
+            Shown only when there is one, and read-only: a line discount is set
+            on its own line in Item Details. Listing the sum here is what stops
+            the footer's "Discount" field from reading as the whole story — the
+            grand discount is this figure PLUS whatever is typed below, which is
+            also what the sale RPC is sent and checks.
+          */}
+          {totals.lineDiscounts > 0 && (
+            <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
+              <span className="font-bold">Line discounts</span>
+              <span className="text-app-ink dark:text-zinc-300">{currencySymbol}{totals.lineDiscounts.toFixed(2)}</span>
+            </div>
+          )}
           {/*
             ERPNext's `add-discount-wrapper`: the discount is a dashed button
             until someone asks for one. Most sales have no discount, so a

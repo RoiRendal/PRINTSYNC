@@ -348,6 +348,7 @@ export default function POS() {
             onVatRatePercentChange={basket.setVatRatePercent}
             onUpdateQty={basket.updateQty}
             onSetLinePrice={basket.setLinePrice}
+            onSetLineDiscount={basket.setLineDiscount}
             onRemoveFromCart={basket.removeFromCart}
             onOpenDesignSelector={basket.openDesignSelector}
             onReset={basket.resetCart}

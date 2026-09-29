@@ -79,6 +79,10 @@ export function makeOrder(overrides: Partial<Order> = {}): Order {
 export function makeTotals(overrides: Partial<CartTotals> = {}): CartTotals {
   return {
     subtotal: 200,
+    // No discounts at all is the unremarkable default — the same cart the
+    // fixture described before per-line discounts existed.
+    lineDiscounts: 0,
+    cartDiscount: 0,
     discount: 0,
     afterDiscount: 200,
     tax: 24,

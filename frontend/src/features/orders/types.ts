@@ -37,6 +37,16 @@ export interface CartItem extends InventoryItem {
    * is the overridden figure — the right thing to persist.
    */
   cataloguePrice?: number;
+  /**
+   * Discount applied to this line alone, in currency.
+   *
+   * Part of the GRAND discount, not a separate deduction: `useCartTotals` adds
+   * the line discounts to the cart-level one and the sale RPC checks that the
+   * grand total covers them. That is the model the database enforces — see
+   * `20260930000200_sale_customer_and_line_discounts.sql` — so a line discount
+   * can never be claimed without being taken off the total.
+   */
+  lineDiscount?: number;
 }
 
 export interface Transaction {

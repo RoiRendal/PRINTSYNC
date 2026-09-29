@@ -158,13 +158,30 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
         const idempotencyKey = options.beginAttempt();
 
         const createdTransaction = await options.createPayment({
-          items: saleCart.map((item) => ({ itemId: item.id, name: item.name, quantity: item.qty, unitPrice: item.price })),
+          items: saleCart.map((item) => ({
+            itemId: item.id,
+            name: item.name,
+            quantity: item.qty,
+            unitPrice: item.price,
+            lineDiscount: item.lineDiscount ?? 0,
+          })),
           subtotal: trxSubtotal,
+          // The GRAND discount, line discounts included. The RPC checks that it
+          // covers the sum of the per-line figures, so sending only the
+          // cart-level part would be refused.
           discount: trxDiscount,
           tax: trxTax,
           total: trxTotal,
           paymentMethod: paymentMethod,
           paymentAmount: trxTotal,
+          /*
+           * Optional, and empty means empty. A walk-in sale is legitimately
+           * anonymous — the sale RPC stores `''` — so an unnamed customer is
+           * sent as `undefined` rather than as a blank string that would look
+           * like a name the cashier typed and then erased.
+           */
+          customer: options.customerName.trim() || undefined,
+          customerId: options.customerId ?? undefined,
           // No `status`: the contract omits it because the server owns it — the
           // sale RPC writes `completed`, and only the void endpoint may set
           // `voided`. Sending one would claim authority the till does not have.
@@ -194,6 +211,7 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
             quantity: i.qty,
             designId: i.designId,
             unitPrice: i.price,
+            lineDiscount: i.lineDiscount ?? 0,
           })),
           amount: trxTotal,
           status: 'Pending',
