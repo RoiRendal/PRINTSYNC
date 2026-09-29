@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { KeyRound, Plus, Shield, Trash2, UserSquare } from '../../../shared/components/ui/icons';
+import { Plus, Trash2 } from '../../../shared/components/ui/icons';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -60,10 +60,6 @@ const EMPTY_FORM: FormState = {
   password: '',
   access: STAFF_PAGE_ACCESS,
 };
-
-function initials(name: string) {
-  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-}
 
 export default function UserManagement() {
   const { users, total, page, limit, isUsersLoading, userError, refreshUsers, goToPage, createUser, updateUser, deleteUser } = useUserContext();
@@ -250,21 +246,19 @@ export default function UserManagement() {
             </CardHeader>
             <div className="space-y-2.5">
               {/*
-                The glyph is bare — no 32px tinted rounded square. The per-row
-                colour it carried was decoration on a frame, not information: the
-                label beside it already says which figure this is. Same ERPNext
-                rule as the analytics and dashboard tiles.
+                Label and figure, nothing else. The glyph used to sit in a 32px
+                tinted rounded tile; both the tile and the glyph are gone, because
+                the icon restated the label beside it and carried no meaning of
+                its own. Same ERPNext rule as the analytics and dashboard tiles:
+                a card carries its figure, not ornament.
               */}
               {[
-                { label: 'Admin', value: adminCount, icon: Shield },
-                { label: 'Staff', value: staffCount, icon: UserSquare },
-                { label: 'Total Users', value: users.length, icon: KeyRound },
-              ].map(({ label, value, icon: Icon }) => (
+                { label: 'Admin', value: adminCount },
+                { label: 'Staff', value: staffCount },
+                { label: 'Total Users', value: users.length },
+              ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="h-4 w-4 shrink-0 text-app-text-muted dark:text-zinc-400" aria-hidden="true" />
-                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  </div>
+                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}
@@ -358,13 +352,13 @@ export default function UserManagement() {
                             title={user.id === firstAdminId ? 'The first admin account cannot be deleted.' : undefined}
                           />
                         </TableSelectCell>
+                        {/*
+                          The name alone. The 32px ringed initials tile that sat
+                          beside it was the same rounded box the icon frames were;
+                          a table row is identified by its text, not by a badge.
+                        */}
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
-                              {initials(user.name)}
-                            </div>
-                            <span className="leading-none text-app-ink dark:text-zinc-100">{user.name}</span>
-                          </div>
+                          <span className="leading-none text-app-ink dark:text-zinc-100">{user.name}</span>
                         </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.phone}</TableCell>

@@ -204,14 +204,17 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   pointer cursor, the press animation, and the focus ring. */}
               <button
                 type="button"
-                className="flex cursor-pointer items-center rounded-[var(--radius-button)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent active:scale-[0.98]"
+                className="flex cursor-pointer items-center rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent active:scale-[0.98]"
                 aria-expanded={isProfileOpen}
                 aria-label={`Account menu for ${currentUser?.name ?? 'Admin'}`}
               >
-                {/* A rounded SQUARE, not a circle: `--radius-button` is the 8px
-                    corner every other control in the app uses (Button, Input), so
-                    the avatar reads as the same family rather than a one-off. */}
-                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-button)] bg-app-accent text-2xs font-bold text-[var(--app-accent-ink)]">
+                {/* A rounded SQUARE, not a circle — one step up the shared radius
+                    ladder (`--radius-card`, 12px) from the 8px `--radius-button`,
+                    which is a little soft for a 28px box while still reading as
+                    the same family as Button/Input rather than a one-off. The
+                    button wrapper matches it so the focus ring hugs the avatar's
+                    own corners instead of cutting across them. */}
+                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-card)] bg-app-accent text-2xs font-bold text-[var(--app-accent-ink)]">
                   {initials}
                 </div>
               </button>

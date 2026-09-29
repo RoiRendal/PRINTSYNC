@@ -30,10 +30,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-app-ink dark:text-zinc-100">
           <SurfaceCard className="relative w-full max-w-md p-6 text-center">
-            {/* The glyph is bare — the 56px ringed red tile around it was a box
-                around an icon, not structure. The colour stays; the frame does
-                not. */}
-            <span className="block text-app-danger dark:text-red-300">
+            {/* The glyph is bare and carries no hue — the 56px ringed red tile
+                around it was a box around an icon, not structure, and the
+                triangle's shape already says what the colour used to repeat. */}
+            <span className="block text-app-text-muted dark:text-zinc-400">
               <AlertTriangle className="mx-auto h-7 w-7" aria-hidden="true" />
             </span>
             <div className="mt-5 space-y-2">

@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Mail, Phone, Plus, Trash2, Users } from '../../../shared/components/ui/icons';
+import { Plus, Trash2 } from '../../../shared/components/ui/icons';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
@@ -46,10 +46,6 @@ const EMPTY_FORM: FormState = {
   email: '',
   notes: '',
 };
-
-function initials(name: string) {
-  return name.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-}
 
 export default function CustomersPage() {
   const { customers, total, page, limit, isLoading, error, refresh, goToPage, addCustomer, updateCustomer, deleteCustomer, countOrders } = useCustomers();
@@ -247,22 +243,19 @@ export default function CustomersPage() {
             </CardHeader>
             <div className="space-y-2.5">
               {/*
-                The glyph is bare. It used to sit in a 32px tinted rounded square
-                that carried a per-row colour, which made the colour decoration on
-                a frame rather than information — every row here states its own
-                label, so nothing is lost. Same ERPNext rule as the analytics and
-                dashboard tiles: a card carries its figure, not ornament.
+                Label and figure, nothing else. The glyph used to sit in a 32px
+                tinted rounded tile; both the tile and the glyph are gone, because
+                the icon restated the label beside it and carried no meaning of
+                its own. Same ERPNext rule as the analytics and dashboard tiles:
+                a card carries its figure, not ornament.
               */}
               {[
-                { label: 'Total Customers', value: customers.length, icon: Users },
-                { label: 'With Phone', value: withPhone, icon: Phone },
-                { label: 'With Email', value: withEmail, icon: Mail },
-              ].map(({ label, value, icon: Icon }) => (
+                { label: 'Total Customers', value: customers.length },
+                { label: 'With Phone', value: withPhone },
+                { label: 'With Email', value: withEmail },
+              ].map(({ label, value }) => (
                 <div key={label} className="flex items-center justify-between rounded-[var(--radius-card)] border p-3">
-                  <div className="flex items-center gap-2.5">
-                    <Icon className="h-4 w-4 shrink-0 text-app-text-muted dark:text-zinc-400" aria-hidden="true" />
-                    <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
-                  </div>
+                  <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-400">{label}</span>
                   <span className="tabular-nums text-sm font-bold text-app-ink dark:text-zinc-100">{value}</span>
                 </div>
               ))}
@@ -346,13 +339,13 @@ export default function CustomersPage() {
                             aria-label={`Select ${customer.name}`}
                           />
                         </TableSelectCell>
+                        {/*
+                          The name alone. The 32px ringed initials tile that sat
+                          beside it was the same rounded box the icon frames were;
+                          a table row is identified by its text, not by a badge.
+                        */}
                         <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-[0.8rem] text-2xs text-app-accent ring-1 ring-[var(--app-border-hairline)] dark:text-app-accent-soft">
-                              {initials(customer.name)}
-                            </div>
-                            <span className="leading-none text-app-ink dark:text-zinc-100">{customer.name}</span>
-                          </div>
+                          <span className="leading-none text-app-ink dark:text-zinc-100">{customer.name}</span>
                         </TableCell>
                         <TableCell>{customer.phone || '—'}</TableCell>
                         <TableCell>{customer.email || '—'}</TableCell>

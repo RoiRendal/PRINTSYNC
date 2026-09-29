@@ -142,10 +142,12 @@ export function POSCheckoutModal({
       <div className="space-y-4">
         {checkoutSuccess ? (
           <div className="flex flex-col items-center justify-center space-y-4 py-10 text-center">
-            {/* The tick is bare — the 64px ringed green tile around it drew a box
-                around an icon. The green stays because it is the success signal;
-                the frame was ornament. */}
-            <span className="text-app-success">
+            {/* The tick is bare and carries no hue — the 64px ringed green tile
+                around it drew a box around an icon, and the green only repeated
+                what the check shape and the heading below it already say. It
+                takes the heading's own ink so it reads as part of the sentence
+                rather than as a status light. */}
+            <span className="text-app-ink dark:text-zinc-100">
               <CheckCircle2 className="h-10 w-10" aria-hidden="true" />
             </span>
             <div>

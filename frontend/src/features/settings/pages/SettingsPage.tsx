@@ -1,6 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Bell, Building2, Download, ImagePlus, Palette, Settings2 } from '../../../shared/components/ui/icons';
-
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
@@ -8,18 +6,6 @@ import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_N
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select, SegmentedControl } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
-
-/**
- * The section glyph, bare.
- *
- * It used to sit in a 40px rounded square with a hairline ring. The ring drew a
- * box around a glyph that already had a heading next to it, so it was ornament
- * rather than structure — the same rule the card family follows. Only the accent
- * colour survives, because that is what the ring's contents actually carried.
- */
-function SettingIcon({ children }: { children: React.ReactNode }) {
-  return <span className="shrink-0 text-app-accent dark:text-app-accent-soft">{children}</span>;
-}
 
 function ToggleSwitch({ label, enabled, onToggle }: { label: string; enabled: boolean; onToggle?: () => void }) {
   return (
@@ -173,13 +159,8 @@ export default function Settings() {
 
       <Card padding="lg" className="overflow-hidden">
         <CardHeader className="border-b pb-4">
-          <div className="flex items-start gap-3">
-            <SettingIcon><Building2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-            <div>
-              <CardTitle>Business identity</CardTitle>
-              <CardDescription>Company name and logo shown in the header, login screen, and reports.</CardDescription>
-            </div>
-          </div>
+          <CardTitle>Business identity</CardTitle>
+          <CardDescription>Company name and logo shown in the header, login screen, and reports.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 pt-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.45fr)]">
           <div className="space-y-5">
@@ -216,10 +197,7 @@ export default function Settings() {
                 <img src={effectiveBusinessLogoUrl} alt="" className="max-h-16 max-w-full object-contain" />
               </div>
               <div className="min-w-0 flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <ImagePlus className="h-4 w-4 text-app-accent dark:text-app-accent-soft" aria-hidden="true" />
-                  <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
-                </div>
+                <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
                 <p className="text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">
                   Stored in Supabase Storage, up to{' '}
                   <span className="font-mono text-2xs">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
@@ -246,13 +224,8 @@ export default function Settings() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
         <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
-            <div className="flex items-start gap-3">
-              <SettingIcon><Settings2 className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Business Defaults</CardTitle>
-                <CardDescription>System-wide values applied to POS transactions and reports.</CardDescription>
-              </div>
-            </div>
+          <CardTitle>Business Defaults</CardTitle>
+          <CardDescription>System-wide values applied to POS transactions and reports.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5 pt-5 md:grid-cols-2">
             <div className="space-y-5">
@@ -303,13 +276,8 @@ export default function Settings() {
 
         <Card variant="raised" padding="lg">
           <CardHeader>
-            <div className="flex items-start gap-3">
-              <SettingIcon><Palette className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Appearance</CardTitle>
-                <CardDescription>Apply a persistent app color scheme.</CardDescription>
-              </div>
-            </div>
+            <CardTitle>Appearance</CardTitle>
+            <CardDescription>Apply a persistent app color scheme.</CardDescription>
           </CardHeader>
           <SegmentedControl
             aria-label="Color scheme"
@@ -328,13 +296,8 @@ export default function Settings() {
       <div className="grid gap-5 md:grid-cols-2">
         <Card padding="lg" className="overflow-hidden">
           <CardHeader className="border-b pb-4">
-            <div className="flex items-start gap-3">
-              <SettingIcon><Download className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Data Export</CardTitle>
-                <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
-              </div>
-            </div>
+          <CardTitle>Data Export</CardTitle>
+          <CardDescription>Download your business data as CSV for backup or analysis.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 pt-5">
             {exportError && <p className="text-xs font-medium text-app-danger dark:text-red-300">{exportError}</p>}
@@ -367,13 +330,8 @@ export default function Settings() {
 
         <Card variant="raised" padding="lg">
           <CardHeader>
-            <div className="flex items-start gap-3">
-              <SettingIcon><Bell className="h-5 w-5" aria-hidden="true" /></SettingIcon>
-              <div>
-                <CardTitle>Notifications</CardTitle>
-                <CardDescription>Control operational alerts across exports and stock.</CardDescription>
-              </div>
-            </div>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>Control operational alerts across exports and stock.</CardDescription>
           </CardHeader>
           <div className="space-y-3">
             <ToggleSwitch label="Export Completion Alerts" enabled={settings.exportAlertsEnabled} onToggle={toggleExportAlerts} />
