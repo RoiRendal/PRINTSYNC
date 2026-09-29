@@ -693,4 +693,38 @@ html {
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /*
+   * The opposite trade to `.scrollbar-hide`, for the one case where hiding the
+   * bar costs the user information: a fixed-height list that is the only way to
+   * reach item 15 of 40. Hiding is still right for a hover panel or a page that
+   * scrolls as a whole; here the bar IS the "there is more below" cue, so it is
+   * drawn — thin, and flat at rest.
+   *
+   * 6px is narrow enough not to read as a control and wide enough to hit. The
+   * thumb is the same grey step a selected chip uses, so it belongs to the
+   * surface rather than announcing itself.
+   */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-state-hover-sub) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--app-state-hover-sub);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--app-border-control);
+  }
 }

@@ -280,11 +280,17 @@ export default function POS() {
   });
 
 
+  /*
+   * The till fills the height the shell leaves it — it does not grow a scrollbar
+   * of its own. `min-h-0` is the load-bearing half: without it a flex child
+   * refuses to shrink below its content, and a 40-line cart would push the page
+   * taller instead of scrolling inside its own panel.
+   */
   return (
-    <div className="flex flex-col gap-5">
-      {transactionError && <InlineAlert message={transactionError} className="text-2xs" />}
+    <div className="flex h-full min-h-0 flex-col gap-5">
+      {transactionError && <InlineAlert message={transactionError} className="shrink-0 text-2xs" />}
 
-      {voidError && <InlineAlert message={voidError} className="text-2xs" />}
+      {voidError && <InlineAlert message={voidError} className="shrink-0 text-2xs" />}
 
       <POSToolbar
         view={view}
@@ -296,10 +302,20 @@ export default function POS() {
         }}
         lastDocument={receipts.lastDocument}
         onReopenLastDocument={receipts.reopenLastDocument}
+        className="shrink-0"
       />
 
       {view === 'pos' ? (
-        <div className="flex flex-col gap-4 xl:flex-row">
+        /*
+         * Two columns at 3fr / 2fr — ERPNext's `span 6 / span 4` of ten, i.e.
+         * 60/40. The cart used to be a fixed `xl:w-[23rem]` (~32% here); the
+         * ratio lets both panels answer to the width instead.
+         *
+         * Below `xl` there is no room for two panels side by side, so they stack
+         * and THIS container scrolls — the page still must not. `xl` and up is
+         * where the geometry is fixed and each panel owns its own scroll.
+         */
+        <div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:grid-rows-1 xl:overflow-hidden">
           <POSCatalog
             inventory={inventory}
             filteredProducts={filteredProducts}
@@ -338,6 +354,14 @@ export default function POS() {
           />
         </div>
       ) : (
+        /*
+         * Provisional, and it goes away with R6. The till no longer scrolls as a
+         * page, so the history table — which is a paged list that genuinely wants
+         * height — gets its own scroll area for now. R6 moves this body to the
+         * Orders page, where it belongs next to the custom-orders table, and this
+         * branch disappears entirely.
+         */
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
         <POSHistoryView
           filteredHistoryRows={history.filteredRows}
           totalRows={history.totalRows}
@@ -353,6 +377,7 @@ export default function POS() {
           onOpenReceipt={receipts.openHistoricalReceipt}
           orderToHistoryTransaction={history.orderToHistoryTransaction}
         />
+        </div>
       )}
 
       <POSDesignSelectorModal

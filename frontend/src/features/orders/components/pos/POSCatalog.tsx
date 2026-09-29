@@ -30,9 +30,15 @@ export function POSCatalog({
   onCategoryChange,
   onAddToCart,
 }: POSCatalogProps) {
+  /*
+   * A fixed-height panel from `xl` up: the search header keeps its natural
+   * height and the item grid takes what is left and scrolls. Below `xl` the two
+   * panels stack instead, so both keep their natural height (`shrink-0`) and the
+   * page-level container is the thing that scrolls.
+   */
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-3">
-      <Card padding="md">
+    <div className="flex min-h-0 min-w-0 shrink-0 flex-col gap-3 xl:shrink">
+      <Card padding="md" className="shrink-0">
         <div className="flex flex-col gap-3">
           <SearchInput
             ref={searchRef}
@@ -65,6 +71,13 @@ export function POSCatalog({
         </div>
       </Card>
 
+      {/*
+        The grid is the catalog's scroll owner. It used to be the page that
+        scrolled, which meant the search box and the category row scrolled away
+        with the items — the two controls you reach for most were the two that
+        left the screen first.
+      */}
+      <div className="scrollbar-thin xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {filteredProducts.map(product => (
           <button
@@ -104,6 +117,7 @@ export function POSCatalog({
             <EmptyState title="No catalog items found" message="Adjust the search or category filter to find printable stock." />
           </div>
         )}
+      </div>
       </div>
     </div>
   );

@@ -59,9 +59,19 @@ export function POSCart({
 }: POSCartProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
 
+  /*
+   * Header and footer are `shrink-0`; only the list between them takes the
+   * leftover height and scrolls. That is what keeps the totals and the action
+   * row in the same place whether the cart holds one line or forty — a cashier
+   * should not have to hunt for the button that finishes the sale.
+   *
+   * The footer no longer needs a `max-h` guess: below `xl` the panel keeps the
+   * 60vh cap it always had, from `xl` up the grid gives it a real height and the
+   * list answers to that instead.
+   */
   return (
-    <SurfaceCard className="flex w-full flex-col overflow-hidden p-0 xl:sticky xl:top-4 xl:w-[23rem] xl:self-start">
-      <div className="relative p-4">
+    <SurfaceCard className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden p-0 xl:h-full xl:shrink">
+      <div className="relative shrink-0 p-4">
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
           <div>
             <h2 className="label-caps text-app-ink dark:text-zinc-100">
@@ -73,7 +83,7 @@ export function POSCart({
         </div>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-hide">
+      <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
         {posMode === 'custom' && (
           <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-accent)] p-3">
             <label className="block space-y-1.5">
@@ -147,7 +157,7 @@ export function POSCart({
         )}
       </div>
 
-      <div className="space-y-3 border-t p-4">
+      <div className="shrink-0 space-y-3 border-t p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
           <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">

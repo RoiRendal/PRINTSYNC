@@ -1,5 +1,6 @@
 import { History, ReceiptText, ShoppingBag } from '../../../../shared/components/ui/icons';
 import { Button, SegmentedControl, SurfaceCard } from '../../../../shared/components/ui';
+import { cn } from '../../../../shared/lib/cn';
 import type { PosMode } from '../../hooks/usePOSCart';
 import type { PrintableDocument } from '../../types/printableDocument';
 
@@ -12,6 +13,9 @@ export interface POSToolbarProps {
   /** The last completed sale, kept printable after the dialog closed. */
   lastDocument: { document: PrintableDocument; label: string } | null;
   onReopenLastDocument: () => void;
+  /** Layout the page owns — the till is a fixed-height column, so the bar must
+   *  be told not to shrink. */
+  className?: string;
 }
 
 /**
@@ -31,9 +35,10 @@ export function POSToolbar({
   onSelectMode,
   lastDocument,
   onReopenLastDocument,
+  className,
 }: POSToolbarProps) {
   return (
-    <SurfaceCard className="flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between">
+    <SurfaceCard className={cn('flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:justify-between', className)}>
       {/*
         Terminal/History was two Buttons whose variant came from the current
         view, so one of the pair was permanently dark — a two-state selector
