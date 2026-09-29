@@ -192,12 +192,6 @@ export default function Orders() {
       {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Orders</h1>
-          <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
-            Track active jobs, phase movement, customer artwork, and production-ready details.
-          </p>
-        </div>
         <Button variant="primary" onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
           New POS Order
         </Button>

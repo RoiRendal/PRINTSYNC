@@ -41,17 +41,15 @@ import type { OrderStatus, OrdersSummary } from '../../orders/types';
  * and a red "5" said with colour what the label already says with words. Low
  * stock above zero is still visible: the tile names it, and it links straight
  * to the filtered inventory view that labels it.
+ *
+ * **The header is gone as well.** `DashboardHeader` printed an `h1` reading
+ * "Dashboard" and a subtitle sentence inside the page, immediately under a
+ * toolbar that already named the page. Both were removed in the same pass as
+ * every other page's header (the toolbar carries the name now), which also
+ * takes the sentence — the last piece of orientation text on this screen. The
+ * counts are one click from the lists they count, so the tiles speak for
+ * themselves.
  */
-function DashboardHeader() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight text-app-ink dark:text-zinc-100 lg:text-title">Dashboard</h1>
-      <p className="mt-1 text-sm text-app-text-muted dark:text-zinc-400">
-        What needs your attention today — every count opens the list behind it.
-      </p>
-    </div>
-  );
-}
 
 /** Reads one status's count from the zero-filled `byStatus` array. */
 function countFor(summary: OrdersSummary, status: OrderStatus): number {
@@ -71,7 +69,6 @@ export default function Dashboard() {
   if (!summary) {
     return (
       <div className="space-y-5">
-        <DashboardHeader />
         <ErrorState
           title="Workspace unavailable"
           message={error ?? 'The workspace counts could not be loaded.'}
@@ -114,8 +111,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-      <DashboardHeader />
-
       {/* A background reload failed but the last good counts are still on screen —
           keep them, and say they may be behind. */}
       {error && <InlineAlert message={`${error} Showing the last known counts.`} />}

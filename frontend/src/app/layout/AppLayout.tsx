@@ -274,11 +274,25 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             the chevron's left edge just inside the bar's own border.
 
             It is 32px tall, down from 40px. The bar's only contents are one icon
-            button and one line of 10px text, so the extra 8px was empty space
+            button and one line of text, so the extra 8px was empty space
             above and below them. The collapse button also drops its `h-8 w-8`
             override and takes the standard 28px icon size — that override existed
             to fill the taller bar, and keeping it at 32px inside a 32px box would
-            leave the hover circle touching the bar's own border. */}
+            leave the hover circle touching the bar's own border.
+
+            The bar now carries the page's name instead of only repeating it. Every
+            page used to print its own `h1` plus a subtitle in the body, directly
+            under a bar that already said the same thing, and the duplicate cost a
+            heading's worth of vertical space on every screen. The pages' headers
+            and subtitles are gone; this line is the one name a page has.
+
+            That is why the line is not 10px. At `--text-2xs` it read as a caption
+            for the collapse chevron rather than as the page's title — the two sat
+            on the same line and nothing said which one named the screen. It is a
+            step up at `text-sm`, which is what the collapsed-sidebar brand row
+            uses for the business name. Deliberately NOT `--text-title`: the old
+            page heading was 28px and the bar is 32px tall, so a title-sized line
+            would have no room to sit inside it without growing the bar back. */}
         <div className="relative z-[40] mx-3 mt-2 flex h-8 shrink-0 items-center justify-between rounded-2xl border border-[var(--app-border-frame)] bg-[var(--app-surface)] px-2 lg:mx-5 xl:mx-6">
           <div className="flex min-w-0 items-center gap-3">
             <Button
@@ -291,10 +305,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
             >
               {isCollapsed ? <PanelLeft className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
             </Button>
-            <div className="min-w-0">
-              <span className="block truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
-
-            </div>
+            {/* No wrapper div: the span is the only child, so the flex row
+                already lays it out. The extra box was a leftover from the
+                two-line block (title + 10px sub-label) that used to sit here. */}
+            <span className="block min-w-0 truncate text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">{currentLabel}</span>
           </div>
           <ConnectionStatus className="shrink-0" />
         </div>
