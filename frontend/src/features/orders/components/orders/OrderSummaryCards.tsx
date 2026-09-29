@@ -1,30 +1,38 @@
 import { StatTile, StatTileRow } from '../../../../shared/components/ui';
-import type { Order } from '../../types';
+import { useOrdersSummary } from '../../hooks/useOrdersSummary';
+import type { OrderStatus, OrdersSummary } from '../../types';
+
+/** Reads one status's count from the zero-filled `byStatus` array. */
+function countFor(summary: OrdersSummary, status: OrderStatus): number {
+  return summary.byStatus.find((entry) => entry.status === status)?.count ?? 0;
+}
 
 /**
  * The four production-phase counts, as the app's one stat tile.
  *
- * This row used to be the only one in the app laid out sideways — label on the
- * left, figure on the right — and it was the odd one out for no reason the page
- * could defend: the other six rows stacked their parts, and a reader moving
- * between Orders and Inventory had to re-learn where to look for the number.
- * The sideways layout was also the reason the label had to be `truncate`, which
- * is a tile admitting it cannot fit its own text.
+ * This row used to derive its numbers from the orders loaded on the page — page 1 of
+ * a 20-row list — so "Designing" could read a different, lower number than the same
+ * tile on the Dashboard. It now reads `GET /orders/summary`, computed in the database
+ * over the whole table, so the two pages agree. The Orders and Dashboard counts are
+ * the same source on purpose (see the summary hook): one label, one truth.
  *
  * No icon and no tone — the same ERPNext rule the dashboard tiles follow: a card
  * carries its figure, not ornament.
  */
-export function OrderSummaryCards({ orders }: { orders: Order[] }) {
-  const orderSummary = [
-    { label: 'Designing', count: orders.filter((o) => o.status === 'Designing').length },
-    { label: 'In Production', count: orders.filter((o) => o.status === 'In Production').length },
-    { label: 'Ready', count: orders.filter((o) => o.status === 'Ready for Pickup').length },
-    { label: 'Total Active', count: orders.filter((o) => o.status !== 'Completed').length },
+export function OrderSummaryCards() {
+  const { summary } = useOrdersSummary();
+  if (!summary) return null;
+
+  const cards: Array<{ label: string; count: number }> = [
+    { label: 'Designing', count: countFor(summary, 'Designing') },
+    { label: 'In Production', count: countFor(summary, 'In Production') },
+    { label: 'Ready', count: countFor(summary, 'Ready for Pickup') },
+    { label: 'Total Active', count: summary.total - countFor(summary, 'Completed') },
   ];
 
   return (
     <StatTileRow columns={4}>
-      {orderSummary.map((card) => (
+      {cards.map((card) => (
         <StatTile key={card.label} label={card.label} value={card.count} />
       ))}
     </StatTileRow>

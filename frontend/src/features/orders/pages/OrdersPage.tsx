@@ -203,7 +203,7 @@ export default function Orders() {
         </Button>
       </div>
 
-      <OrderSummaryCards orders={orders} />
+      <OrderSummaryCards />
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-1.5">

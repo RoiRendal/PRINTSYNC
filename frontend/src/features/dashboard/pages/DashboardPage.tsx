@@ -2,7 +2,7 @@ import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { StatTile, StatTileRow } from '../../../shared/components/ui';
-import { useOrdersSummary } from '../hooks/useOrdersSummary';
+import { useOrdersSummary } from '../../orders/hooks/useOrdersSummary';
 import type { OrderStatus, OrdersSummary } from '../../orders/types';
 
 /**

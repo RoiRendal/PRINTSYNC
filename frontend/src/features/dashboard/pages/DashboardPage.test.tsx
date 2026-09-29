@@ -6,7 +6,7 @@ import type { OrdersSummary } from '../../orders/types';
 
 const hook = vi.hoisted(() => ({ useOrdersSummary: vi.fn() }));
 
-vi.mock('../hooks/useOrdersSummary', () => ({
+vi.mock('../../orders/hooks/useOrdersSummary', () => ({
   useOrdersSummary: hook.useOrdersSummary,
 }));
 

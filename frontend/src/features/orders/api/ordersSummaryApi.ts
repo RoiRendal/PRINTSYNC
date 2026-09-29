@@ -9,14 +9,14 @@ import type { OrdersSummary } from '../../orders/types';
  * beside orders carrying real values could read zero. `GET /orders/summary`
  * replaces that with counts taken over the whole table, in the database.
  *
- * ### Why this lives in the dashboard feature, not in `ordersApi`
+ * ### Why this lives in the orders feature
  *
- * The path is `/orders/summary` and the gate is `orders.read`, but the payload is
- * not an order and not a list — it is a Workspace snapshot: order counts by status
- * **plus** `lowStock`, which is inventory. Filing it under `ordersApi` would put an
- * inventory figure in the orders domain, and the dashboard is its only consumer.
- * The shape is owned by `@printsync/shared-types`; this module only says where to
- * fetch it.
+ * The path is `/orders/summary` and the gate is `orders.read`, so it belongs with
+ * the orders code even though the payload is not a single order or a list — it is a
+ * Workspace snapshot: order counts by status **plus** `lowStock`, which is inventory.
+ * The Dashboard and the Orders page both consume these counts, and both must show the
+ * same numbers, so the one source lives here rather than being duplicated. The shape
+ * is owned by `@printsync/shared-types`; this module only says where to fetch it.
  *
  * ### Failure is loud
  *
@@ -26,10 +26,10 @@ import type { OrdersSummary } from '../../orders/types';
  * not quietly render zeros, because a screen of zeros looks like a quiet morning
  * rather than a broken query.
  */
-export function createDashboardApi(client: ApiClient = apiClient) {
+export function createOrdersSummaryApi(client: ApiClient = apiClient) {
   return {
     summary: () => client.get<OrdersSummary>('/orders/summary'),
   };
 }
 
-export const dashboardApi = createDashboardApi();
+export const ordersSummaryApi = createOrdersSummaryApi();

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { dashboardApi } from '../api/dashboardApi';
+import { ordersSummaryApi } from '../api/ordersSummaryApi';
 import type { OrdersSummary } from '../../orders/types';
 import { ApiError } from '../../../shared/api/errors';
 import {
@@ -55,14 +55,14 @@ export interface OrdersSummaryState {
  * A background reload replaces the numbers when it lands; it does not clear them
  * first. That is the rule the list stores follow, and the reason the revalidation
  * layer is safe to fire from several places at once — and it matters more here,
- * because this is the page staff land on. A failure keeps the stale counts visible
+ * because this is the page (and the Orders page) staff land on. A failure keeps the stale counts visible
  * *and* sets `error`, so the page can say the numbers may be out of date rather
  * than replacing a good screen with an error.
  *
  * ### No fallback
  *
  * If the request fails there is no second implementation to fall back to. See the
- * note in `dashboardApi.ts`.
+ * note in `ordersSummaryApi.ts`.
  */
 export function useOrdersSummary(): OrdersSummaryState {
   const [summary, setSummary] = useState<OrdersSummary | null>(null);
@@ -97,7 +97,7 @@ export function useOrdersSummary(): OrdersSummaryState {
 
   useEffect(() => {
     let mounted = true;
-    void dashboardApi
+    void ordersSummaryApi
       .summary()
       .then((next) => {
         if (!mounted) return;
