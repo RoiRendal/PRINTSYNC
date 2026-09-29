@@ -8,9 +8,10 @@ import { SurfaceCard } from './Card';
  * This is the app's single number card, and it exists because there were seven.
  * Before this component, `DashboardPage` grew its own tile at 30px with a unit
  * word and a sentence under it, `OrderSummaryCards` put its label on the left and
- * its figure on the right, `InventoryStats` and `MetricTile` coloured the figure,
- * and Customers, Users and Audit each carried the same twelve lines
- * copy-pasted. Same job, seven shapes.
+ * its figure on the right, `InventoryStats` and the analytics `MetricTile`
+ * coloured the figure, and Customers, Users and Audit each carried the same
+ * twelve lines copy-pasted. Same job, seven shapes — and all seven are now
+ * this file, so there is nothing left to point at beside it.
  *
  * The target is ERPNext's number card, measured off the live demo's own compiled
  * stylesheet rather than read off a screenshot:

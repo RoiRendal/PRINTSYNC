@@ -12,7 +12,7 @@ import {
 import type { SalesTimeline } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Select } from '../../../shared/components/ui';
+import { Select, StatTile, StatTileRow } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
   generateInsight,
@@ -24,7 +24,6 @@ import {
   type Period,
 } from './analytics-types';
 import { InsightPanel } from './InsightPanel';
-import { MetricTile } from './MetricTile';
 import { PeriodSelector } from './PeriodSelector';
 import { SectionCard } from './SectionCard';
 
@@ -95,11 +94,13 @@ export function SalesComparisonSection({
 
       {salesBucketLabels.length > 0 && !isLoading && !error && (
         <SectionCard title="Sales Comparison Chart" description="Revenue split between the selected timelines.">
-          <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label="Total A" value={money.format(totals.totalA)} />
-            <MetricTile label="Total B" value={money.format(totals.totalB)} />
-            <MetricTile label="Difference" value={money.format(totals.absoluteDiff)} tone={totals.absoluteDiff >= 0 ? 'green' : 'red'} />
-            <MetricTile label="Growth" value={`${totals.growth.toFixed(1)}%`} tone={totals.growth >= 0 ? 'green' : 'red'} />
+          <div className="mb-4">
+            <StatTileRow columns={4}>
+              <StatTile label="Total A" value={money.format(totals.totalA)} />
+              <StatTile label="Total B" value={money.format(totals.totalB)} />
+              <StatTile label="Difference" value={money.format(totals.absoluteDiff)} />
+              <StatTile label="Growth" value={`${totals.growth.toFixed(1)}%`} />
+            </StatTileRow>
           </div>
           <div className="h-[340px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">

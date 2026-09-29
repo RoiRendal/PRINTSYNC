@@ -33,7 +33,7 @@ import {
   type Period,
 } from './analytics-types';
 import { InsightPanel } from './InsightPanel';
-import { MetricTile } from './MetricTile';
+import { StatTile, StatTileRow } from '../../../shared/components/ui';
 import { PeriodSelector } from './PeriodSelector';
 import { SectionCard } from './SectionCard';
 
@@ -91,11 +91,13 @@ export function ProductTrendSection({
       {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
         <>
           <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
-          <div className="my-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <MetricTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} tone="accent" />
-            <MetricTile label="Leading Product" value={`${productTrendSummary.leadingProduct?.label ?? '-'} (${(productTrendSummary.leadingProduct?.units ?? 0).toLocaleString()})`} tone="green" />
-            <MetricTile label="Lowest Product" value={`${productTrendSummary.lowestProduct?.label ?? '-'} (${(productTrendSummary.lowestProduct?.units ?? 0).toLocaleString()})`} tone="orange" />
-            <MetricTile label="Products" value={productTrendData.length.toLocaleString()} />
+          <div className="my-4">
+            <StatTileRow columns={4}>
+              <StatTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} />
+              <StatTile label="Leading Product" value={`${productTrendSummary.leadingProduct?.label ?? '-'} (${(productTrendSummary.leadingProduct?.units ?? 0).toLocaleString()})`} />
+              <StatTile label="Lowest Product" value={`${productTrendSummary.lowestProduct?.label ?? '-'} (${(productTrendSummary.lowestProduct?.units ?? 0).toLocaleString()})`} />
+              <StatTile label="Products" value={productTrendData.length.toLocaleString()} />
+            </StatTileRow>
           </div>
           <div className="h-[380px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
