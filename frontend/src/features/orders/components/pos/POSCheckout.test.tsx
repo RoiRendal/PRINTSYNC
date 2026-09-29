@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { POSCheckoutModal } from './POSCheckoutModal';
+import { POSCheckout } from './POSCheckout';
 import { makeCartItem, makeCheckoutError, makeInsufficientStock, makeTotals } from '../../../../test/fixtures';
 
 /*
@@ -12,20 +12,21 @@ import { makeCartItem, makeCheckoutError, makeInsufficientStock, makeTotals } fr
  * checkout JSX itself uncovered, and the checkout JSX is where the wording that
  * stops a cashier double-charging actually lives.
  *
- * `POSCheckoutModal` is the right first target precisely because it is
+ * `POSCheckout` is the right first target precisely because it is
  * props-driven: no stores, no router, no providers. `POSPage` wraps it in all
  * three, so it would have to be tested through a pile of scaffolding that has
  * nothing to do with the assertions.
  *
- * `Modal` portals into `document.body`, which Testing Library's `screen` queries
- * like any other node, so no special handling is needed for that.
+ * It became a panel rather than a dialog (R4), and the assertions below are the
+ * ones that had to survive that move: the reconciliation wording, the per-line
+ * shortfall, the in-flight lock, and the confirm/cancel pair. A conversion that
+ * kept the pixels and lost the wording would be the expensive kind of refactor.
  */
 
-type ModalProps = ComponentProps<typeof POSCheckoutModal>;
+type CheckoutProps = ComponentProps<typeof POSCheckout>;
 
-function renderModal(overrides: Partial<ModalProps> = {}) {
-  const props: ModalProps = {
-    isOpen: true,
+function renderCheckout(overrides: Partial<CheckoutProps> = {}) {
+  const props: CheckoutProps = {
     checkoutSuccess: false,
     isSubmitting: false,
     checkoutError: null,
@@ -36,17 +37,17 @@ function renderModal(overrides: Partial<ModalProps> = {}) {
     currencySymbol: 'PHP ',
     onPaymentMethodChange: vi.fn(),
     onConfirm: vi.fn(),
-    onClose: vi.fn(),
+    onBack: vi.fn(),
     onPrintReceipt: vi.fn(),
     ...overrides,
   };
 
-  return { ...render(<POSCheckoutModal {...props} />), props };
+  return { ...render(<POSCheckout {...props} />), props };
 }
 
 describe('an unconfirmed checkout is never presented as a failure', () => {
   it('tells the cashier nothing was charged when the sale did not commit', () => {
-    renderModal({
+    renderCheckout({
       checkoutError: makeCheckoutError({
         message: 'The connection dropped before the sale was confirmed.',
         reconciliation: { kind: 'not-committed' },
@@ -57,7 +58,7 @@ describe('an unconfirmed checkout is never presented as a failure', () => {
   });
 
   it('tells the cashier retrying is safe when the outcome could not be established', () => {
-    renderModal({
+    renderCheckout({
       checkoutError: makeCheckoutError({
         message: 'The server could not confirm the sale.',
         reconciliation: { kind: 'unknown' },
@@ -82,13 +83,13 @@ describe('an unconfirmed checkout is never presented as a failure', () => {
     // Identical shape to the code, opposite instructions to a cashier: one means
     // "ring it up again", the other means "the till is still owed a sale". They
     // must never collapse into one generic sentence.
-    const first = renderModal({
+    const first = renderCheckout({
       checkoutError: makeCheckoutError({ reconciliation: { kind: 'not-committed' } }),
     });
     const notCommitted = screen.getByRole('alert').textContent ?? '';
     first.unmount();
 
-    const second = renderModal({
+    const second = renderCheckout({
       checkoutError: makeCheckoutError({ reconciliation: { kind: 'unknown' } }),
     });
     const unknown = screen.getByRole('alert').textContent ?? '';
@@ -100,7 +101,7 @@ describe('an unconfirmed checkout is never presented as a failure', () => {
   });
 
   it('shows the plain message for an ordinary failure with no reconciliation', () => {
-    renderModal({
+    renderCheckout({
       checkoutError: makeCheckoutError({ message: 'Only staff can process a sale.' }),
     });
 
@@ -110,7 +111,7 @@ describe('an unconfirmed checkout is never presented as a failure', () => {
 
 describe('a short cart line is named with the real numbers', () => {
   it('points at the item and reports what is actually left', () => {
-    renderModal({
+    renderCheckout({
       cart: [makeCartItem({ id: 'item-1', name: 'Glossy Paper A4', qty: 5 })],
       checkoutError: makeCheckoutError({
         message: 'Not enough stock to complete this sale.',
@@ -124,7 +125,7 @@ describe('a short cart line is named with the real numbers', () => {
   });
 
   it('does not flag a cart line the shortfall does not apply to', () => {
-    renderModal({
+    renderCheckout({
       cart: [makeCartItem({ id: 'item-1', name: 'Glossy Paper A4' })],
       checkoutError: makeCheckoutError({
         stock: makeInsufficientStock({ itemId: 'item-other', available: 3, requested: 5 }),
@@ -137,21 +138,21 @@ describe('a short cart line is named with the real numbers', () => {
 
 describe('the sale cannot be submitted twice', () => {
   it('disables both actions and says it is processing while a sale is in flight', () => {
-    renderModal({ isSubmitting: true });
+    renderCheckout({ isSubmitting: true });
 
     expect(screen.getByRole('button', { name: /processing/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /cancel/i })).toBeDisabled();
   });
 
   it('offers an enabled confirm button when idle', () => {
-    renderModal();
+    renderCheckout();
 
     expect(screen.getByRole('button', { name: /confirm/i })).toBeEnabled();
   });
 
   it('confirms the sale when the cashier clicks through', async () => {
     const user = userEvent.setup();
-    const { props } = renderModal();
+    const { props } = renderCheckout();
 
     await user.click(screen.getByRole('button', { name: /confirm/i }));
 
@@ -160,18 +161,18 @@ describe('the sale cannot be submitted twice', () => {
 
   it('closes without confirming when the cashier cancels', async () => {
     const user = userEvent.setup();
-    const { props } = renderModal();
+    const { props } = renderCheckout();
 
     await user.click(screen.getByRole('button', { name: /cancel/i }));
 
-    expect(props.onClose).toHaveBeenCalledTimes(1);
+    expect(props.onBack).toHaveBeenCalledTimes(1);
     expect(props.onConfirm).not.toHaveBeenCalled();
   });
 });
 
 describe('a recovered sale is called out, an ordinary one is not', () => {
   it('says the sale had already been saved when reconciliation rescued it', () => {
-    renderModal({ checkoutSuccess: true, recovered: true });
+    renderCheckout({ checkoutSuccess: true, recovered: true });
 
     // The cashier believes this sale failed. Leaving them to find out otherwise
     // is how a paid sale gets rung up a second time.
@@ -179,7 +180,7 @@ describe('a recovered sale is called out, an ordinary one is not', () => {
   });
 
   it('does not claim a rescue after an ordinary successful sale', () => {
-    renderModal({ checkoutSuccess: true, recovered: false });
+    renderCheckout({ checkoutSuccess: true, recovered: false });
 
     expect(screen.getByText('Transaction Successful')).toBeInTheDocument();
     expect(screen.queryByText(/already been saved/i)).not.toBeInTheDocument();
@@ -188,7 +189,7 @@ describe('a recovered sale is called out, an ordinary one is not', () => {
 
 describe('custom orders are not sales', () => {
   it('offers to create an order and asks for no payment method', () => {
-    renderModal({ posMode: 'custom' });
+    renderCheckout({ posMode: 'custom' });
 
     expect(screen.getByRole('button', { name: /create order/i })).toBeInTheDocument();
     // A custom job is entered into production, not paid for at the till, so
@@ -197,7 +198,7 @@ describe('custom orders are not sales', () => {
   });
 
   it('asks for a payment method on a retail sale', () => {
-    renderModal({ posMode: 'retail' });
+    renderCheckout({ posMode: 'retail' });
 
     expect(screen.getByText(/payment method/i)).toBeInTheDocument();
     /*
@@ -215,5 +216,63 @@ describe('custom orders are not sales', () => {
     expect(screen.getByRole('radiogroup', { name: /payment method/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /cash/i })).toBeChecked();
     expect(screen.getByRole('radio', { name: /card/i })).not.toBeChecked();
+  });
+});
+
+/*
+ * The tendered amount and the three-cell strip.
+ *
+ * The strip is ERPNext's, and it is only worth having because the cashier can
+ * enter what the customer handed over — with `Paid Amount` pinned to the total,
+ * `Remaining` would be a hard-coded zero in a coloured box. These tests pin the
+ * two states that make it information rather than ornament, and the rule the
+ * server imposes on one of them: `create_transaction_with_payment` requires the
+ * received amount to equal the total, so a short payment cannot be confirmed.
+ */
+describe('the cash tendered drives the totals strip', () => {
+  const cashField = () => screen.getByLabelText(/cash received/i);
+  const confirm = () => screen.getByRole('button', { name: /confirm/i });
+
+  it('shows the three cells with nothing outstanding by default', () => {
+    renderCheckout();
+
+    expect(screen.getByText(/grand total/i)).toBeInTheDocument();
+    expect(screen.getByText(/paid amount/i)).toBeInTheDocument();
+    // The fixture totals are 200 + 24 = 224, paid in full when nothing is typed.
+    expect(screen.getByText(/^change$/i)).toBeInTheDocument();
+    expect(screen.getByText('PHP 0.00')).toBeInTheDocument();
+  });
+
+  it('refuses to confirm while the customer is short', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await user.type(cashField(), '100');
+
+    // 224 − 100 = 124 outstanding.
+    expect(screen.getByText(/remaining/i)).toBeInTheDocument();
+    expect(screen.getByText('PHP 124.00')).toBeInTheDocument();
+    expect(confirm()).toBeDisabled();
+  });
+
+  it('reports the change when the customer overpays, and allows the sale', async () => {
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await user.type(cashField(), '250');
+
+    // 250 − 224 = 26 back.
+    expect(screen.getByText(/^change$/i)).toBeInTheDocument();
+    expect(screen.getByText('PHP 26.00')).toBeInTheDocument();
+    expect(confirm()).toBeEnabled();
+  });
+
+  it('asks for nothing tendered on a card', () => {
+    renderCheckout({ paymentMethod: 'Card' });
+
+    // A card is tendered for the exact amount by definition — there is nothing
+    // for the cashier to type and nothing to give back.
+    expect(screen.queryByLabelText(/cash received/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/^change$/i)).toBeInTheDocument();
   });
 });

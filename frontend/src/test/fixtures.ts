@@ -2,7 +2,7 @@ import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { InventoryItem } from '../features/inventory/types';
 import type { CartItem, Order } from '../features/orders/types';
 import type { CartTotals } from '../features/orders/hooks/useCartTotals';
-import type { CheckoutError } from '../features/orders/components/pos/POSCheckoutModal';
+import type { CheckoutError } from '../features/orders/components/pos/POSCheckout';
 
 /**
  * Builders for component tests.

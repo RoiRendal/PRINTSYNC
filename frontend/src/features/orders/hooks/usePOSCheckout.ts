@@ -15,7 +15,7 @@ import type {
   CheckoutError,
   CheckoutFailureOutcome,
   ReconciliationOutcome,
-} from '../components/pos/POSCheckoutModal';
+} from '../components/pos/POSCheckout';
 
 /**
  * What the cashier is told when a checkout's fate had to be investigated.

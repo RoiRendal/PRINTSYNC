@@ -13,7 +13,7 @@ import { DEFAULT_PAGE_SIZE } from '../../../shared/store/createListStore';
 import { paymentsApi } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
-import { POSCheckoutModal, type ReconciliationOutcome } from '../components/pos/POSCheckoutModal';
+import { POSCheckout, type ReconciliationOutcome } from '../components/pos/POSCheckout';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
 import { POSHistoryView } from '../components/pos/POSHistoryView';
@@ -85,7 +85,16 @@ export default function POS() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [view, setView] = useState<'pos' | 'history'>('pos');
   const [posMode, setPosMode] = useState<PosMode>('retail');
-  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  /**
+   * What the right column is showing.
+   *
+   * Checkout is a MODE of the column the cart lives in, not a dialog over it —
+   * ERPNext's `.payment-container` works the same way, and a dialog floating
+   * above a fixed-height shell is the state-dependent geometry that shell exists
+   * to remove. `POSCart` owns its own sub-view (the list versus one line's
+   * details) because that is a property of the cart, not of the page.
+   */
+  const [rightMode, setRightMode] = useState<'cart' | 'checkout'>('cart');
   /** Every piece of paper the till can produce, frozen at the moment of sale. */
   const receipts = usePOSReceipts();
 
@@ -188,7 +197,7 @@ export default function POS() {
     // Opening a checkout is a fresh look at the cart; a message from the previous
     // attempt would only be stale noise.
     checkout.resetCheckout();
-    setIsCheckoutModalOpen(true);
+    setRightMode('checkout');
   };
 
   /**
@@ -251,7 +260,9 @@ export default function POS() {
 
   usePOSKeyboardShortcuts({
     searchRef: searchInputRef,
-    enabled: !isCheckoutModalOpen && !basket.isDesignModalOpen,
+    // The checkout is a mode now, so the shortcut is suppressed while it owns the
+    // column rather than while a dialog is open.
+    enabled: rightMode === 'cart' && !basket.isDesignModalOpen,
     canCheckout: cart.length > 0 && view === 'pos',
     onCheckout: handleCheckout,
   });
@@ -276,7 +287,10 @@ export default function POS() {
     reconcileAttempt,
     refreshInventory,
     recordCompletedSale: receipts.recordCompletedSale,
-    onAutoDismiss: () => setIsCheckoutModalOpen(false),
+    // After a sale the panel gives the column back to the cart, ready for the
+    // next customer. The receipt stays reachable from the toolbar's Last receipt
+    // button, so nothing is lost by leaving.
+    onAutoDismiss: () => setRightMode('cart'),
   });
 
 
@@ -328,32 +342,55 @@ export default function POS() {
             onCategoryChange={setActiveCategory}
             onAddToCart={(product) => basket.addToCart(product, posMode)}
           />
-          <POSCart
-            cart={cart}
-            designs={designs}
-            posMode={posMode}
-            editingOrderId={editingOrderId}
-            customers={customers}
-            customerId={customerId}
-            customerName={customerName}
-            orderNotes={orderNotes}
-            cartDiscount={cartDiscount}
-            vatRatePercent={vatRatePercent}
-            totals={totals}
-            currencySymbol={currencySymbol}
-            onCustomerNameChange={basket.setCustomerName}
-            onCustomerIdChange={basket.setCustomerId}
-            onOrderNotesChange={basket.setOrderNotes}
-            onCartDiscountChange={basket.setCartDiscount}
-            onVatRatePercentChange={basket.setVatRatePercent}
-            onUpdateQty={basket.updateQty}
-            onSetLinePrice={basket.setLinePrice}
-            onSetLineDiscount={basket.setLineDiscount}
-            onRemoveFromCart={basket.removeFromCart}
-            onOpenDesignSelector={basket.openDesignSelector}
-            onReset={basket.resetCart}
-            onCheckout={handleCheckout}
-          />
+          {/*
+            One occupant at a time. The cart and the checkout are the same column
+            in two states, so the panel swaps in place and the page geometry does
+            not move — which is the whole point of the fixed-height shell.
+          */}
+          {rightMode === 'checkout' ? (
+            <POSCheckout
+              checkoutSuccess={checkout.checkoutSuccess}
+              isSubmitting={checkout.isSubmitting}
+              checkoutError={checkout.checkoutError}
+              posMode={posMode}
+              cart={cart}
+              totals={totals}
+              paymentMethod={checkout.paymentMethod}
+              currencySymbol={currencySymbol}
+              recovered={checkout.checkoutRecovered}
+              onPaymentMethodChange={checkout.handlePaymentMethodChange}
+              onConfirm={checkout.finalize}
+              onBack={() => { setRightMode('cart'); checkout.resetCheckout(); }}
+              onPrintReceipt={receipts.openReceiptModal}
+            />
+          ) : (
+            <POSCart
+              cart={cart}
+              designs={designs}
+              posMode={posMode}
+              editingOrderId={editingOrderId}
+              customers={customers}
+              customerId={customerId}
+              customerName={customerName}
+              orderNotes={orderNotes}
+              cartDiscount={cartDiscount}
+              vatRatePercent={vatRatePercent}
+              totals={totals}
+              currencySymbol={currencySymbol}
+              onCustomerNameChange={basket.setCustomerName}
+              onCustomerIdChange={basket.setCustomerId}
+              onOrderNotesChange={basket.setOrderNotes}
+              onCartDiscountChange={basket.setCartDiscount}
+              onVatRatePercentChange={basket.setVatRatePercent}
+              onUpdateQty={basket.updateQty}
+              onSetLinePrice={basket.setLinePrice}
+              onSetLineDiscount={basket.setLineDiscount}
+              onRemoveFromCart={basket.removeFromCart}
+              onOpenDesignSelector={basket.openDesignSelector}
+              onReset={basket.resetCart}
+              onCheckout={handleCheckout}
+            />
+          )}
         </div>
       ) : (
         /*
@@ -387,26 +424,6 @@ export default function POS() {
         designs={designs}
         onSelect={basket.selectDesignForItem}
         onClose={basket.closeDesignSelector}
-      />
-
-      <POSCheckoutModal
-        isOpen={isCheckoutModalOpen}
-        checkoutSuccess={checkout.checkoutSuccess}
-        isSubmitting={checkout.isSubmitting}
-        checkoutError={checkout.checkoutError}
-        posMode={posMode}
-        cart={cart}
-        totals={totals}
-        paymentMethod={checkout.paymentMethod}
-        currencySymbol={currencySymbol}
-        recovered={checkout.checkoutRecovered}
-        onPaymentMethodChange={checkout.handlePaymentMethodChange}
-        onConfirm={checkout.finalize}
-        onClose={() => {
-          setIsCheckoutModalOpen(false);
-          checkout.resetCheckout();
-        }}
-        onPrintReceipt={() => { setIsCheckoutModalOpen(false); receipts.openReceiptModal(); }}
       />
 
       {/*
