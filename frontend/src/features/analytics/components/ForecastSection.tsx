@@ -13,6 +13,7 @@ import type { InventoryForecast } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import {
+  SegmentedControl,
   StatusLabel,
   Table,
   TableBody,
@@ -22,7 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/components/ui';
-import { cn } from '../../../shared/lib/cn';
 import {
   chartTooltipStyle,
   generateInsight,
@@ -97,7 +97,7 @@ export function ForecastSection({
     <SectionCard
       title="Financial Forecasting"
       description="Forecasted inventory requirements using moving-average demand projection with confidence bounds."
-      controls={<div className="space-y-2"><div className="flex rounded-full border p-1"><button type="button" onClick={() => setForecastMetric('income')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'income' ? 'bg-app-success text-white' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}>Income</button><button type="button" onClick={() => setForecastMetric('expenses')} className={cn('h-8 cursor-pointer rounded-full px-3 text-2xs font-bold', forecastMetric === 'expenses' ? 'bg-app-warning text-white' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}>Expenses</button></div><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}
+      controls={<div className="space-y-2"><SegmentedControl aria-label="Forecast metric" value={forecastMetric} onChange={setForecastMetric} options={[{ value: 'income', label: 'Income', selectedClassName: 'bg-app-success text-white' }, { value: 'expenses', label: 'Expenses', selectedClassName: 'bg-app-warning text-white' }]} /><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}
     >
       {isLoading ? <LoadingState label="Loading inventory forecast" /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
         <>

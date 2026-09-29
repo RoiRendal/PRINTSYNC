@@ -5,7 +5,7 @@ import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
 import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select } from '../../../shared/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Input, Select, SegmentedControl } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { exportApi } from '../api/exportApi';
 
@@ -307,18 +307,17 @@ export default function Settings() {
               </div>
             </div>
           </CardHeader>
-          <div className="flex rounded-full border p-1">
-            {(['light', 'dark', 'system'] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setTheme(item)}
-                className={cn('h-8 flex-1 cursor-pointer rounded-full px-3 text-2xs font-bold', theme === item ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            aria-label="Color scheme"
+            fill
+            value={theme}
+            onChange={setTheme}
+            options={([
+              { value: 'light', label: 'light' },
+              { value: 'dark', label: 'dark' },
+              { value: 'system', label: 'system' },
+            ])}
+          />
         </Card>
       </div>
 

@@ -11,7 +11,7 @@ import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
-import { DeleteConfirmModal, Pagination } from '../../../shared/components/ui';
+import { DeleteConfirmModal, Pagination, SegmentedControl } from '../../../shared/components/ui';
 import { ApiError } from '../../../shared/api/errors';
 import type { CreateInventoryItem, InventoryItem } from '../types';
 
@@ -138,22 +138,15 @@ export default function Inventory() {
           </p>
         </div>
 
-        <div className="flex items-center rounded-full border p-1">
-          <button
-            type="button"
-            onClick={() => setViewMode('inventory')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'inventory' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}
-          >
-            <Box className="h-3.5 w-3.5" aria-hidden="true" /> Stock List
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode('designs')}
-            className={cn('flex h-8 cursor-pointer items-center gap-2 rounded-full px-4 text-2xs font-bold', viewMode === 'designs' ? 'bg-app-accent text-[var(--app-accent-ink)]' : 'text-app-text-muted hover:bg-[var(--app-state-hover)] dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)]')}
-          >
-            <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> Design Repo
-          </button>
-        </div>
+        <SegmentedControl
+          aria-label="Inventory view"
+          value={viewMode}
+          onChange={setViewMode}
+          options={[
+            { value: 'inventory', label: 'Stock List', icon: <Box className="h-3.5 w-3.5" aria-hidden="true" /> },
+            { value: 'designs', label: 'Design Repo', icon: <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> },
+          ]}
+        />
       </div>
 
       {viewMode === 'inventory' ? (
