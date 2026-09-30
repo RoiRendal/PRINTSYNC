@@ -1,43 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useAuthStore } from '../../../app/stores/useAuthStore';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
-import { DeleteConfirmModal } from '../../../shared/components/ui';
-import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { useRowSelection } from '../../../shared/hooks/useRowSelection';
-import { usePaymentStore } from '../../../app/stores/usePaymentStore';
-import type { Transaction } from '../types';
-import { DEFAULT_PAGE_SIZE } from '../../../shared/store/createListStore';
 import { paymentsApi } from '../api/paymentsApi';
 import { POSCart } from '../components/pos/POSCart';
 import { POSCatalog } from '../components/pos/POSCatalog';
 import { POSCheckout, type ReconciliationOutcome } from '../components/pos/POSCheckout';
 import { ReceiptModal } from '../components/pos/ReceiptModal';
 import { POSDesignSelectorModal } from '../components/pos/POSDesignSelectorModal';
-import { POSHistoryView } from '../components/pos/POSHistoryView';
 import { POSToolbar } from '../components/pos/POSToolbar';
 import { useCartTotals } from '../hooks/useCartTotals';
 import { useCheckoutAttemptKey } from '../hooks/useCheckoutAttemptKey';
 import { useFilteredProducts } from '../hooks/useFilteredProducts';
 import { printDocument, usePOSReceipts } from '../hooks/usePOSReceipts';
 import { usePOSCart, type PosMode } from '../hooks/usePOSCart';
-import { usePOSHistory } from '../hooks/usePOSHistory';
 import { usePOSKeyboardShortcuts } from '../hooks/usePOSKeyboardShortcuts';
 import { useOrderEditHydration } from '../hooks/useOrderEditHydration';
 import { usePOSTransactions } from '../hooks/usePOSTransactions';
 import { usePOSCheckout } from '../hooks/usePOSCheckout';
 import { useOrders } from '../../../app/stores/useOrderStore';
 import { emitDataChange } from '../../../shared/store/dataEvents';
-
-/**
- * Rows per page in the history table. Tied to the shared store default so every
- * table in the app pages at the same size — this list is paged in the browser
- * (it is one combined in-memory list), so it does not read the store's own limit.
- */
-const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
 
 
 export default function POS() {
@@ -73,20 +58,17 @@ export default function POS() {
   } = basket;
 
   /**
-   * The till's transaction history. Reads from the payment store (R11) so the
-   * page no longer reaches past the store layer; voiding and the just-recorded
-   * sale are pushed through here too.
+   * The till writes its sales into the payment store (R11) so the page never
+   * reaches past the store layer.
+   *
+   * Only the two write paths are taken here now. The list itself, the load error
+   * and voiding all belong to the retail table on the Orders page — this page
+   * records sales, it does not browse them. The store is a module-level
+   * singleton, so a sale recorded here is already in the list that page reads.
    */
-  const {
-    transactions,
-    error: transactionError,
-    voidTransaction,
-    recordCommitted,
-    recordReconciled,
-  } = usePOSTransactions({ inventory });
+  const { recordCommitted, recordReconciled } = usePOSTransactions({ inventory });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
-  const [view, setView] = useState<'pos' | 'history'>('pos');
   const [posMode, setPosMode] = useState<PosMode>('retail');
   /**
    * What the right column is showing.
@@ -123,40 +105,13 @@ export default function POS() {
    */
   const { beginAttempt, peekAttempt, completeAttempt } = useCheckoutAttemptKey(cartSignature);
 
-  /** Sales and custom orders merged into one searchable timeline. */
   /*
-   * The browser page of the history list, owned here rather than inside the
-   * view. It has to live above both the rows and the tick set: the rows are cut
-   * to the page, and the tick set is scoped to those rows, so if the page and
-   * the selection were owned in different places they could disagree about what
-   * is on screen — which is exactly how a bulk action ends up pointed at rows
-   * nobody looked at.
+   * R6 moved the sales-and-orders timeline to the Orders page, and with it the
+   * browser page number, the tick set, and the void batch. All of that was state
+   * about a LIST this page no longer renders — `RetailSalesTable` owns it now,
+   * which is the same invariant in a better place: the rows and the ticks can no
+   * longer be owned by two different components that have to be kept in step.
    */
-  const [historyPage, setHistoryPage] = useState(1);
-  const history = usePOSHistory({
-    transactions,
-    orders,
-    inventory,
-    page: historyPage,
-    pageSize: HISTORY_PAGE_SIZE,
-  });
-
-  const selection = useRowSelection(
-    useMemo(() => history.selectableRows.map((row) => (row.source === 'trx' ? row.trx!.id : row.order!.id)), [history.selectableRows]),
-  );
-
-  const [salesToVoid, setSalesToVoid] = useState<Transaction[]>([]);
-  const [isVoiding, setIsVoiding] = useState(false);
-  /** Which of a batch could not be reversed. Distinct from the store's own
-   *  `transactionError`, which reports a load/void failure generically. */
-  const [voidError, setVoidError] = useState<string | null>(null);
-
-  // A new search term is a new result set, so go back to its first page. The
-  // hook clamps anyway; this is what *returns* the user to page 1 rather than
-  // leaving them on a page number that happens to still exist.
-  useEffect(() => {
-    setHistoryPage(1);
-  }, [history.historySearchTerm]);
 
   const editOrderId = (location.state as { editOrderId?: string } | null)?.editOrderId ?? null;
 
@@ -165,7 +120,6 @@ export default function POS() {
     orders,
     inventory,
     navigate,
-    setView,
     setPosMode,
     hydrateFromOrder,
   });
@@ -203,70 +157,14 @@ export default function POS() {
     setRightMode('checkout');
   };
 
-  /**
-   * Captures the ticked sales and opens the confirmation.
-   *
-   * The rows are snapshotted here rather than read back off `selection` when the
-   * user confirms: the list can refresh underneath an open dialog, and the
-   * dialog has to name the sales that were actually ticked, not whatever happens
-   * to be selected by the time Confirm gets clicked.
-   */
-  const openVoidConfirm = () => {
-    const ids = selection.selectedIds;
-    if (ids.size === 0) return;
-    setSalesToVoid(transactions.filter((trx) => ids.has(trx.id)));
-  };
-
-  /**
-   * Reverses every sale named in the confirmation, one at a time.
-   *
-   * `voidTransaction` is a single-row endpoint and adding a bulk route would be
-   * a backend change this screen does not need. Void is not a delete — the sale
-   * and the stock it moved stay on the record, marked reversed — which is why
-   * the modal's wording is changed and why a partial failure is reported by
-   * reference rather than by customer.
-   *
-   * `voidTransaction` swallows its own error and reports through the store, so
-   * the failure branch here cannot observe it. It re-reads the list instead: a
-   * sale still `completed` after the attempt did not reverse, and naming it is
-   * what lets the user retry the one that failed rather than all of them.
-   */
-  const confirmVoidSelected = async () => {
-    if (salesToVoid.length === 0 || isVoiding) return;
-    const targets = salesToVoid;
-    setIsVoiding(true);
-    try {
-      for (const sale of targets) {
-        await voidTransaction(sale.id);
-      }
-    } finally {
-      // A throw before the close below would otherwise leave Confirm spinning on
-      // a dialog that never goes away.
-      setIsVoiding(false);
-    }
-    setSalesToVoid([]);
-    selection.clear();
-
-    const stillCompleted = new Set(
-      usePaymentStore.getState().items.filter((item) => item.status === 'completed').map((item) => item.id),
-    );
-    const failed = targets.filter((sale) => stillCompleted.has(sale.id));
-    if (failed.length > 0) {
-      const names = failed.map((sale) => `#${sale.id.replace('TRX-', '').slice(-8)}`).join(', ');
-      setVoidError(
-        `${failed.length} of ${targets.length} sales could not be voided: ${names}. ${failed.length === 1 ? 'It is' : 'They are'} still completed — try again.`,
-      );
-      return;
-    }
-    setVoidError(null);
-  };
-
   usePOSKeyboardShortcuts({
     searchRef: searchInputRef,
     // The checkout is a mode now, so the shortcut is suppressed while it owns the
     // column rather than while a dialog is open.
     enabled: rightMode === 'cart' && !basket.isDesignModalOpen,
-    canCheckout: cart.length > 0 && view === 'pos',
+    // No view guard any more: the terminal is the only thing this page shows,
+    // so "is the terminal on screen" is not a question the shortcut has to ask.
+    canCheckout: cart.length > 0,
     onCheckout: handleCheckout,
   });
 
@@ -307,13 +205,7 @@ export default function POS() {
    */
   return (
     <div className="flex h-full min-h-0 flex-col gap-5">
-      {transactionError && <InlineAlert message={transactionError} className="shrink-0 text-2xs" />}
-
-      {voidError && <InlineAlert message={voidError} className="shrink-0 text-2xs" />}
-
       <POSToolbar
-        view={view}
-        onViewChange={setView}
         posMode={posMode}
         onSelectMode={(mode) => {
           setPosMode(mode);
@@ -324,105 +216,83 @@ export default function POS() {
         className="shrink-0"
       />
 
-      {view === 'pos' ? (
-        /*
-         * Two columns at 3fr / 2fr — ERPNext's `span 6 / span 4` of ten, i.e.
-         * 60/40. The cart used to be a fixed `xl:w-[23rem]` (~32% here); the
-         * ratio lets both panels answer to the width instead.
-         *
-         * Below `xl` there is no room for two panels side by side, so they stack
-         * and THIS container scrolls — the page still must not. `xl` and up is
-         * where the geometry is fixed and each panel owns its own scroll.
-         */
-        <div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:grid-rows-1 xl:overflow-hidden">
-          <POSCatalog
-            inventory={inventory}
-            filteredProducts={filteredProducts}
-            categories={categories}
-            searchTerm={searchTerm}
-            activeCategory={activeCategory}
-            currencySymbol={currencySymbol}
-            searchRef={searchInputRef}
-            onSearchChange={setSearchTerm}
-            onCategoryChange={setActiveCategory}
-            onAddToCart={(product) => basket.addToCart(product, posMode)}
-          />
-          {/*
-            One occupant at a time. The cart and the checkout are the same column
-            in two states, so the panel swaps in place and the page geometry does
-            not move — which is the whole point of the fixed-height shell.
-          */}
-          {rightMode === 'checkout' ? (
-            <POSCheckout
-              checkoutSuccess={checkout.checkoutSuccess}
-              isSubmitting={checkout.isSubmitting}
-              checkoutError={checkout.checkoutError}
-              posMode={posMode}
-              cart={cart}
-              totals={totals}
-              paymentMethod={checkout.paymentMethod}
-              currencySymbol={currencySymbol}
-              recovered={checkout.checkoutRecovered}
-              onPaymentMethodChange={checkout.handlePaymentMethodChange}
-              onConfirm={checkout.finalize}
-              onBack={() => { setRightMode('cart'); checkout.resetCheckout(); }}
-              onPrintReceipt={receipts.openReceiptModal}
-            />
-          ) : (
-            <POSCart
-              cart={cart}
-              designs={designs}
-              posMode={posMode}
-              editingOrderId={editingOrderId}
-              customers={customers}
-              customerId={customerId}
-              customerName={customerName}
-              orderNotes={orderNotes}
-              cartDiscount={cartDiscount}
-              vatRatePercent={vatRatePercent}
-              totals={totals}
-              currencySymbol={currencySymbol}
-              onCustomerNameChange={basket.setCustomerName}
-              onCustomerIdChange={basket.setCustomerId}
-              onOrderNotesChange={basket.setOrderNotes}
-              onCartDiscountChange={basket.setCartDiscount}
-              onVatRatePercentChange={basket.setVatRatePercent}
-              onUpdateQty={basket.updateQty}
-              onSetLinePrice={basket.setLinePrice}
-              onSetLineDiscount={basket.setLineDiscount}
-              onRemoveFromCart={basket.removeFromCart}
-              onOpenDesignSelector={basket.openDesignSelector}
-              onReset={basket.resetCart}
-              onCheckout={handleCheckout}
-            />
-          )}
-        </div>
-      ) : (
-        /*
-         * Provisional, and it goes away with R6. The till no longer scrolls as a
-         * page, so the history table — which is a paged list that genuinely wants
-         * height — gets its own scroll area for now. R6 moves this body to the
-         * Orders page, where it belongs next to the custom-orders table, and this
-         * branch disappears entirely.
-         */
-        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
-        <POSHistoryView
-          filteredHistoryRows={history.filteredRows}
-          totalRows={history.totalRows}
-          historyPage={historyPage}
-          onHistoryPageChange={setHistoryPage}
-          historySearchTerm={history.historySearchTerm}
-          selectedTransaction={history.selectedTransaction}
-          onHistorySearchChange={history.setHistorySearchTerm}
-          onSelectTransaction={history.selectTransaction}
-          onVoidSelected={openVoidConfirm}
-          selection={selection}
-          onCloseTransactionDetail={() => history.selectTransaction(null)}
-          onOpenReceipt={receipts.openHistoricalReceipt}
-          orderToHistoryTransaction={history.orderToHistoryTransaction}
+      {/*
+       * Two columns at 3fr / 2fr — ERPNext's `span 6 / span 4` of ten, i.e.
+       * 60/40. The cart used to be a fixed `xl:w-[23rem]` (~32% here); the
+       * ratio lets both panels answer to the width instead.
+       *
+       * Below `xl` there is no room for two panels side by side, so they stack
+       * and THIS container scrolls — the page still must not. `xl` and up is
+       * where the geometry is fixed and each panel owns its own scroll.
+       *
+       * R6 removed the `view === 'pos' ? … : …` wrapper this used to sit in. The
+       * terminal is now the only thing this page renders: the history half moved
+       * to the Orders page, where records belong, and with it went the state
+       * that only it read.
+       */}
+      <div className="scrollbar-thin flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:grid-rows-1 xl:overflow-hidden">
+        <POSCatalog
+          inventory={inventory}
+          filteredProducts={filteredProducts}
+          categories={categories}
+          searchTerm={searchTerm}
+          activeCategory={activeCategory}
+          currencySymbol={currencySymbol}
+          searchRef={searchInputRef}
+          onSearchChange={setSearchTerm}
+          onCategoryChange={setActiveCategory}
+          onAddToCart={(product) => basket.addToCart(product, posMode)}
         />
-        </div>
-      )}
+        {/*
+          One occupant at a time. The cart and the checkout are the same column
+          in two states, so the panel swaps in place and the page geometry does
+          not move — which is the whole point of the fixed-height shell.
+        */}
+        {rightMode === 'checkout' ? (
+          <POSCheckout
+            checkoutSuccess={checkout.checkoutSuccess}
+            isSubmitting={checkout.isSubmitting}
+            checkoutError={checkout.checkoutError}
+            posMode={posMode}
+            cart={cart}
+            totals={totals}
+            paymentMethod={checkout.paymentMethod}
+            currencySymbol={currencySymbol}
+            recovered={checkout.checkoutRecovered}
+            onPaymentMethodChange={checkout.handlePaymentMethodChange}
+            onConfirm={checkout.finalize}
+            onBack={() => { setRightMode('cart'); checkout.resetCheckout(); }}
+            onPrintReceipt={receipts.openReceiptModal}
+          />
+        ) : (
+          <POSCart
+            cart={cart}
+            designs={designs}
+            posMode={posMode}
+            editingOrderId={editingOrderId}
+            customers={customers}
+            customerId={customerId}
+            customerName={customerName}
+            orderNotes={orderNotes}
+            cartDiscount={cartDiscount}
+            vatRatePercent={vatRatePercent}
+            totals={totals}
+            currencySymbol={currencySymbol}
+            onCustomerNameChange={basket.setCustomerName}
+            onCustomerIdChange={basket.setCustomerId}
+            onOrderNotesChange={basket.setOrderNotes}
+            onCartDiscountChange={basket.setCartDiscount}
+            onVatRatePercentChange={basket.setVatRatePercent}
+            onUpdateQty={basket.updateQty}
+            onSetLinePrice={basket.setLinePrice}
+            onSetLineDiscount={basket.setLineDiscount}
+            onRemoveFromCart={basket.removeFromCart}
+            onOpenDesignSelector={basket.openDesignSelector}
+            onReset={basket.resetCart}
+            onCheckout={handleCheckout}
+          />
+        )}
+      </div>
 
       <POSDesignSelectorModal
         isOpen={basket.isDesignModalOpen}
@@ -457,26 +327,10 @@ export default function POS() {
       />
 
       {/*
-        Reversing a sale is not a delete: the record stays, marked voided, and
-        the stock it consumed goes back on the shelf. The shared dialog says
-        "This action cannot be undone", which is true of a void but reads at
-        first glance like the row is about to be destroyed — and a cashier who
-        believes that will not use the control when they should. The extra line
-        says what actually happens, and the reference ids are named rather than
-        the totals, because the id is what the slip in the customer's hand
-        carries.
+        The void confirmation left with the list it belonged to. Reversing a sale
+        is a decision about a RECORD, and the records are on the Orders page now —
+        the till has no rows to tick and therefore nothing to confirm.
       */}
-      <DeleteConfirmModal
-        isOpen={salesToVoid.length > 0}
-        itemLabels={salesToVoid.map((sale) => `#${sale.id.replace('TRX-', '').slice(-8)}`)}
-        isBusy={isVoiding}
-        onClose={() => setSalesToVoid([])}
-        onConfirm={confirmVoidSelected}
-      >
-        <p className="text-sm text-app-ink dark:text-zinc-100">
-          The sale is voided and the stock it used is returned to inventory. The record itself stays in the history, marked voided.
-        </p>
-      </DeleteConfirmModal>
     </div>
   );
 }

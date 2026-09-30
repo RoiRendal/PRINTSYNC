@@ -15,7 +15,6 @@ export interface UseOrderEditHydrationOptions {
   inventory: InventoryItem[];
   /** Clears the request so a later refresh cannot re-hydrate over the cashier's edits. */
   navigate: (path: string, options?: { replace?: boolean }) => void;
-  setView: (view: 'pos' | 'history') => void;
   setPosMode: (mode: PosMode) => void;
   /** Loads the order into the cart and captures its version token. */
   hydrateFromOrder: (order: Order, inventory: InventoryItem[]) => void;
@@ -31,15 +30,18 @@ export interface UseOrderEditHydrationOptions {
  * built from — which is exactly the lost update the token exists to prevent.
  *
  * Reworking an order is always a custom job, so the till is switched to Custom
- * as part of the same hydration; arriving on the History tab and finding the
- * cart silently loaded behind it would be worse than the switch.
+ * as part of the same hydration.
+ *
+ * It used to force the view back to Terminal as well, because the till had a
+ * History half the cart could have been hidden behind. R6 removed that half — the
+ * page navigates to `/pos` outright, and the terminal is the only thing there —
+ * so the switch had nothing left to guard.
  */
 export function useOrderEditHydration({
   editOrderId,
   orders,
   inventory,
   navigate,
-  setView,
   setPosMode,
   hydrateFromOrder,
 }: UseOrderEditHydrationOptions): void {
@@ -51,9 +53,8 @@ export function useOrderEditHydration({
     const orderToEdit = orders.find((order) => order.id === editOrderId);
     if (!orderToEdit) return;
 
-    setView('pos');
     setPosMode('custom');
     hydrateFromOrder(orderToEdit, inventory);
     navigate('/pos', { replace: true });
-  }, [editOrderId, hydrateFromOrder, inventory, navigate, orders, setPosMode, setView]);
+  }, [editOrderId, hydrateFromOrder, inventory, navigate, orders, setPosMode]);
 }

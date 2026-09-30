@@ -19,7 +19,6 @@ type Options = UseOrderEditHydrationOptions;
 
 function render(initial: Partial<Options> = {}) {
   const calls = {
-    setView: vi.fn(),
     setPosMode: vi.fn(),
     hydrateFromOrder: vi.fn(),
     navigate: vi.fn(),
@@ -53,13 +52,20 @@ describe('useOrderEditHydration', () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it('loads the order, switches to Custom and shows the terminal', () => {
-    const { setView, setPosMode, hydrateFromOrder, navigate } = render({
+  it('loads the order and switches the till to Custom', () => {
+    const { setPosMode, hydrateFromOrder, navigate } = render({
       editOrderId: 'order-1',
       orders: [LOADED_ORDER],
     });
 
-    expect(setView).toHaveBeenCalledWith('pos');
+    /*
+     * No assertion that a view was switched back to the terminal: R6 removed the
+     * POS's Terminal/History half, so `/pos` is now only ever the terminal and
+     * there is no view to switch. The navigation below is what lands the user on
+     * it. The Custom switch stays, because reworking an order is always a custom
+     * job and the till must not be left selling a counter sale with a customer's
+     * order quietly loaded.
+     */
     expect(setPosMode).toHaveBeenCalledWith('custom');
     // The order handed over is the one found in the store, together with the
     // catalogue available at that moment — the version is taken inside.
