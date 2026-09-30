@@ -26,6 +26,23 @@ export interface PrintableDocumentLine {
   /** Set when the line carries artwork or a custom job ticket. */
   designId?: string;
   sku?: string;
+  /**
+   * Discount applied to this line alone, in currency.
+   *
+   * Printed under the line, because a customer who was given ₱150 off one item
+   * should see that against the item rather than as a single unexplained figure
+   * at the bottom. Optional: a legacy line has none, and a line with no discount
+   * prints nothing.
+   */
+  lineDiscount?: number;
+  /**
+   * Unit of measure, printed beside the unit price — `₱1,200.00 / pc`.
+   *
+   * Only a live sale can carry this. A unit lives on `inventory_items`, and
+   * neither `sales_transaction_items` nor the `Transaction` contract carries one,
+   * so a REPRINT cannot show it. That is a gap in the record, not in this view.
+   */
+  uom?: string;
 }
 
 export interface PrintableDocumentTotals {
@@ -61,6 +78,18 @@ export interface PrintableDocument {
   };
   /** Walk-in when absent. */
   customerName?: string;
+  /**
+   * Who served the customer — the cashier's email.
+   *
+   * Frozen onto the document at the moment of sale rather than read from the
+   * session at render time, for the same reason the amounts are: a reprint must
+   * show who rang the sale up, not who is looking at it now.
+   *
+   * Absent on a reprint, because `sales_transactions.created_by` is not in the
+   * `Transaction` contract, so the record does not carry it back. A live receipt
+   * prints the line; a reprint prints nothing rather than guessing.
+   */
+  soldBy?: string;
   /** Order documents only: production notes for the shop floor. */
   notes?: string;
   /** Order documents only. `undefined` for a retail receipt. */
@@ -100,17 +129,32 @@ export function documentFromSale(input: {
   paymentMethod: 'Cash' | 'Card';
   customerName?: string;
   orderId?: string;
+  /**
+   * The id of the sale this receipt is for, once the server has assigned one.
+   *
+   * The reference used to be `SALE-<milliseconds>`, minted in the browser — so
+   * the number on the paper a customer walked away with existed nowhere in the
+   * database. A customer returning with that slip could not be looked up by it,
+   * and the terminal's Last-receipt label (derived from the same reference)
+   * disagreed with the row the cashier finds in History. The stored id is the
+   * only reference that means anything, so it is the one that gets printed.
+   *
+   * The timestamp fallback survives for the one case where there is no id yet.
+   */
+  transactionId?: string;
+  /** The cashier's email, frozen onto the document. See `PrintableDocument.soldBy`. */
+  soldBy?: string;
   /** Injectable clock so tests are not time-dependent. */
   now?: Date;
 }): PrintableDocument {
-  const { cart, totals, paymentMethod, customerName, orderId } = input;
+  const { cart, totals, paymentMethod, customerName, orderId, transactionId, soldBy } = input;
   const now = input.now ?? new Date();
   const isOrder = Boolean(orderId);
   const totalUnits = cart.reduce((sum, item) => sum + item.qty, 0) || 1;
 
   return {
     kind: isOrder ? 'order' : 'receipt',
-    reference: orderId ?? `SALE-${now.getTime()}`,
+    reference: orderId ?? transactionId ?? `SALE-${now.getTime()}`,
     date: now.toLocaleString(),
     lines: cart.map((item, index) => ({
       id: `${item.id}-${index}`,
@@ -121,6 +165,10 @@ export function documentFromSale(input: {
       unitPrice: item.price > 0 ? item.price : totals.subtotal / totalUnits,
       designId: item.designId,
       sku: item.sku,
+      // The till's own figures, spent here: the receipt is the one place a
+      // per-line discount and a unit of measure are worth showing a customer.
+      lineDiscount: item.lineDiscount,
+      uom: item.uom,
     })),
     totals: {
       subtotal: totals.subtotal,
@@ -136,6 +184,7 @@ export function documentFromSale(input: {
       settled: !isOrder,
     },
     customerName,
+    soldBy,
     notes: undefined,
     balance: undefined,
   };
@@ -173,6 +222,10 @@ export function documentFromTransaction(transaction: Transaction): PrintableDocu
       unitPrice: item.price > 0 ? item.price : averageUnitPrice,
       designId: item.designId,
       sku: item.sku,
+      // The sale LINE carries its discount — `sales_transaction_items` grew the
+      // column — so a reprint shows the same per-line figure the original did.
+      // The unit does not: it lives on the inventory item, not the sale line.
+      lineDiscount: item.lineDiscount,
     })),
     totals: {
       subtotal: transaction.subtotal,
@@ -255,6 +308,9 @@ export function documentFromOrder(
        */
       unitPrice: (lineItem.unitPrice ?? 0) > 0 ? lineItem.unitPrice! : averageUnitPrice,
       designId: lineItem.designId ?? order.designId,
+      // A job ticket shows the line discount too: it is part of what the
+      // customer was quoted, and the totals below have already had it taken off.
+      lineDiscount: lineItem.lineDiscount,
     })),
     totals: {
       subtotal: order.amount,

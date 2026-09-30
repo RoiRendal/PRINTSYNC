@@ -531,6 +531,18 @@ html {
     top: 0;
     left: 0;
     width: 100%;
+    /*
+     * The slip is a narrow centred column ON SCREEN — a receipt shown at receipt
+     * width — and the full page on paper. `width: 100%` above is not enough on
+     * its own: a `max-width` on the element caps it whatever the width says, so
+     * R5's `max-w-[320px]` silently turned the printed slip into a 320px
+     * left-aligned strip with 12mm of padding. Measured under print media, the
+     * slip came out 320px wide against a 1440px page.
+     *
+     * Written as a literal, like everything else in this block — see the note at
+     * the top of `@media print`.
+     */
+    max-width: none;
     margin: 0;
     padding: 12mm;
     border: 0;

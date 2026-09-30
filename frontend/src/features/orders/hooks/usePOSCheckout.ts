@@ -40,6 +40,14 @@ export interface UsePOSCheckoutOptions {
   posMode: PosMode;
   customerName: string;
   customerId: string | null;
+  /**
+   * The signed-in cashier's email, stamped onto the receipt as `Sold by`.
+   *
+   * Passed in rather than read here, because this hook has no store access and
+   * the document must be frozen with the sale — a reprint later shows who rang
+   * it up, not who is looking at it.
+   */
+  soldBy?: string;
   orderNotes: string;
   editingOrderId: string | null;
   /** Captured at hydration (see `useOrderEditHydration`); passed through, never re-read here. */
@@ -195,7 +203,18 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
         // and analytics re-read without a page reload.
         emitDataChange('inventory');
         options.recordCompletedSale(
-          documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName }),
+          documentFromSale({
+            cart: saleCart,
+            totals: saleTotals,
+            paymentMethod: paymentMethod,
+            customerName: options.customerName,
+            // The sale the server just wrote. This is what goes on the paper:
+            // the receipt's reference used to be a browser-minted timestamp that
+            // existed nowhere in the database, so a customer returning with the
+            // slip could not be looked up by it.
+            transactionId: createdTransaction.id,
+            soldBy: options.soldBy,
+          }),
         );
         saleCompleted = true;
       } else {
@@ -242,13 +261,13 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
             options.editingOrderVersion,
           );
           options.recordCompletedSale(
-            documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName, orderId: updated.id }),
+            documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName, orderId: updated.id, soldBy: options.soldBy }),
             options.customerName,
           );
         } else {
           const created = await options.addOrder(preparedOrder);
           options.recordCompletedSale(
-            documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName, orderId: created.id }),
+            documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName, orderId: created.id, soldBy: options.soldBy }),
             options.customerName,
           );
         }
@@ -274,7 +293,17 @@ export function usePOSCheckout(options: UsePOSCheckoutOptions): POSCheckoutContr
           // INVARIANT 3 — a reconciled sale is a real sale; retire the key.
           options.completeAttempt();
           options.recordCompletedSale(
-            documentFromSale({ cart: saleCart, totals: saleTotals, paymentMethod: paymentMethod, customerName: options.customerName }),
+            documentFromSale({
+              cart: saleCart,
+              totals: saleTotals,
+              paymentMethod: paymentMethod,
+              customerName: options.customerName,
+              // The sale committed — we just never saw the response. The
+              // reconciler found it and hands back its id, so the receipt for a
+              // recovered sale carries the same reference as any other.
+              transactionId: outcome.reference,
+              soldBy: options.soldBy,
+            }),
           );
           saleCompleted = true;
           saleRecovered = true;

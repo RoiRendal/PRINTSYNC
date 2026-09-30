@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
+import { useAuthStore } from '../../../app/stores/useAuthStore';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import { useInventory } from '../../../app/stores/useInventoryStore';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
@@ -44,6 +45,8 @@ export default function POS() {
   const { designs } = useDesigns();
   const { addOrder, orders, updateOrder } = useOrders();
   const { customers } = useCustomers();
+  // The cashier, for the receipt's `Sold by` line.
+  const currentUser = useAuthStore((state) => state.currentUser);
   const { vatRate, currencySymbol } = useBusinessBranding();
   const location = useLocation();
   const navigate = useNavigate();
@@ -273,6 +276,8 @@ export default function POS() {
     posMode,
     customerName,
     customerId,
+    // Who is standing at the till, frozen onto the receipt as `Sold by`.
+    soldBy: currentUser?.email,
     orderNotes,
     editingOrderId,
     editingOrderVersion,
@@ -437,6 +442,18 @@ export default function POS() {
         onClose={receipts.closeReceiptModal}
         document={receipts.receipt}
         onPrint={() => receipts.receipt && printDocument(receipts.receipt)}
+        /*
+         * `New Order` only when the document on screen is the sale that just
+         * happened — the same object `recordCompletedSale` filed in both places,
+         * so identity is the honest test. A reprint pulled from History is a
+         * different document about a different sale, and offering "New Order"
+         * there would describe an action the cashier did not ask for.
+         */
+        onNewOrder={
+          receipts.receipt && receipts.receipt === receipts.lastDocument?.document
+            ? receipts.closeReceiptModal
+            : undefined
+        }
       />
 
       {/*

@@ -76,8 +76,19 @@ describe('a retail receipt reads as proof of payment', () => {
     // from — so a receipt printing unit prices as line totals would fail here.
     expect(screen.getByText('₱787.50')).toBeInTheDocument();
     expect(screen.getByText('₱212.50')).toBeInTheDocument();
-    expect(screen.queryByText('₱262.50')).not.toBeInTheDocument();
-    expect(screen.queryByText('₱106.25')).not.toBeInTheDocument();
+    /*
+     * R5 prints the RATE under each line, with its unit — `₱262.50 / pc`. That
+     * reverses what this test used to assert (that a unit price never appeared
+     * at all), and it is deliberate: the plan asks for `uom` to be spent on the
+     * receipt, and the rate is where a unit belongs.
+     *
+     * The guard this test was protecting survives intact. The two figures are
+     * still distinct and each still appears exactly once, so a slip that printed
+     * the rate in the line total's place would show 262.50 where 787.50 belongs
+     * and fail the assertions above.
+     */
+    expect(screen.getByText('₱262.50')).toBeInTheDocument();
+    expect(screen.getByText('₱106.25')).toBeInTheDocument();
   });
 
   it('attaches a design reference to the line that carries it', () => {
@@ -105,7 +116,11 @@ describe('a voided sale cannot be mistaken for a live one', () => {
   it('stamps the document as void', () => {
     render(<PrintableDocumentView document={makeRetailDocument({ voided: true })} />);
 
-    expect(screen.getByText(/voided/i)).toBeInTheDocument();
+    // The word now appears twice — the banner across the top and the status pill
+    // in the header — and that is the point rather than an accident: a customer
+    // glancing at either end of the slip should see it.
+    expect(screen.getAllByText(/voided/i).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(/not a valid receipt/i)).toBeInTheDocument();
   });
 
   it('leaves a live sale unstamped', () => {
@@ -119,7 +134,12 @@ describe('a voided sale cannot be mistaken for a live one', () => {
 
     // The amounts are left as recorded. A reversal is proved by the paper
     // showing what was reversed, not by zeroing the record.
-    expect(screen.getByText('₱224.00')).toBeInTheDocument();
+    //
+    // `getAllByText`: the figure appears in the header (the headline amount) and
+    // again in the Payments block (what was handed over). That repetition is how
+    // a receipt reads — the top line is the total, the bottom is the detail —
+    // so the assertion is "the amount is still on the paper", not "exactly once".
+    expect(screen.getAllByText('₱224.00').length).toBeGreaterThan(0);
   });
 });
 
@@ -188,5 +208,97 @@ describe('a custom order summary reads as an acknowledgement, not a receipt', ()
     render(<PrintableDocumentView document={makeOrderDocument()} />);
 
     expect(screen.queryByText(/VAT/i)).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * R5's recomposition, as the reader sees it: the three labelled blocks, the
+ * two-half header with the status pill, `Sold by`, and the per-line figures the
+ * new columns made printable.
+ */
+describe('the slip is composed as labelled blocks', () => {
+  it('heads the three sections ERPNext heads', () => {
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    // The reader is looking for one of three things; the headings are what tell
+    // them where to stop.
+    expect(screen.getByText('Items')).toBeInTheDocument();
+    expect(screen.getByText('Totals')).toBeInTheDocument();
+    expect(screen.getByText('Payments')).toBeInTheDocument();
+  });
+
+  it('prints the reference under the amount it belongs to', () => {
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    // The reference is what you look for when the sale has to be found again —
+    // and after R5 it is the STORED sale's id, not a browser-minted timestamp.
+    expect(screen.getByText('TRX-ABCD1234')).toBeInTheDocument();
+  });
+
+  it('names the cashier who served the sale', () => {
+    render(<PrintableDocumentView document={makeRetailDocument({ soldBy: 'mika@printsync.com' })} />);
+
+    expect(screen.getByText(/sold by: mika@printsync\.com/i)).toBeInTheDocument();
+  });
+
+  it('prints no `Sold by` when the record does not carry one', () => {
+    // A reprint: `sales_transactions.created_by` is not in the `Transaction`
+    // contract, so the document genuinely does not know. Printing a guess would
+    // be worse than printing nothing.
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    expect(screen.queryByText(/sold by/i)).not.toBeInTheDocument();
+  });
+
+  it('marks a settled sale Paid and an outstanding job Balance due', () => {
+    const { unmount } = render(<PrintableDocumentView document={makeRetailDocument()} />);
+    expect(screen.getByText('Paid')).toBeInTheDocument();
+    unmount();
+
+    render(<PrintableDocumentView document={makeOrderDocument()} />);
+    expect(screen.getByText('Balance due')).toBeInTheDocument();
+  });
+
+  it('prints the unit beside the rate', () => {
+    render(
+      <PrintableDocumentView
+        document={makeRetailDocument({
+          lines: [{ id: 'line-1', name: 'Bond Paper', qty: 2, unitPrice: 250, uom: 'ream' }],
+        })}
+      />,
+    );
+
+    // The unit is a property of the item, so it rides on the rate.
+    expect(screen.getByText('₱250.00 / ream')).toBeInTheDocument();
+  });
+
+  it('prints a line discount against its own line', () => {
+    render(
+      <PrintableDocumentView
+        document={makeRetailDocument({
+          lines: [{ id: 'line-1', name: 'Banner', qty: 1, unitPrice: 1200, lineDiscount: 150 }],
+          totals: { subtotal: 1200, discount: 150, tax: 126, taxLabel: 'VAT (12%)', total: 1176 },
+        })}
+      />,
+    );
+
+    // A customer given ₱150 off one item should see it against that item, not
+    // only as one unexplained figure in the totals — so it appears twice: once
+    // under the line it belongs to, once in the Totals block it rolls into.
+    expect(screen.getAllByText('−₱150.00')).toHaveLength(2);
+    // …and the line still prices net of it.
+    expect(screen.getByText('₱1050.00')).toBeInTheDocument();
+  });
+
+  it('never claims an order collected money at the till', () => {
+    render(<PrintableDocumentView document={makeOrderDocument()} />);
+
+    // The order's Totals block already carries Amount Paid and the balance;
+    // repeating the deposit under Payments would print one figure twice under
+    // two headings, and "collected at the till" would be untrue of a deposit.
+    expect(screen.getByText('No payment collected at the till.')).toBeInTheDocument();
+    // Anchored at the start of a node's text: the negative CONTAINS the positive,
+    // so an unanchored query would match the very sentence it is excluding.
+    expect(screen.queryByText(/^collected at the till/i)).not.toBeInTheDocument();
   });
 });
