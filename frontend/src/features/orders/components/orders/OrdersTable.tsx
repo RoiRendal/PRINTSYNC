@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LoaderCircle, Trash2 } from '../../../../shared/components/ui/icons';
+import { LoaderCircle, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import {
   Button,
   Card,
@@ -30,6 +30,8 @@ interface OrdersTableProps {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
   onSelectOrder: (order: Order) => void;
+  /** Opens the POS to ring up a new sale — the header's "+" control. */
+  onNewOrder: () => void;
   /**
    * Deletes every ticked row. The table no longer deletes one row at a time: the
    * row's trash button was removed so a delete can only come from the header
@@ -54,6 +56,7 @@ export function OrdersTable({
   searchTerm,
   onSearchTermChange,
   onSelectOrder,
+  onNewOrder,
   onDeleteSelected,
   selection,
   pendingOrderIds,
@@ -93,6 +96,23 @@ export function OrdersTable({
             className="shrink-0"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+          {/*
+            "New POS Order" as a bare plus, to the right of delete — the same pair
+            the Inventory, Customers and Users tables show. The words live in the
+            accessible name now; the primary fill stays, because ringing up a sale
+            is still this screen's one dominant action (R23).
+          */}
+          <Button
+            type="button"
+            variant="primary"
+            size="icon"
+            onClick={onNewOrder}
+            aria-label="New POS Order"
+            title="New POS Order"
+            className="shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>

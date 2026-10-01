@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Calendar } from '../../../shared/components/ui/icons';
+import { Calendar } from '../../../shared/components/ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
@@ -202,6 +202,13 @@ export default function Orders() {
 
   return (
     <div className="space-y-5">
+      {/*
+        The wrapper outlives its second child on purpose: `lg:flex-row` is what
+        keeps the switch at its own width on desktop instead of letting it stretch
+        to the page edge. The Inventory page's view switch sits in the identical
+        wrapper, for the same reason. "New POS Order" is now the "+" inside the
+        orders-table header, beside that table's delete control.
+      */}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <SegmentedControl
           aria-label="Order list"
@@ -213,9 +220,6 @@ export default function Orders() {
             { value: 'retail', label: 'Retail Sales' },
           ]}
         />
-        <Button variant="primary" onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
-          New POS Order
-        </Button>
       </div>
 
       {/*
@@ -298,6 +302,7 @@ export default function Orders() {
                 searchTerm={searchTerm}
                 onSearchTermChange={setSearchTerm}
                 onSelectOrder={setSelectedOrder}
+                onNewOrder={() => navigate('/pos')}
                 onDeleteSelected={openDeleteConfirm}
                 selection={selection}
                 pendingOrderIds={pendingOrderIds}

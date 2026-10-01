@@ -80,8 +80,25 @@ export function InventoryTable({
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
-          <Button type="button" variant="primary" onClick={onAddItem} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />} id="add-stock-btn" className="shrink-0">
-            Add Stock
+          {/*
+            A bare plus, sitting to the right of the delete square and matching
+            its geometry exactly (both `size="icon"`, both a 14px glyph). The plus
+            IS the affordance now; the words moved into the accessible name, so a
+            screen reader still hears "Add Stock". The primary fill stays — adding
+            stock is still this screen's one dominant action (R23), and only the
+            label was dropped, not the weight.
+          */}
+          <Button
+            type="button"
+            variant="primary"
+            size="icon"
+            onClick={onAddItem}
+            aria-label="Add Stock"
+            title="Add Stock"
+            id="add-stock-btn"
+            className="shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>

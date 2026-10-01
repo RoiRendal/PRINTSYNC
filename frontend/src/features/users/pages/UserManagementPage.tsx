@@ -225,10 +225,6 @@ export default function UserManagement() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <Button variant="primary" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Add User</Button>
-      </div>
-
       <StatTileRow columns={1}>
         <StatTile label="Total Users" value={users.length} />
       </StatTileRow>
@@ -253,6 +249,23 @@ export default function UserManagement() {
                   className="shrink-0"
                 >
                   <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
+                {/*
+                  "Add User" as a bare plus, to the right of delete — the same pair
+                  the Inventory table shows. The words live in the accessible name
+                  now; the primary fill stays, because adding a user is still this
+                  screen's one dominant action (R23).
+                */}
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="icon"
+                  onClick={openCreate}
+                  aria-label="Add User"
+                  title="Add User"
+                  className="shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                 </Button>
               </div>
             </CardHeader>
