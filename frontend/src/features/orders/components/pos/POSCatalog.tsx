@@ -103,20 +103,18 @@ export function POSCatalog({
                 </div>
               )}
               {/*
-                A bare number, toned by threshold — ERPNext's `.item-qty-available`.
-                It used to be a `Badge` pill reading "15 stock", which spent a
-                frame, a fill and a word on one fact. The word went too: every
-                other number in this column is a quantity, so the tile does not
-                need to say which one.
-
-                At or under the reorder level it goes red. That is the same
-                deliberate exception the inventory table and the dashboard
-                low-stock count already use — here the number is the only place
-                the cashier sees that this item is about to run out.
+                A solid, borderless pill, not the bare number it replaced. A bare
+                figure over the tile's photo is unreadable whenever the image is a
+                similar colour — exactly the case that matters (a dark product
+                shot, a red low-stock figure). The fill is the raised-surface token,
+                so it is opaque in both themes and hides the image underneath; the
+                text keeps its threshold tone (danger at or under reorder level) so
+                the low-stock cue survives. No `border-*` class: the one outline the
+                change asked to drop is the pill's own.
               */}
               <span
                 className={cn(
-                  'absolute right-1.5 top-1.5 tabular-nums text-2xs font-bold',
+                  'absolute right-1.5 top-1.5 rounded-full bg-[var(--app-surface-raised)] px-2 py-0.5 tabular-nums text-2xs font-bold',
                   product.stock <= product.reorderLevel
                     ? 'text-app-danger dark:text-red-300'
                     : 'text-app-text-muted dark:text-zinc-400',

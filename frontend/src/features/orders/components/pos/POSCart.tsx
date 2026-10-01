@@ -119,7 +119,12 @@ export function POSCart({
             floor for 10px type. `zinc-400` measures 6.49:1 and is the step the
             "· optional" hint beside it already uses.
           */}
-          <span className="text-2xs font-bold tabular-nums text-app-text-muted dark:text-zinc-400">{cart.length} items</span>
+          {/*
+            "item(s)" rather than "items": the count reads the same whether there
+            is one line or forty, so the label never flickers between singular and
+            plural as the cashier adds and removes stock.
+          */}
+          <span className="text-2xs font-bold tabular-nums text-app-text-muted dark:text-zinc-400">{cart.length} item(s)</span>
         </div>
       </div>
 
@@ -147,7 +152,14 @@ export function POSCart({
         order *requires* a name and a counter sale does not — which is enforced
         at the button below, not by hiding the field.
       */}
-      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
+      {/*
+        `px-4 pb-4`, not `p-4`: the 16px top padding was the last of the dead
+        space above the "Customer" label. The rule over the heading already
+        separates the two blocks, so the customer block needs no padding of its
+        own above its first line — removing it drops the gap heading→"Customer"
+        by another 16px (74 → 38 → ~22 measured).
+      */}
+      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] px-4 pb-4">
         <label className="block space-y-1.5">
           <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">
             Customer{posMode === 'retail' && <span className="font-medium text-app-text-muted dark:text-zinc-400"> · optional</span>}
