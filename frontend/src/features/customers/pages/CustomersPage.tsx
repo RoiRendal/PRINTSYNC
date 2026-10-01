@@ -357,9 +357,17 @@ export default function CustomersPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
-              <div className="border-t px-4 py-3">
-                <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
-              </div>
+              {/*
+                Only when there is more than one page. The band exists to frame the
+                pager, so an empty pager would leave a stray strip under the last
+                row — which is why the two tables that take a `footer` prop are
+                handed one only when it has something in it.
+              */}
+              {total > limit && (
+                <div className="border-t px-4 py-3">
+                  <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
+                </div>
+              )}
             </CardContent>
           </Card>
 

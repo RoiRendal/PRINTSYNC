@@ -303,9 +303,21 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
             </Table>
           </TableContainer>
         </CardContent>
-        <div className="border-t px-4 py-3">
-          <Pagination page={historyPage} limit={history.filteredRows.length} total={history.totalRows} onPageChange={setHistoryPage} />
-        </div>
+        {/*
+          Only when there is more than one page — the band frames the pager, so an
+          empty pager would leave a stray strip under the last row.
+
+          `limit` is the PAGE SIZE, not the number of rows on screen. This list is
+          paged in the browser, so on a part-full last page `filteredRows.length`
+          understates the page size and the pager would invent pages that do not
+          exist ("Page 2 of 5" when there are 2). The hook's `totalPages` is the
+          honest count, and it is what the condition below tests.
+        */}
+        {history.totalPages > 1 && (
+          <div className="border-t px-4 py-3">
+            <Pagination page={historyPage} limit={HISTORY_PAGE_SIZE} total={history.totalRows} onPageChange={setHistoryPage} />
+          </div>
+        )}
       </Card>
 
       <Modal isOpen={!!history.selectedTransaction} onClose={() => history.selectTransaction(null)} title="Transaction Details" maxWidth="max-w-sm">
