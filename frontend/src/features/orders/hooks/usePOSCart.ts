@@ -40,6 +40,25 @@ export interface POSCartController {
   addToCart: (product: InventoryItem, mode: PosMode) => void;
   removeFromCart: (cartIndex: number) => void;
   updateQty: (cartIndex: number, delta: number) => void;
+  /**
+   * Overrides one line's rate.
+   *
+   * The line's rate IS its `price` — `CartItem` extends `InventoryItem`, and
+   * `useCartTotals` already multiplies `price * qty`, so a per-line override
+   * needs no new field. It also needs no new plumbing downstream: both checkout
+   * paths already send `unitPrice: item.price`, and the sale/order RPCs store
+   * that value, so an overridden rate is persisted rather than recomputed.
+   */
+  setLinePrice: (cartIndex: number, price: number) => void;
+  /**
+   * Discounts one line, in currency.
+   *
+   * Clamped to the line's own gross value, which is what makes the server's
+   * `discount ≥ Σ line discounts` rule unreachable: the sum of the clamps can
+   * never exceed the subtotal. A discount larger than the line is not a bigger
+   * discount, it is a negative line.
+   */
+  setLineDiscount: (cartIndex: number, amount: number) => void;
   openDesignSelector: (cartIndex: number) => void;
   selectDesignForItem: (designId: string) => void;
   closeDesignSelector: () => void;
@@ -104,7 +123,7 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
           item.id === product.id && !item.isCustom ? { ...item, qty: item.qty + 1 } : item,
         );
       }
-      return [...previous, { ...product, qty: 1, isCustom: mode === 'custom' }];
+      return [...previous, { ...product, qty: 1, isCustom: mode === 'custom', cataloguePrice: product.price }];
     });
   }, []);
 
@@ -128,12 +147,59 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
           if (idx !== cartIndex) return current;
           const product = inventory.find((inv) => inv.id === current.id);
           if (!product) return current;
-          return { ...current, qty: Math.max(1, Math.min(current.qty + delta, product.stock)) };
+          const qty = Math.max(1, Math.min(current.qty + delta, product.stock));
+          // The line's gross moves with its quantity, so a discount that was
+          // legal at three units may not be at one. Clamping here keeps the
+          // invariant that a line is never discounted below zero — the sale RPC
+          // refuses such a cart, and it would refuse it at the last step.
+          const lineGross = current.price * qty;
+          return {
+            ...current,
+            qty,
+            lineDiscount: Math.min(current.lineDiscount ?? 0, lineGross),
+          };
         });
       });
     },
     [inventory],
   );
+
+  /**
+   * A rate is a money value, so it is clamped the same way every other money
+   * input in the cart is: never negative, never NaN. A blank field reads as 0
+   * rather than as "leave it alone" — the cashier clearing the box means free,
+   * and the alternative is a field that silently keeps a stale number.
+   */
+  const setLinePrice = useCallback((cartIndex: number, price: number) => {
+    setCart((previous) =>
+      previous.map((item, idx) => {
+        if (idx !== cartIndex) return item;
+        const next = Number.isFinite(price) ? Math.max(0, price) : 0;
+        /*
+         * Re-clamp the line's discount against its NEW value. Dropping a rate
+         * from ₱1,200 to ₱100 while a ₱500 discount sits on the line would
+         * otherwise leave a discount larger than the line — which the sale RPC
+         * refuses outright, so the till would look broken at the very last step
+         * of a sale. The discount is a property of the line, so it moves with it.
+         */
+        const lineGross = next * item.qty;
+        const clampedDiscount = Math.min(item.lineDiscount ?? 0, lineGross);
+        if (item.price === next && item.lineDiscount === clampedDiscount) return item;
+        return { ...item, price: next, lineDiscount: clampedDiscount };
+      }),
+    );
+  }, []);
+
+  const setLineDiscount = useCallback((cartIndex: number, amount: number) => {
+    setCart((previous) =>
+      previous.map((item, idx) => {
+        if (idx !== cartIndex) return item;
+        const lineGross = item.price * item.qty;
+        const next = Math.min(Math.max(0, Number.isFinite(amount) ? amount : 0), lineGross);
+        return (item.lineDiscount ?? 0) === next ? item : { ...item, lineDiscount: next };
+      }),
+    );
+  }, []);
 
   const openDesignSelector = useCallback((cartIndex: number) => {
     setCurrentItemToDesign(cartIndex.toString());
@@ -169,6 +235,9 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
               // the catalogue on hydration, so the contract's required field is
               // stated as zero rather than invented.
               unitPrice: 0,
+              // Likewise: a legacy order has no per-line discount to recover,
+              // and `0` is the "no discount" the column itself defaults to.
+              lineDiscount: 0,
             }));
 
     const hydratedCart: CartItem[] = sourceLineItems
@@ -181,6 +250,23 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
         return {
           ...inventoryItem,
           qty: lineItem.quantity,
+          /*
+           * Honour the price the order was written with.
+           *
+           * This used to always re-price from the catalogue, which was harmless
+           * while every line was at the catalogue price — but the till can now
+           * override a line's rate, and re-pricing on reopen would silently undo
+           * the override and change what the order is worth. A stored price of 0
+           * still falls back to the catalogue: legacy orders carry no per-line
+           * price, and that is the case the fallback exists for.
+           */
+          price: lineItem.unitPrice > 0 ? lineItem.unitPrice : inventoryItem.price,
+          // The catalogue's own figure, so the details surface can still tell an
+          // order that was priced by hand from one that was not.
+          cataloguePrice: inventoryItem.price,
+          // A legacy order has no per-line discount to recover; 0 is the same
+          // "no discount" the column defaults to.
+          lineDiscount: lineItem.lineDiscount ?? 0,
           isCustom: true,
           designId: lineItem.designId,
           notes: order.notes,
@@ -239,6 +325,8 @@ export function usePOSCart({ inventory, vatRate }: UsePOSCartOptions): POSCartCo
     addToCart,
     removeFromCart,
     updateQty,
+    setLinePrice,
+    setLineDiscount,
     openDesignSelector,
     selectDesignForItem,
     closeDesignSelector,

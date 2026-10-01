@@ -5,7 +5,20 @@ export interface TransactionItem {
   itemId?: string;
   name: string;
   quantity: number;
+  /**
+   * The rate actually charged for this line — NOT necessarily the catalogue
+   * price. The till can override a line's rate, and the sale RPC stores what it
+   * is given instead of re-pricing from the catalogue.
+   */
   unitPrice: number;
+  /**
+   * Discount applied to this line alone, in currency.
+   *
+   * Optional because the server defaults it to 0; the sale RPC writes the
+   * column, so the API always returns it on a read. A missing value means "no
+   * discount", never "unknown".
+   */
+  lineDiscount?: number;
 }
 
 export interface Transaction {
@@ -18,6 +31,13 @@ export interface Transaction {
   total: number;
   paymentMethod: PaymentMethod;
   paymentAmount: number;
+  /**
+   * Who the sale was for. Empty string — never absent — for an anonymous
+   * walk-in sale, because the column is `not null default ''`. A custom order
+   * requires a customer; a retail sale does not.
+   */
+  customer: string;
+  customerId?: string;
   date: string;
 }
 
@@ -31,7 +51,14 @@ export interface Transaction {
  * the contract does not offer the field at all. This matches the API, whose
  * `TransactionInput` has never carried a `status`.
  */
-export type CreateTransaction = Omit<Transaction, 'id' | 'date' | 'status'>;
+export type CreateTransaction = Omit<Transaction, 'id' | 'date' | 'status' | 'customer'> & {
+  /**
+   * Optional, unlike on the read shape. A retail sale is legitimately anonymous
+   * — the API accepts a blank customer and stores `''` — so requiring the field
+   * here would force every caller to send an empty string to say "no customer".
+   */
+  customer?: string;
+};
 
 /**
  * The structured context the API attaches when a sale is rejected because stock

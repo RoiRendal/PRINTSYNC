@@ -17,6 +17,9 @@ const itemSchema = z.object({
   name: z.string().trim().min(1),
   quantity: z.number().int().positive(),
   unitPrice: z.number().min(0),
+  // The RPC enforces the real rule (a line cannot be discounted below zero);
+  // this only rejects a nonsensical value before it reaches the database.
+  lineDiscount: z.number().min(0).optional(),
 });
 const transactionSchema = z.object({
   items: z.array(itemSchema).min(1),
@@ -33,6 +36,10 @@ const transactionSchema = z.object({
   // does not send one is buggy and should fail loudly rather than silently lose
   // its protection.
   idempotencyKey: z.string().uuid(),
+  // Optional on purpose: a walk-in sale is anonymous. Unlike a custom order,
+  // where the order RPC refuses a blank customer, a retail sale may carry none.
+  customer: z.string().trim().max(160).optional(),
+  customerId: z.string().uuid().optional(),
 });
 
 function getSupabase() {

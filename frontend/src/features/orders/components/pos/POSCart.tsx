@@ -1,11 +1,12 @@
+import { useState } from 'react';
 import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
 import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
-import { cn } from '../../../../shared/lib/cn';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
+import { POSItemDetails } from './POSItemDetails';
 import type { Customer } from '../../../customers/types';
 
 interface POSCartProps {
@@ -27,6 +28,8 @@ interface POSCartProps {
   onCartDiscountChange: (value: number) => void;
   onVatRatePercentChange: (value: number) => void;
   onUpdateQty: (index: number, delta: number) => void;
+  onSetLinePrice: (index: number, price: number) => void;
+  onSetLineDiscount: (index: number, amount: number) => void;
   onRemoveFromCart: (index: number) => void;
   onOpenDesignSelector: (index: number) => void;
   onReset: () => void;
@@ -52,16 +55,43 @@ export function POSCart({
   onCartDiscountChange,
   onVatRatePercentChange,
   onUpdateQty,
+  onSetLinePrice,
+  onSetLineDiscount,
   onRemoveFromCart,
   onOpenDesignSelector,
   onReset,
   onCheckout,
 }: POSCartProps) {
   const { subtotal, discount: appliedDiscount, tax, total } = totals;
+  /** Whether the discount field is open. Local, because it is a property of this
+   *  panel's layout, not of the sale. */
+  const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  /**
+   * Which line is open in Item Details, if any.
+   *
+   * Owned here rather than by the page: it is a property of this panel's layout,
+   * not of the sale. `cart[selectedLine]` is read defensively below, so a line
+   * removed from under the view falls back to the list instead of rendering an
+   * empty detail — the index is only ever a pointer into `cart`, and the cart
+   * can change while the detail is open (the design modal, a background refresh
+   * of the catalogue).
+   */
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const detailItem = selectedLine !== null ? cart[selectedLine] : undefined;
 
+  /*
+   * Header and footer are `shrink-0`; only the list between them takes the
+   * leftover height and scrolls. That is what keeps the totals and the action
+   * row in the same place whether the cart holds one line or forty — a cashier
+   * should not have to hunt for the button that finishes the sale.
+   *
+   * The footer no longer needs a `max-h` guess: below `xl` the panel keeps the
+   * 60vh cap it always had, from `xl` up the grid gives it a real height and the
+   * list answers to that instead.
+   */
   return (
-    <SurfaceCard className="flex w-full flex-col overflow-hidden p-0 xl:sticky xl:top-4 xl:w-[23rem] xl:self-start">
-      <div className="relative p-4">
+    <SurfaceCard className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden p-0 xl:h-full xl:shrink">
+      <div className="relative shrink-0 p-4">
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
           <div>
             <h2 className="label-caps text-app-ink dark:text-zinc-100">
@@ -73,26 +103,72 @@ export function POSCart({
         </div>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto px-4 pb-4 space-y-2.5 scrollbar-hide">
-        {posMode === 'custom' && (
-          <div className="mb-4 space-y-3 rounded-[var(--radius-card)] border bg-[var(--app-tint-accent)] p-3">
-            <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Customer</span>
-              <CustomerSelector
-                customers={customers}
-                customerId={customerId}
-                customerName={customerName}
-                onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
-              />
-            </label>
-            <label className="block space-y-1.5">
-              <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Production Notes</span>
-              <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
-            </label>
-          </div>
-        )}
+      {/*
+        The customer is the sale's header, not one of its lines — so it is its
+        own box above the list and never scrolls. It used to sit inside the
+        scrolling area, which meant the name of the person you are building the
+        job for scrolled away with the items. ERPNext puts the customer in its
+        own card at the top of the right column for the same reason: it is who
+        the sale is FOR, and everything below it is what they are buying.
 
-        {cart.length === 0 ? (
+        The tint went with the move. The block used to be a rounded, filled
+        panel floating inside the cart; a rule under it separates just as
+        clearly, and a tint inside an already-bounded panel is a frame worn for
+        the sake of wearing one (R19–R21).
+      */}
+      {/*
+        The customer is the sale's header, not one of its lines — so it is its
+        own box above the list and never scrolls. ERPNext puts it in its own card
+        at the top of the right column for the same reason: it is who the sale is
+        FOR, and everything below it is what they are buying.
+
+        Shown in BOTH modes now. A retail sale can name a customer; it simply
+        does not have to. The difference between the two modes is that a custom
+        order *requires* a name and a counter sale does not — which is enforced
+        at the button below, not by hiding the field.
+      */}
+      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
+        <label className="block space-y-1.5">
+          <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">
+            Customer{posMode === 'retail' && <span className="font-medium text-app-text-muted dark:text-zinc-400"> · optional</span>}
+          </span>
+          <CustomerSelector
+            customers={customers}
+            customerId={customerId}
+            customerName={customerName}
+            onChange={(id, name) => { onCustomerIdChange(id); onCustomerNameChange(name); }}
+          />
+        </label>
+        {posMode === 'custom' && (
+          <label className="block space-y-1.5">
+            <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">Production Notes</span>
+            <Input fieldSize="sm" className="text-xs" value={orderNotes} onChange={(e) => onOrderNotesChange(e.target.value)} aria-label="Production notes" />
+          </label>
+        )}
+      </div>
+
+      <div className="scrollbar-thin max-h-[60vh] space-y-2.5 overflow-y-auto px-4 pb-4 xl:max-h-none xl:min-h-0 xl:flex-1">
+        {/*
+          One occupant at a time inside a fixed span — the list and Item Details
+          swap, they never stack. That is the mechanism ERPNext uses for its
+          right column, and it is why the panel's geometry does not move when
+          the cashier opens a line.
+        */}
+        {detailItem ? (
+          <POSItemDetails
+            item={detailItem}
+            index={selectedLine as number}
+            designs={designs}
+            posMode={posMode}
+            currencySymbol={currencySymbol}
+            onUpdateQty={onUpdateQty}
+            onSetLinePrice={onSetLinePrice}
+            onSetLineDiscount={onSetLineDiscount}
+            onRemove={(idx) => { onRemoveFromCart(idx); setSelectedLine(null); }}
+            onOpenDesignSelector={onOpenDesignSelector}
+            onBack={() => setSelectedLine(null)}
+          />
+        ) : cart.length === 0 ? (
           <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
         ) : (
           cart.map((item, idx) => (
@@ -107,7 +183,23 @@ export function POSCart({
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="truncate text-2xs font-bold leading-tight text-app-ink dark:text-zinc-100">{item.name}</span>
+                    {/*
+                      The name is the way into Item Details. It is a real button
+                      rather than a click handler on the row because the row also
+                      contains a stepper and a trash control, and a button cannot
+                      contain buttons — wrapping the whole row would nest them.
+                      The stepper stays inline: bumping a quantity is the edit a
+                      cashier makes constantly, and sending it through a second
+                      screen to save one click would be a regression.
+                    */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedLine(idx)}
+                      title={`Edit ${item.name}`}
+                      className="cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
+                    >
+                      {item.name}
+                    </button>
                     <button type="button" onClick={() => onRemoveFromCart(idx)} className="cursor-pointer text-app-text-muted hover:text-app-danger dark:text-zinc-500 dark:hover:text-red-300" aria-label={`Remove ${item.name}`}>
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -118,7 +210,9 @@ export function POSCart({
                       <span className="w-7 select-none py-1.5 text-center tabular-nums text-2xs">{item.qty}</span>
                       <button type="button" onClick={() => onUpdateQty(idx, 1)} className="cursor-pointer p-1.5 hover:bg-[var(--app-state-hover)]" aria-label={`Increase ${item.name}`}><Plus className="h-2.5 w-2.5" aria-hidden="true" /></button>
                     </div>
-                    <span className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100">{currencySymbol}{(item.price * item.qty).toFixed(2)}</span>
+                    <span className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100">
+                      {currencySymbol}{(item.price * item.qty - Math.min(item.lineDiscount ?? 0, item.price * item.qty)).toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -147,22 +241,72 @@ export function POSCart({
         )}
       </div>
 
-      <div className="space-y-3 border-t p-4">
+      <div className="shrink-0 space-y-3 border-t p-4">
         <div className="space-y-1.5">
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">Subtotal</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{subtotal.toFixed(2)}</span></div>
-          <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
-            <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
-            <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-24 max-w-[40%] px-2 text-right tabular-nums text-2xs" value={cartDiscount} onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="Cart discount" />
-          </div>
+          {/*
+            Shown only when there is one, and read-only: a line discount is set
+            on its own line in Item Details. Listing the sum here is what stops
+            the footer's "Discount" field from reading as the whole story — the
+            grand discount is this figure PLUS whatever is typed below, which is
+            also what the sale RPC is sent and checks.
+          */}
+          {totals.lineDiscounts > 0 && (
+            <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
+              <span className="font-bold">Line discounts</span>
+              <span className="text-app-ink dark:text-zinc-300">{currencySymbol}{totals.lineDiscounts.toFixed(2)}</span>
+            </div>
+          )}
+          {/*
+            ERPNext's `add-discount-wrapper`: the discount is a dashed button
+            until someone asks for one. Most sales have no discount, so a
+            permanently visible numeric field spends footer height — the height
+            the pinned totals need — on a control that is usually zero.
+
+            Once a discount exists the field stays open, so the number you typed
+            remains visible and editable; setting it back to 0 collapses it to
+            the button again.
+          */}
+          {isEditingDiscount || cartDiscount > 0 ? (
+            <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
+              <span className="shrink-0 font-bold">Discount ({currencySymbol})</span>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                fieldSize="sm"
+                autoFocus
+                className="w-24 max-w-[40%] px-2 text-right tabular-nums text-2xs"
+                value={cartDiscount}
+                onChange={(e) => { const v = parseFloat(e.target.value); onCartDiscountChange(Number.isFinite(v) ? Math.max(0, v) : 0); }}
+                onBlur={() => setIsEditingDiscount(false)}
+                aria-label="Cart discount"
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditingDiscount(true)}
+              className="w-full rounded-[var(--radius-button)] border border-dashed border-[var(--app-border-control)] py-1.5 text-2xs font-bold text-app-text-muted hover:border-[var(--app-border-frame)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Add Discount
+            </button>
+          )}
           {appliedDiscount > 0 && <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">After discount</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{totals.afterDiscount.toFixed(2)}</span></div>}
           <div className="flex items-center justify-between gap-2 text-2xs tabular-nums text-app-text-muted dark:text-zinc-500">
             <span className="shrink-0 font-bold">VAT rate (%)</span>
             <Input type="number" min={0} step="0.01" fieldSize="sm" className="w-20 px-2 text-right tabular-nums text-2xs" value={vatRatePercent} onChange={(e) => { const v = parseFloat(e.target.value); onVatRatePercentChange(Number.isFinite(v) ? Math.max(0, v) : 0); }} aria-label="VAT rate" />
           </div>
           <div className="flex justify-between text-2xs tabular-nums text-app-text-muted dark:text-zinc-500"><span className="font-bold">VAT ({totals.vatRatePercent}%)</span><span className="text-app-ink dark:text-zinc-300">{currencySymbol}{tax.toFixed(2)}</span></div>
+          {/*
+            R25, applied to the till: a figure is never coloured. This Total used
+            to be `text-app-accent` in custom mode, which made the amount the
+            one accented thing on a screen whose accent is supposed to mean
+            "press me". The label already says what kind of total it is.
+          */}
           <div className="mt-2 flex justify-between border-t pt-3 text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">
             <span>{posMode === 'retail' ? 'Total' : 'Order value'}</span>
-            <span className={cn('tabular-nums', posMode === 'retail' ? 'text-app-ink dark:text-zinc-100' : 'text-app-accent dark:text-app-accent-soft')}>{currencySymbol}{total.toFixed(2)}</span>
+            <span className="tabular-nums">{currencySymbol}{total.toFixed(2)}</span>
           </div>
         </div>
 

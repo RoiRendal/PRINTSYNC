@@ -38,6 +38,9 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
   const currentPath = location.pathname;
   const currentItem = NAV_ITEMS.find(item => item.path === currentPath);
   const currentLabel = currentItem?.label || 'Dashboard';
+  /* Read off the nav item rather than a hard-coded '/pos' string, so the route
+     and the layout that special-cases it cannot drift apart. */
+  const isPosRoute = currentItem?.key === 'pos';
   const { theme, toggleTheme, isDark } = useTheme();
   const { currentUser, logout } = useAuth();
   const { businessDisplayName } = useBusinessBranding();
@@ -337,13 +340,27 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Main Content Area. The body card sits in the same 12 / 20 / 24 gutter
             as the header and the toolbar above it, so all three share one left
             and right edge down the column. The 8px of top padding is the same 8px
-            that sits above the toolbar. */}
+            that sits above the toolbar.
+
+            `/pos` is the one route that opts out of that card. It is a till: it
+            fills whatever height is left and never scrolls as a page, because a
+            cashier's panels (catalog, cart, totals) have to stay put while only
+            the lists inside them move. Every other route keeps the scrolling
+            body card exactly as it was — this branch is route-aware, not a new
+            default, and the gutter is the same 12 / 20 / 24 either way so the
+            POS still reads as part of the app. */}
         <main className="flex flex-1 flex-col overflow-hidden bg-transparent">
-          <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pt-2 xl:p-6 xl:pt-2">
-            <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
+          {isPosRoute ? (
+            <div className="min-h-0 flex-1 p-3 pt-2 lg:p-5 lg:pt-2 xl:p-6 xl:pt-2">
               {children}
-            </section>
-          </div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-3 pt-2 scrollbar-hide lg:p-5 lg:pt-2 xl:p-6 xl:pt-2">
+              <section className="min-h-full rounded-[1.5rem] border border-[var(--app-border-frame)] bg-[var(--app-surface)] p-3 lg:p-4">
+                {children}
+              </section>
+            </div>
+          )}
         </main>
       </div>
     </div>

@@ -29,7 +29,8 @@ function makeRawTransaction(overrides: Partial<PaymentTransaction> = {}): Paymen
   return {
     id: 'TRX-1',
     status: 'completed',
-    items: [{ itemId: 'item-1', name: 'Glossy Paper A4', quantity: 2, unitPrice: 100 }],
+    customer: '',
+    items: [{ itemId: 'item-1', name: 'Glossy Paper A4', quantity: 2, unitPrice: 100, lineDiscount: 0 }],
     subtotal: 200,
     discount: 0,
     tax: 24,

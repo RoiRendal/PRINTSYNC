@@ -1,6 +1,6 @@
-import { Plus, ShoppingBag } from '../../../../shared/components/ui/icons';
+import { ShoppingBag } from '../../../../shared/components/ui/icons';
 import type { InventoryItem } from '../../../inventory/types';
-import { Badge, Card, SearchInput } from '../../../../shared/components/ui';
+import { CardContent, CardHeader, SearchInput, SurfaceCard } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { cn } from '../../../../shared/lib/cn';
 
@@ -30,41 +30,57 @@ export function POSCatalog({
   onCategoryChange,
   onAddToCart,
 }: POSCatalogProps) {
+  /*
+   * ONE panel, not two — ERPNext's `.items-selector` is a single card whose
+   * header carries the search and the item-group filter and whose body is the
+   * item grid. It used to be a floating search card and then a loose grid
+   * beneath it, which read as two surfaces and let the scroll live on the page
+   * instead of on the list.
+   *
+   * Fixed-height from `xl` up: the header keeps its natural height and the grid
+   * takes what is left and scrolls. Below `xl` the panels stack, so both keep
+   * their natural height (`shrink-0`) and the page-level container scrolls.
+   */
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-3">
-      <Card padding="md">
-        <div className="flex flex-col gap-3">
-          <SearchInput
-            ref={searchRef}
-            aria-label="Search catalog"
-            value={searchTerm}
-            onChange={(e) => onSearchChange(e.target.value)}
-            autoFocus
-          />
+    <SurfaceCard padding="none" className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden xl:shrink">
+      <CardHeader className="mb-0 shrink-0 flex-col gap-3 border-b border-[var(--app-border-hairline)] p-3 lg:flex-row lg:items-center">
+        <SearchInput
+          ref={searchRef}
+          aria-label="Search catalog"
+          value={searchTerm}
+          onChange={(e) => onSearchChange(e.target.value)}
+          autoFocus
+          className="lg:w-56 xl:w-64"
+        />
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => onCategoryChange(cat)}
-                className={cn(
-                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-2xs font-bold',
-                  // Active category: the grey "selected" step, matching the
-                  // status chips and the segmented control. Border keeps its 1px
-                  // box but takes the fill's colour, so only the hue changes.
-                  activeCategory === cat
-                    ? 'border-[var(--app-state-hover-sub)] bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
-                    : 'text-app-text-muted hover:border-[var(--app-border-control)] hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft',
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => onCategoryChange(cat)}
+              className={cn(
+                'whitespace-nowrap rounded-full border px-3 py-1.5 text-2xs font-bold',
+                // Active category: the grey "selected" step, matching the
+                // status chips and the segmented control. Border keeps its 1px
+                // box but takes the fill's colour, so only the hue changes.
+                activeCategory === cat
+                  ? 'border-[var(--app-state-hover-sub)] bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
+                  : 'text-app-text-muted hover:border-[var(--app-border-control)] hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft',
+              )}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
-      </Card>
+      </CardHeader>
 
+      {/*
+        The grid is the catalog's scroll owner, so the search box and the
+        category row stay put while the tiles move — the two controls you reach
+        for most were the two that used to leave the screen first.
+      */}
+      <CardContent className="scrollbar-thin p-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         {filteredProducts.map(product => (
           <button
@@ -86,17 +102,46 @@ export function POSCatalog({
                   <span className="mt-1 text-3xs">No image</span>
                 </div>
               )}
-              <div className="absolute right-1.5 top-1.5">
-                <Badge variant={product.stock <= product.reorderLevel ? 'red' : 'accent'} className="bg-[var(--app-surface-raised)] dark:bg-[#141416]">
-                  {product.stock} stock
-                </Badge>
-              </div>
+              {/*
+                A bare number, toned by threshold — ERPNext's `.item-qty-available`.
+                It used to be a `Badge` pill reading "15 stock", which spent a
+                frame, a fill and a word on one fact. The word went too: every
+                other number in this column is a quantity, so the tile does not
+                need to say which one.
+
+                At or under the reorder level it goes red. That is the same
+                deliberate exception the inventory table and the dashboard
+                low-stock count already use — here the number is the only place
+                the cashier sees that this item is about to run out.
+              */}
+              <span
+                className={cn(
+                  'absolute right-1.5 top-1.5 tabular-nums text-2xs font-bold',
+                  product.stock <= product.reorderLevel
+                    ? 'text-app-danger dark:text-red-300'
+                    : 'text-app-text-muted dark:text-zinc-400',
+                )}
+              >
+                {product.stock}
+              </span>
             </div>
             <h3 className="line-clamp-2 text-xs font-bold tracking-tight text-app-ink dark:text-zinc-100 xl:text-xs">{product.name}</h3>
-            <div className="mt-2 flex items-center justify-between">
-              <p className="tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100 xl:text-xs">{currencySymbol}{product.price.toFixed(2)}</p>
-              <Plus className="h-3.5 w-3.5 text-app-text-muted group-hover:text-app-accent dark:text-zinc-500 dark:group-hover:text-app-accent-soft" aria-hidden="true" />
-            </div>
+            {/*
+              Three cues: image, name, price. The `+` glyph is gone — the whole
+              tile is already the button, so the plus was a second affordance
+              pointing at the first one. ERPNext's tile carries no add control
+              either.
+            */}
+            {/*
+              The unit rides on the price, the way ERPNext prints it — the figure
+              and what it buys are one fact, so they read as one line. The unit
+              is part of the item, not of this tile, so it is set on the product
+              and not here.
+            */}
+            <p className="mt-2 tabular-nums text-2xs font-bold text-app-ink dark:text-zinc-100 xl:text-xs">
+              {currencySymbol}{product.price.toFixed(2)}
+              <span className="font-medium text-app-text-muted dark:text-zinc-400"> / {product.uom}</span>
+            </p>
           </button>
         ))}
         {filteredProducts.length === 0 && (
@@ -105,6 +150,7 @@ export function POSCatalog({
           </div>
         )}
       </div>
-    </div>
+      </CardContent>
+    </SurfaceCard>
   );
 }

@@ -20,7 +20,8 @@ function makeRaw(overrides: Partial<PaymentTransaction> = {}): PaymentTransactio
   return {
     id: 'TRX-1',
     status: 'completed',
-    items: [{ itemId: 'item-1', name: 'Glossy Paper A4', quantity: 2, unitPrice: 100 }],
+    customer: '',
+    items: [{ itemId: 'item-1', name: 'Glossy Paper A4', quantity: 2, unitPrice: 100, lineDiscount: 0 }],
     subtotal: 200,
     discount: 0,
     tax: 24,
@@ -41,7 +42,7 @@ describe('mapPaymentTransaction', () => {
 
   it('rebuilds an item the catalogue no longer carries from the server figures', () => {
     const result = mapPaymentTransaction(
-      makeRaw({ items: [{ itemId: 'gone', name: 'Discontinued Ink', quantity: 3, unitPrice: 50 }] }),
+      makeRaw({ items: [{ itemId: 'gone', name: 'Discontinued Ink', quantity: 3, unitPrice: 50, lineDiscount: 0 }] }),
       [PAPER],
     );
 

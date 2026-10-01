@@ -24,6 +24,29 @@ export interface CartItem extends InventoryItem {
   isCustom?: boolean;
   designId?: string;
   notes?: string;
+  /**
+   * What the catalogue said this line's rate was when it was staged.
+   *
+   * `price` is the line's LIVE rate — the till can override it per line, and
+   * both checkout paths send it as `unitPrice`. Keeping the catalogue value
+   * alongside is what lets the item-details surface say "this was overridden"
+   * and offer a way back. Without it an override is invisible and irreversible,
+   * and a cashier who mistypes a rate has no way to notice or undo it.
+   *
+   * Client-only: it is never sent. The stored order carries `unitPrice`, which
+   * is the overridden figure — the right thing to persist.
+   */
+  cataloguePrice?: number;
+  /**
+   * Discount applied to this line alone, in currency.
+   *
+   * Part of the GRAND discount, not a separate deduction: `useCartTotals` adds
+   * the line discounts to the cart-level one and the sale RPC checks that the
+   * grand total covers them. That is the model the database enforces — see
+   * `20260930000200_sale_customer_and_line_discounts.sql` — so a line discount
+   * can never be claimed without being taken off the total.
+   */
+  lineDiscount?: number;
 }
 
 export interface Transaction {

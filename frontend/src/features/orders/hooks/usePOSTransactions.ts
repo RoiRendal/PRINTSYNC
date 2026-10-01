@@ -38,6 +38,11 @@ export function mapPaymentTransaction(
             // The catalogue row is gone, so there is no cost to recover; the
             // field is required by the contract and zero is the honest value.
             costPrice: 0,
+            // A sale LINE carries no unit — `uom` lives on the inventory item,
+            // which is exactly the row that is missing here. 'pc' is the
+            // column's own default, so the synthesised line reads the same as a
+            // real one created before units existed.
+            uom: 'pc',
             // `null`, not `undefined`: `imageUrl` is a nullable column, and a
             // key set to `undefined` would vanish from the JSON round-trip.
             imageUrl: null,

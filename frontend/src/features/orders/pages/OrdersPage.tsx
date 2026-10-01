@@ -4,13 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { LoadingState } from '../../../shared/components/feedback/LoadingState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { Button, DeleteConfirmModal, Input, Pagination } from '../../../shared/components/ui';
+import { Button, DeleteConfirmModal, Input, Pagination, SegmentedControl } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
 import { ApiError } from '../../../shared/api/errors';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
 import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
+import { RetailSalesTable } from '../components/orders/RetailSalesTable';
 import { readOrderConflict } from '../api/ordersApi';
 import { useOrderFilters } from '../hooks/useOrderFilters';
 import { useOrders } from '../../../app/stores/useOrderStore';
@@ -184,100 +185,143 @@ export default function Orders() {
     navigate('/pos', { state: { editOrderId: order.id } });
   };
 
-  if (isLoading) return <LoadingState label="Loading orders" className="min-h-64" />;
-  if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
+  /*
+   * Which list this page is showing.
+   *
+   * The same mechanism the POS toolbar used for Terminal/History — a
+   * SegmentedControl — because that is the control the Boss asked for by name.
+   * What changed is where it lives: a sale is a RECORD, and records belong with
+   * the other records. The terminal is where the next sale is rung up.
+   *
+   * Kept in the URL rather than in component state, matching the status filter
+   * directly below it: the browser's back button then walks back through the
+   * tabs, and a link to "the retail sales" is a link that works.
+   */
+  const [listView, setListView] = useUrlFilter('view', 'custom');
+  const isRetail = listView === 'retail';
 
   return (
     <div className="space-y-5">
-      {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
-
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <SegmentedControl
+          aria-label="Order list"
+          size="sm"
+          value={isRetail ? 'retail' : 'custom'}
+          onChange={setListView}
+          options={[
+            { value: 'custom', label: 'Custom Orders' },
+            { value: 'retail', label: 'Retail Sales' },
+          ]}
+        />
         <Button variant="primary" onClick={() => navigate('/pos')} leftIcon={<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />}>
           New POS Order
         </Button>
       </div>
 
-      <OrderSummaryCards />
+      {/*
+        Retail sales need none of this page's own state — the status filter, the
+        date range, the search box and the summary cards are all properties of
+        the CUSTOM-ORDERS list, and showing them above a table of till receipts
+        would be four controls that do nothing. So the two lists are siblings,
+        not a shared frame with a table swapped inside it.
+      */}
+      {isRetail ? (
+        <RetailSalesTable />
+      ) : (
+        <>
+          {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-1.5">
-          {STATUS_FILTERS.map((filter) => {
-            const isActive = statusFilter === filter.value;
-            return (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setStatusParam(filter.value)}
-                className={cn(
-                  'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
-                  /*
-                    The active chip is a grey step, not the accent. ERPNext's own
-                    active filter chip (`.btn-primary-light`) is `#e2e2e2` with
-                    dark ink — it never spends the dark fill on "which filter am
-                    I on". Inactive chips are untouched: only the selected state
-                    was inverted, so only the selected state changes.
-                  */
-                  isActive
-                    ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
-                    : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
-                )}
-              >
-                {filter.label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
-          <Input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="h-8 w-auto text-2xs"
-            placeholder="From"
-          />
-          <span className="text-2xs text-app-text-muted dark:text-zinc-500">to</span>
-          <Input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="h-8 w-auto text-2xs"
-            placeholder="To"
-          />
-          {(dateFrom || dateTo) && (
-            <Button type="button" variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>
-              Clear dates
-            </Button>
+          {isLoading ? (
+            <LoadingState label="Loading orders" className="min-h-64" />
+          ) : error ? (
+            <ErrorState message={error} onRetry={refresh} className="min-h-64" />
+          ) : (
+            <>
+              <OrderSummaryCards />
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-wrap gap-1.5">
+                  {STATUS_FILTERS.map((filter) => {
+                    const isActive = statusFilter === filter.value;
+                    return (
+                      <button
+                        key={filter.value}
+                        type="button"
+                        onClick={() => setStatusParam(filter.value)}
+                        className={cn(
+                          'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
+                          /*
+                            The active chip is a grey step, not the accent. ERPNext's own
+                            active filter chip (`.btn-primary-light`) is `#e2e2e2` with
+                            dark ink — it never spends the dark fill on "which filter am
+                            I on". Inactive chips are untouched: only the selected state
+                            was inverted, so only the selected state changes.
+                          */
+                          isActive
+                            ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
+                            : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
+                        )}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Calendar className="h-3.5 w-3.5 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
+                  <Input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="h-8 w-auto text-2xs"
+                    placeholder="From"
+                  />
+                  <span className="text-2xs text-app-text-muted dark:text-zinc-500">to</span>
+                  <Input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="h-8 w-auto text-2xs"
+                    placeholder="To"
+                  />
+                  {(dateFrom || dateTo) && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => { setDateFrom(''); setDateTo(''); }}>
+                      Clear dates
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <OrdersTable
+                orders={filteredOrders}
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+                onSelectOrder={setSelectedOrder}
+                onDeleteSelected={openDeleteConfirm}
+                selection={selection}
+                pendingOrderIds={pendingOrderIds}
+                footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
+              />
+
+              <OrderDetailModal
+                order={selectedOrder}
+                onClose={() => setSelectedOrder(null)}
+                onEditOrder={handleEditOrder}
+                onAdvancePhase={updateOrderStatusByStep}
+                onRefreshOrder={refreshOrder}
+              />
+
+              <DeleteConfirmModal
+                isOpen={ordersToDelete.length > 0}
+                itemLabels={ordersToDelete.map((order) => order.customer)}
+                isBusy={isDeleting}
+                onClose={() => setOrdersToDelete([])}
+                onConfirm={confirmDeleteSelected}
+              />
+            </>
           )}
-        </div>
-      </div>
-
-      <OrdersTable
-        orders={filteredOrders}
-        searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
-        onSelectOrder={setSelectedOrder}
-        onDeleteSelected={openDeleteConfirm}
-        selection={selection}
-        pendingOrderIds={pendingOrderIds}
-        footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
-      />
-
-      <OrderDetailModal
-        order={selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        onEditOrder={handleEditOrder}
-        onAdvancePhase={updateOrderStatusByStep}
-        onRefreshOrder={refreshOrder}
-      />
-
-      <DeleteConfirmModal
-        isOpen={ordersToDelete.length > 0}
-        itemLabels={ordersToDelete.map((order) => order.customer)}
-        isBusy={isDeleting}
-        onClose={() => setOrdersToDelete([])}
-        onConfirm={confirmDeleteSelected}
-      />
+        </>
+      )}
     </div>
   );
 }

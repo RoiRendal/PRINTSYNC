@@ -19,6 +19,9 @@ const lineItemSchema = z.object({
   quantity: z.number().int().positive(),
   designId: z.string().uuid().optional(),
   unitPrice: z.number().min(0).default(0),
+  // Defaulted so the service type can require it and a caller that predates
+  // per-line discounts keeps working unchanged.
+  lineDiscount: z.number().min(0).default(0),
 });
 const orderSchema = z.object({
   customer: z.string().trim().min(1),

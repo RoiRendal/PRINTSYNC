@@ -2,7 +2,7 @@ import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { InventoryItem } from '../features/inventory/types';
 import type { CartItem, Order } from '../features/orders/types';
 import type { CartTotals } from '../features/orders/hooks/useCartTotals';
-import type { CheckoutError } from '../features/orders/components/pos/POSCheckoutModal';
+import type { CheckoutError } from '../features/orders/components/pos/POSCheckout';
 
 /**
  * Builders for component tests.
@@ -28,6 +28,7 @@ export function makeCartItem(overrides: Partial<CartItem> = {}): CartItem {
     reorderLevel: 20,
     price: 100,
     costPrice: 0,
+    uom: 'pc',
     imageUrl: null,
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
@@ -46,6 +47,7 @@ export function makeInventoryItem(overrides: Partial<InventoryItem> = {}): Inven
     reorderLevel: 20,
     price: 100,
     costPrice: 0,
+    uom: 'pc',
     imageUrl: null,
     createdAt: '2026-09-01T00:00:00.000Z',
     updatedAt: '2026-09-01T00:00:00.000Z',
@@ -77,6 +79,10 @@ export function makeOrder(overrides: Partial<Order> = {}): Order {
 export function makeTotals(overrides: Partial<CartTotals> = {}): CartTotals {
   return {
     subtotal: 200,
+    // No discounts at all is the unremarkable default — the same cart the
+    // fixture described before per-line discounts existed.
+    lineDiscounts: 0,
+    cartDiscount: 0,
     discount: 0,
     afterDiscount: 200,
     tax: 24,

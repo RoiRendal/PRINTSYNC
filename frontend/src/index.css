@@ -477,6 +477,21 @@ html {
     visibility: hidden;
   }
 
+  /*
+   * Collapse the application shell out of the printed page.
+   *
+   * The app lives in `#root`, which is a SIBLING of the receipt modal — Modal
+   * portals into `document.body`, so `#receipt-content` is NOT a descendant of
+   * `#root`. `body *` already hides `#root` with `visibility: hidden`, but that
+   * still reserves its full on-screen box (taller than one A4 page), so every
+   * receipt printed as two pages, the second blank. Taking `#root` out of the
+   * render tree entirely collapses the document to the receipt's real height.
+   * The receipt is untouched because it lives outside `#root`.
+   */
+  #root {
+    display: none !important;
+  }
+
   #receipt-content,
   #receipt-content * {
     visibility: visible;
@@ -531,6 +546,18 @@ html {
     top: 0;
     left: 0;
     width: 100%;
+    /*
+     * The slip is a narrow centred column ON SCREEN — a receipt shown at receipt
+     * width — and the full page on paper. `width: 100%` above is not enough on
+     * its own: a `max-width` on the element caps it whatever the width says, so
+     * R5's `max-w-[320px]` silently turned the printed slip into a 320px
+     * left-aligned strip with 12mm of padding. Measured under print media, the
+     * slip came out 320px wide against a 1440px page.
+     *
+     * Written as a literal, like everything else in this block — see the note at
+     * the top of `@media print`.
+     */
+    max-width: none;
     margin: 0;
     padding: 12mm;
     border: 0;
@@ -692,5 +719,39 @@ html {
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /*
+   * The opposite trade to `.scrollbar-hide`, for the one case where hiding the
+   * bar costs the user information: a fixed-height list that is the only way to
+   * reach item 15 of 40. Hiding is still right for a hover panel or a page that
+   * scrolls as a whole; here the bar IS the "there is more below" cue, so it is
+   * drawn — thin, and flat at rest.
+   *
+   * 6px is narrow enough not to read as a control and wide enough to hit. The
+   * thumb is the same grey step a selected chip uses, so it belongs to the
+   * surface rather than announcing itself.
+   */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--app-state-hover-sub) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--app-state-hover-sub);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--app-border-control);
   }
 }

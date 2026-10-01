@@ -1,21 +1,20 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PaginationParams, PaginatedResponse } from '@printsync/shared-types';
+import type { InventoryItem, PaginationParams, PaginatedResponse } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 
-export interface InventoryItem {
-  id: string;
-  sku: string;
-  name: string;
-  category: string;
-  stock: number;
-  reorderLevel: number;
-  price: number;
-  costPrice: number;
-  imageUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+/**
+ * Re-exported so existing importers keep their path, but the shape itself now
+ * comes from the contract.
+ *
+ * This file used to declare its own `InventoryItem`. Nothing imported it — every
+ * consumer took the shared type — so it was a silent second copy of a contract
+ * that is supposed to exist once, and it had already drifted: adding `uom` to
+ * `packages/shared-types` changed the contract and left this copy behind, which
+ * is what made `tsc` reject the mapper below. A duplicate definition that nobody
+ * imports is still a duplicate that can disagree.
+ */
+export type { InventoryItem };
 
 export interface InventoryInput {
   sku?: string | undefined;
@@ -25,6 +24,8 @@ export interface InventoryInput {
   reorderLevel: number;
   price: number;
   costPrice?: number | undefined;
+  /** Defaults to 'pc' on create; on update, omitted means "leave it alone". */
+  uom?: string | undefined;
   imageUrl?: string | null | undefined;
 }
 
@@ -38,6 +39,10 @@ function toItem(row: Record<string, unknown>): InventoryItem {
     reorderLevel: Number(row.reorder_level),
     price: Number(row.price),
     costPrice: Number(row.cost_price ?? 0),
+    // The column is `not null default 'pc'`, so this only guards a row read
+    // through a path that did not select it. Falling back to the same default
+    // keeps the contract's non-null promise rather than leaking an undefined.
+    uom: row.uom ? String(row.uom) : 'pc',
     imageUrl: row.image_url ? String(row.image_url) : null,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -67,7 +72,7 @@ export async function listInventory(
    */
   let query = supabase
     .from('inventory_items')
-    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at', { count: 'exact' })
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at', { count: 'exact' })
     .order('name');
   if (lowStock) query = query.eq('is_low_stock', true);
   const { data, error, count } = await query.range(start, end);
@@ -89,9 +94,10 @@ export async function createInventoryItem(
       reorder_level: input.reorderLevel,
       price: input.price,
       cost_price: input.costPrice ?? 0,
+      uom: input.uom ?? 'pc',
       image_url: input.imageUrl ?? null,
     })
-    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
     .single();
   if (error || !data) throw new AppError(400, 'INVENTORY_CREATE_FAILED', 'The inventory item could not be created.');
   return toItem(data);
@@ -111,10 +117,15 @@ export async function updateInventoryItem(
       reorder_level: input.reorderLevel,
       price: input.price,
       cost_price: input.costPrice ?? 0,
+      // Omitted means "leave the unit alone", matching how `sku` is handled
+      // above. Every other field here is written unconditionally, but a unit is
+      // not something a caller that has never heard of units should silently
+      // reset to the default.
+      ...(input.uom !== undefined ? { uom: input.uom } : {}),
       image_url: input.imageUrl ?? null,
     })
     .eq('id', id)
-    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
     .single();
   if (error || !data) throw new AppError(404, 'INVENTORY_NOT_FOUND', 'The inventory item was not found.');
   return toItem(data);
@@ -145,7 +156,7 @@ export async function adjustInventoryStock(
 export async function exportInventory(supabase: SupabaseClient): Promise<InventoryItem[]> {
   const { data, error } = await supabase
     .from('inventory_items')
-    .select('id, sku, name, category, stock, reorder_level, price, cost_price, image_url, created_at, updated_at')
+    .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
     .order('name');
   if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
   return data.map((row) => toItem(row));

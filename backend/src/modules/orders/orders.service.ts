@@ -39,7 +39,15 @@ export interface OrderLineItem {
   name: string;
   quantity: number;
   designId?: string | undefined;
+  /** The rate charged for this line — not necessarily the catalogue price. */
   unitPrice: number;
+  /**
+   * Discount applied to this line alone, in currency. Optional to match the
+   * contract: the RPC defaults it to 0, and a caller that predates per-line
+   * discounts is still correct. The read mapper always emits it, so on a
+   * response it is present — the optionality describes the wire, not the row.
+   */
+  lineDiscount?: number | undefined;
 }
 
 export interface OrderRecord {
@@ -124,7 +132,7 @@ async function loadItems(supabase: SupabaseClient, orderIds: string[]): Promise<
   if (orderIds.length === 0) return result;
   const { data, error } = await supabase
     .from('order_items')
-    .select('order_id, inventory_item_id, design_id, name, quantity, unit_price')
+    .select('order_id, inventory_item_id, design_id, name, quantity, unit_price, line_discount')
     .in('order_id', orderIds)
     .order('id');
   if (error) throw new AppError(503, 'ORDER_ITEMS_LOOKUP_FAILED', 'Order items could not be loaded.');
@@ -136,6 +144,7 @@ async function loadItems(supabase: SupabaseClient, orderIds: string[]): Promise<
       name: String(row.name),
       quantity: Number(row.quantity),
       unitPrice: Number(row.unit_price),
+      lineDiscount: Number(row.line_discount ?? 0),
     });
     result.set(String(row.order_id), items);
   }

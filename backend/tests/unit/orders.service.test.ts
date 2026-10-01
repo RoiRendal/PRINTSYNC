@@ -101,9 +101,13 @@ describe('orders.service', () => {
       assert.equal(order.notes, 'Rush job');
       assert.equal(order.isCustom, true);
       assert.equal(order.date, '2026-09-15');
+      // `lineDiscount` is now part of the line contract. The fixture rows carry
+      // no `line_discount` column, which is the "row written before per-line
+      // discounts existed" case, so the mapper must default it to 0 rather than
+      // emit undefined.
       assert.deepEqual(order.lineItems, [
-        { itemId: 'inv-1', designId: undefined, name: 'Banner', quantity: 2, unitPrice: 150 },
-        { itemId: undefined, designId: 'design-1', name: 'Sticker', quantity: 3, unitPrice: 50 },
+        { itemId: 'inv-1', designId: undefined, name: 'Banner', quantity: 2, unitPrice: 150, lineDiscount: 0 },
+        { itemId: undefined, designId: 'design-1', name: 'Sticker', quantity: 3, unitPrice: 50, lineDiscount: 0 },
       ] satisfies OrderLineItem[]);
     });
 
@@ -250,7 +254,7 @@ describe('orders.service', () => {
 
       const order = await createOrder(
         db.client,
-        { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }], amount: 10 },
+        { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10, lineDiscount: 0 }], amount: 10 },
         'actor-1',
       );
 
@@ -273,7 +277,7 @@ describe('orders.service', () => {
       await runWithRequestContext(REQUEST_CONTEXT, () =>
         createOrder(
           db.client,
-          { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }], amount: 10 },
+          { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10, lineDiscount: 0 }], amount: 10 },
           'actor-1',
         ),
       );
@@ -291,7 +295,7 @@ describe('orders.service', () => {
 
       await createOrder(
         db.client,
-        { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }], amount: 10 },
+        { customer: 'Acme Print Co', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10, lineDiscount: 0 }], amount: 10 },
         'actor-1',
       );
 
@@ -309,7 +313,7 @@ describe('orders.service', () => {
         () =>
           createOrder(
             db.client,
-            { customer: 'Acme', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 1 }], amount: 1 },
+            { customer: 'Acme', lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 1, lineDiscount: 0 }], amount: 1 },
             'actor-1',
           ),
         400,
@@ -333,7 +337,7 @@ describe('orders.service', () => {
       await updateOrder(
         db.client,
         'order-1',
-        { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20 }] },
+        { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20, lineDiscount: 0 }] },
         'actor-1',
         version,
       );
@@ -362,7 +366,7 @@ describe('orders.service', () => {
       queueOrderSingle(db);
 
       await runWithRequestContext(REQUEST_CONTEXT, () =>
-        updateOrder(db.client, 'order-1', { lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10 }] }, 'actor-1', version),
+        updateOrder(db.client, 'order-1', { lineItems: [{ name: 'Banner', quantity: 1, unitPrice: 10, lineDiscount: 0 }] }, 'actor-1', version),
       );
 
       const rpcPayload = db.lastCall('replace_order_with_items')?.payload as Record<string, unknown>;
@@ -391,7 +395,7 @@ describe('orders.service', () => {
           updateOrder(
             db.client,
             'order-1',
-            { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20 }] },
+            { lineItems: [{ name: 'Poster', quantity: 1, unitPrice: 20, lineDiscount: 0 }] },
             'actor-1',
             version,
           ),
