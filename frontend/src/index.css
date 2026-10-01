@@ -477,6 +477,21 @@ html {
     visibility: hidden;
   }
 
+  /*
+   * Collapse the application shell out of the printed page.
+   *
+   * The app lives in `#root`, which is a SIBLING of the receipt modal — Modal
+   * portals into `document.body`, so `#receipt-content` is NOT a descendant of
+   * `#root`. `body *` already hides `#root` with `visibility: hidden`, but that
+   * still reserves its full on-screen box (taller than one A4 page), so every
+   * receipt printed as two pages, the second blank. Taking `#root` out of the
+   * render tree entirely collapses the document to the receipt's real height.
+   * The receipt is untouched because it lives outside `#root`.
+   */
+  #root {
+    display: none !important;
+  }
+
   #receipt-content,
   #receipt-content * {
     visibility: visible;
