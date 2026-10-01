@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, RefreshCw, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
+import { Download, Edit, Eye, Image as ImageIcon, Plus, RefreshCw, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -296,7 +296,7 @@ export function DesignRepository() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <h3 className="truncate text-sm font-bold text-app-ink dark:text-zinc-100">{design.name}</h3>
-                          <p className="mt-1 flex items-center gap-1 text-2xs text-app-text-muted dark:text-zinc-500"><Calendar className="h-2.5 w-2.5" aria-hidden="true" /> Added {design.createdAt}</p>
+                          <p className="mt-1 text-2xs text-app-text-muted dark:text-zinc-500">Added {design.createdAt}</p>
                         </div>
                         <div className="flex gap-1">
                           <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>

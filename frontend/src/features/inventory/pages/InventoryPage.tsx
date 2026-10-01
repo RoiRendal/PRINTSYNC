@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Image as ImageIcon } from '../../../shared/components/ui/icons';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -132,8 +131,8 @@ export default function Inventory() {
           value={viewMode}
           onChange={setViewMode}
           options={[
-            { value: 'inventory', label: 'Stock List', icon: <Box className="h-3.5 w-3.5" aria-hidden="true" /> },
-            { value: 'designs', label: 'Design Repo', icon: <ImageIcon className="h-3.5 w-3.5" aria-hidden="true" /> },
+            { value: 'inventory', label: 'Stock List' },
+            { value: 'designs', label: 'Design Repo' },
           ]}
         />
       </div>
