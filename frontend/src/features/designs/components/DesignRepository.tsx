@@ -229,7 +229,24 @@ export function DesignRepository() {
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <Button variant="primary" onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
+            {/*
+              A bare plus, the same control the list tables carry: the words moved
+              into the accessible name, and the primary fill stays because
+              uploading is still this screen's one dominant action (R23). Nothing
+              sits to its left — a design is deleted from its own card, not in a
+              batch, so this header has no delete square to pair with.
+            */}
+            <Button
+              type="button"
+              variant="primary"
+              size="icon"
+              onClick={() => setIsAddModalOpen(true)}
+              aria-label="Upload Design"
+              title="Upload Design"
+              className="shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-4">

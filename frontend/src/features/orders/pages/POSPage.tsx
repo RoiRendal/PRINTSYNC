@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useAuthStore } from '../../../app/stores/useAuthStore';
@@ -114,6 +114,21 @@ export default function POS() {
    */
 
   const editOrderId = (location.state as { editOrderId?: string } | null)?.editOrderId ?? null;
+
+  /**
+   * The Orders page can also ask the till to open in a particular mode.
+   *
+   * The custom-orders "+" asks for Custom, so a job ticket does not begin with a
+   * mode change. The retail-sales "+" asks for nothing, and that is correct
+   * rather than merely convenient: `/pos` is its own route, so entering it mounts
+   * this page fresh and `posMode` starts at Retail every time — there is no mode
+   * left over from an earlier visit for a request to have to undo.
+   */
+  const requestedPosMode = (location.state as { posMode?: PosMode } | null)?.posMode ?? null;
+
+  useEffect(() => {
+    if (requestedPosMode === 'custom') setPosMode('custom');
+  }, [requestedPosMode]);
 
   useOrderEditHydration({
     editOrderId,

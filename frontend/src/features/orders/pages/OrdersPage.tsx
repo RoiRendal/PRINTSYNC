@@ -230,7 +230,8 @@ export default function Orders() {
         not a shared frame with a table swapped inside it.
       */}
       {isRetail ? (
-        <RetailSalesTable />
+        // No mode to ask for here: Retail is what the till opens as.
+        <RetailSalesTable onNewOrder={() => navigate('/pos')} />
       ) : (
         <>
           {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
@@ -302,7 +303,9 @@ export default function Orders() {
                 searchTerm={searchTerm}
                 onSearchTermChange={setSearchTerm}
                 onSelectOrder={setSelectedOrder}
-                onNewOrder={() => navigate('/pos')}
+                // The custom-orders "+" opens the till already switched to Custom,
+                // so a job ticket does not begin with a mode change.
+                onNewOrder={() => navigate('/pos', { state: { posMode: 'custom' } })}
                 onDeleteSelected={openDeleteConfirm}
                 selection={selection}
                 pendingOrderIds={pendingOrderIds}
