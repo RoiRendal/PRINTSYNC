@@ -298,6 +298,11 @@ export default function Orders() {
                 </div>
               </div>
 
+              {/*
+                Handed over only when there is more than one page: the band belongs
+                to the pager, so passing an empty one would leave a stray strip
+                under the last row.
+              */}
               <OrdersTable
                 orders={filteredOrders}
                 searchTerm={searchTerm}
@@ -310,7 +315,7 @@ export default function Orders() {
                 onDeleteSelected={openDeleteConfirm}
                 selection={selection}
                 pendingOrderIds={pendingOrderIds}
-                footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
+                footer={total > limit ? <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} /> : undefined}
               />
 
               <OrderDetailModal

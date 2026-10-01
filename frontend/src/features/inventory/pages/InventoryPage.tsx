@@ -158,6 +158,11 @@ export default function Inventory() {
             </button>
           </div>
 
+          {/*
+            The footer is handed over only when there is more than one page: the
+            band belongs to the pager, so passing an empty one would leave a stray
+            strip under the last row.
+          */}
           <InventoryTable
             items={filteredItems}
             searchTerm={searchTerm}
@@ -167,7 +172,7 @@ export default function Inventory() {
             onEditItem={(item) => handleOpenModal(item)}
             onDeleteSelected={handleDeleteSelected}
             selection={selection}
-            footer={<Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />}
+            footer={total > limit ? <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} /> : undefined}
           />
         </div>
       ) : (
