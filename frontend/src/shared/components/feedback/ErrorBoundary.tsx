@@ -1,5 +1,4 @@
 import React from 'react';
-import { AlertTriangle } from '../ui/icons';
 import { Button, SurfaceCard } from '../ui';
 
 interface ErrorBoundaryState {
@@ -30,16 +29,16 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--app-surface)] p-6 text-app-ink dark:text-zinc-100">
           <SurfaceCard className="relative w-full max-w-md p-6 text-center">
-            {/* The glyph is bare and carries no hue — the 56px ringed red tile
-                around it was a box around an icon, not structure, and the
-                triangle's shape already says what the colour used to repeat. */}
-            <span className="block text-app-text-muted dark:text-zinc-400">
-              <AlertTriangle className="mx-auto h-7 w-7" aria-hidden="true" />
-            </span>
-            <div className="mt-5 space-y-2">
+            {/*
+              No glyph, and no "Application alert" eyebrow. Both were restating
+              the heading below them: the triangle said "problem" and the eyebrow
+              said "this is a problem", immediately above the words "Something
+              went wrong". The heading is the message; nothing needs to announce
+              it first.
+            */}
+            <div className="space-y-2">
               {/* No hue. The words say the severity; red only repeated them, and
                   the label now takes the card's default ink like any other text. */}
-              <p className="text-2xs font-bold">Application alert</p>
               <h1 className="text-xl font-bold tracking-tight text-app-ink dark:text-zinc-100">Something went wrong</h1>
               <p className="text-sm leading-relaxed text-app-text-muted dark:text-zinc-400">
                 An unexpected error occurred while rendering this page. Reloading will restore a clean application state.

@@ -11,7 +11,6 @@
  */
 export const ICON_MAP = {
   AlertCircle: 'alert-circle',
-  AlertTriangle: 'warning',
   ArrowRight: 'arrow-forward',
   BarChart3: 'bar-chart',
   Bell: 'notifications',
