@@ -30,7 +30,17 @@ const DEFAULT_STOCK_VIEW: StockView = 'list';
 
 export default function Inventory() {
   const { items, total, page, limit, isLoading, error, refresh, goToPage, addItem, updateItem, deleteItem, setFilters } = useInventory();
-  const [viewMode, setViewMode] = useState<'inventory' | 'designs'>('inventory');
+  /*
+   * Which SURFACE is showing — the stock list or the design repository. In the
+   * URL for the same reason the view is: without it, a refresh drops you back
+   * on the stock list and a shared `?designView=list` link opens the wrong
+   * screen entirely, because each surface's own view param is meaningless
+   * unless the surface that reads it is also the one on screen.
+   *
+   * `inventory` is the default and clears the param, so `/inventory` stays clean.
+   */
+  const [surfaceParam, setSurfaceParam] = useUrlFilter('surface', 'inventory');
+  const viewMode: 'inventory' | 'designs' = surfaceParam === 'designs' ? 'designs' : 'inventory';
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -159,12 +169,24 @@ export default function Inventory() {
    * `?stockView=image` does not flash a table before the gallery arrives. Both
    * fill the same reserved height, so the swap does not jump the page.
    */
-  if (isLoading) {
-    return stockView === 'image'
-      ? <ImageGridSkeleton label="stock items" className="min-h-64" />
-      : <TableSkeleton columns={5} className="min-h-64" />;
+  /*
+   * The loading and error guards belong to the SURFACE they guard.
+   *
+   * `isLoading` and `error` are the *inventory* store's, and this used to
+   * return them for both surfaces — so refreshing the design repository drew
+   * eight rows of table skeleton over a screen about to become a grid of
+   * pictures, and an inventory error blanked the repository that had caused it.
+   * `DesignRepository` owns its own store, its own skeleton (measured to its
+   * card's 313px) and its own error state, and is left to draw them.
+   */
+  if (viewMode === 'inventory') {
+    if (isLoading) {
+      return stockView === 'image'
+        ? <ImageGridSkeleton label="stock items" className="min-h-64" />
+        : <TableSkeleton columns={5} className="min-h-64" />;
+    }
+    if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
   }
-  if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
     <div className="space-y-5">
@@ -175,7 +197,9 @@ export default function Inventory() {
         <SegmentedControl
           aria-label="Inventory view"
           value={viewMode}
-          onChange={setViewMode}
+          // `useUrlFilter` deletes on its clear value, so passing the default
+          // back is what clears the param — passing '' would store `?surface=`.
+          onChange={setSurfaceParam}
           options={[
             { value: 'inventory', label: 'Stock List' },
             { value: 'designs', label: 'Design Repo' },

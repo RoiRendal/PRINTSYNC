@@ -10,12 +10,28 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
+import { cn } from '../../../shared/lib/cn';
+import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, Pagination, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { DesignTable } from './DesignTable';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
 /** How many placeholder cards the grid shows while the designs load. */
 const DESIGN_SKELETON_COUNT = 10;
+
+/**
+ * Which shape the repository is drawn in.
+ *
+ * The default here is `image`, the opposite of the stock surface's `list` —
+ * the repository has always been a wall of artwork, and that is what the people
+ * using it expect to land on. `?designView=list` asks for the table; an absent
+ * param means the grid, so the common case stays a clean `/inventory`.
+ */
+const DESIGN_VIEWS = ['image', 'list'] as const;
+type DesignView = (typeof DESIGN_VIEWS)[number];
+const DEFAULT_DESIGN_VIEW: DesignView = 'image';
 
 /**
  * The loading form of this component's own card grid.
@@ -56,7 +72,20 @@ function DesignGridSkeleton() {
 }
 
 export function DesignRepository() {
-  const { designs, isLoading, error, refresh, addDesign, deleteDesign, updateDesign } = useDesigns();
+  const { designs, total, page, limit, isLoading, error, refresh, goToPage, addDesign, deleteDesign, updateDesign } = useDesigns();
+  /*
+   * The chosen view lives in the URL (D3), the same way the stock surface's
+   * does: it survives a refresh, Back returns to the previous shape, and a link
+   * can open the repository as a table. Picking the default CLEARS the param
+   * rather than storing `?designView=image`.
+   *
+   * An unrecognised value falls back to the grid instead of rendering an empty
+   * screen — a stale bookmark must still show the artwork.
+   */
+  const [designViewParam, setDesignViewParam] = useUrlFilter('designView', '');
+  const designView: DesignView = DESIGN_VIEWS.includes(designViewParam as DesignView)
+    ? (designViewParam as DesignView)
+    : DEFAULT_DESIGN_VIEW;
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -208,12 +237,48 @@ export function DesignRepository() {
     }
   };
 
+  /*
+   * The pager the repository has never rendered. The backend has paginated
+   * designs all along (`listDesigns` uses `range` with an exact count), and the
+   * store has always held one page of 20 — so the grid has been quietly showing
+   * only the first 20 designs with no way to reach the rest. Both shapes get it
+   * now, because hiding rows is not a property of how they are drawn.
+   */
+  const pager = total > limit
+    ? <Pagination page={page} limit={limit} total={total} onPageChange={goToPage} />
+    : undefined;
+
   return (
     <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
       {mutationError && (
         <InlineAlert message={mutationError} onDismiss={() => setMutationError(null)} />
       )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        {/*
+          TEMPORARY: a plain two-button toggle, replaced by the ERPNext-style
+          dropdown in P5. Switchers are the look the Boss retired, so this is
+          scaffolding to keep this phase about the table itself — not a pattern
+          to copy. It sits at the leading edge, where the dropdown will go.
+        */}
+        {DESIGN_VIEWS.map((view) => (
+          <button
+            key={view}
+            type="button"
+            onClick={() => setDesignViewParam(view === DEFAULT_DESIGN_VIEW ? '' : view)}
+            aria-pressed={designView === view}
+            className={cn(
+              'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
+              designView === view
+                ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
+                : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
+            )}
+          >
+            {view === 'list' ? 'List View' : 'Image View'}
+          </button>
+        ))}
+      </div>
 
       <Card padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
@@ -260,16 +325,26 @@ export function DesignRepository() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
-          {/* The card frame, the title, the search box and the Upload button are
-              all drawn while the designs load — none of them depends on the
-              data, and the list pages cannot do the same because their chrome
-              (summary counts, status chips) is derived from it. Rendering the
-              frame here is also what keeps the placeholder cards the same width
-              as the real ones: the grid sits inside `CardContent`'s padding
-              either way. */}
+        {/*
+          The grid needs `CardContent`'s padding; the table brings its own row
+          padding and must run to the card's edge like every other list table.
+          Only the padding differs — the frame, the title, the search box and the
+          Upload button are drawn in either shape, because none of them depends
+          on the data.
+        */}
+        <CardContent className={designView === 'list' ? undefined : 'p-4'}>
           {isLoading ? (
-            <DesignGridSkeleton />
+            designView === 'list'
+              ? <TableSkeleton columns={4} select={false} />
+              : <DesignGridSkeleton />
+          ) : designView === 'list' ? (
+            <DesignTable
+              designs={filteredDesigns}
+              onView={(design) => openViewModal(design)}
+              onEdit={(design) => openEditModal(design)}
+              onDelete={(design) => confirmDelete(design)}
+              footer={pager}
+            />
           ) : filteredDesigns.length > 0 ? (
             <ImageGrid>
               {/*
@@ -318,6 +393,10 @@ export function DesignRepository() {
             </div>
           )}
         </CardContent>
+
+        {/* The grid's own pager band. `DesignTable` renders its own in the list
+            shape, so exactly one band is ever on screen. */}
+        {designView !== 'list' && pager ? <div className="border-t px-4 py-3">{pager}</div> : null}
       </Card>
 
       <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Upload New Design">
