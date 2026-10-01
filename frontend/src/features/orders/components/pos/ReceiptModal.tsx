@@ -1,4 +1,3 @@
-import { Printer, X } from '../../../../shared/components/ui/icons';
 import { Button, Modal } from '../../../../shared/components/ui';
 import { PrintableDocumentView } from './PrintableDocumentView';
 import type { PrintableDocument } from '../../types/printableDocument';
@@ -56,7 +55,7 @@ export function ReceiptModal({ isOpen, onClose, document, onPrint, onNewOrder, t
             secondary act and moving to the next customer is the primary one.
           */}
           <div className="flex gap-3">
-            <Button type="button" variant="secondary" fullWidth leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />} onClick={handlePrint}>
+            <Button type="button" variant="secondary" fullWidth onClick={handlePrint}>
               {document.kind === 'receipt' ? 'Print Receipt' : 'Print Order Summary'}
             </Button>
             {onNewOrder ? (
@@ -64,7 +63,7 @@ export function ReceiptModal({ isOpen, onClose, document, onPrint, onNewOrder, t
                 New Order
               </Button>
             ) : (
-              <Button type="button" variant="secondary" fullWidth leftIcon={<X className="h-3.5 w-3.5" aria-hidden="true" />} onClick={onClose}>
+              <Button type="button" variant="secondary" fullWidth onClick={onClose}>
                 Close
               </Button>
             )}

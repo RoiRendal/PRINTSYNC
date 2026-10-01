@@ -31,12 +31,6 @@ export const ArrowRight = ({ className, ...props }: SVGProps<SVGSVGElement>) => 
   </svg>
 );
 
-export const Banknote = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <rect width="448" height="256" x="32" y="80" rx="16" ry="16" transform="matrix(-1 0 0 -1 512 416)" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><path d="M64 384h384M96 432h320" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><circle cx="256" cy="208" r="80" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><path d="M480 160a80 80 0 0 1-80-80M32 160a80 80 0 0 0 80-80M480 256a80 80 0 0 0-80 80M32 256a80 80 0 0 1 80 80" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
-  </svg>
-);
-
 export const BarChart3 = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M32 32v432a16 16 0 0 0 16 16h432" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><rect width="80" height="192" x="96" y="224" rx="20" ry="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><rect width="80" height="240" x="240" y="176" rx="20" ry="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><rect width="80" height="304" x="383.64" y="112" rx="20" ry="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
@@ -109,12 +103,6 @@ export const Edit = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const Edit3 = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M384 224v184a40 40 0 0 1-40 40H104a40 40 0 0 1-40-40V168a40 40 0 0 1 40-40h167.48" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><path d="M459.94 53.25a16.06 16.06 0 0 0-23.22-.56L424.35 65a8 8 0 0 0 0 11.31l11.34 11.32a8 8 0 0 0 11.34 0l12.06-12c6.1-6.09 6.67-16.01.85-22.38M399.34 90 218.82 270.2a9 9 0 0 0-2.31 3.93L208.16 299a3.91 3.91 0 0 0 4.86 4.86l24.85-8.35a9 9 0 0 0 3.93-2.31L422 112.66a9 9 0 0 0 0-12.66l-9.95-10a9 9 0 0 0-12.71 0"/>
-  </svg>
-);
-
 export const Eye = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M255.66 112c-77.94 0-157.89 45.11-220.83 135.33a16 16 0 0 0-.27 17.77C82.92 340.8 161.8 400 255.66 400c92.84 0 173.34-59.38 221.79-135.25a16.14 16.14 0 0 0 0-17.47C428.89 172.28 347.8 112 255.66 112" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><circle cx="256" cy="256" r="80" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeWidth="32px"/>
@@ -169,12 +157,6 @@ export const Mail = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-export const MessageSquare = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M87.49 380c1.19-4.38-1.44-10.47-3.95-14.86a45 45 0 0 0-2.54-3.8 199.8 199.8 0 0 1-33-110C47.65 139.09 140.73 48 255.83 48 356.21 48 440 117.54 459.58 209.85a199 199 0 0 1 4.42 41.64c0 112.41-89.49 204.93-204.59 204.93-18.3 0-43-4.6-56.47-8.37s-26.92-8.77-30.39-10.11a31.1 31.1 0 0 0-11.12-2.07 30.7 30.7 0 0 0-12.09 2.43l-67.83 24.48a16 16 0 0 1-4.67 1.22 9.6 9.6 0 0 1-9.57-9.74 16 16 0 0 1 .6-3.29Z" fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="32px"/>
-  </svg>
-);
-
 export const Minus = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M400 256H112" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
@@ -220,18 +202,6 @@ export const Phone = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
 export const Plus = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M256 112v288M400 256H112" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
-  </svg>
-);
-
-export const Printer = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M384 368h24a40.12 40.12 0 0 0 40-40V168a40.12 40.12 0 0 0-40-40H104a40.12 40.12 0 0 0-40 40v160a40.12 40.12 0 0 0 40 40h24" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><rect width="256" height="208" x="128" y="240" rx="24.32" ry="24.32" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><path d="M384 128v-24a40.12 40.12 0 0 0-40-40H168a40.12 40.12 0 0 0-40 40v24" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><circle cx="392" cy="184" r="24"/>
-  </svg>
-);
-
-export const ReceiptText = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M160 336V48l32 16 32-16 31.94 16 32.37-16L320 64l31.79-16 31.93 16L416 48l32.01 16L480 48v224" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><path d="M480 272v112a80 80 0 0 1-80 80 80 80 0 0 1-80-80v-48H48a15.86 15.86 0 0 0-16 16c0 64 6.74 112 80 112h288" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="32px"/><path d="M224 144h192M288 224h128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
   </svg>
 );
 
@@ -292,12 +262,6 @@ export const Tag = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
 export const Trash2 = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="m112 112 20 320c.95 18.49 14.4 32 32 32h184c17.67 0 30.87-13.51 32-32l20-320" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><path d="M80 112h352" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="32px"/><path d="M192 112V72h0a23.93 23.93 0 0 1 24-24h80a23.93 23.93 0 0 1 24 24h0v40M256 176v224M184 176l8 224M328 176l-8 224" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
-  </svg>
-);
-
-export const UploadCloud = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M320 367.79h76c55 0 100-29.21 100-83.6s-53-81.47-96-83.6c-8.89-85.06-71-136.8-144-136.8-69 0-113.44 45.79-128 91.2-60 5.7-112 43.88-112 106.4s54 106.4 120 106.4h56" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><path d="m320 255.79-64-64-64 64M256 448.21V207.79" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/>
   </svg>
 );
 

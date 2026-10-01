@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Banknote, ChevronLeft, ChevronRight, ClipboardList, Edit3, Image as ImageIcon, MessageSquare, Plus, Printer } from '../../../../shared/components/ui/icons';
+import { ChevronLeft, ChevronRight, Image as ImageIcon } from '../../../../shared/components/ui/icons';
 import {
   Badge,
   Button,
@@ -188,8 +188,8 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
-                  <ClipboardList className="h-3 w-3" aria-hidden="true" /> Job Specifications
+                <h4 className="label-caps text-app-text-muted dark:text-zinc-500">
+                  Job Specifications
                 </h4>
                 <Card variant="raised" padding="sm" className="divide-y">
                   <div className="flex items-start justify-between gap-4 py-2 text-xs">
@@ -241,8 +241,8 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
               {order.notes && (
                 <section className="space-y-2">
-                  <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
-                    <MessageSquare className="h-3 w-3" aria-hidden="true" /> Production Notes
+                  <h4 className="label-caps text-app-text-muted dark:text-zinc-500">
+                    Production Notes
                   </h4>
                   <div className="rounded-[var(--radius-card)] border p-3 text-xs italic text-app-ink dark:text-zinc-300">
                     &ldquo;{order.notes}&rdquo;
@@ -253,8 +253,8 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
             <div className="space-y-4">
               <section className="space-y-2">
-                <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
-                  <ImageIcon className="h-3 w-3" aria-hidden="true" /> Visual Assets
+                <h4 className="label-caps text-app-text-muted dark:text-zinc-500">
+                  Visual Assets
                 </h4>
                 {selectedOrderIsCustom ? (
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -294,8 +294,8 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
 
           {selectedOrderIsCustom && (
             <Card variant="raised" padding="md" className="space-y-4">
-              <h4 className="flex items-center gap-2 label-caps text-app-text-muted dark:text-zinc-500">
-                <Banknote className="h-3 w-3" aria-hidden="true" /> Payment History
+              <h4 className="label-caps text-app-text-muted dark:text-zinc-500">
+                Payment History
               </h4>
               {paymentError && <InlineAlert message={paymentError} className="text-2xs" />}
               {paymentsLoading ? (
@@ -332,7 +332,7 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
                   </Select>
                 </div>
                 <Input fieldSize="sm" className="text-xs" placeholder="Notes (optional)" value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)} />
-                <Button type="submit" size="sm" fullWidth leftIcon={<Plus className="h-3 w-3" aria-hidden="true" />}>Record Payment</Button>
+                <Button type="submit" size="sm" fullWidth>Record Payment</Button>
               </form>
             </Card>
           )}
@@ -392,7 +392,6 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
               type="button"
               variant="secondary"
               fullWidth
-              leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}
               onClick={() => order && setTicketOrder(order)}
             >
               Print Job Ticket
@@ -400,7 +399,6 @@ export function OrderDetailModal({ order, onClose, onEditOrder, onAdvancePhase, 
             <Button
               type="button"
               fullWidth
-              leftIcon={<Edit3 className="h-3.5 w-3.5" aria-hidden="true" />}
               onClick={() => order && onEditOrder(order)}
             >
               Edit Order

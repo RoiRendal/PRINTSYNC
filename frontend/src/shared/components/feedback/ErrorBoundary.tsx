@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertTriangle, RotateCw } from '../ui/icons';
+import { AlertTriangle } from '../ui/icons';
 import { Button, SurfaceCard } from '../ui';
 
 interface ErrorBoundaryState {
@@ -55,7 +55,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 type="button"
                 variant="primary"
                 onClick={() => window.location.reload()}
-                leftIcon={<RotateCw className="h-3.5 w-3.5" aria-hidden="true" />}
               >
                 Reload page
               </Button>

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Printer, RefreshCw, Trash2 } from '../../../../shared/components/ui/icons';
+import { Plus, RefreshCw, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Transaction } from '../../types';
 import {
   Badge, Button, Card, CardContent, CardHeader, Checkbox, DeleteConfirmModal, Modal,
@@ -374,7 +374,6 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
                 type="button"
                 variant="secondary"
                 fullWidth
-                leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}
                 onClick={() => {
                   receipts.openHistoricalReceipt(history.selectedTransaction!);
                   history.selectTransaction(null);
