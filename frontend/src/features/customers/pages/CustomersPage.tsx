@@ -26,6 +26,7 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
 } from '../../../shared/components/ui';
 import { describeApiError } from '../../../shared/api/errors';
 import { useCustomers } from '../../../app/stores/useCustomerStore';
@@ -340,13 +341,19 @@ export default function CustomersPage() {
                           beside it was the same rounded box the icon frames were;
                           a table row is identified by its text, not by a badge.
                         */}
-                        <TableCell>
+                        <TableCell title={cellTitle('Name', customer.name)}>
                           <span className="leading-none text-app-ink dark:text-zinc-100">{customer.name}</span>
                         </TableCell>
-                        <TableCell>{customer.phone || '—'}</TableCell>
-                        <TableCell>{customer.email || '—'}</TableCell>
-                        <TableCell className="max-w-[200px] truncate text-app-text-muted dark:text-zinc-400">{customer.notes || '—'}</TableCell>
-                        <TableCell className="text-app-text-muted dark:text-zinc-500">{customer.createdAt.slice(0, 10)}</TableCell>
+                        <TableCell title={cellTitle('Phone', customer.phone)}>{customer.phone || '—'}</TableCell>
+                        <TableCell title={cellTitle('Email', customer.email)}>{customer.email || '—'}</TableCell>
+                        {/*
+                          `truncate` and `max-w-[200px]` came off this cell: the
+                          primitive now clips every cell, and a max-width here
+                          would have held the column narrower than the colgroup
+                          allots it, leaving a gap after the text.
+                        */}
+                        <TableCell className="text-app-text-muted dark:text-zinc-400" title={cellTitle('Notes', customer.notes)}>{customer.notes || '—'}</TableCell>
+                        <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('Date Created', customer.createdAt.slice(0, 10))}>{customer.createdAt.slice(0, 10)}</TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (

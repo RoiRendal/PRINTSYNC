@@ -30,6 +30,7 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
 } from '../../../shared/components/ui';
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
@@ -352,14 +353,14 @@ export default function UserManagement() {
                           beside it was the same rounded box the icon frames were;
                           a table row is identified by its text, not by a badge.
                         */}
-                        <TableCell>
+                        <TableCell title={cellTitle('Staff Identity', user.name)}>
                           <span className="leading-none text-app-ink dark:text-zinc-100">{user.name}</span>
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone}</TableCell>
-                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
-                        <TableCell className="text-app-ink dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="text-app-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell title={cellTitle('Email', user.email)}>{user.email}</TableCell>
+                        <TableCell title={cellTitle('Phone', user.phone)}>{user.phone}</TableCell>
+                        <TableCell title={cellTitle('RBAC Role', user.role)}><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
+                        <TableCell className="text-app-ink dark:text-zinc-200" title={cellTitle('Position', user.position)}>{user.position}</TableCell>
+                        <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('Date Created', user.createdAt)}>{user.createdAt}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (

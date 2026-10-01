@@ -103,6 +103,33 @@ export const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLT
 
 TableCell.displayName = 'TableCell';
 
+/**
+ * The tooltip for a clipped cell: the column's own label, then the FULL value.
+ * This is the string ERPNext's list view writes onto every cell
+ * (`title="Status: Open"`), and it is why a clipped value there is never lost.
+ *
+ * Native `title` is a deliberate choice, not a shortcut. It is the one tooltip
+ * that renders identically in both themes — a dark box with light text, drawn by
+ * the browser — which is the behaviour this app is being matched to. It needs no
+ * positioning, no portal, no state and no measurement. The trade is real and
+ * accepted: roughly a second of hover delay, no styling, and no way to wrap a
+ * very long value onto a second line.
+ *
+ * Returns `undefined` for an empty value, so a cell showing the em-dash
+ * placeholder gets no tooltip at all — "Notes: " on an empty cell explains
+ * nothing and just adds noise.
+ *
+ * Pass the value the cell actually renders, formatted the way the cell renders
+ * it, so the tooltip completes the visible text rather than restating something
+ * different.
+ */
+export function cellTitle(label: string, value: string | number | null | undefined): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  const text = String(value).trim();
+  if (text === '') return undefined;
+  return `${label}: ${text}`;
+}
+
 export const TableCaption = forwardRef<HTMLTableCaptionElement, HTMLAttributes<HTMLTableCaptionElement>>(({ className, ...props }, ref) => (
   <caption ref={ref} className={cn('mt-3 text-2xs font-semibold text-app-text-muted', className)} {...props} />
 ));

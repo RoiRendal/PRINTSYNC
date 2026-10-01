@@ -20,6 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  cellTitle,
 } from '../../../shared/components/ui';
 import type { BadgeVariant } from '../../../shared/components/ui';
 import { useAuditLogs } from '../hooks/useAuditLogs';
@@ -88,28 +89,27 @@ function ActionBadge({ action }: { action: string }) {
   return <StatusLabel tone={variant}>{formatAction(action)}</StatusLabel>;
 }
 
-function MetadataPreview({ metadata }: { metadata: Record<string, unknown> }) {
-  const [expanded, setExpanded] = useState(false);
-  const entries = Object.entries(metadata);
-  if (entries.length === 0) return <span className="text-app-text-muted dark:text-zinc-500">—</span>;
-
-  const preview = entries.slice(0, 2).map(([k, v]) => `${k}: ${String(v).slice(0, 20)}`).join(', ');
-
-  return (
-    <button
-      type="button"
-      onClick={() => setExpanded(!expanded)}
-      className="text-left text-app-text-muted hover:text-app-accent dark:text-zinc-400 dark:hover:text-app-accent-soft"
-    >
-      {expanded ? (
-        <pre className="max-w-xs whitespace-pre-wrap break-words rounded-md bg-[var(--app-state-hover)] p-2 dark:bg-[var(--app-state-hover)]">
-          {JSON.stringify(metadata, null, 2)}
-        </pre>
-      ) : (
-        <span className="truncate">{preview}{entries.length > 2 && '...'}</span>
-      )}
-    </button>
-  );
+/**
+ * The whole metadata record as ONE flat string: `"key: value"` pairs, comma
+ * joined, nothing cut short.
+ *
+ * This replaces `MetadataPreview`, which was a button that expanded the row into
+ * a pretty-printed JSON block. That block was the last thing in any table that
+ * could make a row many lines tall, which is precisely what the one-line rule
+ * forbids — a row that grows on click is a row that is not one line. So the
+ * expansion is gone and the full string travels in the cell's tooltip instead:
+ * the value is still reachable, the row stays flat, and nothing about it depends
+ * on the user knowing it can be clicked.
+ *
+ * The old component also hand-wrote its own clipping — the first two entries
+ * only, each value cut at 20 characters, with a hand-typed ellipsis appended.
+ * The browser draws the ellipsis now, so none of that is needed, and it was
+ * actively hiding data that a full value would have shown.
+ */
+function formatMetadata(metadata: Record<string, unknown>): string {
+  return Object.entries(metadata)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(', ');
 }
 
 export default function AuditLogPage() {
@@ -219,32 +219,50 @@ export default function AuditLogPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredItems.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="text-app-text-muted dark:text-zinc-500">
-                          {formatTimestamp(log.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <ActionBadge action={log.action} />
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-app-ink dark:text-zinc-200">
-                            {log.entityType.replace(/_/g, ' ')}
-                          </span>
-                          {log.entityId && (
-                            <span className="ml-1.5 text-app-text-muted dark:text-zinc-500">
-                              {log.entityId.slice(0, 8)}...
+                    {filteredItems.map((log) => {
+                      /*
+                        Entity and Actor used to be truncated to their first
+                        eight characters by hand, with a hand-typed ellipsis.
+                        That was a workaround from before cells could clip. Now
+                        the whole identifier is rendered, the browser clips it,
+                        and the tooltip carries it in full — so an operator can
+                        actually copy a complete reference off the row.
+                      */
+                      const entityLabel = log.entityType.replace(/_/g, ' ');
+                      const entityText = log.entityId ? `${entityLabel} ${log.entityId}` : entityLabel;
+                      const actorText = log.actorId || 'System';
+                      const details = formatMetadata(log.metadata);
+                      return (
+                        <TableRow key={log.id}>
+                          <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('Timestamp', formatTimestamp(log.createdAt))}>
+                            {formatTimestamp(log.createdAt)}
+                          </TableCell>
+                          <TableCell title={cellTitle('Action', formatAction(log.action))}>
+                            <ActionBadge action={log.action} />
+                          </TableCell>
+                          <TableCell title={cellTitle('Entity', entityText)}>
+                            <span className="text-app-ink dark:text-zinc-200">
+                              {entityLabel}
                             </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-app-ink dark:text-zinc-200">
-                          {log.actorId ? log.actorId.slice(0, 8) + '...' : 'System'}
-                        </TableCell>
-                        <TableCell>
-                          <MetadataPreview metadata={log.metadata} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            {log.entityId && (
+                              <span className="ml-1.5 text-app-text-muted dark:text-zinc-500">
+                                {log.entityId}
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-app-ink dark:text-zinc-200" title={cellTitle('Actor', actorText)}>
+                            {actorText}
+                          </TableCell>
+                          <TableCell title={cellTitle('Details', details)}>
+                            {details ? (
+                              <span className="text-app-text-muted dark:text-zinc-400">{details}</span>
+                            ) : (
+                              <span className="text-app-text-muted dark:text-zinc-500">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                     {filteredItems.length === 0 && (
                       <TableRow className="hover:bg-transparent">
                         <TableCell colSpan={5} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">

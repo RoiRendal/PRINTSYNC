@@ -17,6 +17,7 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { formatSelectedCount } from '../../../../shared/lib/selectionLabels';
@@ -187,6 +188,17 @@ export function OrdersTable({
             <TableBody>
               {orders.map((order) => {
                 const isPending = pendingOrderIds.has(order.id);
+                const isCustom = isCustomOrder(order);
+                /*
+                  The display strings are built once and handed to BOTH the cell
+                  and its tooltip, so the two cannot drift apart — the tooltip
+                  completes the text on screen rather than restating something
+                  else. `undefined` where the cell shows the em dash, which
+                  `cellTitle` turns into no tooltip at all.
+                */
+                const orderRef = `#${order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}`;
+                const paidText = isCustom ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : undefined;
+                const balanceText = isCustom ? `${currencySymbol}${(order.balanceDue ?? 0).toFixed(2)}` : undefined;
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => onSelectOrder(order)}>
                     {/*
@@ -201,16 +213,16 @@ export function OrdersTable({
                         aria-label={`Select order ${order.id}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="text-app-ink dark:text-zinc-100">
-                      #{order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}
+                    <TableCell className="text-app-ink dark:text-zinc-100" title={cellTitle('Order ID', orderRef)}>
+                      {orderRef}
                     </TableCell>
-                    <TableCell>
+                    <TableCell title={cellTitle('Project / Client', order.customer)}>
                       <span className="text-app-ink dark:text-zinc-100">{order.customer}</span>
                     </TableCell>
-                    <TableCell>
-                      {isCustomOrder(order) ? 'Custom' : 'Retail'}
+                    <TableCell title={cellTitle('Type', isCustom ? 'Custom' : 'Retail')}>
+                      {isCustom ? 'Custom' : 'Retail'}
                     </TableCell>
-                    <TableCell>
+                    <TableCell title={cellTitle('Work Phase', order.status)}>
                       {/* `min-w-0`: a flex child refuses to shrink below its
                           content, so without it the row is cut with no ellipsis. */}
                       <div className="flex min-w-0 items-center gap-1.5">
@@ -227,7 +239,7 @@ export function OrdersTable({
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-right tabular-nums" title={cellTitle('Due Date', order.dueDate)}>
                       {order.dueDate ? (
                         new Date(order.dueDate) < new Date(new Date().toISOString().slice(0, 10)) && order.status !== 'Completed' && order.status !== 'Delivered' ? (
                           <span className="text-app-danger dark:text-red-300">{order.dueDate}</span>
@@ -238,15 +250,20 @@ export function OrdersTable({
                         <span className="text-app-text-muted dark:text-zinc-500">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{currencySymbol}{order.amount.toFixed(2)}</TableCell>
-                    <TableCell className="text-right tabular-nums text-app-text-muted dark:text-zinc-400">
-                      {isCustomOrder(order) ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : '—'}
+                    <TableCell
+                      className="text-right tabular-nums text-app-ink dark:text-zinc-100"
+                      title={cellTitle('Value', `${currencySymbol}${order.amount.toFixed(2)}`)}
+                    >
+                      {currencySymbol}{order.amount.toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {isCustomOrder(order) && (order.balanceDue ?? 0) > 0 ? (
-                        <StatusLabel tone="red">{currencySymbol}{(order.balanceDue ?? 0).toFixed(2)}</StatusLabel>
+                    <TableCell className="text-right tabular-nums text-app-text-muted dark:text-zinc-400" title={cellTitle('Paid', paidText)}>
+                      {paidText ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums" title={cellTitle('Balance', balanceText)}>
+                      {isCustom && (order.balanceDue ?? 0) > 0 ? (
+                        <StatusLabel tone="red">{balanceText}</StatusLabel>
                       ) : (
-                        <span className="text-app-text-muted dark:text-zinc-500">{isCustomOrder(order) ? `${currencySymbol}0.00` : '—'}</span>
+                        <span className="text-app-text-muted dark:text-zinc-500">{isCustom ? balanceText : '—'}</span>
                       )}
                     </TableCell>
                   </TableRow>

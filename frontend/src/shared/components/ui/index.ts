@@ -33,6 +33,7 @@ export {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
 } from './Table';
 export type { TableContainerProps } from './Table';
 export { Tooltip } from './Tooltip';
