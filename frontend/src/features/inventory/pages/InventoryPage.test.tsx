@@ -58,3 +58,46 @@ describe('InventoryPage — URL lowStock filter', () => {
     expect(screen.getByRole('button', { name: /low stock only/i })).toBeInTheDocument();
   });
 });
+
+/*
+ * The stock view picker, pinned at the page level.
+ *
+ * These assertions are about WHERE the choice is kept — the URL — not about how
+ * the gallery looks. The URL is the part a refresh, a Back press and a shared
+ * link all depend on, and it is the part that silently breaks: a picker wired to
+ * `useState` passes every visual review and loses the choice on reload.
+ *
+ * The control itself is scaffolding and is replaced in P5 by the ERPNext-style
+ * dropdown; these tests name the buttons by their label so that swap changes the
+ * implementation under them rather than the expectations.
+ */
+describe('InventoryPage — stock view in the URL', () => {
+  it('opens the list view by default', () => {
+    renderAt('/inventory');
+    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('opens the image view when the URL asks for it', () => {
+    renderAt('/inventory?stockView=image');
+    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('falls back to the list for a value it does not recognise', () => {
+    renderAt('/inventory?stockView=gallery');
+    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('switching to the image view marks it pressed', () => {
+    renderAt('/inventory');
+    fireEvent.click(screen.getByRole('button', { name: 'Image View' }));
+    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('switching back to the list marks it pressed again', () => {
+    renderAt('/inventory?stockView=image');
+    fireEvent.click(screen.getByRole('button', { name: 'List View' }));
+    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'false');
+  });
+});
