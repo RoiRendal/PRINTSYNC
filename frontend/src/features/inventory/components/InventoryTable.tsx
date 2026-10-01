@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Package, Plus, Trash2 } from '../../../shared/components/ui/icons';
+import { Package, Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import {
   Button,
@@ -25,9 +25,10 @@ import type { InventoryItem } from '../types';
 
 interface InventoryTableProps {
   items: InventoryItem[];
-  totalCount: number;
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
+  /** Re-reads the stock list from the server. */
+  onRefresh: () => void;
   onAddItem: () => void;
   onEditItem: (item: InventoryItem) => void;
   /**
@@ -44,9 +45,9 @@ interface InventoryTableProps {
 
 export function InventoryTable({
   items,
-  totalCount,
   searchTerm,
   onSearchTermChange,
+  onRefresh,
   onAddItem,
   onEditItem,
   onDeleteSelected,
@@ -62,6 +63,21 @@ export function InventoryTable({
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />
+          {/*
+            Re-reads the list. To the LEFT of delete — the rule for every table
+            that has one — so the toolbar reads search, refresh, delete, add.
+          */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            onClick={onRefresh}
+            aria-label="Refresh"
+            title="Refresh"
+            className="shrink-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
           {/*
             Icon-only, gray, square — the same tone as Cancel. The hover title is
             the only place the user sees *why* it is disabled, so the affordance
@@ -179,10 +195,12 @@ export function InventoryTable({
         </TableContainer>
       </CardContent>
 
-      <div className="surface-toolbar flex justify-between px-3 py-2 text-app-text-muted dark:text-zinc-500">
-        <span>Displaying {items.length} of {totalCount} items</span>
-        <span className="hidden opacity-50 sm:inline">PrintSync cloud sync active</span>
-      </div>
+      {/*
+        No "Displaying N of M items" line and no sync claim any more. Every other
+        list table ends in the pagination band alone, and the pager already
+        reports "(N total)" — the second count on a second row was the odd one
+        out, and "cloud sync active" said nothing a user could act on.
+      */}
       {footer ? <div className="border-t px-4 py-3">{footer}</div> : null}
     </Card>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Printer, Trash2 } from '../../../../shared/components/ui/icons';
+import { Plus, Printer, RefreshCw, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Transaction } from '../../types';
 import {
   Badge, Button, Card, CardContent, CardHeader, Checkbox, DeleteConfirmModal, Modal,
@@ -29,6 +29,8 @@ interface RetailSalesTableProps {
    * this only has to navigate and the POS opens in Retail by itself.
    */
   onNewOrder: () => void;
+  /** Re-reads the sales history from the server. */
+  onRefresh: () => void;
 }
 
 /**
@@ -56,7 +58,7 @@ interface RetailSalesTableProps {
  * sale hidden by the search box or sitting on another page cannot be voided by
  * accident.
  */
-export function RetailSalesTable({ onNewOrder }: RetailSalesTableProps) {
+export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProps) {
   const { items: inventory } = useInventory();
   const { orders } = useOrders();
   const { transactions, error: transactionError, voidTransaction } = usePOSTransactions({ inventory });
@@ -158,6 +160,22 @@ export function RetailSalesTable({ onNewOrder }: RetailSalesTableProps) {
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
             <SearchInput className="flex-1" aria-label="Filter transaction history" value={history.historySearchTerm} onChange={(e) => history.setHistorySearchTerm(e.target.value)} />
+            {/*
+              Re-reads the sales history. To the LEFT of the void square — the
+              rule for every table that has one — so the toolbar reads search,
+              refresh, void, add.
+            */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              onClick={onRefresh}
+              aria-label="Refresh"
+              title="Refresh"
+              className="shrink-0"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
             {/*
               The table's only reversal control, and the same icon-only gray
               square the other list tables use. It is disabled until something is

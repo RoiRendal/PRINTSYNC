@@ -231,7 +231,7 @@ export default function Orders() {
       */}
       {isRetail ? (
         // No mode to ask for here: Retail is what the till opens as.
-        <RetailSalesTable onNewOrder={() => navigate('/pos')} />
+        <RetailSalesTable onNewOrder={() => navigate('/pos')} onRefresh={refresh} />
       ) : (
         <>
           {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
@@ -306,6 +306,7 @@ export default function Orders() {
                 // The custom-orders "+" opens the till already switched to Custom,
                 // so a job ticket does not begin with a mode change.
                 onNewOrder={() => navigate('/pos', { state: { posMode: 'custom' } })}
+                onRefresh={refresh}
                 onDeleteSelected={openDeleteConfirm}
                 selection={selection}
                 pendingOrderIds={pendingOrderIds}

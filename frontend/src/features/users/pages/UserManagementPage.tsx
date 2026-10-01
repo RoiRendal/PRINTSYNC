@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Trash2 } from '../../../shared/components/ui/icons';
+import { Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -233,6 +233,22 @@ export default function UserManagement() {
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
                 <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
+                {/*
+                  Re-reads the list. To the LEFT of delete — the rule for every
+                  table that has one — so the toolbar reads search, refresh,
+                  delete, add.
+                */}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => refreshUsers()}
+                  aria-label="Refresh"
+                  title="Refresh"
+                  className="shrink-0"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                </Button>
                 {/*
                   The table's only delete control. Icon-only and gray (the same
                   tone as Cancel) so it does not advertise itself as destructive

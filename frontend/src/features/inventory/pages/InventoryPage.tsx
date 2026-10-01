@@ -160,9 +160,9 @@ export default function Inventory() {
 
           <InventoryTable
             items={filteredItems}
-            totalCount={items.length}
             searchTerm={searchTerm}
             onSearchTermChange={setSearchTerm}
+            onRefresh={refresh}
             onAddItem={() => handleOpenModal()}
             onEditItem={(item) => handleOpenModal(item)}
             onDeleteSelected={handleDeleteSelected}
