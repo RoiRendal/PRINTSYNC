@@ -244,12 +244,17 @@ export default function AuditLogPage() {
                 </Table>
               </TableContainer>
 
-              <div className="space-y-2 border-t px-4 py-3">
-                <span className="block text-app-text-muted dark:text-zinc-500">
-                  Showing {items.length} of {total} events
-                </span>
-                <Pagination page={page} limit={pageSize} total={total} onPageChange={setPage} />
-              </div>
+              {/*
+                The footer is the pagination band alone, and only when there is
+                more than one page — the same shape every other list table ends
+                in. The "Showing N of M events" line above the pager was the last
+                one left in the app, and the pager already reports "(N total)".
+              */}
+              {total > pageSize && (
+                <div className="border-t px-4 py-3">
+                  <Pagination page={page} limit={pageSize} total={total} onPageChange={setPage} />
+                </div>
+              )}
             </CardContent>
           </Card>
     </div>
