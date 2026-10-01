@@ -245,6 +245,17 @@
      mode — same role, opposite steps, and deliberately not the same value. */
   --app-state-selected: #e3e3e8;     /* light step */
   --app-border-hairline: #d5d5da;    /* internal dividers */
+  /* The placeholder fill: a block standing in for content that has not arrived.
+     ERPNext calls the same thing `--skeleton-bg` (`= --surface-gray-2`, #f3f3f3
+     on white) and paints its `.es-skeleton` with `--surface-gray-3` (#ededed).
+
+     It is NOT `--app-surface-sub`. That token is #ececef in light, which on the
+     sidebar's #ebebee measures 1.005:1 — a placeholder there would be invisible,
+     and the sidebar is exactly where the boot skeleton puts its pills. So the
+     fill needs its own value, dark enough to read on the darkest surface it
+     lands on (the sidebar) while still reading on a white card. Measured, light:
+     1.29:1 on a raised card, 1.19:1 on the page, 1.09:1 on the sidebar. */
+  --app-skeleton: #e2e2e7;
   /* The control edge — the border on a focusable control, and the colour of the
      focus ring itself.
 
@@ -365,6 +376,12 @@
   --app-state-hover: #3a3a3c;        /* 1.23:1 on raised — matches the old 6%-white hover tint at 1.21:1 */
   --app-state-hover-sub: #48484a;
   --app-state-selected: #48484a;     /* dark step — one step up from the surface, never the light value */
+  /* The dark partner of the placeholder fill above, and the direction is
+     inverted on purpose: dark mode's page is the DARKEST surface, so a
+     placeholder has to step UP off it rather than down. Measured: 1.33:1 on a
+     raised card, 1.62:1 on the page, 1.71:1 on the sidebar — the pills read a
+     little stronger here than in light, which is what the reference does too. */
+  --app-skeleton: #3f3f42;
   --app-border-hairline: #48484a;
   --app-border-control: #8e8e93;     /* 4.27:1 on raised */
   --app-border-frame: #4a4a4a;       /* 2.98:1 on the page — matched to the light step */

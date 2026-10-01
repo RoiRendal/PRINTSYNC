@@ -6,7 +6,7 @@ import { useAuth } from '../app/stores/useAuthStore';
 import LoginPage from '../features/auth/pages/LoginPage';
 import { NAV_ITEMS } from '../shared/constants/navigation';
 import { ErrorBoundary } from '../shared/components/feedback/ErrorBoundary';
-import { LoadingState } from '../shared/components/feedback/LoadingState';
+import { PageSkeleton } from '../shared/components/feedback/PageSkeleton';
 
 const Dashboard = lazy(() => import('../features/dashboard/pages/DashboardPage'));
 const Inventory = lazy(() => import('../features/inventory/pages/InventoryPage'));
@@ -18,26 +18,39 @@ const Settings = lazy(() => import('../features/settings/pages/SettingsPage'));
 const Customers = lazy(() => import('../features/customers/pages/CustomersPage'));
 const AuditLog = lazy(() => import('../features/audit/pages/AuditLogPage'));
 
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { currentUser, isSessionLoading } = useAuth();
-  if (isSessionLoading) {
-    return <LoadingState label="Restoring session" className="min-h-screen" />;
-  }
-  if (!currentUser) {
-    return <Navigate to="/login" replace />;
-  }
-  return <>{children}</>;
-}
-
+/**
+ * The authenticated shell.
+ *
+ * The order of the two conditions is the whole point. The shell renders even
+ * while the session is unknown, because its frame — sidebar column, header, page
+ * toolbar — is already decided; only the two things that depend on WHO is signed
+ * in are not. `Layout` takes `navLoading` for exactly that, so the boot screen is
+ * this layout with placeholders in it rather than a second copy of the layout
+ * that could drift away from the real one.
+ *
+ * What stood here before was a full-screen spinner gated ahead of `Layout`, so
+ * the shell could not paint until the session call returned: the window showed
+ * nothing, then a spinner, then the app. Now the frame is up from the first
+ * commit and only its contents fill in.
+ *
+ * `!currentUser` is checked AFTER the loading flag, so a signed-out visitor is
+ * redirected rather than left looking at the shell.
+ */
 function ProtectedLayout() {
+  const { currentUser, isSessionLoading } = useAuth();
+
   return (
-    <RequireAuth>
-      <Layout>
-        <Suspense fallback={<LoadingState label="Loading page" className="min-h-[60vh]" />}>
+    <Layout navLoading={isSessionLoading || !currentUser}>
+      {isSessionLoading ? (
+        <PageSkeleton />
+      ) : currentUser ? (
+        <Suspense fallback={<PageSkeleton className="min-h-[60vh]" />}>
           <Outlet />
         </Suspense>
-      </Layout>
-    </RequireAuth>
+      ) : (
+        <Navigate to="/login" replace />
+      )}
+    </Layout>
   );
 }
 
