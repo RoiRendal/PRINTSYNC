@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
-import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
+import { Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
 import { POSItemDetails } from './POSItemDetails';
@@ -91,15 +91,35 @@ export function POSCart({
    */
   return (
     <SurfaceCard className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden p-0 xl:h-full xl:shrink">
-      <div className="relative shrink-0 p-4">
+      {/*
+        The header names the panel and counts its lines, and that is all it does.
+        "Checkout panel" restated the obvious — this is the column the checkout
+        swaps into, and the heading already says which mode it is — so the line
+        went, and the wrapper that existed only to stack it went with it.
+
+        `px-4 pt-4` rather than `p-4`: the rule below is drawn by the inner div's
+        own `pb-3`, so an outer bottom padding stacked 16px of dead space on top
+        of the customer block's own 16px and pushed "Customer" half a line away
+        from the heading it belongs under.
+
+        No `label-caps`: the app's one uppercase treatment is reserved for group
+        headers, and a panel title reads as a title — sentence case, `text-sm`,
+        the same treatment `CardTitle` gives every other card heading. The count
+        is a figure, so it is muted ink like every other figure, not a tinted pill.
+      */}
+      <div className="relative shrink-0 px-4 pt-4">
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
-          <div>
-            <h2 className="label-caps text-app-ink dark:text-zinc-100">
-              {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
-            </h2>
-            <p className="mt-1 text-xs text-app-text-muted dark:text-zinc-500">Checkout panel</p>
-          </div>
-          <Badge variant="accent">{cart.length} items</Badge>
+          <h2 className="text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">
+            {posMode === 'retail' ? 'Item Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Cart'}
+          </h2>
+          {/*
+            `dark:text-zinc-400`, not the `-500` the footer labels use. The pill's
+            tint used to carry the contrast; on the bare panel fill the same
+            `zinc-500` measures 3.52:1 against `--app-surface`, under the 4.5:1
+            floor for 10px type. `zinc-400` measures 6.49:1 and is the step the
+            "· optional" hint beside it already uses.
+          */}
+          <span className="text-2xs font-bold tabular-nums text-app-text-muted dark:text-zinc-400">{cart.length} items</span>
         </div>
       </div>
 
@@ -169,7 +189,13 @@ export function POSCart({
             onBack={() => setSelectedLine(null)}
           />
         ) : cart.length === 0 ? (
-          <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
+          /*
+           * One sentence, no glyph. The old pair of lines told the cashier what
+           * to do and what the two modes are; the toolbar above already carries
+           * Retail / Custom, and the totals below already read zero. A picture
+           * of an empty tray said nothing the sentence does not.
+           */
+          <EmptyState title="No items in cart." icon={null} className="py-10" />
         ) : (
           cart.map((item, idx) => (
             <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border p-2.5">
