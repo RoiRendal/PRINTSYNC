@@ -46,8 +46,8 @@ function Harness({ items = ITEMS, onEditItem = vi.fn() }: { items?: InventoryIte
     <>
       <InventoryTable
         items={items}
-        totalCount={items.length}
         searchTerm=""
+        onRefresh={vi.fn()}
         onSearchTermChange={vi.fn()}
         onAddItem={vi.fn()}
         onEditItem={onEditItem}

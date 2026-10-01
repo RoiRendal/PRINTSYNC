@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Printer, Trash2 } from '../../../../shared/components/ui/icons';
+import { Plus, Printer, RefreshCw, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Transaction } from '../../types';
 import {
   Badge, Button, Card, CardContent, CardHeader, Checkbox, DeleteConfirmModal, Modal,
@@ -20,6 +20,18 @@ import { printDocument, usePOSReceipts } from '../../hooks/usePOSReceipts';
 import { ReceiptModal } from '../pos/ReceiptModal';
 
 const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
+
+interface RetailSalesTableProps {
+  /**
+   * Opens the POS to ring up a new sale — the header's "+" control.
+   *
+   * Nothing else is asked of the page: Retail is the till's resting mode, so
+   * this only has to navigate and the POS opens in Retail by itself.
+   */
+  onNewOrder: () => void;
+  /** Re-reads the sales history from the server. */
+  onRefresh: () => void;
+}
 
 /**
  * The retail-sales list, transplanted from the POS terminal.
@@ -46,7 +58,7 @@ const HISTORY_PAGE_SIZE = DEFAULT_PAGE_SIZE;
  * sale hidden by the search box or sitting on another page cannot be voided by
  * accident.
  */
-export function RetailSalesTable() {
+export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProps) {
   const { items: inventory } = useInventory();
   const { orders } = useOrders();
   const { transactions, error: transactionError, voidTransaction } = usePOSTransactions({ inventory });
@@ -149,6 +161,22 @@ export function RetailSalesTable() {
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
             <SearchInput className="flex-1" aria-label="Filter transaction history" value={history.historySearchTerm} onChange={(e) => history.setHistorySearchTerm(e.target.value)} />
             {/*
+              Re-reads the sales history. To the LEFT of the void square — the
+              rule for every table that has one — so the toolbar reads search,
+              refresh, void, add.
+            */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              onClick={onRefresh}
+              aria-label="Refresh"
+              title="Refresh"
+              className="shrink-0"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+            {/*
               The table's only reversal control, and the same icon-only gray
               square the other list tables use. It is disabled until something is
               ticked; the hover title is the only place the user sees *why*, so
@@ -167,6 +195,22 @@ export function RetailSalesTable() {
               className="shrink-0"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+            {/*
+              The same "+" the other list tables carry, to the right of the void
+              square. It asks the page only to navigate — Retail is already the
+              till's resting mode, so there is no mode to set on the way over.
+            */}
+            <Button
+              type="button"
+              variant="primary"
+              size="icon"
+              onClick={onNewOrder}
+              aria-label="New POS Order"
+              title="New POS Order"
+              className="shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
           </div>
         </CardHeader>

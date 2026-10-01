@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
+import { Calendar, Download, Edit, Eye, Image as ImageIcon, Plus, RefreshCw, Tag, Trash2, UploadCloud } from '../../../shared/components/ui/icons';
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -229,7 +229,40 @@ export function DesignRepository() {
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            <Button variant="primary" onClick={() => setIsAddModalOpen(true)} leftIcon={<Plus className="h-3.5 w-3.5" aria-hidden="true" />}>Upload Design</Button>
+            {/*
+              Re-reads the repository. This header has no delete square to sit to
+              the left of, so it takes the other position the rule allows — on the
+              right of the search box, the same place the Audit Log puts its own.
+            */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              onClick={() => refresh()}
+              aria-label="Refresh"
+              title="Refresh"
+              className="shrink-0"
+            >
+              <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+            {/*
+              A bare plus, the same control the list tables carry: the words moved
+              into the accessible name, and the primary fill stays because
+              uploading is still this screen's one dominant action (R23). Nothing
+              sits to its left — a design is deleted from its own card, not in a
+              batch, so this header has no delete square to pair with.
+            */}
+            <Button
+              type="button"
+              variant="primary"
+              size="icon"
+              onClick={() => setIsAddModalOpen(true)}
+              aria-label="Upload Design"
+              title="Upload Design"
+              className="shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-4">

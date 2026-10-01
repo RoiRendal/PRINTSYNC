@@ -150,12 +150,6 @@ export default function AuditLogPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <Button type="button" variant="secondary" onClick={() => refresh()} leftIcon={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}>
-          Refresh
-        </Button>
-      </div>
-
       <StatTileRow columns={1}>
         <StatTile label="Total Events" value={total} />
       </StatTileRow>
@@ -163,8 +157,28 @@ export default function AuditLogPage() {
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <div className="w-full sm:max-w-xs">
-                  <SearchInput value={search} onChange={(e) => setSearch(e.target.value)} />
+                {/*
+                  Search and Refresh are one group, then the two filters — the
+                  refresh sits on the right of the search box, the position this
+                  page's toolbar controls take. It is disabled while a load is in
+                  flight because, unlike the other list tables whose whole toolbar
+                  is replaced by a skeleton, this header stays on screen: the
+                  button is the only thing that can report that a fetch is running.
+                */}
+                <div className="flex w-full gap-2 sm:max-w-xs">
+                  <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="icon"
+                    disabled={isLoading}
+                    onClick={() => refresh()}
+                    aria-label="Refresh"
+                    title="Refresh"
+                    className="shrink-0"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Button>
                 </div>
                 <div className="flex gap-2">
                   <Select value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }}>

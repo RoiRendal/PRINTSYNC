@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { LoaderCircle, Trash2 } from '../../../../shared/components/ui/icons';
+import { LoaderCircle, Plus, RefreshCw, Trash2 } from '../../../../shared/components/ui/icons';
 import {
   Button,
   Card,
@@ -30,6 +30,10 @@ interface OrdersTableProps {
   searchTerm: string;
   onSearchTermChange: (value: string) => void;
   onSelectOrder: (order: Order) => void;
+  /** Opens the POS to ring up a new sale — the header's "+" control. */
+  onNewOrder: () => void;
+  /** Re-reads the current page of orders from the server. */
+  onRefresh: () => void;
   /**
    * Deletes every ticked row. The table no longer deletes one row at a time: the
    * row's trash button was removed so a delete can only come from the header
@@ -54,6 +58,8 @@ export function OrdersTable({
   searchTerm,
   onSearchTermChange,
   onSelectOrder,
+  onNewOrder,
+  onRefresh,
   onDeleteSelected,
   selection,
   pendingOrderIds,
@@ -77,6 +83,21 @@ export function OrdersTable({
             onChange={(e) => onSearchTermChange(e.target.value)}
           />
           {/*
+            Re-reads the list. To the LEFT of delete — the rule for every table
+            that has one — so the toolbar reads search, refresh, delete, add.
+          */}
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            onClick={onRefresh}
+            aria-label="Refresh"
+            title="Refresh"
+            className="shrink-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+          {/*
             The table's only delete control. It is icon-only and gray (the same
             tone as Cancel) so it does not advertise itself as a destructive
             action at a glance — the confirmation modal does that work. The
@@ -93,6 +114,23 @@ export function OrdersTable({
             className="shrink-0"
           >
             <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+          </Button>
+          {/*
+            "New POS Order" as a bare plus, to the right of delete — the same pair
+            the Inventory, Customers and Users tables show. The words live in the
+            accessible name now; the primary fill stays, because ringing up a sale
+            is still this screen's one dominant action (R23).
+          */}
+          <Button
+            type="button"
+            variant="primary"
+            size="icon"
+            onClick={onNewOrder}
+            aria-label="New POS Order"
+            title="New POS Order"
+            className="shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
           </Button>
         </div>
       </CardHeader>
