@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
+import { Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -234,7 +234,7 @@ export function POSCart({
                       type="button"
                       onClick={() => setSelectedLine(idx)}
                       title={`Edit ${item.name}`}
-                      className="cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
+                      className="min-w-0 cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
                     >
                       {item.name}
                     </button>
@@ -268,7 +268,14 @@ export function POSCart({
                     glyph swaps Edit/CheckCircle2, and the chip beside it names
                     the design that is set. No cue was dropped, only recoloured.
                   */}
-                  <Button type="button" variant="secondary" size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
+                  {/*
+                    No leading glyph: the label swaps Select/Change Design, so the
+                    state is in the words. The Edit/CheckCircle2 pair used to
+                    restate that — R20 dropped it everywhere else for the same
+                    reason, and the row already names the design that is set
+                    beside the button.
+                  */}
+                  <Button type="button" variant="secondary" size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
                   {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[var(--app-state-hover)] px-2 py-2 text-3xs dark:bg-[var(--app-tint-neutral)]">{designs.find(d => d.id === item.designId)?.name}</div>}
@@ -351,14 +358,24 @@ export function POSCart({
         {posMode === 'custom' && editingOrderId && <div className="text-center text-3xs font-bold text-app-accent dark:text-app-accent-soft">Editing Order: {editingOrderId}</div>}
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="secondary" onClick={onReset}>Reset</Button>
-          <Button type="button" variant="primary" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
+          {/*
+            No left icon: the label alone (Quick Pay / Update Order / Create
+            Order) names the action, and the button is the one dark fill on the
+            screen, so a glyph in front of it would compete with the label for the
+            same eye.
+          */}
+          <Button type="button" variant="primary" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)}>
             {posMode === 'retail' ? 'Quick Pay' : editingOrderId ? 'Update Order' : 'Create Order'}
           </Button>
         </div>
+        {/*
+          Muted ink, no icon — the line is a precondition nudge, not a failure.
+          The button below is already disabled while this is showing, so the
+          words alone tell the cashier what to do. Per the R19–R22 rule, hue is
+          reserved for status that no other cue carries.
+        */}
         {posMode === 'custom' && !customerName && cart.length > 0 && (
-          <div className="flex items-center justify-center gap-1.5 text-3xs font-bold text-app-warning">
-            <AlertCircle className="h-2.5 w-2.5" aria-hidden="true" /> Client Name Required
-          </div>
+          <div className="text-center text-3xs font-bold text-app-text-muted dark:text-zinc-400">Client Name Required</div>
         )}
       </div>
     </SurfaceCard>

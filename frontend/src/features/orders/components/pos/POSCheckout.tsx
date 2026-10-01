@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Banknote, CheckCircle2, ChevronLeft, CreditCard, Printer } from '../../../../shared/components/ui/icons';
+import { CheckCircle2, ChevronLeft, Printer } from '../../../../shared/components/ui/icons';
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -241,8 +241,8 @@ export function POSCheckout({
                   value={paymentMethod}
                   onChange={onPaymentMethodChange}
                   options={[
-                    { value: 'Cash', label: 'Cash', icon: <Banknote className="h-3.5 w-3.5" aria-hidden="true" /> },
-                    { value: 'Card', label: 'Card', icon: <CreditCard className="h-3.5 w-3.5" aria-hidden="true" /> },
+                    { value: 'Cash', label: 'Cash' },
+                    { value: 'Card', label: 'Card' },
                   ]}
                 />
               </div>
