@@ -8,6 +8,8 @@ export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { DeleteConfirmModal } from './DeleteConfirmModal';
 export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
+export { ImageGrid, ImageGridCard } from './ImageGrid';
+export type { ImageGridCardProps } from './ImageGrid';
 export { Input, Select, Textarea } from './Input';
 export type { InputProps, SelectProps, TextareaProps } from './Input';
 export { SearchInput } from './SearchInput';

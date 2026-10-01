@@ -10,7 +10,7 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
 
@@ -24,18 +24,13 @@ const DESIGN_SKELETON_COUNT = 10;
  * `shared/components/feedback` with the other skeletons: the shape — a square
  * thumbnail over a name bar, a date bar and a tag row — is `DesignRepository`'s
  * private layout, not a primitive anything else draws. `SectionCard` is kept
- * analytics-only for the same reason. The grid classes are repeated from the
- * real grid below, so if that grid ever changes its column count, this changes
- * with it.
+ * analytics-only for the same reason. The track is the shared `ImageGrid`, not a
+ * copy of its breakpoints, so the placeholder cards cannot drift to a different
+ * column count from the real ones they are standing in for.
  */
 function DesignGridSkeleton() {
   return (
-    <div
-      role="status"
-      aria-busy="true"
-      aria-label="Loading designs"
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
-    >
+    <ImageGrid role="status" aria-busy="true" aria-label="Loading designs">
       {Array.from({ length: DESIGN_SKELETON_COUNT }, (_, index) => (
         <SurfaceCard key={index} className="overflow-hidden p-0">
           {/* `aspect-square` matches the thumbnail box, so the cards are the
@@ -56,7 +51,7 @@ function DesignGridSkeleton() {
           </div>
         </SurfaceCard>
       ))}
-    </div>
+    </ImageGrid>
   );
 }
 
@@ -276,42 +271,47 @@ export function DesignRepository() {
           {isLoading ? (
             <DesignGridSkeleton />
           ) : filteredDesigns.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
+            <ImageGrid>
+              {/*
+                The shared track, not a local one — the stock gallery renders the
+                same grid, so a column-count change lands on both at once. What
+                is specific to a design lives in the card's slots: its category
+                badge, its View / Download pair, and the body below.
+              */}
               {filteredDesigns.map((design) => (
-                <div key={design.id}>
-                  <SurfaceCard className="group overflow-hidden p-0">
-                    <div className="relative aspect-square overflow-hidden bg-[var(--app-state-hover)] dark:bg-[var(--app-state-hover)]">
-                      <img src={design.imageUrl} alt={design.name} className="h-full w-full object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-[var(--app-scrim)] opacity-0 group-hover:opacity-100">
-                        <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
-                          <Eye className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                        <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
-                          <Download className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      </div>
-                      <div className="absolute left-2 top-2"><Badge variant="accent">{design.category}</Badge></div>
+                <ImageGridCard
+                  key={design.id}
+                  imageUrl={design.imageUrl}
+                  imageAlt={design.name}
+                  leading={<Badge variant="accent">{design.category}</Badge>}
+                  overlay={
+                    <>
+                      <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
+                        <Eye className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                      <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
+                        <Download className="h-4 w-4" aria-hidden="true" />
+                      </Button>
+                    </>
+                  }
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-sm font-bold text-app-ink dark:text-zinc-100">{design.name}</h3>
+                      <p className="mt-1 text-2xs text-app-text-muted dark:text-zinc-500">Added {design.createdAt}</p>
                     </div>
-                    <div className="space-y-3 p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-sm font-bold text-app-ink dark:text-zinc-100">{design.name}</h3>
-                          <p className="mt-1 text-2xs text-app-text-muted dark:text-zinc-500">Added {design.createdAt}</p>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-                          <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-app-danger hover:text-app-danger"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {design.tags.slice(0, 3).map((tag) => <Badge key={tag} variant="gray" className="gap-1"><Tag className="h-2.5 w-2.5" aria-hidden="true" />{tag}</Badge>)}
-                        {design.tags.length > 3 && <Badge variant="neutral">+{design.tags.length - 3}</Badge>}
-                      </div>
+                    <div className="flex gap-1">
+                      <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-app-danger hover:text-app-danger"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
                     </div>
-                  </SurfaceCard>
-                </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {design.tags.slice(0, 3).map((tag) => <Badge key={tag} variant="gray" className="gap-1"><Tag className="h-2.5 w-2.5" aria-hidden="true" />{tag}</Badge>)}
+                    {design.tags.length > 3 && <Badge variant="neutral">+{design.tags.length - 3}</Badge>}
+                  </div>
+                </ImageGridCard>
               ))}
-            </div>
+            </ImageGrid>
           ) : (
             <div className="rounded-[var(--radius-card)] border border-dashed py-20">
               <EmptyState title="No designs found" message="Try adjusting your search or upload a new design." icon={<ImageIcon className="h-12 w-12 opacity-15" aria-hidden="true" />} className="gap-3" />
