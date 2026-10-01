@@ -14,6 +14,7 @@ import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
+import { uploadInventoryImage } from '../services/inventoryAssetService.js';
 import { paginationQuerySchema } from '../shared/pagination.js';
 
 export const inventoryRouter = Router();
@@ -111,4 +112,26 @@ inventoryRouter.delete('/:id', authenticate, requirePermission('inventory.manage
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.deleted', entityType: 'inventory_item', entityId: itemId });
   publishDataChange('inventory');
   response.status(204).send();
+});
+
+const assetSchema = z.object({
+  dataUrl: z.string().min(1),
+  fileName: z.string().trim().min(1),
+  contentType: z.string().trim().min(1),
+  sizeBytes: z.number().int().positive(),
+});
+
+/**
+ * Uploads a stock photo to Storage and returns its URL. It deliberately does
+ * **not** publish an `inventory` change: no item row is written here — the caller
+ * passes the returned URL into `POST /inventory` or `PATCH /inventory/:id`
+ * afterwards. Broadcasting on the upload alone would wake every inventory page
+ * for a change no row has taken yet.
+ */
+inventoryRouter.post('/assets', authenticate, requirePermission('inventory.manage'), async (request, response) => {
+  const parsed = assetSchema.safeParse(request.body);
+  if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_INVENTORY_ASSET', 'The stock photo is invalid.');
+  const asset = await uploadInventoryImage(getSupabase(), parsed.data, request.auth.user.id);
+  await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'inventory.asset_uploaded', entityType: 'inventory_asset', metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes } });
+  sendSuccess(response, { imageUrl: asset.imageUrl }, 201);
 });

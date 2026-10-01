@@ -13,8 +13,25 @@ import type { CreateInventoryItem, InventoryItem, UpdateInventoryItem } from '..
  */
 export type InventoryListFilters = { lowStock?: 1 };
 
+/**
+ * Uploads a stock photo and returns its Storage URL.
+ *
+ * Separate from `create`/`update` because the file has to land in Storage before
+ * there is a URL to put on the item — the same two-step the design repository
+ * uses. The response is only `imageUrl`: `inventory_items` has no columns for the
+ * asset's type or byte size, so returning them would be dead data.
+ */
+export type InventoryAssetUpload = {
+  dataUrl: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+};
+
 export function createInventoryApi(client: ApiClient = apiClient) {
   return {
+    uploadAsset: (payload: InventoryAssetUpload) =>
+      client.post<{ imageUrl: string }, InventoryAssetUpload>('/inventory/assets', payload),
     list: (query?: { page?: number; limit?: number } & InventoryListFilters) =>
       client.get<PaginatedResponse<InventoryItem>>('/inventory', query),
     create: (payload: CreateInventoryItem) => client.post<InventoryItem, CreateInventoryItem>('/inventory', payload),
