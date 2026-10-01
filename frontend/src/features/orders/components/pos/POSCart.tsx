@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { AlertCircle, CheckCircle2, CreditCard, Edit, Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
+import { Minus, Plus, Trash2 } from '../../../../shared/components/ui/icons';
 import type { Design } from '../../../designs/types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
-import { Badge, Button, SurfaceCard, Input } from '../../../../shared/components/ui';
+import { Button, SurfaceCard, Input } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { CustomerSelector } from '../../../customers/components/CustomerSelector';
 import { POSItemDetails } from './POSItemDetails';
@@ -91,15 +91,40 @@ export function POSCart({
    */
   return (
     <SurfaceCard className="flex w-full min-w-0 shrink-0 flex-col overflow-hidden p-0 xl:h-full xl:shrink">
-      <div className="relative shrink-0 p-4">
+      {/*
+        The header names the panel and counts its lines, and that is all it does.
+        "Checkout panel" restated the obvious — this is the column the checkout
+        swaps into, and the heading already says which mode it is — so the line
+        went, and the wrapper that existed only to stack it went with it.
+
+        `px-4 pt-4` rather than `p-4`: the rule below is drawn by the inner div's
+        own `pb-3`, so an outer bottom padding stacked 16px of dead space on top
+        of the customer block's own 16px and pushed "Customer" half a line away
+        from the heading it belongs under.
+
+        No `label-caps`: the app's one uppercase treatment is reserved for group
+        headers, and a panel title reads as a title — sentence case, `text-sm`,
+        the same treatment `CardTitle` gives every other card heading. The count
+        is a figure, so it is muted ink like every other figure, not a tinted pill.
+      */}
+      <div className="relative shrink-0 px-4 pt-4">
         <div className="relative flex items-center justify-between gap-3 border-b pb-3">
-          <div>
-            <h2 className="label-caps text-app-ink dark:text-zinc-100">
-              {posMode === 'retail' ? 'Transaction Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Order Builder'}
-            </h2>
-            <p className="mt-1 text-xs text-app-text-muted dark:text-zinc-500">Checkout panel</p>
-          </div>
-          <Badge variant="accent">{cart.length} items</Badge>
+          <h2 className="text-sm font-bold tracking-tight text-app-ink dark:text-zinc-100">
+            {posMode === 'retail' ? 'Item Cart' : editingOrderId ? 'Custom Order Update' : 'Custom Cart'}
+          </h2>
+          {/*
+            `dark:text-zinc-400`, not the `-500` the footer labels use. The pill's
+            tint used to carry the contrast; on the bare panel fill the same
+            `zinc-500` measures 3.52:1 against `--app-surface`, under the 4.5:1
+            floor for 10px type. `zinc-400` measures 6.49:1 and is the step the
+            "· optional" hint beside it already uses.
+          */}
+          {/*
+            "item(s)" rather than "items": the count reads the same whether there
+            is one line or forty, so the label never flickers between singular and
+            plural as the cashier adds and removes stock.
+          */}
+          <span className="text-2xs font-bold tabular-nums text-app-text-muted dark:text-zinc-400">{cart.length} item(s)</span>
         </div>
       </div>
 
@@ -127,7 +152,14 @@ export function POSCart({
         order *requires* a name and a counter sale does not — which is enforced
         at the button below, not by hiding the field.
       */}
-      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] p-4">
+      {/*
+        `px-4 pb-4`, not `p-4`: the 16px top padding was the last of the dead
+        space above the "Customer" label. The rule over the heading already
+        separates the two blocks, so the customer block needs no padding of its
+        own above its first line — removing it drops the gap heading→"Customer"
+        by another 16px (74 → 38 → ~22 measured).
+      */}
+      <div className="shrink-0 space-y-3 border-b border-[var(--app-border-hairline)] px-4 pb-4">
         <label className="block space-y-1.5">
           <span className="text-3xs font-bold text-app-accent dark:text-app-accent-soft">
             Customer{posMode === 'retail' && <span className="font-medium text-app-text-muted dark:text-zinc-400"> · optional</span>}
@@ -169,7 +201,13 @@ export function POSCart({
             onBack={() => setSelectedLine(null)}
           />
         ) : cart.length === 0 ? (
-          <EmptyState title="Build list to proceed" message="Select catalog items to stage a retail sale or custom order." className="py-10" />
+          /*
+           * One sentence, no glyph. The old pair of lines told the cashier what
+           * to do and what the two modes are; the toolbar above already carries
+           * Retail / Custom, and the totals below already read zero. A picture
+           * of an empty tray said nothing the sentence does not.
+           */
+          <EmptyState title="No items in cart." icon={null} className="py-10" />
         ) : (
           cart.map((item, idx) => (
             <div key={`${item.id}-${idx}`} className="rounded-[var(--radius-card)] border p-2.5">
@@ -196,7 +234,7 @@ export function POSCart({
                       type="button"
                       onClick={() => setSelectedLine(idx)}
                       title={`Edit ${item.name}`}
-                      className="cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
+                      className="min-w-0 cursor-pointer truncate text-left text-2xs font-bold leading-tight text-app-ink hover:underline hover:decoration-dotted hover:underline-offset-2 dark:text-zinc-100"
                     >
                       {item.name}
                     </button>
@@ -230,7 +268,14 @@ export function POSCart({
                     glyph swaps Edit/CheckCircle2, and the chip beside it names
                     the design that is set. No cue was dropped, only recoloured.
                   */}
-                  <Button type="button" variant="secondary" size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)} leftIcon={item.designId ? <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> : <Edit className="h-3 w-3" aria-hidden="true" />}>
+                  {/*
+                    No leading glyph: the label swaps Select/Change Design, so the
+                    state is in the words. The Edit/CheckCircle2 pair used to
+                    restate that — R20 dropped it everywhere else for the same
+                    reason, and the row already names the design that is set
+                    beside the button.
+                  */}
+                  <Button type="button" variant="secondary" size="sm" fullWidth onClick={() => onOpenDesignSelector(idx)}>
                     {item.designId ? 'Change Design' : 'Select Design'}
                   </Button>
                   {item.designId && <div className="max-w-[100px] truncate rounded-full bg-[var(--app-state-hover)] px-2 py-2 text-3xs dark:bg-[var(--app-tint-neutral)]">{designs.find(d => d.id === item.designId)?.name}</div>}
@@ -313,14 +358,24 @@ export function POSCart({
         {posMode === 'custom' && editingOrderId && <div className="text-center text-3xs font-bold text-app-accent dark:text-app-accent-soft">Editing Order: {editingOrderId}</div>}
         <div className="grid grid-cols-2 gap-2">
           <Button type="button" variant="secondary" onClick={onReset}>Reset</Button>
-          <Button type="button" variant="primary" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)} leftIcon={<CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}>
+          {/*
+            No left icon: the label alone (Quick Pay / Update Order / Create
+            Order) names the action, and the button is the one dark fill on the
+            screen, so a glyph in front of it would compete with the label for the
+            same eye.
+          */}
+          <Button type="button" variant="primary" onClick={onCheckout} disabled={cart.length === 0 || (posMode === 'custom' && !customerName)}>
             {posMode === 'retail' ? 'Quick Pay' : editingOrderId ? 'Update Order' : 'Create Order'}
           </Button>
         </div>
+        {/*
+          Muted ink, no icon — the line is a precondition nudge, not a failure.
+          The button below is already disabled while this is showing, so the
+          words alone tell the cashier what to do. Per the R19–R22 rule, hue is
+          reserved for status that no other cue carries.
+        */}
         {posMode === 'custom' && !customerName && cart.length > 0 && (
-          <div className="flex items-center justify-center gap-1.5 text-3xs font-bold text-app-warning">
-            <AlertCircle className="h-2.5 w-2.5" aria-hidden="true" /> Client Name Required
-          </div>
+          <div className="text-center text-3xs font-bold text-app-text-muted dark:text-zinc-400">Client Name Required</div>
         )}
       </div>
     </SurfaceCard>
