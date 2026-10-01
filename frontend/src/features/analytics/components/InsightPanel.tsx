@@ -1,4 +1,3 @@
-import { Brain } from '../../../shared/components/ui/icons';
 import { Badge, Button, Checkbox, SurfaceCard } from '../../../shared/components/ui';
 import { formatInsightTime, type InsightState } from './analytics-types';
 
@@ -22,7 +21,7 @@ export function InsightPanel({ state, onToggleAutoGenerate, onGenerate }: Insigh
           <Checkbox checked={state.autoGenerate} onChange={onToggleAutoGenerate} />
           Auto-generate insights
         </label>
-        <Button type="button" size="sm" onClick={onGenerate} isLoading={state.isLoading} leftIcon={<Brain className="h-3.5 w-3.5" aria-hidden="true" />}>
+        <Button type="button" size="sm" onClick={onGenerate} isLoading={state.isLoading}>
           {state.isLoading ? 'Generating...' : 'Generate Insights'}
         </Button>
       </div>

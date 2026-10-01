@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Calendar } from '../../../shared/components/ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
@@ -274,7 +273,6 @@ export default function Orders() {
                   })}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-app-text-muted dark:text-zinc-500" aria-hidden="true" />
                   <Input
                     type="date"
                     value={dateFrom}

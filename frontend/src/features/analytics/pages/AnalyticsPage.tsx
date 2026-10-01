@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { CalendarRange } from '../../../shared/components/ui/icons';
 import { SurfaceCard } from '../../../shared/components/ui';
 import { AnalyticsSummary } from '../components/AnalyticsSummary';
 import { ForecastSection } from '../components/ForecastSection';
@@ -52,7 +51,7 @@ export default function AnalyticsPage() {
     <div className="space-y-5 pb-8">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
         <SurfaceCard className="flex flex-col gap-2 p-3 md:flex-row md:items-center">
-          <div className="flex items-center gap-2 px-1 text-2xs font-bold text-app-text-muted dark:text-zinc-500"><CalendarRange className="h-3.5 w-3.5" aria-hidden="true" /> Global Sort</div>
+          <div className="flex items-center gap-2 px-1 text-2xs font-bold text-app-text-muted dark:text-zinc-500">Global Sort</div>
           <PeriodSelector value={globalPeriod} onChange={applyGlobalPeriod} prefix="global" />
         </SurfaceCard>
       </div>

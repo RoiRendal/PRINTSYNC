@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, ChevronLeft, Printer } from '../../../../shared/components/ui/icons';
+import { CheckCircle2, ChevronLeft } from '../../../../shared/components/ui/icons';
 import type { InsufficientStockDetails } from '@printsync/shared-types';
 import type { CartItem } from '../../types';
 import type { CartTotals } from '../../hooks/useCartTotals';
@@ -196,7 +196,7 @@ export function POSCheckout({
                 </p>
               )}
             </div>
-            <Button type="button" variant="secondary" onClick={onPrintReceipt} leftIcon={<Printer className="h-3.5 w-3.5" aria-hidden="true" />}>
+            <Button type="button" variant="secondary" onClick={onPrintReceipt}>
               {posMode === 'retail' ? 'Print Receipt' : 'Print Order Summary'}
             </Button>
           </div>

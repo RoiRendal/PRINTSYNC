@@ -1,4 +1,4 @@
-import { AlertCircle, RefreshCw } from '../ui/icons';
+import { AlertCircle } from '../ui/icons';
 import { Button } from '../ui';
 import { cn } from '../../lib/cn';
 
@@ -31,7 +31,7 @@ export function ErrorState({
         <p className="max-w-sm text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">{message}</p>
       </div>
       {onRetry && (
-        <Button type="button" variant="secondary" size="sm" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />}>
+        <Button type="button" variant="secondary" size="sm" onClick={onRetry}>
           Retry
         </Button>
       )}

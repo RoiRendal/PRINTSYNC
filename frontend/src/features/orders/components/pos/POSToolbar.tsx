@@ -1,4 +1,3 @@
-import { ReceiptText } from '../../../../shared/components/ui/icons';
 import { Button, SegmentedControl, SurfaceCard } from '../../../../shared/components/ui';
 import { cn } from '../../../../shared/lib/cn';
 import type { PosMode } from '../../hooks/usePOSCart';
@@ -63,7 +62,6 @@ export function POSToolbar({
             size="sm"
             onClick={onReopenLastDocument}
             title={`Reopen the receipt for ${lastDocument.document.reference}`}
-            leftIcon={<ReceiptText className="h-3.5 w-3.5" aria-hidden="true" />}
             className="max-w-[240px]"
           >
             <span className="truncate">
