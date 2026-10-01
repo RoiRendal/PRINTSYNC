@@ -123,7 +123,7 @@ export function POSCatalog({
                 {product.stock}
               </span>
             </div>
-            <h3 className="line-clamp-2 text-xs font-bold tracking-tight text-app-ink dark:text-zinc-100 xl:text-xs">{product.name}</h3>
+            <h3 className="truncate text-xs font-bold tracking-tight text-app-ink dark:text-zinc-100 xl:text-xs">{product.name}</h3>
             {/*
               Three cues: image, name, price. The `+` glyph is gone — the whole
               tile is already the button, so the plus was a second affordance
