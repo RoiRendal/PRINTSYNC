@@ -10,7 +10,7 @@ import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
-import { Button, Skeleton, Tooltip } from '../../shared/components/ui';
+import { Button, Skeleton } from '../../shared/components/ui';
 
 const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
   light: 'Dark',
@@ -178,18 +178,24 @@ export const Layout = ({ children, navLoading = false }: { children: React.React
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <Tooltip content={`Theme: ${theme[0].toUpperCase()}${theme.slice(1)} (click for ${NEXT_THEME_LABEL[theme]})`}>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={toggleTheme}
-                title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
-                aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
-                className="rounded-full text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
-              >
-                <ThemeIcon theme={theme} isDark={isDark} />
-              </Button>
-            </Tooltip>
+            {/*
+              The native `title` is the only hover text here, deliberately.
+              This button used to carry both it and a `Tooltip` wrapper, so
+              hovering drew two boxes stacked on each other — one styled, one
+              not — which is worse than either alone. Native `title` is what
+              every table cell now uses, and the accessible name already spells
+              the action out in full, so the wrapper was the one to drop.
+            */}
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={toggleTheme}
+              title={`Theme: ${theme}. Click to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              aria-label={`Theme is ${theme}. Activate to switch to ${NEXT_THEME_LABEL[theme]}.`}
+              className="rounded-full text-app-text-muted hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              <ThemeIcon theme={theme} isDark={isDark} />
+            </Button>
             <div
               id="notification-trigger"
               className="relative"

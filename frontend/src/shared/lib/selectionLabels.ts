@@ -8,7 +8,11 @@
  *
  *   {count === 0
  *     ? <><TableHead>Order ID</TableHead> …</>
- *     : <TableHead colSpan={9}>{"10 items selected"}</TableHead>}
+ *     : <TableHead colSpan={DATA_COLUMN_COUNT}>{"10 items selected"}</TableHead>}
+ *
+ * The `colSpan` is per table and changes whenever a column is added or cut, so
+ * it is deliberately shown here as a name rather than a number — a literal in
+ * this comment would go stale the next time any table gains or loses a column.
  *
  * Centralised so every list table (orders, inventory, customers, users) reads
  * the same string. The ERPNext item list collapses the WHOLE header to this

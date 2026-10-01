@@ -23,6 +23,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  cellTitle,
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
@@ -128,8 +129,25 @@ export function ProfitMarginSection({
               </Select>
             </div>
             <Table>
+              <colgroup>
+                <col style={{ width: '180px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '100px' }} />
+              </colgroup>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Segment</TableHead><TableHead className="text-right">Revenue</TableHead><TableHead className="text-right">COGS</TableHead><TableHead className="text-right">Profit</TableHead><TableHead className="text-right">Margin</TableHead></TableRow></TableHeader>
-              <TableBody>{sortedMarginRows.map((row) => <TableRow key={row.label}><TableCell className="text-app-ink dark:text-zinc-100">{row.label}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.revenue)}</TableCell><TableCell className="text-right tabular-nums">{money.format(row.expenses)}</TableCell><TableCell className="text-right tabular-nums text-green-700 dark:text-green-300">{money.format(row.profit)}</TableCell><TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{row.margin.toFixed(1)}%</TableCell></TableRow>)}</TableBody>
+              <TableBody>
+                {sortedMarginRows.map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell className="text-app-ink dark:text-zinc-100" title={cellTitle('Segment', row.label)}>{row.label}</TableCell>
+                    <TableCell className="text-right tabular-nums" title={cellTitle('Revenue', money.format(row.revenue))}>{money.format(row.revenue)}</TableCell>
+                    <TableCell className="text-right tabular-nums" title={cellTitle('COGS', money.format(row.expenses))}>{money.format(row.expenses)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-green-700 dark:text-green-300" title={cellTitle('Profit', money.format(row.profit))}>{money.format(row.profit)}</TableCell>
+                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100" title={cellTitle('Margin', `${row.margin.toFixed(1)}%`)}>{row.margin.toFixed(1)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </TableContainer>
         </>

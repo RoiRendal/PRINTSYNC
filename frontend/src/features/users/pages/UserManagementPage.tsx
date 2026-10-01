@@ -30,6 +30,7 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
 } from '../../../shared/components/ui';
 import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
@@ -220,7 +221,7 @@ export default function UserManagement() {
 
   const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
 
-  if (isUsersLoading) return <TableSkeleton columns={6} className="min-h-64" />;
+  if (isUsersLoading) return <TableSkeleton columns={5} className="min-h-64" />;
   if (userError) return <ErrorState message={userError} onRetry={refreshUsers} className="min-h-64" />;
 
   return (
@@ -288,14 +289,20 @@ export default function UserManagement() {
             <CardContent>
               <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
+                  {/*
+                    Six columns: the tick box and five data columns. "Date
+                    Created" was cut — an account's creation date is trivia in a
+                    staff list nobody sorts by it, and the five that remain are
+                    the ones an administrator actually reads to decide who
+                    someone is and what they may do.
+                  */}
                   <colgroup>
                     <col style={{ width: '44px' }} />
-                    <col style={{ width: '200px' }} />
                     <col style={{ width: '240px' }} />
-                    <col style={{ width: '150px' }} />
-                    <col style={{ width: '130px' }} />
+                    <col style={{ width: '300px' }} />
                     <col style={{ width: '180px' }} />
-                    <col style={{ width: '140px' }} />
+                    <col style={{ width: '160px' }} />
+                    <col style={{ width: '220px' }} />
                   </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -311,7 +318,7 @@ export default function UserManagement() {
                       {/*
                         When rows are ticked the whole header collapses to just the
                         "# items selected" message (ERPNext item-list behaviour);
-                        every column label disappears. colSpan 6 = all six data columns.
+                        every column label disappears. colSpan 5 = all five data columns.
                       */}
                       {selection.count === 0 ? (
                         <>
@@ -320,10 +327,9 @@ export default function UserManagement() {
                           <TableHead>Phone</TableHead>
                           <TableHead>RBAC Role</TableHead>
                           <TableHead>Position</TableHead>
-                          <TableHead>Date Created</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={6} className="font-semibold text-app-ink dark:text-zinc-100">
+                        <TableHead colSpan={5} className="font-semibold text-app-ink dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -352,19 +358,18 @@ export default function UserManagement() {
                           beside it was the same rounded box the icon frames were;
                           a table row is identified by its text, not by a badge.
                         */}
-                        <TableCell>
+                        <TableCell title={cellTitle('Staff Identity', user.name)}>
                           <span className="leading-none text-app-ink dark:text-zinc-100">{user.name}</span>
                         </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone}</TableCell>
-                        <TableCell><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
-                        <TableCell className="text-app-ink dark:text-zinc-200">{user.position}</TableCell>
-                        <TableCell className="text-app-text-muted dark:text-zinc-500">{user.createdAt}</TableCell>
+                        <TableCell title={cellTitle('Email', user.email)}>{user.email}</TableCell>
+                        <TableCell title={cellTitle('Phone', user.phone)}>{user.phone}</TableCell>
+                        <TableCell title={cellTitle('RBAC Role', user.role)}><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
+                        <TableCell className="text-app-ink dark:text-zinc-200" title={cellTitle('Position', user.position)}>{user.position}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={6} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

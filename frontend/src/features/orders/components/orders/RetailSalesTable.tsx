@@ -4,7 +4,7 @@ import type { Transaction } from '../../types';
 import {
   Badge, Button, Card, CardContent, CardHeader, Checkbox, DeleteConfirmModal, Modal,
   Pagination, SearchInput, StatusLabel, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableHeader, TableRow, TableSelectCell, TableSelectHead,
+  TableHead, TableHeader, TableRow, TableSelectCell, TableSelectHead, cellTitle,
 } from '../../../../shared/components/ui';
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { InlineAlert } from '../../../../shared/components/feedback/InlineAlert';
@@ -217,6 +217,14 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
         <CardContent>
           <TableContainer className="rounded-none border-0 bg-transparent">
             <Table>
+              <colgroup>
+                <col style={{ width: '44px' }} />
+                <col style={{ width: '160px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '130px' }} />
+              </colgroup>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableSelectHead>
@@ -261,6 +269,14 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
                    * the button matches what the action will really take.
                    */
                   const isVoidable = row.source === 'trx' && row.status === 'completed';
+                  /*
+                    Built once each and handed to both the cell and its tooltip,
+                    so what the tooltip completes is exactly what the row shows.
+                  */
+                  const units = trx.items.reduce((acc, curr) => acc + curr.qty, 0);
+                  const itemsText = `${units} Units`;
+                  const methodText = row.source === 'trx' ? row.trx!.paymentMethod : 'Order';
+                  const totalText = `₱${trx.total.toFixed(2)}`;
                   return (
                     <TableRow key={key} className="cursor-pointer" onClick={() => history.selectTransaction(trx)}>
                       {/*
@@ -282,19 +298,19 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
                           <span aria-hidden="true" className="block h-4 w-4" />
                         )}
                       </TableSelectCell>
-                      <TableCell className="text-app-text-muted dark:text-zinc-500">{refDisplay}</TableCell>
-                      <TableCell className="text-app-text-muted dark:text-zinc-400">{trx.date}</TableCell>
-                      <TableCell>
-                        <span className="tabular-nums text-app-ink dark:text-zinc-100">{trx.items.reduce((acc, curr) => acc + curr.qty, 0)} Units</span>
+                      <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('Ref ID', refDisplay)}>{refDisplay}</TableCell>
+                      <TableCell className="text-app-text-muted dark:text-zinc-400" title={cellTitle('Date', trx.date)}>{trx.date}</TableCell>
+                      <TableCell title={cellTitle('Items', itemsText)}>
+                        <span className="tabular-nums text-app-ink dark:text-zinc-100">{itemsText}</span>
                       </TableCell>
-                      <TableCell><StatusLabel tone="accent">{row.source === 'trx' ? row.trx!.paymentMethod : 'Order'}</StatusLabel></TableCell>
-                      <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">₱{trx.total.toFixed(2)}</TableCell>
+                      <TableCell title={cellTitle('Method', methodText)}><StatusLabel tone="accent">{methodText}</StatusLabel></TableCell>
+                      <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100" title={cellTitle('Total', totalText)}>{totalText}</TableCell>
                     </TableRow>
                   );
                 })}
                 {history.filteredRows.length === 0 && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={6} className="py-12">
+                    <TableCell colSpan={6} className="whitespace-normal py-12">
                       <EmptyState title={history.historySearchTerm ? 'No entries match filters' : 'No retail sales yet'} />
                     </TableCell>
                   </TableRow>

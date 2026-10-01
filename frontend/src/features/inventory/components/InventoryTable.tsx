@@ -18,6 +18,7 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  cellTitle,
 } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
@@ -173,19 +174,24 @@ export function InventoryTable({
                         aria-label={`Select ${item.sku}`}
                       />
                     </TableSelectCell>
-                    <TableCell className="text-app-text-muted dark:text-zinc-500">{item.sku}</TableCell>
-                    <TableCell className="text-app-ink dark:text-zinc-100">{item.name}</TableCell>
-                    <TableCell className="text-center"><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('SKU', item.sku)}>{item.sku}</TableCell>
+                    <TableCell className="text-app-ink dark:text-zinc-100" title={cellTitle('Material Description', item.name)}>{item.name}</TableCell>
+                    <TableCell className="text-center" title={cellTitle('Category', item.category)}><StatusLabel tone="gray">{item.category}</StatusLabel></TableCell>
+                    <TableCell className="text-right tabular-nums" title={cellTitle('Stock', item.stock)}>
                       <span className={isLowStock ? 'text-app-danger dark:text-red-300' : 'text-app-ink dark:text-zinc-100'}>{item.stock}</span>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-200">₱{item.price.toFixed(2)}</TableCell>
+                    <TableCell
+                      className="text-right tabular-nums text-app-ink dark:text-zinc-200"
+                      title={cellTitle('Price', `₱${item.price.toFixed(2)}`)}
+                    >
+                      ₱{item.price.toFixed(2)}
+                    </TableCell>
                   </TableRow>
                 );
               })}
               {items.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="py-14 text-center">
+                  <TableCell colSpan={6} className="whitespace-normal py-14 text-center">
                     <EmptyState title="No stock items found" icon={<Package className="h-8 w-8 opacity-20" aria-hidden="true" />} />
                   </TableCell>
                 </TableRow>

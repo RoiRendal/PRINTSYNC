@@ -22,6 +22,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  cellTitle,
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
@@ -115,8 +116,21 @@ export function ProductTrendSection({
           </div>
           <TableContainer className="mt-4">
             <Table>
+              <colgroup>
+                <col style={{ width: '70px' }} />
+                <col style={{ width: '220px' }} />
+                <col style={{ width: '100px' }} />
+              </colgroup>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Rank</TableHead><TableHead>Product</TableHead><TableHead className="text-right">Units</TableHead></TableRow></TableHeader>
-              <TableBody>{productTrendSummary.ranked.map((item, index) => <TableRow key={item.label}><TableCell>{index + 1}</TableCell><TableCell className="text-app-ink dark:text-zinc-100">{item.label}</TableCell><TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{item.units.toLocaleString()}</TableCell></TableRow>)}</TableBody>
+              <TableBody>
+                {productTrendSummary.ranked.map((item, index) => (
+                  <TableRow key={item.label}>
+                    <TableCell title={cellTitle('Rank', index + 1)}>{index + 1}</TableCell>
+                    <TableCell className="text-app-ink dark:text-zinc-100" title={cellTitle('Product', item.label)}>{item.label}</TableCell>
+                    <TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100" title={cellTitle('Units', item.units.toLocaleString())}>{item.units.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
             </Table>
           </TableContainer>
         </>

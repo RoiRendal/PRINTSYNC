@@ -235,9 +235,9 @@ export default function Orders() {
         <>
           {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
 
-          {/* 8 data columns — Order ID through Balance — plus the select column. */}
+          {/* 6 data columns — Order ID through Balance — plus the select column. */}
           {isLoading ? (
-            <TableSkeleton columns={8} className="min-h-64" />
+            <TableSkeleton columns={6} className="min-h-64" />
           ) : error ? (
             <ErrorState message={error} onRetry={refresh} className="min-h-64" />
           ) : (

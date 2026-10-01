@@ -43,9 +43,11 @@ interface StatusPresentation {
 const ICON_CLASS = 'h-3.5 w-3.5 shrink-0';
 
 /**
- * Hover text is kept short on purpose: `Tooltip` renders it in a
- * `whitespace-nowrap` pill, so a full sentence would run off the edge of the
- * screen. The longer explanation lives in the status's `aria-label`.
+ * Hover text stays short, but no longer because it has to: `Tooltip` now wraps
+ * inside a width cap and clamps itself to the viewport, so a longer sentence
+ * would render correctly. It is short because a glance at a status indicator
+ * wants a phrase — the full explanation still lives in the `aria-label`, where
+ * it costs nothing and can be as long as it needs to be.
  */
 const STATUS_PRESENTATION: Record<VisibleStatus, StatusPresentation> = {
   live: {
