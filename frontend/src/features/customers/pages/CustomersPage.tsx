@@ -351,7 +351,7 @@ export default function CustomersPage() {
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={6} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={6} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

@@ -197,9 +197,21 @@ export default function AuditLogPage() {
             <CardContent className="p-0">
               <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
+                  {/*
+                    Details is the column that used to wrap — it takes whatever is
+                    left after the four fixed ones, so it stays the widest and the
+                    row stays one line.
+                  */}
+                  <colgroup>
+                    <col style={{ width: '160px' }} />
+                    <col style={{ width: '130px' }} />
+                    <col style={{ width: '150px' }} />
+                    <col style={{ width: '140px' }} />
+                    <col style={{ width: '320px' }} />
+                  </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[160px]">Timestamp</TableHead>
+                      <TableHead>Timestamp</TableHead>
                       <TableHead>Action</TableHead>
                       <TableHead>Entity</TableHead>
                       <TableHead>Actor</TableHead>
@@ -235,7 +247,7 @@ export default function AuditLogPage() {
                     ))}
                     {filteredItems.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={5} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">
+                        <TableCell colSpan={5} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">
                           No audit events match your filters.
                         </TableCell>
                       </TableRow>

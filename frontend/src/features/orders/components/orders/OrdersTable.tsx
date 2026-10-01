@@ -211,7 +211,9 @@ export function OrdersTable({
                       {isCustomOrder(order) ? 'Custom' : 'Retail'}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5">
+                      {/* `min-w-0`: a flex child refuses to shrink below its
+                          content, so without it the row is cut with no ellipsis. */}
+                      <div className="flex min-w-0 items-center gap-1.5">
                         <StatusLabel tone={getStatusBadgeVariant(order.status)}>{order.status}</StatusLabel>
                         {/*
                           The phase on screen has already moved — this says the
@@ -252,7 +254,7 @@ export function OrdersTable({
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={9} className="py-12">
+                  <TableCell colSpan={9} className="whitespace-normal py-12">
                     <div className="text-center text-sm text-app-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>

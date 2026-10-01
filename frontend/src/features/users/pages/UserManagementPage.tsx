@@ -364,7 +364,7 @@ export default function UserManagement() {
                     ))}
                     {filteredUsers.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={7} className="py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No users match your search.</TableCell>
+                        <TableCell colSpan={7} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No users match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>

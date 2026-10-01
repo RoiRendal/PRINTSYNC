@@ -185,7 +185,7 @@ export function InventoryTable({
               })}
               {items.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="py-14 text-center">
+                  <TableCell colSpan={6} className="whitespace-normal py-14 text-center">
                     <EmptyState title="No stock items found" icon={<Package className="h-8 w-8 opacity-20" aria-hidden="true" />} />
                   </TableCell>
                 </TableRow>

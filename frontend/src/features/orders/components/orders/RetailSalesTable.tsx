@@ -217,6 +217,14 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
         <CardContent>
           <TableContainer className="rounded-none border-0 bg-transparent">
             <Table>
+              <colgroup>
+                <col style={{ width: '44px' }} />
+                <col style={{ width: '160px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '140px' }} />
+                <col style={{ width: '130px' }} />
+              </colgroup>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableSelectHead>
@@ -294,7 +302,7 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
                 })}
                 {history.filteredRows.length === 0 && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={6} className="py-12">
+                    <TableCell colSpan={6} className="whitespace-normal py-12">
                       <EmptyState title={history.historySearchTerm ? 'No entries match filters' : 'No retail sales yet'} />
                     </TableCell>
                   </TableRow>

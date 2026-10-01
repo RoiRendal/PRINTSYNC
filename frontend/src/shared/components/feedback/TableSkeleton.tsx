@@ -42,9 +42,11 @@ export interface TableSkeletonProps {
  * 1440px: a real cell is `px-2 py-1.5` around a 14px/20px line, so a row is 33px
  * and the placeholder is 32px. The 1px is the inline checkbox sitting on the
  * baseline, which a block placeholder does not reproduce and should not pretend
- * to. Audit Log's rows measure 53px because its Details column wraps to two
- * lines — that is a fact about its content, not about the table, and a
- * placeholder must not encode a guess about data that has not arrived.
+ * to. Audit Log's rows measured 53px because its Details column wrapped to two
+ * lines; now that `TableCell` is one line by rule that no longer happens, and
+ * every list row is the same height. The placeholder still does not encode a
+ * guess about data that has not arrived — it stays one line because the real
+ * cell does, not because it knows how long the text will be.
  */
 export function TableSkeleton({ columns = 5, rows = 8, select = true, className }: TableSkeletonProps) {
   return (

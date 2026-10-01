@@ -128,6 +128,15 @@ export function ForecastSection({
           <TableContainer className="mt-4">
             <div className="border-b p-3"><p className="text-xs font-bold text-app-ink dark:text-zinc-100">Inventory Reorder Recommendations ({inventoryForecast.horizonDays}-day horizon)</p></div>
             <Table>
+              <colgroup>
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '220px' }} />
+                <col style={{ width: '90px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '90px' }} />
+                <col style={{ width: '90px' }} />
+                <col style={{ width: '110px' }} />
+              </colgroup>
               <TableHeader><TableRow className="hover:bg-transparent"><TableHead>Status</TableHead><TableHead>Item</TableHead><TableHead className="text-right">Stock</TableHead><TableHead className="text-right">Reorder Lvl</TableHead><TableHead className="text-right">Avg Daily</TableHead><TableHead className="text-right">Forecast</TableHead><TableHead className="text-right">Reorder Qty</TableHead></TableRow></TableHeader>
               <TableBody>{inventoryForecast.items.slice(0, 10).map((item) => <TableRow key={item.sku}><TableCell><StatusLabel tone={item.status === 'critical' ? 'red' : item.status === 'warning' ? 'orange' : 'green'}>{item.status}</StatusLabel></TableCell><TableCell className="text-app-ink dark:text-zinc-100">{item.name}</TableCell><TableCell className="text-right tabular-nums">{item.currentStock.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{item.reorderLevel.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums">{item.avgDailyDemand.toFixed(1)}</TableCell><TableCell className="text-right tabular-nums">{item.forecastDemand.toLocaleString()}</TableCell><TableCell className="text-right tabular-nums text-app-ink dark:text-zinc-100">{item.recommendedReorder > 0 ? item.recommendedReorder.toLocaleString() : '—'}</TableCell></TableRow>)}</TableBody>
             </Table>
