@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { APP_NAME } from '../../shared/constants/branding';
 import { ChevronLeft, ChevronRight } from '../../shared/components/ui/icons';
-import { Button } from '../../shared/components/ui';
+import { Button, Skeleton } from '../../shared/components/ui';
 import { cn } from '../../shared/lib/cn';
 import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../../app/providers/BusinessBrandingProvider';
@@ -21,12 +21,20 @@ const EXPANDED_WIDTH = 176;
 export const Sidebar = ({
   isCollapsed,
   isMinimized,
+  isNavLoading = false,
   onToggleMinimize,
   className,
   onNavigate,
 }: {
   isCollapsed: boolean;
   isMinimized: boolean;
+  /**
+   * The navigation is RBAC-filtered — `visibleItems` is derived from
+   * `currentUser.access` — so before the session resolves there is no honest list
+   * to draw. This swaps the links for placeholder rows rather than showing an
+   * empty column, which is the state ERPNext's own sidebar skeleton covers.
+   */
+  isNavLoading?: boolean;
   onToggleMinimize: () => void;
   className?: string;
   onNavigate?: () => void;
@@ -109,7 +117,24 @@ export const Sidebar = ({
             at all — and repeated as a `title` so a pointer user can still read
             what an icon is. */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-1 pb-3 pt-2 scrollbar-hide">
-          {visibleItems.map((item) => (
+          {/* The loading state of the SAME list, not a second list. One pill per
+              `NAV_ITEMS` entry is the most rows the column can ever hold, which
+              is the honest ceiling while the session's access list is unknown.
+
+              Each pill sits in an `h-7` slot — the real row's own height (the
+              28px icon box) — so the rows arrive on exactly the same pitch and
+              nothing moves. The pill inside is deliberately SHORTER than its
+              slot: a real nav row is transparent at rest, so nine full-height
+              pills stacked with no gap between them merge into one scalloped
+              blob instead of reading as nine rows. The slot holds the geometry,
+              the pill holds the shape. */}
+          {isNavLoading
+            ? NAV_ITEMS.map((item) => (
+                <div key={item.key} className="flex h-7 items-center">
+                  <Skeleton className={cn('h-5 rounded-lg', isMinimized ? 'mx-auto w-5' : 'w-full')} />
+                </div>
+              ))
+            : visibleItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}

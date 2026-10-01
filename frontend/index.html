@@ -4,10 +4,64 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PrintSync</title>
+    <!--
+      The splash, and why it is inline rather than in a component.
+
+      This is the only loading state that exists BEFORE the app does: the browser
+      has the HTML but not the JS bundle, so there is no React tree to render it
+      from and no stylesheet to style it with. ERPNext solves the same problem the
+      same way — its splash is server-rendered markup inside the page
+      (`frappe/templates/includes/splash_screen.html`) that the desk removes once
+      it boots (`desk.js`, `$(".splash").remove()`).
+
+      Here the markup sits inside `#root`, so it does not need removing at all:
+      `createRoot(...).render(...)` clears the container's existing children on
+      its first commit. The React tree then takes over with the app shell.
+
+      The two colour values mirror `--app-surface` (#f5f5f7 light / #1c1c1e dark,
+      `index.css`). They are literals because the token does not exist yet at this
+      point in the page's life — the stylesheet has not been fetched. Dark is
+      chosen from `prefers-color-scheme`, which is the app's own default theme, so
+      the common case is right; a user who has explicitly picked a theme may see
+      one frame of the other one, exactly as they do today.
+    -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #f5f5f7;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f5f5f7;
+      }
+      /* 56px — the app's one logo size (`h-14 w-14 object-contain`), so the mark
+         does not change size between this frame and the login screen. */
+      #boot-splash img {
+        height: 56px;
+        width: auto;
+        max-width: 200px;
+        object-fit: contain;
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body,
+        #boot-splash {
+          background: #1c1c1e;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-splash">
+        <img src="/brand-logo.png" alt="" width="56" height="56" />
+      </div>
+    </div>
     <script type="module" src="/src/app/main.tsx"></script>
   </body>
 </html>
-

@@ -10,7 +10,7 @@ import { cn } from '../../shared/lib/cn';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
 import { useAuth } from '../../app/stores/useAuthStore';
 import { useBusinessBranding } from '../providers/BusinessBrandingProvider';
-import { Button, Tooltip } from '../../shared/components/ui';
+import { Button, Skeleton, Tooltip } from '../../shared/components/ui';
 
 const NEXT_THEME_LABEL: Record<'light' | 'dark' | 'system', string> = {
   light: 'Dark',
@@ -33,7 +33,17 @@ const ThemeIcon: React.FC<{ theme: 'light' | 'dark' | 'system'; isDark: boolean 
   );
 };
 
-export const Layout = ({ children }: { children: React.ReactNode }) => {
+/**
+ * The application shell: sidebar, header, page toolbar, body.
+ *
+ * `navLoading` exists so the shell can be drawn BEFORE the session is known —
+ * during a session restore the sidebar's links are RBAC-filtered and the account
+ * avatar has no name to show, but the frame around them is already decided. The
+ * shell therefore renders for real and only its unknowable parts become
+ * placeholders, which is what keeps the boot screen from being a second,
+ * parallel copy of the layout that could drift away from this one.
+ */
+export const Layout = ({ children, navLoading = false }: { children: React.ReactNode; navLoading?: boolean }) => {
   const location = useLocation();
   const currentPath = location.pathname;
   const currentItem = NAV_ITEMS.find(item => item.path === currentPath);
@@ -109,7 +119,10 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const initials = (currentUser?.name ?? 'Admin')
+  /* Empty while the session is unknown, and the avatar is a placeholder then —
+     so this never has to invent a name. It used to fall back to 'Admin', which
+     rendered "AD" for a signed-out visitor. */
+  const initials = (currentUser?.name ?? '')
     .split(' ')
     .map((part) => part[0])
     .join('')
@@ -134,6 +147,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <Sidebar
         isCollapsed={isCollapsed}
         isMinimized={isMinimized}
+        isNavLoading={navLoading}
         onToggleMinimize={toggleMinimize}
         onNavigate={closeSidebar}
         className={cn(
@@ -216,23 +230,32 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
                   a bare "button" to a screen reader. The pill's old hover fill is
                   gone with the pill, because the avatar is opaque and would have
                   hidden it anyway; what is left to signal the control is the
-                  pointer cursor, the press animation, and the focus ring. */}
-              <button
-                type="button"
-                className="flex cursor-pointer items-center rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent active:scale-[0.98]"
-                aria-expanded={isProfileOpen}
-                aria-label={`Account menu for ${currentUser?.name ?? 'Admin'}`}
-              >
-                {/* A rounded SQUARE, not a circle — one step up the shared radius
-                    ladder (`--radius-card`, 12px) from the 8px `--radius-button`,
-                    which is a little soft for a 28px box while still reading as
-                    the same family as Button/Input rather than a one-off. The
-                    button wrapper matches it so the focus ring hugs the avatar's
-                    own corners instead of cutting across them. */}
-                <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-card)] bg-app-accent text-2xs font-bold text-[var(--app-accent-ink)]">
-                  {initials}
-                </div>
-              </button>
+                  pointer cursor, the press animation, and the focus ring.
+
+                  With no session there is no name to show, so the whole control
+                  is replaced by a placeholder. The old `?? 'Admin'` fallback drew
+                  a confident "AD" — and opened a menu naming a user — for a
+                  session that had not been established yet. */}
+              {!currentUser ? (
+                <Skeleton className="h-7 w-7 rounded-[var(--radius-card)]" />
+              ) : (
+                <button
+                  type="button"
+                  className="flex cursor-pointer items-center rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-app-accent active:scale-[0.98]"
+                  aria-expanded={isProfileOpen}
+                  aria-label={`Account menu for ${currentUser.name}`}
+                >
+                  {/* A rounded SQUARE, not a circle — one step up the shared radius
+                      ladder (`--radius-card`, 12px) from the 8px `--radius-button`,
+                      which is a little soft for a 28px box while still reading as
+                      the same family as Button/Input rather than a one-off. The
+                      button wrapper matches it so the focus ring hugs the avatar's
+                      own corners instead of cutting across them. */}
+                  <div className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-card)] bg-app-accent text-2xs font-bold text-[var(--app-accent-ink)]">
+                    {initials}
+                  </div>
+                </button>
+              )}
 
               {isProfileOpen && (
                 <div

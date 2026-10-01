@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { ProductTrends } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { AnalyticsSectionSkeleton } from './AnalyticsSectionSkeleton';
 import {
   Select,
   Table,
@@ -88,7 +88,7 @@ export function ProductTrendSection({
       description={`Per-product demand by ${periodLabel[trendPeriod].toLowerCase()} segment with total volume tracking.`}
       controls={<div className="space-y-2"><PeriodSelector value={trendPeriod} onChange={onTrendPeriodChange} prefix="trend" />{trendBucketLabels.length > 0 && <Select fieldSize="sm" value={safeTrendSelection} onChange={(event) => setTrendSelection(event.target.value)}>{trendBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select>}</div>}
     >
-      {isLoading ? <LoadingState label="Loading product trends" /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
+      {isLoading ? <AnalyticsSectionSkeleton chartHeight={380} /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
         <>
           <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
           <div className="my-4">

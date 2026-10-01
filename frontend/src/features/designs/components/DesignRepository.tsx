@@ -10,10 +10,55 @@ import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
+
+/** How many placeholder cards the grid shows while the designs load. */
+const DESIGN_SKELETON_COUNT = 10;
+
+/**
+ * The loading form of this component's own card grid.
+ *
+ * It lives here, next to the markup it mirrors, rather than in
+ * `shared/components/feedback` with the other skeletons: the shape — a square
+ * thumbnail over a name bar, a date bar and a tag row — is `DesignRepository`'s
+ * private layout, not a primitive anything else draws. `SectionCard` is kept
+ * analytics-only for the same reason. The grid classes are repeated from the
+ * real grid below, so if that grid ever changes its column count, this changes
+ * with it.
+ */
+function DesignGridSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="Loading designs"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6"
+    >
+      {Array.from({ length: DESIGN_SKELETON_COUNT }, (_, index) => (
+        <SurfaceCard key={index} className="overflow-hidden p-0">
+          {/* `aspect-square` matches the thumbnail box, so the cards are the
+              height they will be rather than a guessed one. Below it, the bars
+              follow the real card's own grouping — a name line and a date line
+              inside one block, then the tag row — because that is what sets the
+              card's height. Measured: 313px real, 313px placeholder. */}
+          <Skeleton className="aspect-square w-full rounded-none" />
+          <div className="space-y-3 p-3">
+            <div className="min-w-0">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="mt-1 h-4 w-1/2" />
+            </div>
+            <div className="flex gap-1">
+              <Skeleton className="h-5 w-12 rounded-full" />
+              <Skeleton className="h-5 w-10 rounded-full" />
+            </div>
+          </div>
+        </SurfaceCard>
+      ))}
+    </div>
+  );
+}
 
 export function DesignRepository() {
   const { designs, isLoading, error, refresh, addDesign, deleteDesign, updateDesign } = useDesigns();
@@ -168,8 +213,6 @@ export function DesignRepository() {
     }
   };
 
-  if (isLoading) return <LoadingState label="Loading designs" className="min-h-64" />;
-
   return (
     <div className="space-y-5">
       {error && <ErrorState message={error} onRetry={refresh} />}
@@ -190,7 +233,16 @@ export function DesignRepository() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          {filteredDesigns.length > 0 ? (
+          {/* The card frame, the title, the search box and the Upload button are
+              all drawn while the designs load — none of them depends on the
+              data, and the list pages cannot do the same because their chrome
+              (summary counts, status chips) is derived from it. Rendering the
+              frame here is also what keeps the placeholder cards the same width
+              as the real ones: the grid sits inside `CardContent`'s padding
+              either way. */}
+          {isLoading ? (
+            <DesignGridSkeleton />
+          ) : filteredDesigns.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
               {filteredDesigns.map((design) => (
                 <div key={design.id}>

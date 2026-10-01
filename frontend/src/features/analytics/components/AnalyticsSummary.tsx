@@ -1,6 +1,6 @@
 import type { AnalyticsSummary as AnalyticsSummaryData } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TileRowSkeleton } from '../../../shared/components/feedback/TileRowSkeleton';
 import { Badge, StatTile, StatTileRow } from '../../../shared/components/ui';
 import { money } from './analytics-types';
 import { SectionCard } from './SectionCard';
@@ -18,7 +18,7 @@ export function AnalyticsSummary({ summary, error, isLoading }: AnalyticsSummary
       description="Live reporting snapshot from current year-to-date data."
       controls={summary && <Badge variant="accent">{summary.range.from} → {summary.range.to}</Badge>}
     >
-      {isLoading ? <LoadingState label="Loading report" /> : error ? <ErrorState message={error} /> : summary ? (
+      {isLoading ? <TileRowSkeleton columns={5} /> : error ? <ErrorState message={error} /> : summary ? (
         <>
           <StatTileRow columns={5}>
             <StatTile label="Revenue" value={money.format(summary.revenue)} />

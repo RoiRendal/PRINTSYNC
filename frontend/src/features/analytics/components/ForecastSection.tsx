@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import type { InventoryForecast } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { AnalyticsSectionSkeleton } from './AnalyticsSectionSkeleton';
 import {
   SegmentedControl,
   StatusLabel,
@@ -101,7 +101,7 @@ export function ForecastSection({
       description="Forecasted inventory requirements using moving-average demand projection with confidence bounds."
       controls={<div className="space-y-2"><SegmentedControl aria-label="Forecast metric" value={forecastMetric} onChange={setForecastMetric} options={[{ value: 'income', label: 'Income', selectedClassName: 'bg-app-success text-white' }, { value: 'expenses', label: 'Expenses', selectedClassName: 'bg-app-warning text-white' }]} /><PeriodSelector value={forecastPeriod} onChange={onForecastPeriodChange} prefix="forecast" /></div>}
     >
-      {isLoading ? <LoadingState label="Loading inventory forecast" /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
+      {isLoading ? <AnalyticsSectionSkeleton chartHeight={390} /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
         <>
           <InsightPanel state={forecastInsight} onToggleAutoGenerate={() => setForecastInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateForecastInsight} />
           <div className="my-4">

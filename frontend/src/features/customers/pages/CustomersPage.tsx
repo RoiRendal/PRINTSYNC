@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Plus, Trash2 } from '../../../shared/components/ui/icons';
 
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
   Button,
@@ -218,7 +218,7 @@ export default function CustomersPage() {
     }
   };
 
-  if (isLoading) return <LoadingState label="Loading customers" className="min-h-64" />;
+  if (isLoading) return <TableSkeleton columns={5} className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (

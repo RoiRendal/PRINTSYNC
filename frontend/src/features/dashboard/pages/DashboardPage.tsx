@@ -1,5 +1,5 @@
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TileRowSkeleton } from '../../../shared/components/feedback/TileRowSkeleton';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { StatTile, StatTileRow } from '../../../shared/components/ui';
 import { useOrdersSummary } from '../../orders/hooks/useOrdersSummary';
@@ -59,9 +59,11 @@ function countFor(summary: OrdersSummary, status: OrderStatus): number {
 export default function Dashboard() {
   const { summary, error, isLoading, refresh } = useOrdersSummary();
 
-  // First load: nothing to show yet.
+  // First load: nothing to show yet. The Workspace is one row of five figures,
+  // so the placeholder is one row of five figures — no `min-h-64` either, which
+  // would reserve 256px for a row that is 84px tall.
   if (isLoading && !summary) {
-    return <LoadingState label="Loading workspace" className="min-h-64" />;
+    return <TileRowSkeleton columns={5} />;
   }
 
   // No data at all — say so plainly. Deliberately no zeros: a screen of zeros

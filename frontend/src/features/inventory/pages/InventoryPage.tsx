@@ -3,7 +3,7 @@ import { Box, Image as ImageIcon } from '../../../shared/components/ui/icons';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { DesignRepository } from '../../designs/components/DesignRepository';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import { cn } from '../../../shared/lib/cn';
 import { InventoryFormModal } from '../components/InventoryFormModal';
 import { InventoryStats } from '../components/InventoryStats';
@@ -118,7 +118,7 @@ export default function Inventory() {
     }
   };
 
-  if (isLoading) return <LoadingState label="Loading inventory" className="min-h-64" />;
+  if (isLoading) return <TableSkeleton columns={5} className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (

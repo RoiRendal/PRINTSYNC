@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { RefreshCw } from '../../../shared/components/ui/icons';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import {
   Button,
   Card,
@@ -143,7 +143,9 @@ export default function AuditLogPage() {
     });
   }, [items, search]);
 
-  if (isLoading && items.length === 0) return <LoadingState label="Loading audit logs" className="min-h-64" />;
+  /* Audit Log is the one list table with no checkbox column — nothing in the log
+     is deletable — so the skeleton drops the select column with it. */
+  if (isLoading && items.length === 0) return <TableSkeleton columns={5} select={false} className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
