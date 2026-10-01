@@ -34,8 +34,10 @@ export interface TableSkeletonProps {
  * and it would drift the first time the table primitives changed.
  *
  * The column counts are the caller's, because the count is the caller's fact:
- * Orders has eight data columns, Customers five, Audit Log five and no select
- * column at all. Pass the number the real table has.
+ * Orders and Customers have four data columns each after the column pass, Users
+ * five, Audit Log five and no select column at all. Pass the number the real
+ * table has — a skeleton with the wrong count loads into a table of a different
+ * shape, which is the one thing a placeholder must never do.
  *
  * A row is deliberately NOT the full height of a data row on its own — the bars
  * are `h-5`, one line of the table's text. Measured against the live stack at

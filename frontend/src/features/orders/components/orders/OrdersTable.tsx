@@ -139,16 +139,18 @@ export function OrdersTable({
       <CardContent>
         <TableContainer className="rounded-none border-0 bg-transparent">
           <Table>
+            {/*
+              Seven columns: the tick box, then six data columns. "Type" and
+              "Paid" were cut — see the header comment below for why.
+            */}
             <colgroup>
               <col style={{ width: '44px' }} />
-              <col style={{ width: '120px' }} />
-              <col style={{ width: '220px' }} />
-              <col style={{ width: '90px' }} />
               <col style={{ width: '150px' }} />
-              <col style={{ width: '120px' }} />
-              <col style={{ width: '110px' }} />
-              <col style={{ width: '110px' }} />
-              <col style={{ width: '120px' }} />
+              <col style={{ width: '300px' }} />
+              <col style={{ width: '170px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
+              <col style={{ width: '140px' }} />
             </colgroup>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -164,22 +166,28 @@ export function OrdersTable({
                 {/*
                   When rows are ticked the whole header collapses to just the
                   "# items selected" message (ERPNext item-list behaviour) — every
-                  column label disappears. The message spans all eight data columns
+                  column label disappears. The message spans all six data columns
                   so nothing reads as a stray header.
+
+                  Two columns were cut. "Type" said only Custom or Retail, which
+                  the row already carries: a retail sale's Value, Paid and
+                  Balance cells all read "—", so its shape is the label. "Paid"
+                  was a running total the staff never act on from this list —
+                  the balance is the figure that decides whether to chase a
+                  payment, and it stays. Six columns is also inside ERPNext's
+                  own four-to-six band.
                 */}
                 {selection.count === 0 ? (
                   <>
                     <TableHead>Order ID</TableHead>
                     <TableHead>Project / Client</TableHead>
-                    <TableHead>Type</TableHead>
                     <TableHead>Work Phase</TableHead>
                     <TableHead className="text-right">Due Date</TableHead>
                     <TableHead className="text-right">Value</TableHead>
-                    <TableHead className="text-right">Paid</TableHead>
                     <TableHead className="text-right">Balance</TableHead>
                   </>
                 ) : (
-                  <TableHead colSpan={8} className="font-semibold text-app-ink dark:text-zinc-100">
+                  <TableHead colSpan={6} className="font-semibold text-app-ink dark:text-zinc-100">
                     {formatSelectedCount(selection.count)}
                   </TableHead>
                 )}
@@ -197,7 +205,6 @@ export function OrdersTable({
                   `cellTitle` turns into no tooltip at all.
                 */
                 const orderRef = `#${order.id.length > 10 ? order.id.replace('ORD-', 'PS-').slice(-8) : order.id}`;
-                const paidText = isCustom ? `${currencySymbol}${(order.totalPaid ?? 0).toFixed(2)}` : undefined;
                 const balanceText = isCustom ? `${currencySymbol}${(order.balanceDue ?? 0).toFixed(2)}` : undefined;
                 return (
                   <TableRow key={order.id} className="cursor-pointer" onClick={() => onSelectOrder(order)}>
@@ -218,9 +225,6 @@ export function OrdersTable({
                     </TableCell>
                     <TableCell title={cellTitle('Project / Client', order.customer)}>
                       <span className="text-app-ink dark:text-zinc-100">{order.customer}</span>
-                    </TableCell>
-                    <TableCell title={cellTitle('Type', isCustom ? 'Custom' : 'Retail')}>
-                      {isCustom ? 'Custom' : 'Retail'}
                     </TableCell>
                     <TableCell title={cellTitle('Work Phase', order.status)}>
                       {/* `min-w-0`: a flex child refuses to shrink below its
@@ -256,9 +260,6 @@ export function OrdersTable({
                     >
                       {currencySymbol}{order.amount.toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-app-text-muted dark:text-zinc-400" title={cellTitle('Paid', paidText)}>
-                      {paidText ?? '—'}
-                    </TableCell>
                     <TableCell className="text-right tabular-nums" title={cellTitle('Balance', balanceText)}>
                       {isCustom && (order.balanceDue ?? 0) > 0 ? (
                         <StatusLabel tone="red">{balanceText}</StatusLabel>
@@ -271,7 +272,7 @@ export function OrdersTable({
               })}
               {orders.length === 0 && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={9} className="whitespace-normal py-12">
+                  <TableCell colSpan={7} className="whitespace-normal py-12">
                     <div className="text-center text-sm text-app-text-muted dark:text-zinc-500">No matching orders found.</div>
                   </TableCell>
                 </TableRow>

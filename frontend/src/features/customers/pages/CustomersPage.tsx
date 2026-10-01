@@ -219,7 +219,7 @@ export default function CustomersPage() {
     }
   };
 
-  if (isLoading) return <TableSkeleton columns={5} className="min-h-64" />;
+  if (isLoading) return <TableSkeleton columns={4} className="min-h-64" />;
   if (error) return <ErrorState message={error} onRetry={refresh} className="min-h-64" />;
 
   return (
@@ -287,13 +287,20 @@ export default function CustomersPage() {
             <CardContent>
               <TableContainer className="rounded-none border-0 bg-transparent">
                 <Table>
+                  {/*
+                    Five columns: the tick box and four data columns. "Notes" was
+                    cut. `customers.notes` is a long free-text field, so it was
+                    the one column that could never be read from a one-line row —
+                    a clipped paragraph tells you nothing. It is still editable on
+                    the customer form and still matched by search; what changes is
+                    that the list stops pretending to show it.
+                  */}
                   <colgroup>
                     <col style={{ width: '44px' }} />
+                    <col style={{ width: '280px' }} />
                     <col style={{ width: '200px' }} />
-                    <col style={{ width: '150px' }} />
-                    <col style={{ width: '240px' }} />
-                    <col style={{ width: '220px' }} />
-                    <col style={{ width: '140px' }} />
+                    <col style={{ width: '340px' }} />
+                    <col style={{ width: '160px' }} />
                   </colgroup>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -309,18 +316,17 @@ export default function CustomersPage() {
                       {/*
                         When rows are ticked the whole header collapses to just the
                         "# items selected" message (ERPNext item-list behaviour);
-                        every column label disappears. colSpan 5 = all five data columns.
+                        every column label disappears. colSpan 4 = all four data columns.
                       */}
                       {selection.count === 0 ? (
                         <>
                           <TableHead>Name</TableHead>
                           <TableHead>Phone</TableHead>
                           <TableHead>Email</TableHead>
-                          <TableHead>Notes</TableHead>
                           <TableHead>Date Created</TableHead>
                         </>
                       ) : (
-                        <TableHead colSpan={5} className="font-semibold text-app-ink dark:text-zinc-100">
+                        <TableHead colSpan={4} className="font-semibold text-app-ink dark:text-zinc-100">
                           {formatSelectedCount(selection.count)}
                         </TableHead>
                       )}
@@ -346,19 +352,12 @@ export default function CustomersPage() {
                         </TableCell>
                         <TableCell title={cellTitle('Phone', customer.phone)}>{customer.phone || '—'}</TableCell>
                         <TableCell title={cellTitle('Email', customer.email)}>{customer.email || '—'}</TableCell>
-                        {/*
-                          `truncate` and `max-w-[200px]` came off this cell: the
-                          primitive now clips every cell, and a max-width here
-                          would have held the column narrower than the colgroup
-                          allots it, leaving a gap after the text.
-                        */}
-                        <TableCell className="text-app-text-muted dark:text-zinc-400" title={cellTitle('Notes', customer.notes)}>{customer.notes || '—'}</TableCell>
                         <TableCell className="text-app-text-muted dark:text-zinc-500" title={cellTitle('Date Created', customer.createdAt.slice(0, 10))}>{customer.createdAt.slice(0, 10)}</TableCell>
                       </TableRow>
                     ))}
                     {filtered.length === 0 && (
                       <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={6} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
+                        <TableCell colSpan={5} className="whitespace-normal py-10 text-center text-sm text-app-text-muted dark:text-zinc-500">No customers match your search.</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
