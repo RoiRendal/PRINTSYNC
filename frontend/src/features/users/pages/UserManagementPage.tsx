@@ -3,7 +3,7 @@ import { Plus, Trash2 } from '../../../shared/components/ui/icons';
 
 import { ADMIN_PAGE_ACCESS, NAV_ITEMS, PageAccessKey, STAFF_PAGE_ACCESS } from '../../../shared/constants/navigation';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import {
   Button,
@@ -220,7 +220,7 @@ export default function UserManagement() {
 
   const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
 
-  if (isUsersLoading) return <LoadingState label="Loading users" className="min-h-64" />;
+  if (isUsersLoading) return <TableSkeleton columns={6} className="min-h-64" />;
   if (userError) return <ErrorState message={userError} onRetry={refreshUsers} className="min-h-64" />;
 
   return (

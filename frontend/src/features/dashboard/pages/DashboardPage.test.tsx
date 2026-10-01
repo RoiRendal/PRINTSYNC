@@ -76,7 +76,10 @@ describe('DashboardPage — the Workspace', () => {
     setState({ summary: null, isLoading: true });
     renderPage();
 
-    expect(screen.getByText(/loading workspace/i)).toBeInTheDocument();
+    // The Workspace's placeholder is a row of figure boxes, not a spinner and
+    // not a card grid — and still not five real tiles, because a screen of zeros
+    // would look like a quiet morning.
+    expect(screen.getByRole('status', { name: /loading figures/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /pending/i })).not.toBeInTheDocument();
   });
 

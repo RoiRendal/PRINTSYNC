@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import type { SalesTimeline } from '../api/analyticsApi';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { AnalyticsSectionSkeleton } from './AnalyticsSectionSkeleton';
 import {
   Badge,
   Select,
@@ -89,7 +89,7 @@ export function ProfitMarginSection({
       description={`Revenue vs COGS with margin trend across all ${periodLabel[profitPeriod].toLowerCase()} buckets.`}
       controls={<PeriodSelector value={profitPeriod} onChange={onProfitPeriodChange} prefix="profit" />}
     >
-      {isLoading ? <LoadingState label="Loading profit data" /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
+      {isLoading ? <AnalyticsSectionSkeleton chartHeight={360} /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
         <>
           <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
           <div className="my-4">

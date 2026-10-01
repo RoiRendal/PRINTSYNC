@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Calendar } from '../../../shared/components/ui/icons';
 import { useNavigate } from 'react-router-dom';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
-import { LoadingState } from '../../../shared/components/feedback/LoadingState';
+import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { Button, DeleteConfirmModal, Input, Pagination, SegmentedControl } from '../../../shared/components/ui';
 import { cn } from '../../../shared/lib/cn';
@@ -231,8 +231,9 @@ export default function Orders() {
         <>
           {statusError && <InlineAlert message={statusError} onDismiss={() => setStatusError(null)} />}
 
+          {/* 8 data columns — Order ID through Balance — plus the select column. */}
           {isLoading ? (
-            <LoadingState label="Loading orders" className="min-h-64" />
+            <TableSkeleton columns={8} className="min-h-64" />
           ) : error ? (
             <ErrorState message={error} onRetry={refresh} className="min-h-64" />
           ) : (
