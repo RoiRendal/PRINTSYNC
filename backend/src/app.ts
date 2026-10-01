@@ -33,7 +33,7 @@ import { eventsRouter } from './routes/events.routes.js';
  *
  * Keep in sync with the endpoints that call `uploadStorageImage`.
  */
-const IMAGE_UPLOAD_PATHS = ['/api/v1/designs/assets', '/api/v1/settings/logo'];
+const IMAGE_UPLOAD_PATHS = ['/api/v1/designs/assets', '/api/v1/settings/logo', '/api/v1/inventory/assets'];
 
 /** Covers a 5 MB image (≈6.7 MB base64) plus the JSON envelope. */
 const IMAGE_UPLOAD_JSON_LIMIT = '8mb';
