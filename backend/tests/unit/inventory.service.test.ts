@@ -224,6 +224,44 @@ describe('inventory.service', () => {
       assert.equal(payload.sku, 'INV-NEW');
     });
 
+    /*
+     * The photo used to be written as `input.imageUrl ?? null`, so an update
+     * that simply did not mention it erased the item's picture — one PATCH
+     * correcting a price and the photo was gone, with nothing in the response to
+     * say so. Omission now means "leave it alone", the same rule `sku` and `uom`
+     * already had; removal is an explicit `null`.
+     */
+    it('leaves the photo alone when the caller does not mention it', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
+
+      await updateInventoryItem(db.client, 'inv-1', {
+        name: 'Glossy Paper (A4)',
+        category: 'Supplies',
+        reorderLevel: 10,
+        price: 13,
+      });
+
+      const payload = db.lastCall('inventory_items', 'update')?.payload as Record<string, unknown>;
+      assert.equal('image_url' in payload, false);
+    });
+
+    it('clears the photo when the caller sends an explicit null', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
+
+      await updateInventoryItem(db.client, 'inv-1', {
+        name: 'Glossy Paper (A4)',
+        category: 'Supplies',
+        reorderLevel: 10,
+        price: 13,
+        imageUrl: null,
+      });
+
+      const payload = db.lastCall('inventory_items', 'update')?.payload as Record<string, unknown>;
+      assert.equal(payload.image_url, null);
+    });
+
     it('scopes the update to the requested id', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });

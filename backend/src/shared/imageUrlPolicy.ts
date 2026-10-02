@@ -1,37 +1,39 @@
 /**
- * What `designs.image_url` is allowed to hold.
+ * What a stored image URL is allowed to be.
  *
- * The design forms used to expose the stored value as a free-text field, so
- * whatever a staff member typed — or whatever a script posted straight to the
- * API — landed in a column the app later renders as an `<img src>` and hands to
- * `window.open` on three separate screens. `z.string().url()` did not stop it:
- * `new URL('javascript:alert(1)')` succeeds, so the dangerous schemes passed
- * validation and were stored.
+ * `designs.image_url` and `inventory_items.image_url` are both rendered as an
+ * `<img src>`, and the design one is additionally handed to `window.open` on
+ * three screens. Both used to accept any string the browser sent: the design
+ * forms printed the stored value into a free-text box, and
+ * `z.string().url()` — which was supposed to be the guard — does not help,
+ * because `new URL('javascript:alert(1)')` succeeds. Both columns were
+ * therefore open to `javascript:`, `data:`, a protocol-relative `//host/...`
+ * and any third-party host.
  *
  * Only two shapes are legitimate, because those are the only two the app itself
  * ever produces:
  *
  *   - a bundled preview served by this app, written as a rooted path
- *     (`/design-images/placeholder.png`);
+ *     (`/design-images/DSG-001.png`);
  *   - the public URL Supabase Storage returned for an uploaded asset, which is
  *     always on the configured project's own origin.
  *
- * Everything else — `javascript:`, `data:`, a protocol-relative `//host/...`,
- * or any third-party host — is refused at the edge of the API.
+ * Everything else is refused at the edge of the API. One rule, used by both
+ * columns — a security check kept in two places is a check that drifts.
  */
 
 /** Schemes accepted for an absolute image URL. */
 const ALLOWED_SCHEMES = new Set(['http:', 'https:']);
 
 /**
- * True when `value` is a safe `designs.image_url`.
+ * True when `value` is a safe image URL to store.
  *
  * `supabaseUrl` is the project's own API URL; an absolute URL is accepted only
  * when it shares that origin. When it is absent no absolute URL can be vouched
- * for, so only rooted paths pass — the route withdraws with 503 before anything
+ * for, so only rooted paths pass — the routes withdraw with 503 before anything
  * is written in that case anyway.
  */
-export function isAllowedDesignImageUrl(value: string, supabaseUrl: string | undefined): boolean {
+export function isAllowedStoredImageUrl(value: string, supabaseUrl: string | undefined): boolean {
   const trimmed = value.trim();
   if (!trimmed) return false;
 

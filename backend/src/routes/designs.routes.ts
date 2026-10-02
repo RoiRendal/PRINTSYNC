@@ -9,7 +9,7 @@ import {
   listDesigns,
   updateDesign,
 } from '../modules/designs/designs.service.js';
-import { isAllowedDesignImageUrl } from '../modules/designs/designImageUrl.js';
+import { isAllowedStoredImageUrl } from '../shared/imageUrlPolicy.js';
 import { env } from '../config/env.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
@@ -21,14 +21,15 @@ import { parsePaginationQuery } from '../shared/pagination.js';
 export const designsRouter = Router();
 
 /**
- * The artwork link. See `designImageUrl.ts` for why this is not `z.string().url()`:
- * the value is rendered as an `<img src>` and passed to `window.open`, so an
- * arbitrary but syntactically valid URL is not an acceptable answer here.
+ * The artwork link. See `shared/imageUrlPolicy.ts` for why this is not
+ * `z.string().url()`: the value is rendered as an `<img src>` and passed to
+ * `window.open`, so an arbitrary but syntactically valid URL is not an
+ * acceptable answer here.
  */
 const designImageUrl = z
   .string()
   .trim()
-  .refine((value) => isAllowedDesignImageUrl(value, env.SUPABASE_URL), {
+  .refine((value) => isAllowedStoredImageUrl(value, env.SUPABASE_URL), {
     message: 'The design image must be an uploaded asset or a bundled preview.',
   });
 

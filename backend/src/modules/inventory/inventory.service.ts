@@ -122,7 +122,15 @@ export async function updateInventoryItem(
       // not something a caller that has never heard of units should silently
       // reset to the default.
       ...(input.uom !== undefined ? { uom: input.uom } : {}),
-      image_url: input.imageUrl ?? null,
+      /*
+       * The photo follows the same rule: an update that does not mention it
+       * leaves it alone. It used to be written as `input.imageUrl ?? null`, so
+       * a PATCH that only corrected a price silently wiped the item's photo —
+       * one HTTP request with no `imageUrl` key and the picture was gone.
+       * Removing it is still possible and still obvious; it is an explicit
+       * `imageUrl: null`, which is exactly what the form's Remove Image sends.
+       */
+      ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
     })
     .eq('id', id)
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
