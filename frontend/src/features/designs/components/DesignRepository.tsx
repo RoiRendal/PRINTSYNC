@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, Edit, Eye, Image as ImageIcon, Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
+import React, { useMemo, useState } from 'react';
+import { Download, Image as ImageIcon, Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -12,8 +12,10 @@ import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import { useRefocusOnChange } from '../../../shared/hooks/useRefocusOnChange';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, Pagination, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, ViewSelect, parseViewShape, Input, Modal, Select } from '../../../shared/components/ui';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
+import { Button, Card, CardContent, CardHeader, CardDescription, CardTitle, Checkbox, DeleteConfirmModal, ImageGrid, ImageGridCard, Input, Modal, Pagination, SearchInput, Skeleton, StatTile, StatusLabel, SurfaceCard, ViewSelect, parseViewShape, Select } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
+import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import { DesignTable } from './DesignTable';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
@@ -118,13 +120,12 @@ export function DesignRepository() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
-  const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
+  const [editDesignData, setEditDesignData] = useState<Design | null>(null);
+  /** The designs the confirmed delete is about to take, named in full in the dialog. */
+  const [designsToDelete, setDesignsToDelete] = useState<Design[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newDesign, setNewDesign] = useState({ name: '', category: '' });
-  const [editDesignData, setEditDesignData] = useState<Design | null>(null);
   /*
    * The chosen file for each form, held until submit. It is never read into the
    * form's own state: the upload runs on submit and only the Storage URL it
@@ -153,6 +154,14 @@ export function DesignRepository() {
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     design.category.toLowerCase().includes(searchTerm.toLowerCase()),
   );
+
+  /*
+   * Tick state lives here. The rows on offer are the FILTERED ones, so a design
+   * hidden by the search box cannot be deleted by accident — and because the
+   * repository has no pager-less second list, the filtered set is also what the
+   * header box means by "all".
+   */
+  const selection = useRowSelection(useMemo(() => filteredDesigns.map((design) => design.id), [filteredDesigns]));
 
   const openAddModal = () => {
     setNewDesign({ name: '', category: '' });
@@ -223,11 +232,6 @@ export function DesignRepository() {
     }
   };
 
-  const openViewModal = (design: Design) => {
-    setSelectedDesign(design);
-    setIsViewModalOpen(true);
-  };
-
   const openEditModal = (design: Design) => {
     setEditDesignData({ ...design });
     // A file picked for a previous design must not be uploaded into this one.
@@ -295,25 +299,60 @@ export function DesignRepository() {
     }
   };
 
-  const confirmDelete = (design: Design) => {
-    setDesignToDelete(design);
+  /*
+   * The toolbar's one delete control. It acts on whatever is ticked, exactly as
+   * the stock table's does, so the confirmation names every design it is about
+   * to take rather than a count.
+   */
+  const openDeleteSelected = () => {
+    const targets = filteredDesigns.filter((design) => selection.selectedIds.has(design.id));
+    if (targets.length === 0) return;
+    setMutationError(null);
+    setDesignsToDelete(targets);
     setIsDeleteConfirmOpen(true);
   };
 
+  const closeDeleteModal = () => {
+    setIsDeleteConfirmOpen(false);
+    setDesignsToDelete([]);
+  };
+
   const handleDelete = async () => {
-    if (!designToDelete || isDeleting) return;
+    if (designsToDelete.length === 0 || isDeleting) return;
+    const targets = designsToDelete;
     setMutationError(null);
     setIsDeleting(true);
+    /*
+     * One row at a time: `deleteDesign` is a single-row endpoint, and a bulk
+     * route would be a backend change this screen does not need. Whatever fails
+     * is reported by name, and the dialog keeps the survivors so the retry is one
+     * click — the designs that did delete have already left the list, which drops
+     * their ticks with them.
+     */
+    const failures: Design[] = [];
     try {
-      await deleteDesign(designToDelete.id);
-      setIsDeleteConfirmOpen(false);
-      setDesignToDelete(null);
-    } catch (error: unknown) {
-      setMutationError(error instanceof ApiError ? error.message : 'The design could not be deleted.');
-      setIsDeleteConfirmOpen(false);
+      for (const design of targets) {
+        try {
+          await deleteDesign(design.id);
+        } catch {
+          failures.push(design);
+        }
+      }
     } finally {
+      // A throw between here and the close below would otherwise leave Confirm
+      // spinning on a dialog that never goes away.
       setIsDeleting(false);
     }
+
+    if (failures.length === 0) {
+      selection.clear();
+      closeDeleteModal();
+      return;
+    }
+    setDesignsToDelete(failures);
+    setMutationError(
+      `${failures.length} of ${targets.length} designs could not be deleted: ${failures.map((design) => design.name).join(', ')}. The rest were removed.`,
+    );
   };
 
   /*
@@ -337,24 +376,34 @@ export function DesignRepository() {
       <Card padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
           <div>
-
             <CardTitle>Design Repository</CardTitle>
             <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
             {/*
-              The view picker leads this toolbar row too — left of the search
-              box, the same place the stock table puts its own, so the two
-              surfaces read alike. Below `md` the row is a column and it takes
-              its own line rather than squeezing the search box.
+              The count line, the same one the stock gallery carries: how many
+              designs are on offer, replaced by "# items selected" while rows are
+              ticked (ERPNext collapses the header to that message). Omitted
+              entirely when there is nothing to count — "0 designs" beside "No
+              designs found" states the same fact twice, and the empty state says
+              it better.
+            */}
+            {selection.count === 0 && filteredDesigns.length === 0 ? null : (
+              <p className="mt-2 text-2xs font-bold text-app-text-muted dark:text-zinc-500">
+                {selection.count > 0
+                  ? formatSelectedCount(selection.count)
+                  : `${filteredDesigns.length} design${filteredDesigns.length === 1 ? '' : 's'}`}
+              </p>
+            )}
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-2xl">
+            {/*
+              The same order every other list toolbar uses — view, search,
+              refresh, delete, add — because it is the same row of controls. The
+              delete square is only findable if it stays where the tables put it,
+              and it now leads the pair of action squares rather than sitting
+              alone, since the repository deletes in bulk like the rest.
             */}
             <ViewSelect value={designView} onChange={setDesignViewParam} ariaLabel="Design view" />
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-            {/*
-              Re-reads the repository. This header has no delete square to sit to
-              the left of, so it takes the other position the rule allows — on the
-              right of the search box, the same place the Audit Log puts its own.
-            */}
             <Button
               type="button"
               variant="secondary"
@@ -367,11 +416,29 @@ export function DesignRepository() {
               <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
             {/*
-              A bare plus, the same control the list tables carry: the words moved
-              into the accessible name, and the primary fill stays because
-              uploading is still this screen's one dominant action (R23). Nothing
-              sits to its left — a design is deleted from its own card, not in a
-              batch, so this header has no delete square to pair with.
+              The repository's only delete control, and the same square the stock
+              table carries: icon-only and gray (the tone of Cancel) so it does
+              not advertise itself as destructive at a glance — the confirmation
+              dialog does that work. Disabled until something is ticked, with the
+              reason in the hover title.
+            */}
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon"
+              disabled={selection.count === 0}
+              onClick={openDeleteSelected}
+              aria-label={selection.count > 0 ? `Delete ${selection.count} selected design${selection.count === 1 ? '' : 's'}` : 'Delete selected designs'}
+              title={selection.count === 0 ? 'Tick the rows you want to delete first.' : `Delete ${selection.count} design${selection.count === 1 ? '' : 's'}`}
+              className="shrink-0"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+            {/*
+              A bare plus, to the right of delete and matching its geometry
+              exactly: the words live in the accessible name, and the primary
+              fill stays because uploading is still this screen's one dominant
+              action (R23).
             */}
             <Button
               type="button"
@@ -396,14 +463,13 @@ export function DesignRepository() {
         <CardContent className={designView === 'list' ? undefined : 'p-4'}>
           {isLoading ? (
             designView === 'list'
-              ? <TableSkeleton columns={4} select={false} />
+              ? <TableSkeleton columns={4} />
               : <DesignGridSkeleton />
           ) : designView === 'list' ? (
             <DesignTable
               designs={filteredDesigns}
-              onView={(design) => openViewModal(design)}
               onEdit={(design) => openEditModal(design)}
-              onDelete={(design) => confirmDelete(design)}
+              selection={selection}
               footer={pager}
             />
           ) : filteredDesigns.length > 0 ? (
@@ -411,35 +477,44 @@ export function DesignRepository() {
               {/*
                 The shared track, not a local one — the stock gallery renders the
                 same grid, so a column-count change lands on both at once. What
-                is specific to a design lives in the card's slots: its category
-                badge, its View / Download pair, and the body below.
+                is specific to a design lives in the card's slots: its tick box,
+                and the body below. Both grids now carry the same parts — the
+                category moved out of the photo's corner so the box the bulk
+                delete needs can have it.
               */}
               {filteredDesigns.map((design) => (
                 <ImageGridCard
                   key={design.id}
                   imageUrl={design.imageUrl}
                   imageAlt={design.name}
-                  leading={<Badge variant="accent">{design.category}</Badge>}
-                  overlay={
-                    <>
-                      <Button type="button" variant="secondary" size="icon" onClick={() => openViewModal(design)} title="View details" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
-                        <Eye className="h-4 w-4" aria-hidden="true" />
-                      </Button>
-                      <Button type="button" variant="secondary" size="icon" onClick={() => window.open(design.imageUrl, '_blank', 'noopener,noreferrer')} title="Download design" className="rounded-full bg-[#3a3a3c] text-white ring-[#6b6b6d] hover:bg-[#525254]">
-                        <Download className="h-4 w-4" aria-hidden="true" />
-                      </Button>
-                    </>
+                  /*
+                   * The tick box replaces the category badge in this corner, the
+                   * same trade the stock gallery makes: a card cannot carry both,
+                   * and the box is the only way to reach the bulk delete. Unlike
+                   * the stock gallery there is no `overlay` — View and Download
+                   * now live in the edit modal, which is what clicking the card
+                   * opens.
+                   */
+                  leading={
+                    <span onClick={(event) => event.stopPropagation()}>
+                      <Checkbox
+                        checked={selection.has(design.id)}
+                        onChange={() => selection.toggle(design.id)}
+                        aria-label={`Select ${design.name}`}
+                      />
+                    </span>
                   }
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <div
+                    className="cursor-pointer"
+                    onClick={() => openEditModal(design)}
+                    title={`${design.name} — click to edit`}
+                  >
                     <div className="min-w-0">
                       <h3 className="truncate text-sm font-bold text-app-ink dark:text-zinc-100">{design.name}</h3>
                       <p className="mt-1 text-2xs text-app-text-muted dark:text-zinc-500">Added {design.createdAt}</p>
                     </div>
-                    <div className="flex gap-1">
-                      <Button type="button" variant="ghost" size="icon" onClick={() => openEditModal(design)} title="Edit design" className="h-8 w-8"><Edit className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => confirmDelete(design)} title="Delete design" className="h-8 w-8 text-app-danger hover:text-app-danger"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" /></Button>
-                    </div>
+                    <StatusLabel tone="gray" className="mt-2 text-2xs">{design.category}</StatusLabel>
                   </div>
                 </ImageGridCard>
               ))}
@@ -492,22 +567,6 @@ export function DesignRepository() {
         </form>
       </Modal>
 
-      <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={selectedDesign?.name || 'Design View'} maxWidth="max-w-2xl">
-        {selectedDesign && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="aspect-square overflow-hidden rounded-[var(--radius-card)] border"><img src={selectedDesign.imageUrl} alt={selectedDesign.name} className="h-full w-full object-contain" /></div>
-            <div className="space-y-4">
-              <div><h4 className="mb-1 label-caps text-app-text-muted">Design Information</h4><p className="text-xl font-bold text-app-ink dark:text-zinc-100">{selectedDesign.name}</p><Badge variant="accent" className="mt-2">{selectedDesign.category}</Badge></div>
-              <StatTileRow columns={2}>
-                <StatTile label="Reference ID" value={`#${selectedDesign.id}`} />
-                <StatTile label="Created Date" value={selectedDesign.createdAt} />
-              </StatTileRow>
-              <Button fullWidth onClick={() => window.open(selectedDesign.imageUrl, '_blank', 'noopener,noreferrer')}>Download Assets</Button>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Design" maxWidth="max-w-3xl">
         {editDesignData && (
           <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
@@ -533,6 +592,23 @@ export function DesignRepository() {
               <div className="space-y-4">
                 <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
                 <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{editCategories(editDesignData.category).map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
+                {/*
+                  The two things the removed View modal was the only place to see:
+                  when the design was added, and the download that hands over the
+                  stored original. Both belong on the record's own screen — the
+                  View dialog was a second screen that showed the same record and
+                  one extra stat, which is not a screen.
+                */}
+                <StatTile label="Created Date" value={editDesignData.createdAt} />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => window.open(editDesignData.imageUrl, '_blank', 'noopener,noreferrer')}
+                >
+                  <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                  Download Assets
+                </Button>
               </div>
             </div>
             {mutationError && <InlineAlert message={mutationError} />}
@@ -543,9 +619,9 @@ export function DesignRepository() {
 
       <DeleteConfirmModal
         isOpen={isDeleteConfirmOpen}
-        itemLabels={designToDelete ? [designToDelete.name] : []}
+        itemLabels={designsToDelete.map((design) => design.name)}
         isBusy={isDeleting}
-        onClose={() => setIsDeleteConfirmOpen(false)}
+        onClose={closeDeleteModal}
         onConfirm={handleDelete}
       />
     </div>
