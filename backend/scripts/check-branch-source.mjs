@@ -64,11 +64,74 @@ const SCAN_ROOTS = ['src/routes', 'src/modules'];
 const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'coverage']);
 
 /**
- * Places a branch may legitimately be read from. Empty today, and deliberately
- * shown rather than omitted — see the header. Each entry must name a file and a
- * line, so an exemption cannot be widened by accident.
+ * Places a branch may legitimately be read from. Each entry names a file and a
+ * LINE, so an exemption cannot be widened by accident.
+ *
+ * ### The one entry, and exactly what it covers
+ *
+ * Phase 4's head-office analytics selector is the single place a caller may *ask
+ * for* a branch. It is read-only (no write path consults it — writes call
+ * `getCallerBranch` and refuse head office the same as staff) and analytics-only.
+ *
+ * The exemption is **line-scoped on purpose**. `{ file, line }` rather than a bare
+ * filename means a second branch read added anywhere else in the same file still
+ * fails the gate, and moving the sanctioned read to a different line fails it too —
+ * so the entry has to be re-affirmed rather than silently inherited.
  */
-const ALLOWED = [];
+const ALLOWED = [
+  {
+    file: 'src/routes/analytics.routes.ts',
+    line: 43,
+    reason:
+      'Head-office analytics selector: the `branch` field of the query schema that ' +
+      '`effectiveBranch()` parses from `request.query`. Read-only and analytics-only — ' +
+      '`resolveAnalyticsBranchFilter` refuses every account without `canViewAllBranches` ' +
+      'with a 403, and no write path consults it.',
+  },
+  {
+    file: 'src/routes/users.routes.ts',
+    line: 27,
+    reason:
+      'User administration: `branchId` is a FIELD OF THE USER RECORD being created or ' +
+      'edited, not a scope for the caller’s own request. An admin chooses which branch a ' +
+      'new hire belongs to; the caller’s own branch is irrelevant to that and must not ' +
+      'silently override it. Already gated by the `users.manage` permission, and it ' +
+      'grants no read of any branch’s operational data.',
+  },
+];
+
+/**
+ * A `branch` key whose value is a **validator** — `branch: z.string()`, etc.
+ *
+ * ### Why this pattern had to be added
+ *
+ * The three patterns below catch a branch read *directly* off `request.query` etc.
+ * They missed the shape this codebase actually uses: a Zod schema declares
+ * `branch: z.string()`, and the handler passes `request.query` to `safeParse`. The
+ * branch then arrives as `parsed.data.branch` — never touching `request.query.branch`
+ * — so the read was invisible to the gate.
+ *
+ * That was a genuine hole, not a theoretical one: it meant someone could add
+ * `branch: z.string().optional()` to the **orders** query schema, read
+ * `parsed.data.branch`, and scope a list to another shop without the gate saying a
+ * word. The decision to widen access would have been a one-line diff nobody was
+ * forced to look at.
+ *
+ * ### Why it keys on the VALUE, not just the key
+ *
+ * A key named `branchId` is not by itself suspicious — it appears in response
+ * payloads (`branchId: String(row.id)`) and in type annotations, which are not
+ * request inputs at all. Flagging those would produce false positives on correct
+ * code, and a gate with false positives is one people learn to work around. What is
+ * worth flagging is a branch key bound to a **validator call** (`z.…`), because
+ * that is what turns a client value into a parsed, trusted field.
+ *
+ * The value test is deliberately loose (`z.` or a `zod` import reference) rather
+ * than a full parse: it is meant to force a human to justify the read, not to decide
+ * the justification itself. A false positive costs one ALLOWED entry; a false
+ * negative costs the other shop's data.
+ */
+const SCHEMA_BRANCH_KEY = /(?:^|[,{(\s])branch(?:_?[Ii][Dd]?)?\s*:\s*(?:z\.|zod\b|zodios)/m;
 
 /**
  * `[clientSource].[branchKey]`, where clientSource is one of the four
@@ -92,6 +155,12 @@ const PATTERNS = [
     // const { branchId } = request.query;  /  const { branch_id: b } = req.body;
     regex: /\bconst\s*\{[^}]*\bbranch_?[Ii]d\b[^}]*\}\s*=\s*(?:request|req)\.(query|body|params)\b/g,
     what: (match) => `destructures a branch out of request.${match[1]}`,
+  },
+  {
+    // A `branch` key declared in a schema or object literal — the shape a branch
+    // takes when it arrives via `schema.safeParse(request.query)`. See the note above.
+    regex: SCHEMA_BRANCH_KEY,
+    what: () => 'declares a branch key (e.g. in a query/body schema) that becomes client-controlled',
   },
 ];
 
@@ -143,6 +212,18 @@ if (files.length === 0) {
 const failures = [];
 let checked = 0;
 
+/**
+ * Which ALLOWED entries actually matched a line.
+ *
+ * Tracked so a stale exemption is caught. An entry pointing at a line that has
+ * moved — or at a file that no longer exists — is an exemption the gate is still
+ * granting but nothing needs, and the dangerous version of that is an entry whose
+ * line number has drifted onto a NEW, unexplained branch read. Requiring every
+ * entry to match means the list cannot rot into a standing permission: the moment
+ * the sanctioned read moves, the gate fails and the entry has to be re-justified.
+ */
+const matchedExemptions = new Set();
+
 for (const file of files.sort()) {
   const shown = relative(BACKEND_ROOT, file).split('\\').join('/');
   const lines = readFileSync(file, 'utf8').split('\n');
@@ -157,12 +238,33 @@ for (const file of files.sort()) {
       if (!match) continue;
 
       checked += 1;
-      const allowed = ALLOWED.some((entry) => entry.file === shown && entry.line === index + 1);
-      if (!allowed) {
+      const exemption = ALLOWED.find((entry) => entry.file === shown && entry.line === index + 1);
+      if (exemption) {
+        matchedExemptions.add(exemption);
+      } else {
         failures.push({ file: shown, line: index + 1, source: line.trim(), reason: what(match) });
       }
     }
   });
+}
+
+const staleExemptions = ALLOWED.filter((entry) => !matchedExemptions.has(entry));
+
+if (staleExemptions.length > 0) {
+  console.error(
+    `branch-source gate: FAIL (${staleExemptions.length} stale ALLOWED entr${staleExemptions.length === 1 ? 'y' : 'ies'})\n`,
+  );
+  for (const entry of staleExemptions) {
+    console.error(`  ${entry.file}:${entry.line}\n    -> no client-controlled branch read is at this line (the read moved, or the file changed)`);
+  }
+  console.error(
+    '\nAn ALLOWED entry exempts one specific file and line, and every entry must still\n' +
+      'match something. This entry no longer does, so it is either a leftover exemption\n' +
+      'granting permission nothing needed — or, worse, the line has drifted onto a new\n' +
+      'branch read it was never written for. Re-check the file and remove or correct the\n' +
+      'entry in scripts/check-branch-source.mjs.\n',
+  );
+  process.exit(1);
 }
 
 if (failures.length > 0) {
@@ -182,7 +284,8 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `branch-source gate: pass (${files.length} source files scanned, 0 client-controlled branch reads` +
+  `branch-source gate: pass (${files.length} source files scanned, 0 unexplained client-controlled branch reads` +
+    (ALLOWED.length > 0 ? `; ${ALLOWED.length} sanctioned exemption${ALLOWED.length === 1 ? '' : 's'}` : '') +
     (absentRoots.length > 0 ? `; absent roots skipped: ${absentRoots.join(', ')}` : '') +
     ')',
 );

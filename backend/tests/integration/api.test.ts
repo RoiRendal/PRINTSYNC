@@ -1052,4 +1052,100 @@ describe('PRINTSYNC API integration', () => {
       assert.equal(errorCode(response), 'ORDER_NOT_FOUND');
     }
   });
+
+  /*
+   * ── Phase 4: the analytics branch selector ─────────────────────────────────
+   *
+   * The selector is the one place a branch may be taken from the client, so it
+   * needs a live negative test more than anything else in this file: the whole
+   * point is that a staff account *cannot* reach another shop's revenue even
+   * though the parameter exists and is accepted by the schema.
+   */
+  it('succeeds on the caller’s own analytics without a branch parameter', async (context) => {
+    if (skipIfUnauthenticated(context, 'own analytics')) return;
+
+    const response = await request('/analytics/summary?from=2026-01-01&to=2026-12-31');
+
+    assert.equal(
+      response.status,
+      200,
+      `an unparameterised summary must succeed, received ${response.status}: ${JSON.stringify(response.body)}`,
+    );
+    const summary = dataOf(response) as { revenue: number };
+    assert.equal(typeof summary.revenue, 'number', 'the summary must carry a numeric revenue');
+  });
+
+  it('refuses a cross-branch analytics request with a 403, never a bigger number', async (context) => {
+    if (skipIfUnauthenticated(context, 'cross-branch analytics refusal')) return;
+
+    /*
+     * The test account is a staff account (or an admin without the head-office
+     * flag) — either way, `canViewAllBranches` is false, so naming another branch
+     * must be refused outright.
+     *
+     * A 200 here would be the leak: the response would carry the other shop's
+     * revenue and nobody would see anything wrong. The test therefore asserts the
+     * status AND the code, so a 403 arriving for an unrelated reason (a missing
+     * permission, say) fails rather than passes.
+     *
+     * If the seeded account IS head office, the refusal is not expected and the
+     * test says so rather than pretending — see the branch below.
+     */
+    const session = await request('/auth/session');
+    const profile = dataOf(session) as { canViewAllBranches?: boolean } | null;
+    if (profile?.canViewAllBranches === true) {
+      // Head office: the cross-branch read is *allowed*, and asserting a refusal
+      // would be wrong. Assert the positive instead — it must succeed and carry a
+      // number. This keeps the test honest under either seeded account shape.
+      const branches = dataOf(await request<{ id: string; code: string }[]>('/branches'));
+      const other = branches.find((branch) => branch.code === 'NAS') ?? branches[0];
+      assert.ok(other, 'a branch must exist for this test to mean anything');
+
+      const allowed = await request(`/analytics/summary?from=2026-01-01&to=2026-12-31&branch=${other.id}`);
+      assert.equal(allowed.status, 200, `head office may read another branch: ${JSON.stringify(allowed.body)}`);
+      return;
+    }
+
+    const branches = dataOf(await request<{ id: string; code: string }[]>('/branches'));
+    const other = branches.find((branch) => branch.code === 'NAS') ?? branches[branches.length - 1];
+    assert.ok(other, 'a second branch must exist for this test to mean anything');
+
+    const forged = await request(`/analytics/summary?from=2026-01-01&to=2026-12-31&branch=${other.id}`);
+
+    assert.equal(
+      forged.status,
+      403,
+      `a staff account naming another branch must be refused, received ${forged.status}: ${JSON.stringify(forged.body)}`,
+    );
+    assert.equal(errorCode(forged), 'BRANCH_SELECTION_FORBIDDEN');
+  });
+
+  it('refuses a staff account the combined analytics view', async (context) => {
+    if (skipIfUnauthenticated(context, 'combined analytics refusal')) return;
+
+    const session = await request('/auth/session');
+    const profile = dataOf(session) as { canViewAllBranches?: boolean } | null;
+    if (profile?.canViewAllBranches === true) return; // head office may ask for it
+
+    const response = await request('/analytics/summary?from=2026-01-01&to=2026-12-31&branch=all');
+
+    assert.equal(response.status, 403, `?branch=all must be refused for staff: ${JSON.stringify(response.body)}`);
+    assert.equal(errorCode(response), 'BRANCH_SELECTION_FORBIDDEN');
+  });
+
+  it('refuses a staff account the branch-comparison report', async (context) => {
+    if (skipIfUnauthenticated(context, 'branch comparison refusal')) return;
+
+    const session = await request('/auth/session');
+    const profile = dataOf(session) as { canViewAllBranches?: boolean } | null;
+    if (profile?.canViewAllBranches === true) return; // head office may read it
+
+    const response = await request('/analytics/branch-comparison?from=2026-01-01&to=2026-12-31');
+
+    assert.equal(
+      response.status,
+      403,
+      `the comparison is head-office only, received ${response.status}: ${JSON.stringify(response.body)}`,
+    );
+  });
 });
