@@ -190,13 +190,13 @@ describe('settings.service', () => {
     it('returns the address, so a receipt can print where the sale happened', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', {
-        data: { ...SETTINGS_ROW, address: 'Poblacion, Balayan, Batangas' },
+        data: { ...SETTINGS_ROW, address: 'Balayan, Batangas' },
         error: null,
       });
 
       const branding = await getBranchBranding(db.client, BALAYAN_ID);
 
-      assert.equal(branding.address, 'Poblacion, Balayan, Batangas');
+      assert.equal(branding.address, 'Balayan, Batangas');
     });
 
     it('maps a null address to an empty string, not the word "null"', async () => {

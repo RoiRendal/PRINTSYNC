@@ -35,10 +35,10 @@
  * ## The address
  *
  * It carries no address of its own, deliberately. An address is the one field
- * that is genuinely *per site* — Poblacion for Balayan, the Nasugbu town proper
- * for Nasugbu — and inventing one here would print a made-up street on a real
- * customer's receipt. The script reports a branch whose address is still blank
- * so it is a visible gap and not a silent one; the value is entered once, in
+ * that is genuinely *per site* — "Balayan, Batangas" for one shop, "Nasugbu,
+ * Batangas" for the other — and inventing one here would print a made-up street on
+ * a real customer's receipt. The script reports a branch whose address is still
+ * blank so it is a visible gap and not a silent one; the value is entered once, in
  * Settings, by someone who knows the shop's real address.
  */
 

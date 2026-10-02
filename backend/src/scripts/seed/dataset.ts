@@ -202,17 +202,34 @@ export const PURCHASE_ORDERS: readonly PurchaseOrderTemplate[] = [
 ];
 
 export const BUSINESS = {
-  name: 'IC Printing Services',
   /**
-   * Printed on every receipt. Seeded rather than left blank so the slip is complete
-   * from the first demo sale — an empty address prints no line at all, which reads
-   * as an unfinished receipt rather than a deliberate choice.
+   * The business name WITHOUT a branch suffix.
    *
-   * This is the Balayan shop. Nasugbu's row is seeded empty by the branches
-   * migration and filled in from Settings once the shop supplies it; guessing a
-   * second address would put invented text on a customer's receipt.
+   * Per-branch settings build their printed name as
+   * `"${baseName} - ${branch.name}"`, so this must not carry a suffix itself or a
+   * second branch would end up named "… - Balayan - Nasugbu". Use `name` below when
+   * a single shop's full name is what is wanted.
    */
-  address: 'IC Printing Services — Balayan\nPoblacion, Balayan, Batangas',
+  baseName: 'IC Printing Services',
+  /** Balayan's full printed name — the base plus its branch suffix. */
+  name: 'IC Printing Services - Balayan',
+  /**
+   * Printed on every receipt, UNDER the bold shop name.
+   *
+   * **It carries no repetition of the name.** The receipt renders
+   * `businessDisplayName` as the heading and this string beneath it, so a first
+   * line repeating the name printed it twice on every slip. This is the address
+   * and nothing else.
+   *
+   * Seeded rather than left blank so the slip is complete from the first demo
+   * sale — an empty address prints no line at all, which reads as an unfinished
+   * receipt rather than a deliberate choice.
+   *
+   * Seeded to match the live `business_settings.address` for Balayan exactly. The
+   * two must not disagree, or a re-seed would silently rewrite what the shop has
+   * already approved and printed.
+   */
+  address: 'Balayan, Batangas',
   vatRate: 12,
   currencySymbol: '₱',
 } as const;
