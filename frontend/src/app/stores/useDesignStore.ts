@@ -24,7 +24,13 @@ export const useDesignStore = createListStore<Design, DesignActions>({
       return created;
     },
 
-    /** The edit form only sends changed fields, so missing ones fall back to the cache. */
+    /*
+     * The edit form sends only what it changed, and the artwork is the one thing
+     * it deliberately omits when the image was not replaced. Sending it anyway
+     * would mean reading the stored Storage URL out of the cache and posting it
+     * straight back — the round trip that put the link in the form in the first
+     * place, and a chance for a stale cache entry to overwrite a newer image.
+     */
     updateDesign: async (id, design) => {
       const existing = snapshot().items.find((current) => current.id === id);
       if (!existing) throw new Error('Design not found.');
@@ -32,9 +38,13 @@ export const useDesignStore = createListStore<Design, DesignActions>({
       const updated = await designsApi.update(id, {
         name: design.name ?? existing.name,
         category: design.category ?? existing.category,
-        imageUrl: design.imageUrl ?? existing.imageUrl,
-        assetType: design.assetType ?? existing.assetType,
-        assetSizeBytes: design.assetSizeBytes ?? existing.assetSizeBytes,
+        ...(design.imageUrl === undefined
+          ? {}
+          : {
+              imageUrl: design.imageUrl,
+              assetType: design.assetType ?? null,
+              assetSizeBytes: design.assetSizeBytes ?? null,
+            }),
       });
       mutateItems((items) => items.map((current) => (current.id === id ? updated : current)));
       setError(null);

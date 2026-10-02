@@ -23,6 +23,21 @@ export interface DesignInput {
   assetSizeBytes?: number | null | undefined;
 }
 
+/**
+ * What an update may carry.
+ *
+ * The artwork columns are absent when the edit did not touch the image, which is
+ * the normal case: renaming a design should not require the caller to know — or
+ * to be allowed to overwrite — where the artwork is stored.
+ */
+export interface DesignUpdateInput {
+  name: string;
+  category: string;
+  imageUrl?: string | undefined;
+  assetType?: string | null | undefined;
+  assetSizeBytes?: number | null | undefined;
+}
+
 const designSelect = 'id, name, category, image_url, created_at, updated_at, asset_type, asset_size_bytes';
 
 function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord {
@@ -74,16 +89,21 @@ export async function createDesign(
   return toRecord(data, await getShopTimeZone(supabase));
 }
 
-export async function updateDesign(supabase: SupabaseClient, id: string, input: DesignInput): Promise<DesignRecord> {
+export async function updateDesign(supabase: SupabaseClient, id: string, input: DesignUpdateInput): Promise<DesignRecord> {
+  /*
+   * Only the columns actually sent are written. `image_url` is `not null`, so
+   * writing a missing one as `null` would fail the constraint rather than leave
+   * it alone — and writing the asset metadata as `null` on a name-only edit
+   * would silently erase the record of what was uploaded.
+   */
+  const patch: Record<string, unknown> = { name: input.name, category: input.category };
+  if (input.imageUrl !== undefined) patch.image_url = input.imageUrl;
+  if (input.assetType !== undefined) patch.asset_type = input.assetType;
+  if (input.assetSizeBytes !== undefined) patch.asset_size_bytes = input.assetSizeBytes;
+
   const { data, error } = await supabase
     .from('designs')
-    .update({
-      name: input.name,
-      category: input.category,
-      image_url: input.imageUrl,
-      asset_type: input.assetType ?? null,
-      asset_size_bytes: input.assetSizeBytes ?? null,
-    })
+    .update(patch)
     .eq('id', id)
     .select(designSelect)
     .single();

@@ -3,7 +3,14 @@ import { z } from 'zod';
 import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
-import { createDesign, deleteDesign, listDesigns, updateDesign } from '../modules/designs/designs.service.js';
+import {
+  createDesign,
+  deleteDesign,
+  listDesigns,
+  updateDesign,
+} from '../modules/designs/designs.service.js';
+import { isAllowedStoredImageUrl } from '../shared/imageUrlPolicy.js';
+import { env } from '../config/env.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
@@ -13,10 +20,23 @@ import { parsePaginationQuery } from '../shared/pagination.js';
 
 export const designsRouter = Router();
 
+/**
+ * The artwork link. See `shared/imageUrlPolicy.ts` for why this is not
+ * `z.string().url()`: the value is rendered as an `<img src>` and passed to
+ * `window.open`, so an arbitrary but syntactically valid URL is not an
+ * acceptable answer here.
+ */
+const designImageUrl = z
+  .string()
+  .trim()
+  .refine((value) => isAllowedStoredImageUrl(value, env.SUPABASE_URL), {
+    message: 'The design image must be an uploaded asset or a bundled preview.',
+  });
+
 const designSchema = z.object({
   name: z.string().trim().min(1),
   category: z.string().trim().default(''),
-  imageUrl: z.string().trim().url().or(z.string().trim().startsWith('/')).refine((value) => value.length > 0),
+  imageUrl: designImageUrl,
   assetType: z.string().trim().nullable().optional(),
   assetSizeBytes: z.number().int().min(0).nullable().optional(),
 });
@@ -46,8 +66,21 @@ designsRouter.post('/', authenticate, requirePermission('designs.manage'), async
   response.status(201).json({ data: design });
 });
 
+/**
+ * PATCH accepts a design with no `imageUrl` at all.
+ *
+ * That is the whole point of it being a separate schema: an edit that only
+ * renames a design must not have to read the stored Storage URL back out of the
+ * database and post it straight back in. Making the field optional is what lets
+ * the edit form stop displaying it — the client simply omits what it did not
+ * change, and the column is left alone.
+ */
+const designUpdateSchema = designSchema.extend({
+  imageUrl: designImageUrl.optional(),
+});
+
 designsRouter.patch('/:id', authenticate, requirePermission('designs.manage'), async (request, response) => {
-  const parsed = designSchema.safeParse(request.body);
+  const parsed = designUpdateSchema.safeParse(request.body);
   if (!parsed.success) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
   const designId = getDesignId(request);
   const design = await updateDesign(getSupabase(), designId, parsed.data);

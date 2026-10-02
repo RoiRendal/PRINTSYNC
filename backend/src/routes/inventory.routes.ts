@@ -12,12 +12,29 @@ import {
 } from '../modules/inventory/inventory.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { isAllowedStoredImageUrl } from '../shared/imageUrlPolicy.js';
+import { env } from '../config/env.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { uploadInventoryImage } from '../services/inventoryAssetService.js';
 import { paginationQuerySchema } from '../shared/pagination.js';
 
 export const inventoryRouter = Router();
+
+/**
+ * A stock photo link, held to the same rule as a design's artwork — see
+ * `shared/imageUrlPolicy.ts`. It is `nullable` because a stock item may
+ * legitimately have no photo at all, which is the one way inventory differs
+ * from a design (`designs.image_url` is `not null`).
+ */
+const inventoryImageUrl = z
+  .string()
+  .trim()
+  .refine((value) => isAllowedStoredImageUrl(value, env.SUPABASE_URL), {
+    message: 'The stock photo must be an uploaded image or a bundled preview.',
+  })
+  .nullable()
+  .optional();
 
 const itemSchema = z.object({
   sku: z.string().trim().min(1).optional(),
@@ -31,7 +48,7 @@ const itemSchema = z.object({
   // defaults to 'pc'. Bounded because it is rendered inline beside a price, and
   // a 200-character unit is a layout bug rather than a unit.
   uom: z.string().trim().min(1).max(16).optional(),
-  imageUrl: z.string().trim().nullable().optional(),
+  imageUrl: inventoryImageUrl,
 });
 
 const adjustmentSchema = z.object({
