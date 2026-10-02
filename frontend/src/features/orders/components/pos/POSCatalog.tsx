@@ -44,6 +44,17 @@ export function POSCatalog({
   return (
     <SurfaceCard padding="none" className="flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden xl:shrink">
       <CardHeader className="mb-0 shrink-0 flex-col gap-3 border-b border-[var(--app-border-hairline)] p-3 lg:flex-row lg:items-center">
+        {/*
+          Deliberately NOT the list toolbar's `TOOLBAR_SEARCH_WIDTH_CLASS`.
+
+          The list tables give their search box one fixed 20rem because a list
+          toolbar is a row of controls with room to spare. This is a till side
+          panel: the field shares its row with a horizontally scrolling category
+          strip, and at 20rem the strip would be pushed off the edge on a normal
+          till screen. The width steps with the panel instead (`lg:w-56`,
+          `xl:w-64`) because the panel itself is the constraint here, not the
+          toolbar convention.
+        */}
         <SearchInput
           ref={searchRef}
           aria-label="Search catalog"

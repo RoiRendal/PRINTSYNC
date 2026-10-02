@@ -273,7 +273,21 @@ export function DropdownMenu<T extends string>({
                     close(true);
                   }}
                   className={cn(
-                    'flex w-full cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-button)] px-2 py-1.5 text-left text-2xs',
+                    /*
+                      The panel's type is the trigger's type, which is the search
+                      box's type — `text-sm`, normal weight.
+
+                      The trigger was matched to the field first, but the options
+                      inside stayed at `text-2xs`. Opening the menu therefore
+                      dropped from 14px to a bold 11px, so the choice the user was
+                      about to make rendered smaller than the button that opened
+                      it, and at a different weight from the field beside it. The
+                      whole control now reads as one type size, closed or open.
+
+                      Weight is uniform for the same reason: the selected option
+                      is marked by its grey fill (below), not by going bold.
+                    */
+                    'flex w-full cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-button)] px-2 py-1.5 text-left text-sm font-normal',
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--app-border-control)]',
                     /*
                       Selected is one grey step darker — the app's rule for a
@@ -282,8 +296,8 @@ export function DropdownMenu<T extends string>({
                       control whose label already says which one is picked.
                     */
                     isSelected
-                      ? 'bg-[var(--app-state-hover)] font-bold text-app-ink dark:text-zinc-100'
-                      : 'font-normal text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-200',
+                      ? 'bg-[var(--app-state-hover)] text-app-ink dark:text-zinc-100'
+                      : 'text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:text-zinc-200',
                   )}
                 >
                   {option.label}

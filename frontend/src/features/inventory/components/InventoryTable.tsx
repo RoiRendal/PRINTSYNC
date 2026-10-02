@@ -23,6 +23,7 @@ import {
 } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
 
@@ -65,7 +66,7 @@ export function InventoryTable({
   return (
     <Card padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 border-b p-4">
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+        <div className={TOOLBAR_ROW_CLASS}>
           {/*
             The view picker leads the toolbar row — left of the search box — so
             the established order reads view, search, refresh, delete, add, and
@@ -75,7 +76,7 @@ export function InventoryTable({
           */}
           <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />
           <SearchInput
-            className="flex-1"
+            className={TOOLBAR_SEARCH_WIDTH_CLASS}
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />

@@ -5,6 +5,7 @@ import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
 import type { Design } from '../types';
 import { readFileAsDataUrl } from '../../../shared/lib/readFileAsDataUrl';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
@@ -382,14 +383,14 @@ export function DesignRepository() {
           gone.
         */}
         <CardHeader className="mb-0 border-b p-4">
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+          <div className={TOOLBAR_ROW_CLASS}>
             {/*
               The view picker leads the row, left of the search box — the position
               both surfaces put it in, so switching between Stocks and Designs
               does not move the control. Then search, refresh, delete, add.
             */}
             <ViewSelect value={designView} onChange={setDesignViewParam} ariaLabel="Design view" />
-            <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <SearchInput className={TOOLBAR_SEARCH_WIDTH_CLASS} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             <Button
               type="button"
               variant="secondary"

@@ -36,6 +36,7 @@ import { describeApiError } from '../../../shared/api/errors';
 import { useUserContext } from '../../../app/stores/useUserStore';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import type { RbacRole, UserSummary } from '../types';
 import { normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
@@ -232,8 +233,8 @@ export default function UserManagement() {
 
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
-              <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-md">
-                <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className={TOOLBAR_ROW_CLASS}>
+                <SearchInput className={TOOLBAR_SEARCH_WIDTH_CLASS} value={search} onChange={(e) => setSearch(e.target.value)} />
                 {/*
                   Re-reads the list. To the LEFT of delete — the rule for every
                   table that has one — so the toolbar reads search, refresh,

@@ -14,7 +14,7 @@ import {
   ViewSelect,
 } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
-import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import { thumbnailUrl } from '../../../shared/lib/thumbnail';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
@@ -61,10 +61,9 @@ export function stockInitials(name: string): string {
  * views should recognise the screen, not learn a second one.
  *
  * The toolbar is kept because it is the only way to search, refresh or add from
- * this view — a gallery without it would be a read-only wall of pictures. It
- * carries one thing the table's does not: while rows are ticked the header shows
- * "N items selected" instead of the card count, which is how the table behaves
- * too (ERPNext collapses the whole header to that message).
+ * this view — a gallery without it would be a read-only wall of pictures. The
+ * header is the table's header, one row and no count: both shapes name the same
+ * controls in the same order, so only the body changes between them.
  */
 export function InventoryImageGrid({
   items,
@@ -81,35 +80,29 @@ export function InventoryImageGrid({
 }: InventoryImageGridProps) {
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
+      <CardHeader className="mb-0 border-b p-4">
         {/*
-          The count is NOT reported when there is nothing to count. "0 stock
-          items" beside "No stock items found" is the same fact stated twice, and
-          the second one says it better — a header figure of zero reads as a
-          measurement, not as an empty result. The table never had this problem
-          because it has no count line; this one does, so the empty case is
-          simply left to the empty state.
+          One row, no count line.
+
+          The gallery used to open with a count ("15 stock items", or "N items
+          selected" while rows were ticked). That number is the pager's job —
+          "Page 1 of 2 (15 total)" already reports it at the foot of the same
+          card — and the table view never had the line at all. Two shapes of the
+          same surface disagreeing about their own header is the kind of drift
+          that makes a view switch feel like a different screen, so the line is
+          gone and this header now matches the table's exactly.
         */}
-        {selection.count === 0 && items.length === 0 ? (
-          <span aria-hidden="true" />
-        ) : (
-          <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">
-            {selection.count > 0
-              ? formatSelectedCount(selection.count)
-              : `${items.length} stock item${items.length === 1 ? '' : 's'}`}
-          </p>
-        )}
         {/*
           The same order the table's toolbar uses — search, refresh, delete,
           add — because it is the same row of controls and the delete square is
           only findable if it stays where the table put it.
         */}
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
+        <div className={TOOLBAR_ROW_CLASS}>
           {/* Leading edge of the toolbar row, left of the search box — the same
               position the table puts it in, so the two shapes read alike. */}
           <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />
           <SearchInput
-            className="flex-1"
+            className={TOOLBAR_SEARCH_WIDTH_CLASS}
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />

@@ -9,6 +9,7 @@ import {
 import { EmptyState } from '../../../../shared/components/feedback/EmptyState';
 import { InlineAlert } from '../../../../shared/components/feedback/InlineAlert';
 import { formatSelectedCount } from '../../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../../shared/lib/toolbar';
 import { useRowSelection } from '../../../../shared/hooks/useRowSelection';
 import { DEFAULT_PAGE_SIZE } from '../../../../shared/store/createListStore';
 import { useInventory } from '../../../../app/stores/useInventoryStore';
@@ -158,8 +159,8 @@ export function RetailSalesTable({ onNewOrder, onRefresh }: RetailSalesTableProp
 
       <Card padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
-          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
-            <SearchInput className="flex-1" aria-label="Filter transaction history" value={history.historySearchTerm} onChange={(e) => history.setHistorySearchTerm(e.target.value)} />
+          <div className={TOOLBAR_ROW_CLASS}>
+            <SearchInput className={TOOLBAR_SEARCH_WIDTH_CLASS} aria-label="Filter transaction history" value={history.historySearchTerm} onChange={(e) => history.setHistorySearchTerm(e.target.value)} />
             {/*
               Re-reads the sales history. To the LEFT of the void square — the
               rule for every table that has one — so the toolbar reads search,

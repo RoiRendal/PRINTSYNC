@@ -150,17 +150,28 @@ describe('InventoryImageGrid', () => {
     expect(screen.getByAltText('Bond Paper').getAttribute('src')).toBe('https://example.test/photo.png');
   });
 
-  it('counts the items while nothing is ticked', () => {
+  /*
+   * The header carries no count line — in either state.
+   *
+   * The gallery used to open with "N stock items", swapping to "N items
+   * selected" while cards were ticked. The table view never had that line, so
+   * the same surface read differently depending on which shape you were in, and
+   * the figure was already reported by the pager at the foot of the card. Both
+   * of these tests used to assert the line's presence; they now pin its absence,
+   * which is the only way the removal stays removed.
+   */
+  it('does not print an item count in the header', () => {
     renderGrid({ items: [item(), item({ id: 'i2', sku: 'SKU-002' })] });
-    expect(screen.getByText('2 stock items')).toBeInTheDocument();
+    expect(screen.queryByText('2 stock items')).toBeNull();
+    expect(screen.queryByText('1 stock item')).toBeNull();
   });
 
-  it('replaces the count with the selection message, as the table does', () => {
+  it('does not swap in a selection message when cards are ticked, as the table does not', () => {
     renderGrid({
       items: [item(), item({ id: 'i2', sku: 'SKU-002' })],
       selection: selection({ count: 1, has: (id) => id === 'i1' }),
     });
-    expect(screen.getByText('1 item selected')).toBeInTheDocument();
+    expect(screen.queryByText('1 item selected')).toBeNull();
     expect(screen.queryByText('2 stock items')).toBeNull();
   });
 

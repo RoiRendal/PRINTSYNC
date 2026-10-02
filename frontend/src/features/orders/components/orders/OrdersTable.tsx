@@ -21,6 +21,7 @@ import {
   getStatusBadgeVariant,
 } from '../../../../shared/components/ui';
 import { formatSelectedCount } from '../../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../../shared/lib/toolbar';
 import { useBusinessBranding } from '../../../../app/providers/BusinessBrandingProvider';
 import type { RowSelection } from '../../../../shared/hooks/useRowSelection';
 import type { Order } from '../../types';
@@ -77,9 +78,9 @@ export function OrdersTable({
         ticked — see the increment-2 reference (ERPNext item list).
       */}
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-xl">
+        <div className={TOOLBAR_ROW_CLASS}>
           <SearchInput
-            className="flex-1"
+            className={TOOLBAR_SEARCH_WIDTH_CLASS}
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />
