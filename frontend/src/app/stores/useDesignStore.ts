@@ -33,7 +33,6 @@ export const useDesignStore = createListStore<Design, DesignActions>({
         name: design.name ?? existing.name,
         category: design.category ?? existing.category,
         imageUrl: design.imageUrl ?? existing.imageUrl,
-        tags: design.tags ?? existing.tags,
         assetType: design.assetType ?? existing.assetType,
         assetSizeBytes: design.assetSizeBytes ?? existing.assetSizeBytes,
       });

@@ -61,6 +61,12 @@ export const CheckCircle2 = ({ className, ...props }: SVGProps<SVGSVGElement>) =
   </svg>
 );
 
+export const ChevronDown = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
+    <path d="m112 184 144 144 144-144" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48px"/>
+  </svg>
+);
+
 export const ChevronLeft = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M328 112 184 256l144 144" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48px"/>
@@ -244,12 +250,6 @@ export const ShoppingCart = ({ className, ...props }: SVGProps<SVGSVGElement>) =
 export const Sun = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M256 48v48M256 416v48M403.08 108.92l-33.94 33.94M142.86 369.14l-33.94 33.94M464 256h-48M96 256H48M403.08 403.08l-33.94-33.94M142.86 142.86l-33.94-33.94" fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="32px"/><circle cx="256" cy="256" r="80" fill="none" stroke="currentColor" strokeLinecap="round" strokeMiterlimit="10" strokeWidth="32px"/>
-  </svg>
-);
-
-export const Tag = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
-    <path d="M435.25 48h-122.9a14.46 14.46 0 0 0-10.2 4.2L56.45 297.9a28.85 28.85 0 0 0 0 40.7l117 117a28.85 28.85 0 0 0 40.7 0L459.75 210a14.46 14.46 0 0 0 4.2-10.2v-123a28.66 28.66 0 0 0-28.7-28.8" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="32px"/><path d="M384 160a32 32 0 1 1 32-32 32 32 0 0 1-32 32"/>
   </svg>
 );
 

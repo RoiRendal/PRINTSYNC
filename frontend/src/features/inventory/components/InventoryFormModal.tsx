@@ -7,7 +7,14 @@ import {
   Modal,
   Select,
 } from '../../../shared/components/ui';
+import { inventoryApi } from '../api/inventoryApi';
+import { readFileAsDataUrl } from '../../../shared/lib/readFileAsDataUrl';
 import type { CreateInventoryItem, InventoryItem } from '../types';
+
+/** Mirrors `MAX_INVENTORY_IMAGE_BYTES` in `backend/src/services/inventoryAssetService.ts`. */
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+/** Mirrors `ALLOWED_IMAGE_CONTENT_TYPES` in `backend/src/services/imageAssetService.ts`. */
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
 interface InventoryFormModalProps {
   isOpen: boolean;
@@ -62,6 +69,21 @@ export function InventoryFormModal({
   onSubmit,
 }: InventoryFormModalProps) {
   const [formData, setFormData] = useState<InventoryFormState>(emptyForm);
+  /**
+   * The picked file, held until submit. It is NOT read into `formData.imageUrl`
+   * the way it used to be: a base64 data URL written into that field is what
+   * ended up persisted in `inventory_items.image_url` and shipped back on every
+   * list row. The file is uploaded on submit and only the Storage URL is stored.
+   */
+  const [selectedAsset, setSelectedAsset] = useState<File | null>(null);
+  /** Local preview of `selectedAsset`; never sent to the server. */
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [assetError, setAssetError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  // An object URL pins the whole file in memory until it is released, so this
+  // revokes the previous one on every change and on unmount.
+  React.useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   // Sync form data when modal opens or editing item changes
   React.useEffect(() => {
@@ -80,23 +102,61 @@ export function InventoryFormModal({
       } else {
         setFormData(emptyForm);
       }
+      // A file picked in a previous visit must not be uploaded into the next one.
+      setSelectedAsset(null);
+      setPreviewUrl(null);
+      setAssetError('');
     }
   }, [isOpen, editingItem]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleAssetSelected = (file: File | undefined) => {
+    setAssetError('');
     if (!file) return;
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setAssetError('Use a PNG, JPG, WebP, or SVG image.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setAssetError('Keep the image under 2 MB.');
+      return;
+    }
+    setSelectedAsset(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    // The stored URL is stale the moment a new file is picked; the preview above
+    // is what the user sees from here.
+    setFormData((previous) => ({ ...previous, imageUrl: '' }));
+  };
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData((prev) => ({ ...prev, imageUrl: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+  const clearImage = () => {
+    setSelectedAsset(null);
+    setPreviewUrl(null);
+    setFormData((previous) => ({ ...previous, imageUrl: '' }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(toCreatePayload(formData));
+    setAssetError('');
+    setIsUploading(true);
+    try {
+      let imageUrl = formData.imageUrl || null;
+      if (selectedAsset) {
+        const dataUrl = await readFileAsDataUrl(selectedAsset);
+        const uploaded = await inventoryApi.uploadAsset({
+          dataUrl,
+          fileName: selectedAsset.name,
+          contentType: selectedAsset.type,
+          sizeBytes: selectedAsset.size,
+        });
+        imageUrl = uploaded.imageUrl;
+      }
+      await onSubmit({ ...toCreatePayload(formData), imageUrl });
+    } catch (error: unknown) {
+      // The item is not saved when the photo fails — silently dropping the image
+      // would lose the user's whole edit for the sake of one field.
+      setAssetError(error instanceof Error ? error.message : 'The image could not be uploaded.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -106,8 +166,8 @@ export function InventoryFormModal({
           <div className="space-y-3">
             <label className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Item Image</label>
             <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border">
-              {formData.imageUrl ? (
-                <img src={formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
+              {previewUrl ?? formData.imageUrl ? (
+                <img src={previewUrl ?? formData.imageUrl} alt={formData.name || 'Item preview'} className="h-full w-full object-contain" />
               ) : (
                 <div className="flex flex-col items-center gap-2 p-5 text-center text-app-text-muted dark:text-zinc-500">
                   <ImageIcon className="h-14 w-14 opacity-40" aria-hidden="true" />
@@ -115,8 +175,10 @@ export function InventoryFormModal({
                 </div>
               )}
             </div>
-            <Input type="file" accept="image/*" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={handleImageUpload} />
-            {formData.imageUrl && <Button type="button" variant="danger" size="sm" fullWidth onClick={() => setFormData({ ...formData, imageUrl: '' })}>Remove Image</Button>}
+            <Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={(event) => handleAssetSelected(event.target.files?.[0])} />
+            {selectedAsset && <p className="text-2xs text-app-text-muted dark:text-zinc-500">Selected: {selectedAsset.name}</p>}
+            {assetError && <InlineAlert variant="inline" message={assetError} />}
+            {(previewUrl || formData.imageUrl) && <Button type="button" variant="danger" size="sm" fullWidth onClick={clearImage}>Remove Image</Button>}
             {editingItem && <p className="text-2xs leading-relaxed text-app-text-muted dark:text-zinc-500">SKU <span className="tabular-nums font-bold text-app-ink dark:text-zinc-200">{editingItem.sku}</span> updates are saved when you submit this dialog.</p>}
           </div>
 
@@ -168,7 +230,7 @@ export function InventoryFormModal({
 
         <div className="flex gap-3 border-t pt-4">
           <Button type="button" variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="primary" fullWidth>{editingItem ? 'Save Changes' : 'Create Item'}</Button>
+          <Button type="submit" variant="primary" fullWidth isLoading={isUploading}>{isUploading ? 'Uploading...' : editingItem ? 'Save Changes' : 'Create Item'}</Button>
         </div>
       </form>
     </Modal>

@@ -18,8 +18,10 @@ import {
   TableRow,
   TableSelectCell,
   TableSelectHead,
+  ViewSelect,
   cellTitle,
 } from '../../../shared/components/ui';
+import type { ViewShape } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
@@ -40,6 +42,9 @@ interface InventoryTableProps {
   onDeleteSelected: () => void;
   /** Tick state, owned by the page. See `useRowSelection`. */
   selection: RowSelection;
+  /** Which shape this table is currently drawn in. */
+  view: ViewShape;
+  onViewChange: (view: ViewShape) => void;
   /** Rendered inside the card, below the table — the shared pagination control. */
   footer?: ReactNode;
 }
@@ -53,12 +58,22 @@ export function InventoryTable({
   onEditItem,
   onDeleteSelected,
   selection,
+  view,
+  onViewChange,
   footer,
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
       <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
+          {/*
+            The view picker leads the toolbar row — left of the search box — so
+            the established order reads view, search, refresh, delete, add, and
+            the dark `+` stays rightmost where the toolbar convention wants it.
+            Below `md` this row is a column, so the picker takes its own line
+            instead of squeezing the search box.
+          */}
+          <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />
           <SearchInput
             className="flex-1"
             value={searchTerm}

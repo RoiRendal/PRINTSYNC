@@ -618,7 +618,6 @@ describe('PRINTSYNC API integration', () => {
         name: 'Integration Test Design',
         category: 'Banners',
         imageUrl: '/uploads/test-design.png',
-        tags: ['test', 'integration'],
       }),
     });
     const createdDesign = dataOf(created);
@@ -633,7 +632,6 @@ describe('PRINTSYNC API integration', () => {
         name: 'Integration Test Design (Updated)',
         category: 'Logos',
         imageUrl: '/uploads/test-design-v2.png',
-        tags: ['test', 'updated'],
       }),
     });
     assert.equal(updated.status, 200);
@@ -660,7 +658,7 @@ describe('PRINTSYNC API integration', () => {
 
     const response = await request('/designs', {
       method: 'POST',
-      body: JSON.stringify({ name: 'Bad URL Design', imageUrl: 'not-a-url', tags: [] }),
+      body: JSON.stringify({ name: 'Bad URL Design', imageUrl: 'not-a-url' }),
     });
     assert.equal(response.status, 400);
     assert.equal(errorCode(response), 'INVALID_DESIGN_REQUEST');

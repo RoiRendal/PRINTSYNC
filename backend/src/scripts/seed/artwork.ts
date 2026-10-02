@@ -79,13 +79,21 @@ ${textBlock}
 </svg>`;
 }
 
-export function designArtwork(name: string, category: string, tags: readonly string[]): string {
+/**
+ * The placeholder artwork for one seeded design.
+ *
+ * It used to close with a footer line listing the design's tags, under a short
+ * accent rule. Tags are gone from the schema, so the footer went with them —
+ * the rule was there to separate the name from the tag list, and leaving it
+ * behind would be a divider over empty space. The composition now ends with the
+ * name block, which is what the card is actually about.
+ */
+export function designArtwork(name: string, category: string): string {
   const { bg, accent, ink } = paletteFor(category);
   const lines = wrapLabel(name, 22, 3);
   const textBlock = lines
     .map((line, index) => `<text x="400" y="${470 + index * 44}" font-family="Segoe UI, Arial, sans-serif" font-size="38" font-weight="600" fill="${ink}" text-anchor="middle">${escapeXml(line)}</text>`)
     .join('');
-  const tagText = tags.slice(0, 3).join('  ·  ');
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
 <rect width="800" height="800" fill="${bg}"/>
@@ -97,8 +105,6 @@ export function designArtwork(name: string, category: string, tags: readonly str
 <rect x="272" y="300" width="256" height="60" rx="14" fill="${accent}" opacity="0.6"/>
 <rect x="272" y="382" width="160" height="20" rx="10" fill="${accent}" opacity="0.35"/>
 ${textBlock}
-<rect x="240" y="620" width="320" height="4" rx="2" fill="${accent}" opacity="0.4"/>
-<text x="400" y="662" font-family="Segoe UI, Arial, sans-serif" font-size="20" fill="${accent}" text-anchor="middle">${escapeXml(tagText)}</text>
 </svg>`;
 }
 

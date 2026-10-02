@@ -11,7 +11,6 @@ export interface DesignRecord {
   imageUrl: string;
   createdAt: string;
   updatedAt: string;
-  tags: string[];
   assetType: string | null;
   assetSizeBytes: number | null;
 }
@@ -20,12 +19,11 @@ export interface DesignInput {
   name: string;
   category: string;
   imageUrl: string;
-  tags: string[];
   assetType?: string | null | undefined;
   assetSizeBytes?: number | null | undefined;
 }
 
-const designSelect = 'id, name, category, image_url, created_at, updated_at, tags, asset_type, asset_size_bytes';
+const designSelect = 'id, name, category, image_url, created_at, updated_at, asset_type, asset_size_bytes';
 
 function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord {
   return {
@@ -35,7 +33,6 @@ function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord 
     imageUrl: String(row.image_url),
     createdAt: toShopDateKey(String(row.created_at), timeZone),
     updatedAt: String(row.updated_at),
-    tags: Array.isArray(row.tags) ? row.tags.map(String) : [],
     assetType: row.asset_type ? String(row.asset_type) : null,
     assetSizeBytes: row.asset_size_bytes == null ? null : Number(row.asset_size_bytes),
   };
@@ -67,7 +64,6 @@ export async function createDesign(
       name: input.name,
       category: input.category,
       image_url: input.imageUrl,
-      tags: input.tags,
       asset_type: input.assetType ?? null,
       asset_size_bytes: input.assetSizeBytes ?? null,
       created_by: actorId,
@@ -85,7 +81,6 @@ export async function updateDesign(supabase: SupabaseClient, id: string, input: 
       name: input.name,
       category: input.category,
       image_url: input.imageUrl,
-      tags: input.tags,
       asset_type: input.assetType ?? null,
       asset_size_bytes: input.assetSizeBytes ?? null,
     })
