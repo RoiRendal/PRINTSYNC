@@ -3,8 +3,7 @@ import { Download, Edit, Eye, Image as ImageIcon, Plus, RefreshCw, Trash2 } from
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
-import type { CreateDesign, Design } from '../types';
-import { DEFAULT_NEW_DESIGN_IMAGE_URL } from '../../../shared/constants/designImages';
+import type { Design } from '../types';
 import { readFileAsDataUrl } from '../../../shared/lib/readFileAsDataUrl';
 import { ApiError } from '../../../shared/api/errors';
 import { EmptyState } from '../../../shared/components/feedback/EmptyState';
@@ -18,6 +17,33 @@ import type { ViewShape } from '../../../shared/components/ui';
 import { DesignTable } from './DesignTable';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
+
+/**
+ * The categories the EDIT form offers.
+ *
+ * A `<select required>` whose value matches none of its options is an invalid
+ * control, and the browser refuses to submit an invalid form — so a design whose
+ * category is not one of the five (every seeded one: Branding, Apparel,
+ * Patterns, Stationery) could not be saved at all, from any field. Its own
+ * category is therefore listed too, rather than silently rewritten to one of the
+ * five the moment the dialog is opened.
+ */
+function editCategories(current: string): string[] {
+  if (!current || DESIGN_CATEGORIES.includes(current)) return DESIGN_CATEGORIES;
+  return [current, ...DESIGN_CATEGORIES];
+}
+
+/** Mirrors `MAX_ASSET_BYTES` in `backend/src/services/designAssetService.ts`. */
+const MAX_DESIGN_IMAGE_BYTES = 5 * 1024 * 1024;
+/** Mirrors `ALLOWED_IMAGE_CONTENT_TYPES` in `backend/src/services/imageAssetService.ts`. */
+const ALLOWED_DESIGN_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+
+/** The reason a picked file cannot be used, or `null` when it can. */
+function rejectAsset(file: File): string | null {
+  if (!ALLOWED_DESIGN_IMAGE_TYPES.includes(file.type)) return 'Use a PNG, JPG, WebP, or SVG image.';
+  if (file.size > MAX_DESIGN_IMAGE_BYTES) return 'Keep the image under 5 MB.';
+  return null;
+}
 
 /** How many placeholder cards the grid shows while the designs load. */
 const DESIGN_SKELETON_COUNT = 10;
@@ -97,43 +123,92 @@ export function DesignRepository() {
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const [designToDelete, setDesignToDelete] = useState<Design | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [newDesign, setNewDesign] = useState<CreateDesign>({ name: '', category: '', imageUrl: '', assetType: null, assetSizeBytes: null });
+  const [newDesign, setNewDesign] = useState({ name: '', category: '' });
   const [editDesignData, setEditDesignData] = useState<Design | null>(null);
-  const [selectedAsset, setSelectedAsset] = useState<File | null>(null);
+  /*
+   * The chosen file for each form, held until submit. It is never read into the
+   * form's own state: the upload runs on submit and only the Storage URL it
+   * returns is persisted. The preview beside it is a local object URL, which is
+   * why it is revoked below rather than kept.
+   *
+   * Neither form holds an editable image URL. The stored value is a Supabase
+   * Storage link — an infrastructure detail with no meaning to an operator, and
+   * one that used to be typeable, so any URL at all could be written into a
+   * column this app renders as an image and hands to `window.open`.
+   */
+  const [addAsset, setAddAsset] = useState<File | null>(null);
+  const [addPreviewUrl, setAddPreviewUrl] = useState<string | null>(null);
+  const [editAsset, setEditAsset] = useState<File | null>(null);
+  const [editPreviewUrl, setEditPreviewUrl] = useState<string | null>(null);
   const [assetError, setAssetError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [mutationError, setMutationError] = useState<string | null>(null);
+
+  // An object URL pins the whole file in memory until it is released, so each
+  // one is revoked when it is replaced and when this component goes away.
+  React.useEffect(() => () => { if (addPreviewUrl) URL.revokeObjectURL(addPreviewUrl); }, [addPreviewUrl]);
+  React.useEffect(() => () => { if (editPreviewUrl) URL.revokeObjectURL(editPreviewUrl); }, [editPreviewUrl]);
 
   const filteredDesigns = designs.filter((design) =>
     design.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     design.category.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const openAddModal = () => {
+    setNewDesign({ name: '', category: '' });
+    setAddAsset(null);
+    setAddPreviewUrl(null);
+    setAssetError('');
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddAssetSelected = (file: File | undefined) => {
+    setAssetError('');
+    if (!file) return;
+    const rejection = rejectAsset(file);
+    if (rejection) {
+      setAssetError(rejection);
+      return;
+    }
+    setAddAsset(file);
+    setAddPreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAssetError('');
     setMutationError(null);
-    setIsUploading(true);
-    let imageUrl = newDesign.imageUrl || DEFAULT_NEW_DESIGN_IMAGE_URL;
-    let assetType: string | null = null;
-    let assetSizeBytes: number | null = null;
 
+    /*
+     * A design is artwork, and `designs.image_url` is `not null` — there is no
+     * such thing as a design without one. There used to be a default placeholder
+     * URL behind this field, but the file it points at was never shipped, so
+     * submitting without a file produced a record whose image 404s.
+     */
+    if (!addAsset) {
+      setAssetError('Choose an image to upload.');
+      return;
+    }
+
+    setIsUploading(true);
     try {
-      if (selectedAsset) {
-        const dataUrl = await readFileAsDataUrl(selectedAsset);
-        const uploaded = await designsApi.uploadAsset({
-          dataUrl,
-          fileName: selectedAsset.name,
-          contentType: selectedAsset.type,
-          sizeBytes: selectedAsset.size,
-        });
-        imageUrl = uploaded.imageUrl;
-        assetType = uploaded.assetType;
-        assetSizeBytes = uploaded.assetSizeBytes;
-      }
-      await addDesign({ ...newDesign, imageUrl, assetType, assetSizeBytes });
-      setNewDesign({ name: '', category: '', imageUrl: '', assetType: null, assetSizeBytes: null });
-      setSelectedAsset(null);
+      const dataUrl = await readFileAsDataUrl(addAsset);
+      const uploaded = await designsApi.uploadAsset({
+        dataUrl,
+        fileName: addAsset.name,
+        contentType: addAsset.type,
+        sizeBytes: addAsset.size,
+      });
+      await addDesign({
+        name: newDesign.name,
+        category: newDesign.category,
+        imageUrl: uploaded.imageUrl,
+        assetType: uploaded.assetType,
+        assetSizeBytes: uploaded.assetSizeBytes,
+      });
+      setNewDesign({ name: '', category: '' });
+      setAddAsset(null);
+      setAddPreviewUrl(null);
       setIsAddModalOpen(false);
     } catch (error: unknown) {
       if (error instanceof ApiError) {
@@ -148,22 +223,6 @@ export function DesignRepository() {
     }
   };
 
-  const handleAssetSelected = (file: File | undefined) => {
-    setAssetError('');
-    if (!file) return;
-    const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
-    if (!allowedTypes.includes(file.type)) {
-      setAssetError('Use a PNG, JPG, WebP, or SVG image.');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setAssetError('Keep the image under 5 MB.');
-      return;
-    }
-    setSelectedAsset(file);
-    setNewDesign((previous) => ({ ...previous, imageUrl: '' }));
-  };
-
   const openViewModal = (design: Design) => {
     setSelectedDesign(design);
     setIsViewModalOpen(true);
@@ -171,23 +230,68 @@ export function DesignRepository() {
 
   const openEditModal = (design: Design) => {
     setEditDesignData({ ...design });
+    // A file picked for a previous design must not be uploaded into this one.
+    setEditAsset(null);
+    setEditPreviewUrl(null);
+    setAssetError('');
     setIsEditModalOpen(true);
+  };
+
+  const handleEditAssetSelected = (file: File | undefined) => {
+    setAssetError('');
+    if (!file) return;
+    const rejection = rejectAsset(file);
+    if (rejection) {
+      setAssetError(rejection);
+      return;
+    }
+    setEditAsset(file);
+    setEditPreviewUrl(URL.createObjectURL(file));
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editDesignData) return;
+    setAssetError('');
     setMutationError(null);
+    setIsUploading(true);
     try {
+      /*
+       * The artwork columns reach the server ONLY when a replacement was picked.
+       * A rename omits them, so the stored Storage URL is never read back into
+       * the browser to be echoed — which is what put it on screen before.
+       */
+      let image: { imageUrl: string; assetType: string; assetSizeBytes: number } | null = null;
+      if (editAsset) {
+        const dataUrl = await readFileAsDataUrl(editAsset);
+        image = await designsApi.uploadAsset({
+          dataUrl,
+          fileName: editAsset.name,
+          contentType: editAsset.type,
+          sizeBytes: editAsset.size,
+        });
+      }
       await updateDesign(editDesignData.id, {
         name: editDesignData.name,
         category: editDesignData.category,
-        imageUrl: editDesignData.imageUrl,
+        ...(image
+          ? { imageUrl: image.imageUrl, assetType: image.assetType, assetSizeBytes: image.assetSizeBytes }
+          : {}),
       });
+      setEditAsset(null);
+      setEditPreviewUrl(null);
       setIsEditModalOpen(false);
       setEditDesignData(null);
     } catch (error: unknown) {
-      setMutationError(error instanceof ApiError ? error.message : 'The design could not be updated.');
+      if (error instanceof ApiError) {
+        setMutationError(error.message);
+      } else if (error instanceof Error) {
+        setAssetError(error.message);
+      } else {
+        setAssetError('The design could not be updated.');
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -273,7 +377,7 @@ export function DesignRepository() {
               type="button"
               variant="primary"
               size="icon"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={openAddModal}
               aria-label="Upload Design"
               title="Upload Design"
               className="shrink-0"
@@ -352,13 +456,38 @@ export function DesignRepository() {
         {designView !== 'list' && pager ? <div className="border-t px-4 py-3">{pager}</div> : null}
       </Card>
 
-      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Upload New Design">
-        <form onSubmit={handleAddSubmit} className="space-y-4">
-          <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" placeholder="Modern Minimalist Logo" value={newDesign.name} onChange={(e) => setNewDesign({ ...newDesign, name: e.target.value })} /></label>
-          <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={newDesign.category} onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
-          <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Upload Image (Optional)</span><Input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={(event) => handleAssetSelected(event.target.files?.[0])} />{selectedAsset && <p className="text-2xs text-app-text-muted dark:text-zinc-500">Selected: {selectedAsset.name}</p>}</label>
-          <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Image URL (Optional)</span><Input type="text" placeholder="https://images.unsplash.com/..." value={newDesign.imageUrl} onChange={(e) => setNewDesign({ ...newDesign, imageUrl: e.target.value })} /></label>
-          {assetError && <InlineAlert variant="inline" message={assetError} />}
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Upload New Design" maxWidth="max-w-3xl">
+        <form onSubmit={handleAddSubmit} className="flex flex-col gap-4">
+          {/*
+            The same two-column shape the Stock List's form uses: artwork on the
+            left, the fields it is about on the right. The image is picked as a
+            FILE — there is no URL box, because the only URL there ever was is
+            the Storage link the upload returns.
+          */}
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+            <div className="space-y-3">
+              <label htmlFor="design-image-add" className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Image</label>
+              <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border">
+                {addPreviewUrl ? (
+                  <img src={addPreviewUrl} alt={newDesign.name || 'Design preview'} className="h-full w-full object-contain" />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 p-5 text-center text-app-text-muted dark:text-zinc-500">
+                    <ImageIcon className="h-14 w-14 opacity-40" aria-hidden="true" />
+                    <span className="text-2xs font-bold">No image yet</span>
+                  </div>
+                )}
+              </div>
+              <Input id="design-image-add" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={(event) => handleAddAssetSelected(event.target.files?.[0])} />
+              {addAsset && <p className="text-2xs text-app-text-muted dark:text-zinc-500">Selected: {addAsset.name}</p>}
+              {assetError && <InlineAlert variant="inline" message={assetError} />}
+            </div>
+
+            <div className="space-y-4">
+              <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" placeholder="Modern Minimalist Logo" value={newDesign.name} onChange={(e) => setNewDesign({ ...newDesign, name: e.target.value })} /></label>
+              <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={newDesign.category} onChange={(e) => setNewDesign({ ...newDesign, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
+            </div>
+          </div>
+          {mutationError && <InlineAlert message={mutationError} />}
           <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsAddModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading}>{isUploading ? 'Uploading...' : 'Upload Design'}</Button></div>
         </form>
       </Modal>
@@ -379,13 +508,35 @@ export function DesignRepository() {
         )}
       </Modal>
 
-      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Design">
+      <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} title="Edit Design" maxWidth="max-w-3xl">
         {editDesignData && (
-          <form onSubmit={handleEditSubmit} className="space-y-4">
-            <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
-            <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{DESIGN_CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
-            <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Image URL</span><Input type="text" value={editDesignData.imageUrl} onChange={(e) => setEditDesignData({ ...editDesignData, imageUrl: e.target.value })} /></label>
-            <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth>Save Changes</Button></div>
+          <form onSubmit={handleEditSubmit} className="flex flex-col gap-4">
+            {/*
+              Exactly the Stock List's arrangement: the current artwork, then the
+              control that replaces it. The old form showed the stored URL in a
+              text box instead — a staff member had no way to know what to type
+              there, no way to swap the picture, and the Supabase Storage link
+              (project host included) sat on screen, editable.
+            */}
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+              <div className="space-y-3">
+                <label htmlFor="design-image-edit" className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Image</label>
+                <div className="flex aspect-square max-h-[min(42vh,380px)] w-full items-center justify-center overflow-hidden rounded-[var(--radius-card)] border">
+                  <img src={editPreviewUrl ?? editDesignData.imageUrl} alt={editDesignData.name} className="h-full w-full object-contain" />
+                </div>
+                <Input id="design-image-edit" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="h-auto cursor-pointer py-2 text-xs file:mr-3 file:rounded-full file:border-0 file:bg-app-accent file:px-3 file:py-1.5 file:text-2xs file:font-bold file:text-[var(--app-accent-ink)]" onChange={(event) => handleEditAssetSelected(event.target.files?.[0])} />
+                {editAsset && <p className="text-2xs text-app-text-muted dark:text-zinc-500">Selected: {editAsset.name}</p>}
+                {assetError && <InlineAlert variant="inline" message={assetError} />}
+                <p className="text-2xs leading-relaxed text-app-text-muted dark:text-zinc-500">Choose a file to replace the artwork. Leave it empty and the current image is kept.</p>
+              </div>
+
+              <div className="space-y-4">
+                <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
+                <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{editCategories(editDesignData.category).map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
+              </div>
+            </div>
+            {mutationError && <InlineAlert message={mutationError} />}
+            <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading}>Save Changes</Button></div>
           </form>
         )}
       </Modal>
