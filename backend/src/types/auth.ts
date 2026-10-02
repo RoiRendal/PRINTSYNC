@@ -9,6 +9,14 @@ export interface AuthenticatedRequestContext {
     position: string;
     roleId: string;
     /**
+     * The role NAME, mirroring `public.roles.name`.
+     *
+     * The session payload reports this so the client's `isAdminTier` can compare a
+     * name instead of a uuid it has no table for. Kept in step with the allow-list
+     * in `users.service.ts` and the frontend's `utils/access.ts`.
+     */
+    role: 'admin' | 'staff' | 'owner';
+    /**
      * The branch this account belongs to.
      *
      * `null` only in the window between the auth row existing and its profile
