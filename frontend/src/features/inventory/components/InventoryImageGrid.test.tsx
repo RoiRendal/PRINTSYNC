@@ -128,6 +128,28 @@ describe('InventoryImageGrid', () => {
     expect(screen.queryByText('BP')).toBeNull();
   });
 
+  /*
+   * The gallery draws a ~215px box, so it must ask Storage for a resized copy
+   * rather than the original — the sources ran to 2000×3000, 21.8 MP across
+   * these tiles. Pinned here because the rewrite is invisible: the card looks
+   * identical whether it loads 378 KB or 963 KB, and nothing else would fail.
+   */
+  it('asks Storage for a thumbnail, not the full-size original', () => {
+    const original = 'https://proj.supabase.co/storage/v1/object/public/inventory-assets/photo.png';
+    renderGrid({ items: [item({ imageUrl: original })] });
+    const src = screen.getByAltText('Bond Paper').getAttribute('src') ?? '';
+    expect(src).toContain('/storage/v1/render/image/public/');
+    expect(src).toContain('width=400');
+    expect(src).not.toContain('/object/public/');
+  });
+
+  it('leaves a photo that is not in Storage exactly as it is', () => {
+    // A rewrite that touches URLs it does not understand produces broken images
+    // that are indistinguishable from missing files.
+    renderGrid({ items: [item({ imageUrl: 'https://example.test/photo.png' })] });
+    expect(screen.getByAltText('Bond Paper').getAttribute('src')).toBe('https://example.test/photo.png');
+  });
+
   it('counts the items while nothing is ticked', () => {
     renderGrid({ items: [item(), item({ id: 'i2', sku: 'SKU-002' })] });
     expect(screen.getByText('2 stock items')).toBeInTheDocument();

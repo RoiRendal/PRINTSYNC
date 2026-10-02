@@ -15,6 +15,7 @@ import {
 } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
+import { thumbnailUrl } from '../../../shared/lib/thumbnail';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
 
@@ -157,7 +158,14 @@ export function InventoryImageGrid({
               return (
                 <ImageGridCard
                   key={item.id}
-                  imageUrl={item.imageUrl}
+                  /*
+                    The card draws a ~215px box, so it asks Storage for a 400px
+                    copy rather than the original — measured at 21.8 MP across
+                    these 15 tiles before, with sources up to 2000×3000. The
+                    stored object is untouched; only the URL differs, so this
+                    applies to photos uploaded before it existed too.
+                  */
+                  imageUrl={thumbnailUrl(item.imageUrl)}
                   imageAlt={item.name}
                   fallbackLabel={stockInitials(item.name)}
                   leading={
