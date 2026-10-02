@@ -15,8 +15,16 @@ const userSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().trim().email(),
   phone: z.string().trim().default(''),
-  role: z.enum(['admin', 'staff']),
+  // 'owner' is the head-office role the owner asked for. It is assignable, not a
+  // hidden flag: choosing it is what sets `can_view_all_branches`, so the
+  // cross-branch exception is granted by a deliberate role change rather than by a
+  // boolean anyone could flip.
+  role: z.enum(['admin', 'staff', 'owner']),
   position: z.string().trim().default(''),
+  // Required: every account belongs to exactly one branch (the owner's rule).
+  // There is no sensible default — silently filing a new hire under Balayan is how
+  // a Nasugbu staff member ends up seeing the wrong stock.
+  branchId: z.string().uuid(),
   createdAt: z.string().trim().optional(),
   password: z.string().min(8).optional(),
 });

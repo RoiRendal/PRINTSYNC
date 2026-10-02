@@ -89,8 +89,11 @@ ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (req
  * reachable by the people the Workspace is being built for. `analytics.read` would
  * have made the page admin-only again through the back door.
  */
-ordersRouter.get('/summary', authenticate, requirePermission('orders.read'), async (_request, response) => {
-  sendSuccess(response, await getOrdersSummary(getSupabase()));
+ordersRouter.get('/summary', authenticate, requirePermission('orders.read'), async (request, response) => {
+  // The caller's branch is passed through even though the RPC cannot use it yet
+  // (it takes no parameters by design). This keeps the router correct now and
+  // keeps Phase 3 to a single migration instead of a migration plus a route edit.
+  sendSuccess(response, await getOrdersSummary(getSupabase(), request.auth?.profile.branchId ?? undefined));
 });
 
 ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (request, response) => {

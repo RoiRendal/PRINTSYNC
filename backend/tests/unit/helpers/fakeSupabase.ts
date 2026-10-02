@@ -164,6 +164,20 @@ class FakeQuery implements PromiseLike<FakeResult> {
     return this;
   }
 
+  /**
+   * `limit(n)`, recorded like every other filter.
+   *
+   * Added when `getPublicBranding` grew a fallback read — "the oldest settings
+   * row" — which is `order(...).limit(1)` rather than a primary-key lookup. The
+   * recorded call is what lets a test assert the query is genuinely bounded: a
+   * missing `limit` would make a one-row read silently become a whole-table read
+   * once a second branch exists.
+   */
+  limit(count: number): this {
+    this.call.filters.push({ method: 'limit', args: [count] });
+    return this;
+  }
+
   range(from: number, to: number): this {
     this.call.filters.push({ method: 'range', args: [from, to] });
     return this;

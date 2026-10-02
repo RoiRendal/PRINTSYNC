@@ -117,8 +117,15 @@ function normalizeRange(range: AnalyticsRange, timeZone: string): AnalyticsRange
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
-export async function getAnalyticsSummary(supabase: SupabaseClient, range: AnalyticsRange): Promise<AnalyticsSummary> {
-  const timeZone = await getShopTimeZone(supabase);
+export async function getAnalyticsSummary(
+  supabase: SupabaseClient,
+  range: AnalyticsRange,
+  // Accepted now so the router is already correct; the RPC itself is still
+  // business-wide. Phase 3 drops and recreates `get_analytics_summary` with
+  // `p_branch_id` — one migration, not a half-scoped read in the meantime.
+  branchId?: string,
+): Promise<AnalyticsSummary> {
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const normalizedRange = normalizeRange(range, timeZone);
 
   const { data: rpcData, error: rpcError } = await supabase
@@ -234,8 +241,9 @@ export async function getSalesTimeline(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
+  branchId?: string,
 ): Promise<SalesTimeline> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const normalizedRange = normalizeRange(range, timeZone);
   const [transactionsResult, itemsResult, inventoryResult] = await Promise.all([
     supabase
@@ -317,8 +325,9 @@ export async function getProductTrends(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
+  branchId?: string,
 ): Promise<ProductTrends> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const normalizedRange = normalizeRange(range, timeZone);
   const itemsResult = await supabase
     .from('sales_transaction_items')
@@ -379,8 +388,9 @@ export async function getInventoryForecast(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   horizonDays: number,
+  branchId?: string,
 ): Promise<InventoryForecast> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const normalizedRange = normalizeRange(range, timeZone);
 
   const from = new Date(normalizedRange.from);

@@ -54,13 +54,13 @@ function getDesignId(request: { params: Record<string, string | string[] | undef
 }
 
 designsRouter.get('/', authenticate, requirePermission('designs.read'), async (request, response) => {
-  sendSuccess(response, await listDesigns(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listDesigns(getSupabase(), parsePaginationQuery(request.query), request.auth?.profile.branchId ?? undefined));
 });
 
 designsRouter.post('/', authenticate, requirePermission('designs.manage'), async (request, response) => {
   const parsed = designSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
-  const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id);
+  const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id, request.auth.profile.branchId ?? undefined);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'design.created', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
   publishDataChange('designs');
   response.status(201).json({ data: design });
@@ -83,7 +83,7 @@ designsRouter.patch('/:id', authenticate, requirePermission('designs.manage'), a
   const parsed = designUpdateSchema.safeParse(request.body);
   if (!parsed.success) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
   const designId = getDesignId(request);
-  const design = await updateDesign(getSupabase(), designId, parsed.data);
+  const design = await updateDesign(getSupabase(), designId, parsed.data, request.auth?.profile.branchId ?? undefined);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.updated', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
   publishDataChange('designs');
   sendSuccess(response, design);

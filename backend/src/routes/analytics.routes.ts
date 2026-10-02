@@ -41,23 +41,23 @@ function getSupabase() {
 analyticsRouter.get('/summary', authenticate, requirePermission('analytics.read'), async (request, response) => {
   const parsed = querySchema.safeParse(request.query);
   if (!parsed.success) throw new AppError(400, 'INVALID_ANALYTICS_QUERY', 'Both from and to dates are required.');
-  sendSuccess(response, await getAnalyticsSummary(getSupabase(), parsed.data));
+  sendSuccess(response, await getAnalyticsSummary(getSupabase(), parsed.data, request.auth?.profile.branchId ?? undefined));
 });
 
 analyticsRouter.get('/sales-timeline', authenticate, requirePermission('analytics.read'), async (request, response) => {
   const parsed = bucketQuerySchema.safeParse(request.query);
   if (!parsed.success) throw new AppError(400, 'INVALID_ANALYTICS_QUERY', 'Both from and to dates are required. Bucket must be day, week, or quarter.');
-  sendSuccess(response, await getSalesTimeline(getSupabase(), parsed.data, parsed.data.bucket as AnalyticsBucket));
+  sendSuccess(response, await getSalesTimeline(getSupabase(), parsed.data, parsed.data.bucket as AnalyticsBucket, request.auth?.profile.branchId ?? undefined));
 });
 
 analyticsRouter.get('/product-trends', authenticate, requirePermission('analytics.read'), async (request, response) => {
   const parsed = bucketQuerySchema.safeParse(request.query);
   if (!parsed.success) throw new AppError(400, 'INVALID_ANALYTICS_QUERY', 'Both from and to dates are required. Bucket must be day, week, or quarter.');
-  sendSuccess(response, await getProductTrends(getSupabase(), parsed.data, parsed.data.bucket as AnalyticsBucket));
+  sendSuccess(response, await getProductTrends(getSupabase(), parsed.data, parsed.data.bucket as AnalyticsBucket, request.auth?.profile.branchId ?? undefined));
 });
 
 analyticsRouter.get('/inventory-forecast', authenticate, requirePermission('analytics.read'), async (request, response) => {
   const parsed = forecastQuerySchema.safeParse(request.query);
   if (!parsed.success) throw new AppError(400, 'INVALID_ANALYTICS_QUERY', 'Both from and to dates are required. horizonDays must be between 1 and 365.');
-  sendSuccess(response, await getInventoryForecast(getSupabase(), parsed.data, parsed.data.horizonDays));
+  sendSuccess(response, await getInventoryForecast(getSupabase(), parsed.data, parsed.data.horizonDays, request.auth?.profile.branchId ?? undefined));
 });

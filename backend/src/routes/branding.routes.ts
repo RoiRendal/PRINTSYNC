@@ -29,5 +29,8 @@ brandingRouter.get('/', async (_request, response) => {
     throw new AppError(503, 'SUPABASE_NOT_CONFIGURED', 'Supabase has not been configured for this environment.');
   }
 
+  // No branch: this route runs before anyone has a session, so it serves the
+  // business-wide identity (the oldest settings row, which is Balayan's — the one
+  // holding the owner's real logo). See `getPublicBranding`.
   sendSuccess(response, await getPublicBranding(supabase));
 });

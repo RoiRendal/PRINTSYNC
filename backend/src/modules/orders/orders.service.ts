@@ -169,14 +169,25 @@ async function loadPayments(supabase: SupabaseClient, orderIds: string[]): Promi
 /**
  * The one place rows become `OrderRecord`s, so the shop's time zone is resolved
  * once per call rather than threaded through every caller. `getShopTimeZone` is
- * cached, so this is not a settings query per order.
+ * cached per branch, so this is not a settings query per order.
+ *
+ * `branchId` decides which branch's calendar day an order's date is rendered in.
+ * It is optional in Phase 1 — reads are not yet branch-scoped, so passing the
+ * caller's branch would label a mixed set of rows with one branch's zone. Phase 3
+ * scopes the reads and makes this required. `getOrdersSummary` below is the one
+ * caller that must pass it now, because it is reachable from a branch's own
+ * Workspace and its `lowStock` count is already branch-specific.
  */
-async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<OrderRecord[]> {
+async function mapOrders(
+  supabase: SupabaseClient,
+  rows: Record<string, unknown>[],
+  branchId?: string,
+): Promise<OrderRecord[]> {
   const ids = rows.map((row) => String(row.id));
   const [itemMap, paymentMap, timeZone] = await Promise.all([
     loadItems(supabase, ids),
     loadPayments(supabase, ids),
-    getShopTimeZone(supabase),
+    getShopTimeZone(supabase, branchId),
   ]);
   return rows.map((row) =>
     toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0, timeZone),
@@ -201,8 +212,14 @@ async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>
  *
  * The current in-browser aggregation is not kept as a fallback. It is deleted in
  * the phase that rebuilds the page — that is part of the work, not a cleanup.
+ *
+ * `branchId` is accepted and currently unused. The RPC has no parameters at all
+ * by design, so scoping it means dropping and recreating it with `p_branch_id` —
+ * which is Phase 3 work, done in one migration rather than half-here and half
+ * there. The parameter exists now so the route already passes the caller's branch
+ * and Phase 3 does not have to touch the router.
  */
-export async function getOrdersSummary(supabase: SupabaseClient): Promise<OrdersSummary> {
+export async function getOrdersSummary(supabase: SupabaseClient, _branchId?: string): Promise<OrdersSummary> {
   const { data, error } = await supabase.rpc('get_orders_summary');
 
   if (error || !data) {
@@ -273,6 +290,8 @@ export async function listOrders(
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');
+  // No branch passed: Phase 1 does not yet scope this read. Phase 3 adds the
+  // predicate and the argument together — see `mapOrders`.
   const orders = await mapOrders(supabase, data);
   return createPaginatedResponse(orders, count ?? 0, params.page, params.limit);
 }

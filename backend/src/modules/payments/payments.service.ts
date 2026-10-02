@@ -103,12 +103,17 @@ async function loadPaymentAmounts(supabase: SupabaseClient, transactionIds: stri
   return amounts;
 }
 
-async function mapTransactions(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<TransactionRecord[]> {
+async function mapTransactions(
+  supabase: SupabaseClient,
+  rows: Record<string, unknown>[],
+  // Rendering only in Phase 1; the read is not branch-scoped until Phase 3.
+  branchId?: string,
+): Promise<TransactionRecord[]> {
   const ids = rows.map((row) => String(row.id));
   const [items, payments, timeZone] = await Promise.all([
     loadItems(supabase, ids),
     loadPaymentAmounts(supabase, ids),
-    getShopTimeZone(supabase),
+    getShopTimeZone(supabase, branchId),
   ]);
   return rows.map((row) => ({
     id: String(row.id),

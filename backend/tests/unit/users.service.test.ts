@@ -19,12 +19,16 @@ import { assertAppError, assertResolves } from './helpers/assertAppError.js';
 
 const STAFF_ROLE = { data: { id: 'role-staff', name: 'staff' }, error: null };
 
+const BALAYAN_ID = '11111111-1111-4111-8111-111111111111';
+
 const VALID_INPUT = {
   name: 'Ana Reyes',
   email: 'ana@shop.test',
   phone: '0917 000 0000',
   role: 'staff' as const,
   position: 'Press Operator',
+  // Required: every account belongs to exactly one branch.
+  branchId: BALAYAN_ID,
   password: 'secret123',
 };
 
@@ -34,6 +38,8 @@ const PROFILE_ROW = {
   phone: '0917 000 0000',
   position: 'Press Operator',
   role_id: 'role-staff',
+  branch_id: BALAYAN_ID,
+  can_view_all_branches: false,
   created_at: '2026-09-16T02:00:00.000Z',
 };
 
@@ -132,8 +138,36 @@ describe('createUser — provider failures are described accurately', () => {
     assert.equal(created.id, 'user-1');
     assert.equal(created.email, 'ana@shop.test');
     assert.equal(created.role, 'staff');
+    assert.equal(created.branchId, BALAYAN_ID);
+    assert.equal(created.canViewAllBranches, false);
     assert.deepEqual(created.access, ['orders']);
     assert.equal(auth.callsFor('createUser').length, 1);
+
+    // The branch has to reach the profile row, not merely be accepted. A user
+    // whose branch was dropped on the way in would be branch-less in the database
+    // and would see everything once Phase 3 scopes the reads.
+    const payload = db.lastCall('profiles', 'insert')?.payload as Record<string, unknown>;
+    assert.equal(payload.branch_id, BALAYAN_ID);
+    assert.equal(payload.can_view_all_branches, false);
+  });
+
+  it('derives the cross-branch flag from the owner role, not from the request', async () => {
+    const { db, auth } = setup();
+    db.queueTable('roles', { data: { id: 'role-owner', name: 'owner' }, error: null });
+    auth.queueResult('createUser', {
+      data: { user: { id: 'user-2', email: 'grantly@shop.test' } },
+      error: null,
+    });
+    db.queueTable('profiles', { data: { ...PROFILE_ROW, can_view_all_branches: true }, error: null });
+    db.queueTable('role_permissions', { data: [], error: null });
+
+    await createUser(db.client, { ...VALID_INPUT, role: 'owner', email: 'grantly@shop.test' });
+
+    const payload = db.lastCall('profiles', 'insert')?.payload as Record<string, unknown>;
+    // Owner is the *only* role that gets this, and it is derived server-side. If a
+    // request could set it directly, any admin could quietly grant themselves
+    // read-across to the other branch.
+    assert.equal(payload.can_view_all_branches, true);
   });
 
   it('refuses to create a user without a password before calling the provider', async () => {

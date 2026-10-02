@@ -26,7 +26,7 @@ export async function loadAuthContext(
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, name, phone, position, role_id')
+    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -70,6 +70,12 @@ export async function loadAuthContext(
       phone: profile.phone,
       position: profile.position,
       roleId: profile.role_id,
+      branchId: profile.branch_id ? String(profile.branch_id) : null,
+      // Coerced rather than trusted: PostgREST hands back a real boolean for a
+      // `boolean not null default false` column, but this value decides whether an
+      // account may read another branch's figures, so a missing column or a null
+      // must fail closed rather than be truthy by accident.
+      canViewAllBranches: profile.can_view_all_branches === true,
     },
     permissions: permissions.map((permission) => permission.key),
   };

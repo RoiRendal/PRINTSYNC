@@ -56,6 +56,10 @@ function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord 
 export async function listDesigns(
   supabase: SupabaseClient,
   params: PaginationParams,
+  // Rendering only in Phase 1 — the read is not branch-scoped until Phase 3, so a
+  // mixed result set is still rendered in one zone rather than being mislabelled
+  // as the caller's branch.
+  branchId?: string,
 ): Promise<PaginatedResponse<DesignRecord>> {
   const { start, end } = calculateRange(params.page, params.limit);
   const { data, error, count } = await supabase
@@ -64,7 +68,7 @@ export async function listDesigns(
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'DESIGNS_LOOKUP_FAILED', 'Designs could not be loaded.');
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   return createPaginatedResponse(data.map((row) => toRecord(row, timeZone)), count ?? 0, params.page, params.limit);
 }
 
@@ -72,6 +76,7 @@ export async function createDesign(
   supabase: SupabaseClient,
   input: DesignInput,
   actorId: string,
+  branchId?: string,
 ): Promise<DesignRecord> {
   const { data, error } = await supabase
     .from('designs')
@@ -86,10 +91,15 @@ export async function createDesign(
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(400, 'DESIGN_CREATE_FAILED', 'The design could not be created.');
-  return toRecord(data, await getShopTimeZone(supabase));
+  return toRecord(data, await getShopTimeZone(supabase, branchId));
 }
 
-export async function updateDesign(supabase: SupabaseClient, id: string, input: DesignUpdateInput): Promise<DesignRecord> {
+export async function updateDesign(
+  supabase: SupabaseClient,
+  id: string,
+  input: DesignUpdateInput,
+  branchId?: string,
+): Promise<DesignRecord> {
   /*
    * Only the columns actually sent are written. `image_url` is `not null`, so
    * writing a missing one as `null` would fail the constraint rather than leave
@@ -108,7 +118,7 @@ export async function updateDesign(supabase: SupabaseClient, id: string, input: 
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(404, 'DESIGN_NOT_FOUND', 'The design was not found.');
-  return toRecord(data, await getShopTimeZone(supabase));
+  return toRecord(data, await getShopTimeZone(supabase, branchId));
 }
 
 export async function deleteDesign(supabase: SupabaseClient, id: string): Promise<void> {

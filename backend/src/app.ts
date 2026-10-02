@@ -12,6 +12,7 @@ import { apiRateLimit } from './middleware/apiRateLimit.js';
 import { authRouter } from './routes/auth.routes.js';
 import { auditRouter } from './routes/audit.routes.js';
 import { brandingRouter } from './routes/branding.routes.js';
+import { branchesRouter } from './routes/branches.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { inventoryRouter } from './routes/inventory.routes.js';
 import { designsRouter } from './routes/designs.routes.js';
@@ -175,6 +176,7 @@ export function createApp() {
   app.use('/api/v1/ready', readyRouter);
   // Public: the login screen needs the company name and logo before sign-in.
   app.use('/api/v1/branding', brandingRouter);
+  app.use('/api/v1/branches', branchesRouter);
   app.use('/api/v1/auth', authRouter);
   // Server-sent events. Authenticated by the same session cookie as everything
   // else; each client only receives the domains it holds a read capability for.

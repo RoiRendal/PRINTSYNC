@@ -37,7 +37,7 @@ expensesRouter.get('/', authenticate, requirePermission('expenses.read'), async 
 expensesRouter.post('/', authenticate, requirePermission('expenses.manage'), async (request, response) => {
   const parsed = expenseSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_EXPENSE_REQUEST', 'The expense details are invalid.');
-  const expense = await createExpense(getSupabase(), parsed.data, request.auth.user.id);
+  const expense = await createExpense(getSupabase(), parsed.data, request.auth.user.id, request.auth.profile.branchId ?? undefined);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'expense.created', entityType: 'expense', entityId: expense.id, metadata: { category: expense.category, amount: expense.amount } });
   response.status(201).json({ data: expense });
 });

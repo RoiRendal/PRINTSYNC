@@ -17,7 +17,11 @@ import { assertAppError } from './helpers/assertAppError.js';
  */
 const STORED_LOGO_URL = 'https://example.supabase.co/storage/v1/object/public/business-assets/seed/brand-logo.png';
 
+const BALAYAN_ID = '11111111-1111-4111-8111-111111111111';
+const NASUGBU_ID = '22222222-2222-4222-8222-222222222222';
+
 const SETTINGS_ROW = {
+  branch_id: BALAYAN_ID,
   business_name: 'IC Printing Services',
   logo_url: STORED_LOGO_URL,
   vat_rate: 12,
@@ -27,11 +31,11 @@ const SETTINGS_ROW = {
 
 describe('settings.service', () => {
   describe('getBusinessSettings', () => {
-    it('maps the single settings row into the domain shape', async () => {
+    it('maps the settings row into the domain shape', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      const settings = await getBusinessSettings(db.client);
+      const settings = await getBusinessSettings(db.client, BALAYAN_ID);
 
       assert.equal(settings.businessName, 'IC Printing Services');
       assert.equal(settings.logoUrl, STORED_LOGO_URL);
@@ -40,13 +44,18 @@ describe('settings.service', () => {
       assert.equal(settings.updatedAt, '2026-09-15T00:00:00.000Z');
     });
 
-    it('always reads the singleton row (id = 1)', async () => {
+    it('scopes the read to the given branch, never to id = 1', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await getBusinessSettings(db.client);
+      await getBusinessSettings(db.client, NASUGBU_ID);
 
-      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('business_settings')[0], 'eq'), ['id', 1]);
+      const filter = FakeSupabase.filterOf(db.callsFor('business_settings')[0], 'eq');
+      assert.deepEqual(filter, ['branch_id', NASUGBU_ID]);
+      // The old singleton predicate must be gone: `id = 1` would return Balayan's
+      // row for a Nasugbu caller and — worse — would still "work", so a passing
+      // test that asserted `id` would hide the bug rather than catch it.
+      assert.notDeepEqual(filter, ['id', 1]);
     });
 
     it('applies the documented defaults when columns are missing', async () => {
@@ -56,7 +65,7 @@ describe('settings.service', () => {
         error: null,
       });
 
-      const settings = await getBusinessSettings(db.client);
+      const settings = await getBusinessSettings(db.client, BALAYAN_ID);
 
       // VAT and currency fall back to the Philippine defaults the UI assumes.
       assert.equal(settings.logoUrl, null);
@@ -68,7 +77,7 @@ describe('settings.service', () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: null, error: { message: 'no rows returned' } });
 
-      await assertAppError(() => getBusinessSettings(db.client), 503, 'SETTINGS_LOOKUP_FAILED');
+      await assertAppError(() => getBusinessSettings(db.client, BALAYAN_ID), 503, 'SETTINGS_LOOKUP_FAILED');
     });
   });
 
@@ -77,7 +86,7 @@ describe('settings.service', () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      const branding = await getPublicBranding(db.client);
+      const branding = await getPublicBranding(db.client, BALAYAN_ID);
 
       assert.deepEqual(branding, {
         businessName: 'IC Printing Services',
@@ -89,7 +98,7 @@ describe('settings.service', () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await getPublicBranding(db.client);
+      await getPublicBranding(db.client, BALAYAN_ID);
 
       // The projection is the guard: if `vat_rate` is never selected, a careless
       // edit to the mapping below cannot leak it to a signed-out caller.
@@ -104,19 +113,39 @@ describe('settings.service', () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
 
-      const branding = await getPublicBranding(db.client);
+      const branding = await getPublicBranding(db.client, BALAYAN_ID);
 
       assert.equal(branding.logoUrl, null);
       assert.equal(branding.businessName, 'IC Printing Services');
     });
 
-    it('always reads the singleton row (id = 1)', async () => {
+    it('reads the given branch when one is known', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await getPublicBranding(db.client);
+      await getPublicBranding(db.client, NASUGBU_ID);
 
-      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('business_settings')[0], 'eq'), ['id', 1]);
+      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('business_settings')[0], 'eq'), ['branch_id', NASUGBU_ID]);
+    });
+
+    it('falls back to the oldest row when no branch is known, and bounds the read', async () => {
+      // The login screen renders before anyone has a session, so it cannot pass a
+      // branch. It must still show the company identity rather than nothing.
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      const branding = await getPublicBranding(db.client);
+
+      assert.equal(branding.businessName, 'IC Printing Services');
+      const call = db.callsFor('business_settings')[0];
+      // No branch filter at all in this mode...
+      assert.equal(FakeSupabase.filterOf(call, 'eq'), undefined);
+      // ...but the read is still pinned to one row. Without `limit`, adding a
+      // second branch turns this into a whole-table read, and `.maybeSingle()`
+      // then fails outright with two settings rows in the database.
+      assert.deepEqual(FakeSupabase.filterOf(call, 'limit'), [1]);
+      assert.deepEqual(FakeSupabase.filterOf(call, 'order'), ['created_at', { ascending: true }]);
+      assert.equal(call?.modes.includes('maybeSingle'), true);
     });
 
     it('maps a missing row to a 503 BRANDING_LOOKUP_FAILED', async () => {
@@ -125,7 +154,7 @@ describe('settings.service', () => {
 
       // Distinct from SETTINGS_LOOKUP_FAILED so the login screen can tell a broken
       // branding read apart from a broken settings read.
-      await assertAppError(() => getPublicBranding(db.client), 503, 'BRANDING_LOOKUP_FAILED');
+      await assertAppError(() => getPublicBranding(db.client, BALAYAN_ID), 503, 'BRANDING_LOOKUP_FAILED');
     });
   });
 
@@ -136,6 +165,7 @@ describe('settings.service', () => {
 
       const settings = await updateBusinessSettings(
         db.client,
+        BALAYAN_ID,
         { businessName: 'IC Printing Services', vatRate: 12, currencySymbol: '₱' },
         'actor-1',
       );
@@ -152,7 +182,7 @@ describe('settings.service', () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await updateBusinessSettings(db.client, { businessName: 'Renamed Shop' }, 'actor-1');
+      await updateBusinessSettings(db.client, BALAYAN_ID, { businessName: 'Renamed Shop' }, 'actor-1');
 
       const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
       // The logo has its own writer, so a generic save must not touch `logo_url`
@@ -166,6 +196,7 @@ describe('settings.service', () => {
 
       await updateBusinessSettings(
         db.client,
+        BALAYAN_ID,
         { businessName: 'IC Printing Services', vatRate: 0, currencySymbol: '$' },
         'actor-1',
       );
@@ -177,13 +208,16 @@ describe('settings.service', () => {
       assert.equal(payload.currency_symbol, '$');
     });
 
-    it('always targets the singleton row', async () => {
+    it('targets the caller\'s branch, so one branch cannot rename another', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await updateBusinessSettings(db.client, { businessName: 'Renamed Shop' }, 'actor-1');
+      await updateBusinessSettings(db.client, NASUGBU_ID, { businessName: 'Renamed Shop' }, 'actor-1');
 
-      assert.deepEqual(FakeSupabase.filterOf(db.lastCall('business_settings', 'update'), 'eq'), ['id', 1]);
+      assert.deepEqual(
+        FakeSupabase.filterOf(db.lastCall('business_settings', 'update'), 'eq'),
+        ['branch_id', NASUGBU_ID],
+      );
     });
 
     it('maps a write failure to a 400 SETTINGS_UPDATE_FAILED', async () => {
@@ -191,7 +225,7 @@ describe('settings.service', () => {
       db.queueTable('business_settings', { data: null, error: { message: 'permission denied' } });
 
       await assertAppError(
-        () => updateBusinessSettings(db.client, { businessName: 'Renamed Shop' }, 'actor-1'),
+        () => updateBusinessSettings(db.client, BALAYAN_ID, { businessName: 'Renamed Shop' }, 'actor-1'),
         400,
         'SETTINGS_UPDATE_FAILED',
       );
@@ -204,7 +238,7 @@ describe('settings.service', () => {
       const logoUrl = 'https://example.supabase.co/storage/v1/object/public/business-assets/actor-1/logo.png';
       db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: logoUrl }, error: null });
 
-      const settings = await setBusinessLogo(db.client, logoUrl, 'actor-1');
+      const settings = await setBusinessLogo(db.client, BALAYAN_ID, logoUrl, 'actor-1');
 
       const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
       assert.deepEqual(Object.keys(payload).sort(), ['logo_url', 'updated_by']);
@@ -213,24 +247,27 @@ describe('settings.service', () => {
       assert.equal(settings.logoUrl, logoUrl);
     });
 
-    it('clears the logo so the bundled asset takes over', async () => {
+    it('clears the logo so the UI falls back to the business initials', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
 
-      const settings = await setBusinessLogo(db.client, null, 'actor-1');
+      const settings = await setBusinessLogo(db.client, BALAYAN_ID, null, 'actor-1');
 
       const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
       assert.equal(payload.logo_url, null);
       assert.equal(settings.logoUrl, null);
     });
 
-    it('always targets the singleton row', async () => {
+    it('targets the caller\'s branch, so a logo upload cannot overwrite another branch\'s', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
 
-      await setBusinessLogo(db.client, 'https://example.com/logo.png', 'actor-1');
+      await setBusinessLogo(db.client, NASUGBU_ID, 'https://example.com/logo.png', 'actor-1');
 
-      assert.deepEqual(FakeSupabase.filterOf(db.lastCall('business_settings', 'update'), 'eq'), ['id', 1]);
+      assert.deepEqual(
+        FakeSupabase.filterOf(db.lastCall('business_settings', 'update'), 'eq'),
+        ['branch_id', NASUGBU_ID],
+      );
     });
 
     it('maps a write failure to a 400 SETTINGS_UPDATE_FAILED', async () => {
@@ -238,7 +275,7 @@ describe('settings.service', () => {
       db.queueTable('business_settings', { data: null, error: { message: 'permission denied' } });
 
       await assertAppError(
-        () => setBusinessLogo(db.client, 'https://example.com/logo.png', 'actor-1'),
+        () => setBusinessLogo(db.client, BALAYAN_ID, 'https://example.com/logo.png', 'actor-1'),
         400,
         'SETTINGS_UPDATE_FAILED',
       );

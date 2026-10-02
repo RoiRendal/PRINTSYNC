@@ -39,20 +39,43 @@ function getSupabase() {
   return supabase;
 }
 
-settingsRouter.get('/', authenticate, requirePermission('settings.read'), async (_request, response) => {
-  sendSuccess(response, await getBusinessSettings(getSupabase()));
+/**
+ * The branch whose settings this request is about.
+ *
+ * Always the signed-in user's own branch — read from the auth context, never from
+ * the query string or body. Phase 1 has one settings row per branch, so a
+ * caller-supplied branch id would let any staff member read or rewrite another
+ * branch's name, VAT rate and logo.
+ *
+ * A profile with no branch is rejected rather than defaulted: silently writing to
+ * Balayan because a caller's branch was missing is how one branch's settings get
+ * overwritten by another.
+ */
+function getCallerBranch(request: { auth?: { profile: { branchId: string | null } } }): string {
+  const branchId = request.auth?.profile.branchId;
+  if (!branchId) throw new AppError(403, 'BRANCH_NOT_ASSIGNED', 'This account is not assigned to a branch.');
+  return branchId;
+}
+
+settingsRouter.get('/', authenticate, requirePermission('settings.read'), async (request, response) => {
+  sendSuccess(response, await getBusinessSettings(getSupabase(), getCallerBranch(request)));
 });
 
 settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), async (request, response) => {
   const parsed = settingsSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_SETTINGS_REQUEST', 'The business settings are invalid.');
-  const settings = await updateBusinessSettings(getSupabase(), parsed.data, request.auth.user.id);
+  const branchId = getCallerBranch(request);
+  const settings = await updateBusinessSettings(getSupabase(), branchId, parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), {
     actorId: request.auth.user.id,
     action: 'settings.business_updated',
     entityType: 'business_settings',
-    entityId: '1',
-    metadata: { businessName: settings.businessName },
+    // The audit row names the branch, not the surrogate id. `entityId` used to be
+    // the literal '1' because there was one row; with one row per branch that
+    // value is no longer meaningful, and the branch is what a person reading the
+    // log is actually looking for.
+    entityId: branchId,
+    metadata: { businessName: settings.businessName, branchId },
   });
   // The business name and currency symbol appear in page headers and every
   // receipt, so the whole app needs to pick the new values up.
@@ -78,14 +101,15 @@ settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), as
 settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'), async (request, response) => {
   const parsed = logoUploadSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_BUSINESS_LOGO', 'The business logo is invalid.');
+  const branchId = getCallerBranch(request);
   const asset = await uploadBusinessLogo(getSupabase(), parsed.data, request.auth.user.id);
-  const settings = await setBusinessLogo(getSupabase(), asset.imageUrl, request.auth.user.id);
+  const settings = await setBusinessLogo(getSupabase(), branchId, asset.imageUrl, request.auth.user.id);
   await writeAuditLog(getSupabase(), {
     actorId: request.auth.user.id,
     action: 'settings.logo_uploaded',
     entityType: 'business_settings',
-    entityId: '1',
-    metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes },
+    entityId: branchId,
+    metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes, branchId },
   });
   publishDataChange('settings');
   // Housekeeping runs after the response is ready and never throws: the logo is

@@ -51,10 +51,13 @@ export async function createExpense(
   supabase: SupabaseClient,
   input: ExpenseInput,
   actorId: string,
+  // "Today at the shop" has to be *this* shop: an expense logged at Nasugbu is
+  // filed in Nasugbu's calendar day.
+  branchId?: string,
 ): Promise<Expense> {
   // A defaulted expense date is "today at the shop", not "today in UTC". Logging a
   // receipt at 07:00 local used to file it under yesterday's books.
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const { data, error } = await supabase
     .from('operating_expenses')
     .insert({
