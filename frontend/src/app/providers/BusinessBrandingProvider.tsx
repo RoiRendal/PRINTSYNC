@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import {
-  BRAND_LOGO_URL,
   DEFAULT_BUSINESS_DISPLAY_NAME,
   MAX_BUSINESS_LOGO_BYTES,
 } from '../../shared/constants/branding';
@@ -12,14 +11,18 @@ import { useAuth } from '../../app/stores/useAuthStore';
 type BusinessBrandingContextValue = {
   businessDisplayName: string;
   setBusinessDisplayName: (name: string) => Promise<void>;
-  /** Hosted logo URL persisted in `business_settings.logo_url`, or null when unset. */
-  businessLogoUrl: string | null;
-  /** Always renderable: the custom logo when set, otherwise the bundled asset. */
-  effectiveBusinessLogoUrl: string;
+  /**
+   * Hosted logo URL persisted in `business_settings.logo_url`, or `''` when the
+   * shop has none.
+   *
+   * It is a plain string rather than `string | null` because the value goes
+   * straight into an `<img src>`: an empty string makes the image render nothing
+   * without a request, whereas `null` renders the string "null". Callers branch
+   * on falsiness, which is both the render guard and the "no logo yet" guard.
+   */
+  businessLogoUrl: string;
   /** Uploads to Supabase Storage and persists the returned public URL. */
   uploadBusinessLogo: (file: File) => Promise<void>;
-  /** Reverts to the bundled logo. */
-  clearBusinessLogo: () => Promise<void>;
   vatRate: number;
   setVatRate: (rate: number) => Promise<void>;
   currencySymbol: string;
@@ -32,18 +35,21 @@ type BusinessBrandingContextValue = {
 const BusinessBrandingContext = createContext<BusinessBrandingContextValue | null>(null);
 
 /**
- * Legacy rows stored the logo inline as a base64 data URL. Those are no longer
+ * Only a hosted URL is renderable.
+ *
+ * Legacy rows stored the logo inline as a base64 data URL; those are no longer
  * rendered — they bloated every settings read and the login screen payload — so
- * anything that is not a hosted URL is treated as unset and the bundled logo takes
- * over until the user uploads again.
+ * anything that is not a hosted URL is treated as "no logo". There is no bundled
+ * fallback any more: the database is the only source, so a rejected value leaves
+ * the initials mark rather than a duplicate file.
  */
-function toHostedLogoUrl(value: string | null): string | null {
-  return value !== null && /^https?:\/\//.test(value) ? value : null;
+function toHostedLogoUrl(value: string | null): string {
+  return value !== null && /^https?:\/\//.test(value) ? value : '';
 }
 
 export function BusinessBrandingProvider({ children }: { children: React.ReactNode }) {
   const [businessDisplayName, setBusinessDisplayNameState] = useState(DEFAULT_BUSINESS_DISPLAY_NAME);
-  const [businessLogoUrl, setBusinessLogoUrlState] = useState<string | null>(null);
+  const [businessLogoUrl, setBusinessLogoUrlState] = useState<string>('');
   const [vatRate, setVatRate] = useState(12);
   const [currencySymbol, setCurrencySymbol] = useState('₱');
   const [brandingError, setBrandingError] = useState<string | null>(null);
@@ -110,12 +116,6 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
     setBrandingError(null);
   }, []);
 
-  const clearBusinessLogo = useCallback(async () => {
-    const settings = await settingsApi.clearLogo();
-    setBusinessLogoUrlState(toHostedLogoUrl(settings.logoUrl));
-    setBrandingError(null);
-  }, []);
-
   const setVatRateCallback = useCallback(async (rate: number) => {
     const settings = await settingsApi.updateBusiness({ businessName: businessDisplayName, vatRate: rate });
     setVatRate(settings.vatRate ?? 12);
@@ -128,16 +128,12 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
     setBrandingError(null);
   }, [businessDisplayName]);
 
-  const effectiveBusinessLogoUrl = businessLogoUrl ?? BRAND_LOGO_URL;
-
   const value = useMemo(
     () => ({
       businessDisplayName,
       setBusinessDisplayName,
       businessLogoUrl,
-      effectiveBusinessLogoUrl,
       uploadBusinessLogo,
-      clearBusinessLogo,
       vatRate,
       setVatRate: setVatRateCallback,
       currencySymbol,
@@ -145,7 +141,7 @@ export function BusinessBrandingProvider({ children }: { children: React.ReactNo
       maxBusinessLogoBytes: MAX_BUSINESS_LOGO_BYTES,
       brandingError,
     }),
-    [businessDisplayName, setBusinessDisplayName, businessLogoUrl, effectiveBusinessLogoUrl, uploadBusinessLogo, clearBusinessLogo, vatRate, setVatRateCallback, currencySymbol, setCurrencySymbolCallback, brandingError],
+    [businessDisplayName, setBusinessDisplayName, businessLogoUrl, uploadBusinessLogo, vatRate, setVatRateCallback, currencySymbol, setCurrencySymbolCallback, brandingError],
   );
 
   return (

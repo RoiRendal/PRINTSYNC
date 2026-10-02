@@ -370,7 +370,7 @@ describe('image asset uploads', () => {
     it('returns null for the bundled fallback logo', () => {
       // The same-origin fallback is not a Storage object, so there is nothing to
       // protect — and nothing to delete.
-      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, '/brand-logo.png'), null);
+      assert.equal(objectPathFromPublicUrl(BUSINESS_ASSET_BUCKET, '/legacy-logo.png'), null);
     });
 
     it('returns null for null or empty input', () => {

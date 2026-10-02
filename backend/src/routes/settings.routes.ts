@@ -68,6 +68,12 @@ settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), as
  * URL for the caller to reference later — the logo *is* the settings value, so
  * splitting this into upload-then-patch would leave an orphaned object whenever
  * the follow-up write failed.
+ *
+ * This is the only logo route. A `DELETE /logo` used to clear the stored URL so
+ * the app fell back to a bundled `/brand-logo.png`; that file is gone, so the
+ * route would have meant "delete the logo" while still being labelled as a
+ * reset. Both the route and the button that called it were removed — the
+ * database is the single source, and a shop with no logo shows its initials.
  */
 settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'), async (request, response) => {
   const parsed = logoUploadSchema.safeParse(request.body);
@@ -85,21 +91,5 @@ settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'),
   // Housekeeping runs after the response is ready and never throws: the logo is
   // already persisted, so a Storage hiccup here must not fail the request.
   await sweepOrphanedBusinessLogosSafely(getSupabase(), settings.logoUrl);
-  sendSuccess(response, settings);
-});
-
-/** Revert to the bundled `/brand-logo.png` by clearing the stored URL. */
-settingsRouter.delete('/logo', authenticate, requirePermission('settings.manage'), async (request, response) => {
-  if (!request.auth) throw new AppError(401, 'UNAUTHENTICATED', 'Sign in to continue.');
-  const settings = await setBusinessLogo(getSupabase(), null, request.auth.user.id);
-  await writeAuditLog(getSupabase(), {
-    actorId: request.auth.user.id,
-    action: 'settings.logo_removed',
-    entityType: 'business_settings',
-    entityId: '1',
-  });
-  publishDataChange('settings');
-  // Nothing is referenced any more, so every aged-out object becomes removable.
-  await sweepOrphanedBusinessLogosSafely(getSupabase(), null);
   sendSuccess(response, settings);
 });

@@ -24,6 +24,11 @@ supabase/.temp/
 # Temporary scratch / verification scratchpad (duplicates public assets)
 **/.tmp-verify/
 
+# Throwaway trees the image-format gate's own test builds under `backend/`.
+# They are per-case sandboxes, created and removed by the suite; this stops a
+# killed test run from leaving one staged.
+**/.tmp-image-gate/
+
 # Compiled output must never sit next to its TypeScript source. `shared-types`
 # compiles src -> dist; stale `src/*.js` files were committed once, and any tool
 # that prefers `.js` over `.ts` would silently resolve the stale build instead.

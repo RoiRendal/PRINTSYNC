@@ -13,12 +13,17 @@
  */
 
 import 'dotenv/config';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-import { businessLogo, designArtwork, productArtwork } from './seed/artwork.js';
+import { designArtwork, productArtwork } from './seed/artwork.js';
+import {
+  BRAND_LOGO_ASSET_PATH,
+  BRAND_LOGO_CONTENT_TYPE,
+  BRAND_LOGO_OBJECT_PATH,
+} from './seed/brandLogo.js';
 import {
   BUSINESS,
   CUSTOMERS,
@@ -385,9 +390,37 @@ async function uploadArtwork(supabase: SupabaseClient, bucket: string, path: str
   return data.publicUrl;
 }
 
+/**
+ * Uploads an existing binary asset from the repository.
+ *
+ * `uploadArtwork` generates an SVG string on the fly; the brand logo is a real
+ * PNG the owner supplied, so its bytes are read from disk instead. Kept separate
+ * rather than folded into `uploadArtwork` because the two differ in every
+ * argument that matters — buffer versus string, a declared type the generator
+ * did not choose, and a path fixed at upload time.
+ *
+ * `upsert: true` is deliberate: re-seeding must overwrite the same object rather
+ * than accumulate `brand-logo-1.png`, `brand-logo-2.png`, … as orphans. Because
+ * the path is fixed, a re-seed also repairs a `logo_url` that had drifted.
+ */
+async function uploadBinaryAsset(supabase: SupabaseClient, bucket: string, path: string, filePath: string): Promise<string> {
+  const bytes = readFileSync(filePath);
+  const { error } = await supabase.storage.from(bucket).upload(path, bytes, {
+    contentType: BRAND_LOGO_CONTENT_TYPE,
+    upsert: true,
+  });
+  if (error) throw new Error(`Could not upload ${path}: ${error.message}`);
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
 async function seedSettings(supabase: SupabaseClient, adminId: string): Promise<void> {
   if (!skipUploads) {
-    const logoUrl = await uploadArtwork(supabase, BUSINESS_BUCKET, 'seed/logo.svg', businessLogo(BUSINESS.name));
+    // The database becomes the one place the logo lives. The seed writes the
+    // owner's real PNG here; nothing else in the repository serves a logo, so a
+    // screen that cannot reach this URL has no logo to show — which is the
+    // honest state rather than a second, conflicting copy.
+    const logoUrl = await uploadBinaryAsset(supabase, BUSINESS_BUCKET, BRAND_LOGO_OBJECT_PATH, BRAND_LOGO_ASSET_PATH);
     const { error } = await supabase
       .from('business_settings')
       .update({ business_name: BUSINESS.name, vat_rate: BUSINESS.vatRate, currency_symbol: BUSINESS.currencySymbol, logo_url: logoUrl, updated_by: adminId })

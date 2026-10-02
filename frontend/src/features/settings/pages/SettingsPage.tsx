@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../../../app/providers/ThemeProvider';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { useNotifications } from '../../../app/providers/NotificationProvider';
-import { BRAND_LOGO_URL, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
+import { businessInitials, BUSINESS_LOGO_CONTENT_TYPES, DEFAULT_BUSINESS_DISPLAY_NAME } from '../../../shared/constants/branding';
 import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, SurfaceCard, Checkbox, Input, Select, SegmentedControl } from '../../../shared/components/ui';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { exportApi } from '../api/exportApi';
@@ -12,10 +12,8 @@ export default function Settings() {
   const {
     businessDisplayName,
     setBusinessDisplayName,
-    effectiveBusinessLogoUrl,
     businessLogoUrl,
     uploadBusinessLogo,
-    clearBusinessLogo,
     vatRate,
     setVatRate,
     currencySymbol,
@@ -102,18 +100,6 @@ export default function Settings() {
     }
   };
 
-  const handleClearBusinessLogo = async () => {
-    setLogoUploadError('');
-    setIsUploadingLogo(true);
-    try {
-      await clearBusinessLogo();
-    } catch (error) {
-      setLogoUploadError(error instanceof Error ? error.message : 'The business logo could not be removed.');
-    } finally {
-      setIsUploadingLogo(false);
-    }
-  };
-
   const handleExportOrders = async () => {
     setExportError('');
     try {
@@ -181,25 +167,32 @@ export default function Settings() {
             <div className="flex items-center gap-4">
               {/* The logo stands on its own — no 80px rounded bordered tile. It
                   is the preview of what the sidebar and login screen print, not a
-                  badge, and it now matches how those two render it. */}
-              <img src={effectiveBusinessLogoUrl} alt="" className="h-14 w-14 shrink-0 object-contain" />
+                  badge, and it now matches how those two render it.
+
+                  When nothing is stored it shows the business initials, the same
+                  mark the sidebar and login screen fall back to. There is no
+                  bundled logo file to fall back on, and no "reset" — the only way
+                  to change the logo is to upload one, which is why there is a
+                  single button here. */}
+              {businessLogoUrl === '' ? (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center text-2xl font-bold text-app-accent dark:text-app-accent-soft">
+                  {businessInitials(businessDisplayName)}
+                </div>
+              ) : (
+                <img src={businessLogoUrl} alt="" className="h-14 w-14 shrink-0 object-contain" />
+              )}
               <div className="min-w-0 flex-1 space-y-2">
                 <p className="text-xs font-bold text-app-ink dark:text-zinc-100">Business logo</p>
                 <p className="text-xs leading-relaxed text-app-text-muted dark:text-zinc-400">
                   Stored in Supabase Storage, up to{' '}
-                  <span className="font-mono text-2xs">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Falls back to{' '}
-                  <span className="font-mono text-2xs">{BRAND_LOGO_URL}</span> when unset.
+                  <span className="font-mono text-2xs">{Math.round(maxBusinessLogoBytes / (1024 * 1024))} MB</span>. Upload a new
+                  image to replace the current logo.
                 </p>
                 <input ref={logoFileInputRef} type="file" accept={BUSINESS_LOGO_CONTENT_TYPES.join(',')} className="sr-only" onChange={handleBusinessLogoFile} />
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" size="sm" disabled={isUploadingLogo} onClick={() => logoFileInputRef.current?.click()}>
                     {isUploadingLogo ? 'Uploading…' : 'Upload image'}
                   </Button>
-                  {businessLogoUrl != null && (
-                    <Button type="button" variant="secondary" size="sm" disabled={isUploadingLogo} onClick={handleClearBusinessLogo}>
-                      Use default logo
-                    </Button>
-                  )}
                 </div>
                 {logoError && <InlineAlert variant="inline" message={logoError} />}
               </div>

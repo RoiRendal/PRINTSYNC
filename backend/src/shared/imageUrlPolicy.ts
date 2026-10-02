@@ -13,10 +13,15 @@
  * Only two shapes are legitimate, because those are the only two the app itself
  * ever produces:
  *
- *   - a bundled preview served by this app, written as a rooted path
- *     (`/design-images/DSG-001.png`);
+ *   - a rooted path served by this app (`/some/asset.png`) — kept accepted so a
+ *     legacy row written under the old bundled-asset scheme still validates
+ *     rather than having to be migrated. Nothing in the app writes one any more;
+ *     the `design-images/` and `product-images/` folders that used to justify it
+ *     were removed when it turned out twelve of their fourteen files were not
+ *     the format their names claimed;
  *   - the public URL Supabase Storage returned for an uploaded asset, which is
- *     always on the configured project's own origin.
+ *     always on the configured project's own origin — the only shape the app
+ *     produces today.
  *
  * Everything else is refused at the edge of the API. One rule, used by both
  * columns — a security check kept in two places is a check that drifts.

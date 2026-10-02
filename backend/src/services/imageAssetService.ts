@@ -108,8 +108,9 @@ const PUBLIC_URL_MARKER = '/object/public/';
  * Inverse of `getPublicUrl`: recover the object path a public URL points at.
  *
  * Returns `null` when the value is not a public URL for `bucket` — a legacy
- * externally-hosted URL, or the bundled `/brand-logo.png` fallback. Callers use
- * that to decide whether a stored URL refers to an object they may manage.
+ * externally-hosted URL, or any non-hosted value left over from the removed
+ * bundled-logo fallback. Callers use that to decide whether a stored URL refers
+ * to an object they may manage.
  *
  * Lives next to `getPublicUrl` so the two halves of the URL contract cannot drift.
  */
