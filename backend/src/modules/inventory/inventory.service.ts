@@ -52,6 +52,7 @@ function toItem(row: Record<string, unknown>): InventoryItem {
 export async function listInventory(
   supabase: SupabaseClient,
   params: PaginationParams,
+  branchId: string,
   lowStock = false,
 ): Promise<PaginatedResponse<InventoryItem>> {
   const { start, end } = calculateRange(params.page, params.limit);
@@ -69,10 +70,15 @@ export async function listInventory(
    * `get_orders_summary` counts. That is why this list's low-stock total and the
    * summary's `lowStock` field must always agree — and the live cross-check
    * asserts they do.
+   *
+   * Both filters are applied because a branch's Low stock list must count its own
+   * shelf: the same `is_low_stock` flag exists per branch, and the summary is now
+   * branch-scoped too.
    */
   let query = supabase
     .from('inventory_items')
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at', { count: 'exact' })
+    .eq('branch_id', branchId)
     .order('name');
   if (lowStock) query = query.eq('is_low_stock', true);
   const { data, error, count } = await query.range(start, end);
@@ -82,6 +88,7 @@ export async function listInventory(
 
 export async function createInventoryItem(
   supabase: SupabaseClient,
+  branchId: string,
   input: InventoryInput,
 ): Promise<InventoryItem> {
   const { data, error } = await supabase
@@ -96,6 +103,9 @@ export async function createInventoryItem(
       cost_price: input.costPrice ?? 0,
       uom: input.uom ?? 'pc',
       image_url: input.imageUrl ?? null,
+      // Stock is entirely separate per branch, so the item is born into the
+      // caller's shelf. A stock item cannot exist without a shop that holds it.
+      branch_id: branchId,
     })
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
     .single();
@@ -106,6 +116,7 @@ export async function createInventoryItem(
 export async function updateInventoryItem(
   supabase: SupabaseClient,
   id: string,
+  branchId: string,
   input: Omit<InventoryInput, 'stock'>,
 ): Promise<InventoryItem> {
   const { data, error } = await supabase
@@ -133,24 +144,44 @@ export async function updateInventoryItem(
       ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
     })
     .eq('id', id)
+    .eq('branch_id', branchId)
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
     .single();
   if (error || !data) throw new AppError(404, 'INVENTORY_NOT_FOUND', 'The inventory item was not found.');
   return toItem(data);
 }
 
-export async function deleteInventoryItem(supabase: SupabaseClient, id: string): Promise<void> {
-  const { error } = await supabase.from('inventory_items').delete().eq('id', id);
+export async function deleteInventoryItem(supabase: SupabaseClient, id: string, branchId: string): Promise<void> {
+  const { error } = await supabase.from('inventory_items').delete().eq('id', id).eq('branch_id', branchId);
   if (error) throw new AppError(404, 'INVENTORY_DELETE_FAILED', 'The inventory item could not be deleted.');
 }
 
 export async function adjustInventoryStock(
   supabase: SupabaseClient,
   id: string,
+  branchId: string,
   quantity: number,
   reason: string,
   actorId: string,
 ): Promise<InventoryItem> {
+  /*
+   * The RPC validates the item exists but has no branch predicate of its own —
+   * `adjust_inventory_stock(item, qty, reason, actor)` only ever took an id. So
+   * the branch is checked here, before the call: without it, a Nasugbu staff
+   * member who knew a Balayan item id could move Balayan's stock. The check is a
+   * plain read rather than a new RPC parameter, because adding a parameter to
+   * this function would create an overload exactly as it would for the money
+   * RPCs — and the replay's overload check exists to prevent that.
+   */
+  const { data: owned, error: lookupError } = await supabase
+    .from('inventory_items')
+    .select('id')
+    .eq('id', id)
+    .eq('branch_id', branchId)
+    .maybeSingle();
+  if (lookupError) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'The inventory item could not be checked.');
+  if (!owned) throw new AppError(404, 'INVENTORY_NOT_FOUND', 'The inventory item was not found.');
+
   const { data, error } = await supabase.rpc('adjust_inventory_stock', {
     p_item_id: id,
     p_quantity: quantity,
@@ -161,10 +192,11 @@ export async function adjustInventoryStock(
   return toItem(data as Record<string, unknown>);
 }
 
-export async function exportInventory(supabase: SupabaseClient): Promise<InventoryItem[]> {
+export async function exportInventory(supabase: SupabaseClient, branchId: string): Promise<InventoryItem[]> {
   const { data, error } = await supabase
     .from('inventory_items')
     .select('id, sku, name, category, stock, reorder_level, price, cost_price, uom, image_url, created_at, updated_at')
+    .eq('branch_id', branchId)
     .order('name');
   if (error) throw new AppError(503, 'INVENTORY_LOOKUP_FAILED', 'Inventory could not be loaded.');
   return data.map((row) => toItem(row));

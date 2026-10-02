@@ -6,6 +6,7 @@ import { exportOrders } from '../modules/orders/orders.service.js';
 import { exportInventory } from '../modules/inventory/inventory.service.js';
 import { exportTransactions } from '../modules/payments/payments.service.js';
 import { AppError } from '../shared/errors.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { formatCsvHeaders, formatCsvRow } from '../shared/csv.js';
 import { getShopTimeZone, shopToday } from '../shared/shopClock.js';
 
@@ -24,8 +25,8 @@ function setCsvHeaders(response: Response, filename: string) {
 
 exportRouter.get('/orders', authenticate, requirePermission('orders.read'), async (request, response) => {
   const supabase = getSupabase();
-  const branchId = request.auth?.profile.branchId ?? undefined;
-  const orders = await exportOrders(supabase);
+  const branchId = getCallerBranch(request);
+  const orders = await exportOrders(supabase, branchId);
   // Named for the shop's date, so a file exported at 07:00 local is not stamped
   // with yesterday.
   const date = shopToday(await getShopTimeZone(supabase, branchId));
@@ -51,8 +52,8 @@ exportRouter.get('/orders', authenticate, requirePermission('orders.read'), asyn
 
 exportRouter.get('/inventory', authenticate, requirePermission('inventory.read'), async (request, response) => {
   const supabase = getSupabase();
-  const branchId = request.auth?.profile.branchId ?? undefined;
-  const items = await exportInventory(supabase);
+  const branchId = getCallerBranch(request);
+  const items = await exportInventory(supabase, branchId);
   const date = shopToday(await getShopTimeZone(supabase, branchId));
   setCsvHeaders(response, `inventory_${date}.csv`);
   response.write(formatCsvHeaders(['ID', 'SKU', 'Name', 'Category', 'Stock', 'Reorder Level', 'Price', 'Cost Price', 'Image URL', 'Created At', 'Updated At']));
@@ -76,8 +77,8 @@ exportRouter.get('/inventory', authenticate, requirePermission('inventory.read')
 
 exportRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (request, response) => {
   const supabase = getSupabase();
-  const branchId = request.auth?.profile.branchId ?? undefined;
-  const transactions = await exportTransactions(supabase);
+  const branchId = getCallerBranch(request);
+  const transactions = await exportTransactions(supabase, branchId);
   const date = shopToday(await getShopTimeZone(supabase, branchId));
   setCsvHeaders(response, `transactions_${date}.csv`);
   response.write(formatCsvHeaders(['ID', 'Date', 'Status', 'Payment Method', 'Subtotal', 'Discount', 'Tax', 'Total', 'Payment Amount', 'Items']));

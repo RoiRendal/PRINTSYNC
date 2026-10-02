@@ -7,6 +7,7 @@ import { createOrder, deleteOrder, getOrder, getOrdersSummary, listOrders, updat
 import { ORDER_STATUSES } from '../modules/orders/orderStatuses.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { paginationQuerySchema } from '../shared/pagination.js';
@@ -74,7 +75,7 @@ ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (req
     throw new AppError(400, 'INVALID_ORDER_QUERY', 'The order filters are invalid.');
   }
   const { status, ...pagination } = parsed.data;
-  sendSuccess(response, await listOrders(getSupabase(), pagination, status));
+  sendSuccess(response, await listOrders(getSupabase(), pagination, getCallerBranch(request), status));
 });
 
 /*
@@ -90,14 +91,14 @@ ordersRouter.get('/', authenticate, requirePermission('orders.read'), async (req
  * have made the page admin-only again through the back door.
  */
 ordersRouter.get('/summary', authenticate, requirePermission('orders.read'), async (request, response) => {
-  // The caller's branch is passed through even though the RPC cannot use it yet
-  // (it takes no parameters by design). This keeps the router correct now and
-  // keeps Phase 3 to a single migration instead of a migration plus a route edit.
-  sendSuccess(response, await getOrdersSummary(getSupabase(), request.auth?.profile.branchId ?? undefined));
+  // The count is the caller's branch. The RPC takes `p_branch_id` as of migration
+  // 20261002000500; this route was already passing the branch since Phase 1, so
+  // only the service changed.
+  sendSuccess(response, await getOrdersSummary(getSupabase(), getCallerBranch(request)));
 });
 
 ordersRouter.get('/:id', authenticate, requirePermission('orders.read'), async (request, response) => {
-  sendSuccess(response, await getOrder(getSupabase(), getOrderId(request)));
+  sendSuccess(response, await getOrder(getSupabase(), getOrderId(request), getCallerBranch(request)));
 });
 
 ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (request, response) => {
@@ -106,7 +107,7 @@ ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (
   // `order.created` is audited by `create_order_with_items`, inside the same
   // transaction as the order and its stock reservation. Auditing here as well
   // would write the row twice.
-  const order = await createOrder(getSupabase(), parsed.data, request.auth.user.id);
+  const order = await createOrder(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   // `create_order_with_items` reserves stock, so the inventory pages are stale too.
   publishDataChange('orders', 'inventory');
   response.status(201).json({ data: order });
@@ -119,7 +120,7 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
   // The version precondition is not part of the order, so it is kept out of the
   // payload the service writes.
   const { expectedUpdatedAt, ...updates } = parsed.data;
-  const order = await updateOrder(getSupabase(), orderId, updates, request.auth.user.id, expectedUpdatedAt);
+  const order = await updateOrder(getSupabase(), orderId, updates, request.auth.user.id, expectedUpdatedAt, getCallerBranch(request));
   /*
    * Only one of the two update paths has an RPC, and only an RPC can audit
    * atomically. A line-item change goes through `replace_order_with_items`, which
@@ -144,7 +145,7 @@ ordersRouter.delete('/:id', authenticate, requirePermission('orders.delete'), as
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const orderId = getOrderId(request);
   // Audited by `delete_order_with_items`, in the same transaction as the delete.
-  await deleteOrder(getSupabase(), orderId, request.auth.user.id);
+  await deleteOrder(getSupabase(), orderId, request.auth.user.id, getCallerBranch(request));
   // `delete_order_with_items` releases the reserved stock back to inventory.
   publishDataChange('orders', 'inventory');
   response.status(204).send();

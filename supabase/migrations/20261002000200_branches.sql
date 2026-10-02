@@ -112,19 +112,19 @@ alter table public.business_settings
 alter table public.business_settings
   add constraint business_settings_branch_id_key unique (branch_id);
 
--- Give Nasugbu an empty row so the settings screen has something to read on day
--- one. The name is seeded from the branch so the UI is never blank; the logo is
--- deliberately null (the UI renders the business initials) because Nasugbu's
--- artwork does not exist yet.
-insert into public.business_settings (branch_id, business_name)
-select b.id, 'IC Printing Services - ' || b.name
-from public.branches b
-where b.code = 'NAS'
-on conflict (branch_id) do nothing;
-
 -- `id` still carries `default 1`, which would make the *next* insert collide with
 -- the existing Balayan row. A sequence is this schema's normal answer and needs no
 -- change to the client, which never sends an id.
+--
+-- ⚠ This MUST run before the Nasugbu insert below, and the ordering is load-
+-- bearing rather than cosmetic. The Balayan row already occupies `id = 1`; while
+-- the default is still the literal `1`, the very next insert into this table —
+-- Nasugbu's settings row — asks for id 1 a second time and dies on
+-- `business_settings_pkey`. That is not a theoretical risk: it is what the
+-- migration-replay gate caught (44/46 applied, FAILED at this file), and it
+-- would have aborted `supabase db push` in production because Supabase runs each
+-- migration in a single transaction. Creating the sequence and switching the
+-- default first is what makes the insert legal.
 create sequence if not exists public.business_settings_id_seq;
 
 select setval(
@@ -136,6 +136,19 @@ alter table public.business_settings
   alter column id set default nextval('public.business_settings_id_seq');
 
 alter sequence public.business_settings_id_seq owned by public.business_settings.id;
+
+-- Give Nasugbu an empty row so the settings screen has something to read on day
+-- one. The name is seeded from the branch so the UI is never blank; the logo is
+-- deliberately null (the UI renders the business initials) because Nasugbu's
+-- artwork does not exist yet.
+--
+-- `branch_id` is the conflict target, not `id`: the row's identity as "Nasugbu's
+-- settings" is the branch, and `id` is now just the sequence's output.
+insert into public.business_settings (branch_id, business_name)
+select b.id, 'IC Printing Services - ' || b.name
+from public.branches b
+where b.code = 'NAS'
+on conflict (branch_id) do nothing;
 
 comment on column public.business_settings.branch_id is
   'The branch these settings belong to. Exactly one row per branch (unique). Identifies the shop; `id` is now just a surrogate key.';
@@ -178,10 +191,16 @@ comment on column public.profiles.can_view_all_branches is
 -- boolean on each account.
 --
 -- `app_role` is seeded with ('admin', 'staff'). `roles.name` is typed on that enum,
--- so adding 'owner' here is what makes the value expressible; the alternative —
+-- so the value has to exist before this row can name it; the alternative —
 -- overloading `admin` — would have made "can see both branches" and "manages the
 -- system" the same thing, which the owner explicitly did not ask for.
-alter type public.app_role add value if not exists 'owner';
+--
+-- ⚠ The enum value itself is added by the migration *immediately before* this one
+-- (`20261002000150_app_role_owner_enum.sql`), not here. PostgreSQL rejects using an
+-- enum value in the same transaction that added it, and Supabase wraps each file
+-- in one transaction, so `alter type ... add value` followed by this `insert`
+-- cannot share a file — it fails with `unsafe use of new value "owner" of enum
+-- type app_role`. Splitting them is what lets the value be used at all.
 
 insert into public.roles (name, description)
 values ('owner', 'Owner / head office. Full read access across branches for reporting.')

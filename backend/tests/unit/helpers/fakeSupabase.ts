@@ -378,9 +378,38 @@ export class FakeSupabase {
     return match ? cloneCall(match) : undefined;
   }
 
-  /** Convenience: the args of the first filter of `method` on a call. */
+  /**
+   * Convenience: the args of the first filter of `method` on a call.
+   *
+   * **Prefer `filtersOf`/`hasFilter` when a query carries more than one filter of
+   * the same kind.** This returns the *first* match, so once `.eq('branch_id', …)`
+   * began leading every branch-scoped query, an assertion like
+   * `filterOf(call, 'eq')` started reporting the branch filter for every
+   * predicate a test meant to check — passing or failing for a reason the test
+   * never stated. It is kept for the genuinely single-filter cases (a `range`, a
+   * bare `id` lookup) where "the first" and "the only" are the same thing.
+   */
   static filterOf(call: FakeCall | undefined, method: string): readonly unknown[] | undefined {
     return call?.filters.find((filter) => filter.method === method)?.args;
+  }
+
+  /** Every filter of `method` on a call, in the order the service applied them. */
+  static filtersOf(call: FakeCall | undefined, method: string): readonly (readonly unknown[])[] {
+    return call?.filters.filter((filter) => filter.method === method).map((filter) => filter.args) ?? [];
+  }
+
+  /**
+   * Whether a call carries a specific `method(column, value)` filter.
+   *
+   * This is the assertion branch scoping needs: a test asks "is this query
+   * narrowed to the caller's branch?" without having to know or care which
+   * position that filter occupies — or how many others were added later.
+   */
+  static hasFilter(call: FakeCall | undefined, method: string, args: readonly unknown[]): boolean {
+    return (call?.filters ?? []).some(
+      (filter) => filter.method === method && (filter.args as readonly unknown[]).length === args.length &&
+        (filter.args as readonly unknown[]).every((value, index) => value === args[index]),
+    );
   }
 
   /** Every upload recorded so far, oldest first. */

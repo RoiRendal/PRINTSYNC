@@ -5,6 +5,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { getBusinessSettings, setBusinessLogo, updateBusinessSettings } from '../modules/settings/settings.service.js';
 import { AppError } from '../shared/errors.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
@@ -47,15 +48,11 @@ function getSupabase() {
  * caller-supplied branch id would let any staff member read or rewrite another
  * branch's name, VAT rate and logo.
  *
- * A profile with no branch is rejected rather than defaulted: silently writing to
- * Balayan because a caller's branch was missing is how one branch's settings get
- * overwritten by another.
+ * Moved to `shared/branchContext.ts` when Phase 2 gave the same requirement to
+ * every operational route; it is imported at the top of this file. The shared
+ * module's doc comment carries the full reasoning, including why an account with
+ * no branch is a 403 rather than a default.
  */
-function getCallerBranch(request: { auth?: { profile: { branchId: string | null } } }): string {
-  const branchId = request.auth?.profile.branchId;
-  if (!branchId) throw new AppError(403, 'BRANCH_NOT_ASSIGNED', 'This account is not assigned to a branch.');
-  return branchId;
-}
 
 settingsRouter.get('/', authenticate, requirePermission('settings.read'), async (request, response) => {
   sendSuccess(response, await getBusinessSettings(getSupabase(), getCallerBranch(request)));

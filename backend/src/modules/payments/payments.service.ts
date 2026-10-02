@@ -138,22 +138,28 @@ async function mapTransactions(
 export async function listTransactions(
   supabase: SupabaseClient,
   params: PaginationParams,
+  branchId: string,
 ): Promise<PaginatedResponse<TransactionRecord>> {
   const { start, end } = calculateRange(params.page, params.limit);
   const { data, error, count } = await supabase
     .from('sales_transactions')
     .select(transactionSelect, { count: 'exact' })
+    // A branch's till history is its own. `count: 'exact'` keeps `total` the
+    // filtered count, so the pager is honest for this branch's rows.
+    .eq('branch_id', branchId)
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'TRANSACTIONS_LOOKUP_FAILED', 'Transactions could not be loaded.');
-  const transactions = await mapTransactions(supabase, data);
+  const transactions = await mapTransactions(supabase, data, branchId);
   return createPaginatedResponse(transactions, count ?? 0, params.page, params.limit);
 }
 
-export async function getTransaction(supabase: SupabaseClient, id: string): Promise<TransactionRecord> {
-  const { data, error } = await supabase.from('sales_transactions').select(transactionSelect).eq('id', id).maybeSingle();
+export async function getTransaction(supabase: SupabaseClient, id: string, branchId?: string): Promise<TransactionRecord> {
+  let query = supabase.from('sales_transactions').select(transactionSelect).eq('id', id);
+  if (branchId) query = query.eq('branch_id', branchId);
+  const { data, error } = await query.maybeSingle();
   if (error || !data) throw new AppError(404, 'TRANSACTION_NOT_FOUND', 'The transaction was not found.');
-  const [transaction] = await mapTransactions(supabase, [data]);
+  const [transaction] = await mapTransactions(supabase, [data], branchId);
   return transaction as TransactionRecord;
 }
 
@@ -176,15 +182,20 @@ export async function getTransaction(supabase: SupabaseClient, id: string): Prom
 export async function findTransactionByIdempotencyKey(
   supabase: SupabaseClient,
   key: string,
+  branchId: string,
 ): Promise<TransactionRecord | null> {
   const { data, error } = await supabase
     .from('sales_transactions')
     .select(transactionSelect)
     .eq('idempotency_key', key)
+    // Scoped, so a guessed key from one branch cannot reveal another branch's
+    // sale. The key is a uuid and unguessable, but a lookup that returns another
+    // shop's receipt is still the wrong answer to give.
+    .eq('branch_id', branchId)
     .maybeSingle();
   if (error) throw new AppError(503, 'TRANSACTION_LOOKUP_FAILED', 'The checkout could not be verified.');
   if (!data) return null;
-  const [transaction] = await mapTransactions(supabase, [data]);
+  const [transaction] = await mapTransactions(supabase, [data], branchId);
   return transaction as TransactionRecord;
 }
 
@@ -233,7 +244,12 @@ function mapCreateFailure(error: { message?: string; details?: string | null } |
   return new AppError(400, 'TRANSACTION_CREATE_FAILED', message);
 }
 
-export async function createTransaction(supabase: SupabaseClient, input: TransactionInput, actorId: string): Promise<TransactionRecord> {
+export async function createTransaction(
+  supabase: SupabaseClient,
+  input: TransactionInput,
+  actorId: string,
+  branchId: string,
+): Promise<TransactionRecord> {
   const { data, error } = await supabase.rpc('create_transaction_with_payment', {
     p_subtotal: input.subtotal,
     p_discount: input.discount,
@@ -252,26 +268,44 @@ export async function createTransaction(supabase: SupabaseClient, input: Transac
     // transaction, so a sale can no longer commit with its audit row lost. A
     // replayed key writes none: nothing moved, and the original attempt has one.
     ...auditRpcArguments(),
+    // The branch that rings up the sale, and the branch whose stock it deducts.
+    // Required by the RPC as of 20261002000400.
+    p_branch_id: branchId,
   });
   if (error || !data) throw mapCreateFailure(error);
-  return getTransaction(supabase, String((data as Record<string, unknown>).id));
+  return getTransaction(supabase, String((data as Record<string, unknown>).id), branchId);
 }
 
-export async function voidTransaction(supabase: SupabaseClient, id: string, actorId: string): Promise<TransactionRecord> {
+export async function voidTransaction(supabase: SupabaseClient, id: string, actorId: string, branchId: string): Promise<TransactionRecord> {
+  /*
+   * `void_transaction` takes no branch and voids by id, so the sale is checked as
+   * belonging to this branch first — the same shape as `deleteOrder`. A new RPC
+   * parameter would leave the old arity behind as an overload.
+   */
+  const { data: owned, error: lookupError } = await supabase
+    .from('sales_transactions')
+    .select('id')
+    .eq('id', id)
+    .eq('branch_id', branchId)
+    .maybeSingle();
+  if (lookupError) throw new AppError(503, 'TRANSACTIONS_LOOKUP_FAILED', 'The sale could not be checked.');
+  if (!owned) throw new AppError(404, 'TRANSACTION_NOT_FOUND', 'The transaction was not found.');
+
   const { data, error } = await supabase.rpc('void_transaction', {
     p_transaction_id: id,
     p_voided_by: actorId,
     ...auditRpcArguments(),
   });
   if (error || !data) throw new AppError(400, 'TRANSACTION_VOID_FAILED', error?.message ?? 'The transaction could not be voided.');
-  return getTransaction(supabase, String((data as Record<string, unknown>).id));
+  return getTransaction(supabase, String((data as Record<string, unknown>).id), branchId);
 }
 
-export async function exportTransactions(supabase: SupabaseClient): Promise<TransactionRecord[]> {
+export async function exportTransactions(supabase: SupabaseClient, branchId: string): Promise<TransactionRecord[]> {
   const { data, error } = await supabase
     .from('sales_transactions')
     .select(transactionSelect)
+    .eq('branch_id', branchId)
     .order('created_at', { ascending: false });
   if (error) throw new AppError(503, 'TRANSACTIONS_LOOKUP_FAILED', 'Transactions could not be loaded.');
-  return mapTransactions(supabase, data);
+  return mapTransactions(supabase, data, branchId);
 }

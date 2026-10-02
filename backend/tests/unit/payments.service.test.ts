@@ -26,6 +26,13 @@ const REQUEST_CONTEXT = {
   userAgent: 'till/1.0',
 };
 
+/**
+ * A branch's till history is its own (migration 20261002000300), so every read
+ * and write is narrowed to the caller's branch. The line items and payments
+ * inherit the branch through their parent row and carry no column of their own.
+ */
+const BRANCH = 'branch-balayan';
+
 const TRANSACTION_ROW = {
   id: 'txn-1',
   status: 'completed',
@@ -34,6 +41,7 @@ const TRANSACTION_ROW = {
   tax: 24,
   total: 204,
   payment_method: 'Cash',
+  branch_id: BRANCH,
   created_at: '2026-09-15T09:15:00.000Z',
 };
 
@@ -63,13 +71,19 @@ function queueTransactionSingle(db: FakeSupabase, row: Record<string, unknown> |
   queueTransactionChildren(db);
 }
 
+/** Queues the branch time-zone read every hydration performs. */
+function queueShopTimeZone(db: FakeSupabase, timeZone: string = 'Asia/Manila'): void {
+  db.queueTable('business_settings', { data: { branch_id: BRANCH, timezone: timeZone, currency: 'PHP' }, error: null });
+}
+
 describe('payments.service', () => {
   describe('listTransactions', () => {
     it('maps rows and joins line items with captured payments', async () => {
       const db = createFakeSupabase();
       queueTransactionList(db, [TRANSACTION_ROW]);
+      queueShopTimeZone(db);
 
-      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 })).data;
+      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH)).data;
 
       assert.ok(transaction);
       assert.equal(transaction.id, 'txn-1');
@@ -89,11 +103,25 @@ describe('payments.service', () => {
       ]);
     });
 
+    it('narrows the till history to the caller\'s branch', async () => {
+      // Without the predicate the list would show both shops' takings and
+      // `total` would count them together — the exact leak branch separation
+      // exists to prevent.
+      const db = createFakeSupabase();
+      queueTransactionList(db, [TRANSACTION_ROW]);
+      queueShopTimeZone(db);
+
+      await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH);
+
+      assert.ok(FakeSupabase.hasFilter(db.callsFor('sales_transactions')[0], 'eq', ['branch_id', BRANCH]));
+    });
+
     it('reads the customer off the sale, empty for an anonymous walk-in', async () => {
       const db = createFakeSupabase();
       queueTransactionList(db, [TRANSACTION_ROW]);
+      queueShopTimeZone(db);
 
-      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 })).data;
+      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH)).data;
 
       // `TRANSACTION_ROW` carries no `customer`, which is the row written before
       // the column existed. The contract promises a string, not null.
@@ -104,8 +132,9 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: [TRANSACTION_ROW], error: null, count: 1 });
       queueTransactionChildren(db);
+      queueShopTimeZone(db);
 
-      await listTransactions(db.client, { page: 1, limit: 20 });
+      await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH);
 
       assert.deepEqual(FakeSupabase.filterOf(db.callsFor('payments')[0], 'eq'), ['status', 'captured']);
     });
@@ -114,8 +143,9 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: [TRANSACTION_ROW], error: null, count: 1 });
       queueTransactionChildren(db, ITEM_ROWS, []);
+      queueShopTimeZone(db);
 
-      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 })).data;
+      const [transaction] = (await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH)).data;
 
       assert.ok(transaction);
       assert.equal(transaction.paymentAmount, 0);
@@ -125,7 +155,7 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       queueTransactionList(db, []);
 
-      await listTransactions(db.client, { page: 4, limit: 15 });
+      await listTransactions(db.client, { page: 4, limit: 15 }, BRANCH);
 
       assert.deepEqual(FakeSupabase.filterOf(db.callsFor('sales_transactions')[0], 'range'), [45, 59]);
     });
@@ -134,7 +164,7 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: [], error: null, count: 0 });
 
-      const response = await listTransactions(db.client, { page: 1, limit: 20 });
+      const response = await listTransactions(db.client, { page: 1, limit: 20 }, BRANCH);
 
       assert.deepEqual(response.data, []);
       assert.equal(db.callsFor('sales_transaction_items').length, 0);
@@ -145,7 +175,7 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: null, error: { message: 'timeout' } });
 
-      await assertAppError(() => listTransactions(db.client, { page: 1, limit: 20 }), 503, 'TRANSACTIONS_LOOKUP_FAILED');
+      await assertAppError(() => listTransactions(db.client, { page: 1, limit: 20 }, BRANCH), 503, 'TRANSACTIONS_LOOKUP_FAILED');
     });
 
     it('maps a payment lookup failure to a 503 PAYMENTS_LOOKUP_FAILED', async () => {
@@ -153,8 +183,9 @@ describe('payments.service', () => {
       db.queueTable('sales_transactions', { data: [TRANSACTION_ROW], error: null, count: 1 });
       db.queueTable('sales_transaction_items', { data: ITEM_ROWS, error: null });
       db.queueTable('payments', { data: null, error: { message: 'boom' } });
+      queueShopTimeZone(db);
 
-      await assertAppError(() => listTransactions(db.client, { page: 1, limit: 20 }), 503, 'PAYMENTS_LOOKUP_FAILED');
+      await assertAppError(() => listTransactions(db.client, { page: 1, limit: 20 }, BRANCH), 503, 'PAYMENTS_LOOKUP_FAILED');
     });
   });
 
@@ -162,8 +193,9 @@ describe('payments.service', () => {
     it('returns the mapped transaction', async () => {
       const db = createFakeSupabase();
       queueTransactionSingle(db);
+      queueShopTimeZone(db);
 
-      const transaction = await getTransaction(db.client, 'txn-1');
+      const transaction = await getTransaction(db.client, 'txn-1', BRANCH);
 
       assert.equal(transaction.id, 'txn-1');
       assert.equal(transaction.paymentAmount, 204);
@@ -173,7 +205,32 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: null, error: null });
 
-      await assertAppError(() => getTransaction(db.client, 'missing'), 404, 'TRANSACTION_NOT_FOUND');
+      await assertAppError(() => getTransaction(db.client, 'missing', BRANCH), 404, 'TRANSACTION_NOT_FOUND');
+    });
+
+    it('looks the sale up by id **and** branch when a branch is given', async () => {
+      const db = createFakeSupabase();
+      queueTransactionSingle(db);
+      queueShopTimeZone(db);
+
+      await getTransaction(db.client, 'txn-1', BRANCH);
+
+      assert.deepEqual(FakeSupabase.filtersOf(db.lastCall('sales_transactions', 'select'), 'eq'), [
+        ['id', 'txn-1'],
+        ['branch_id', BRANCH],
+      ]);
+    });
+
+    it('omits the branch predicate when no branch is given', async () => {
+      // The internal arity the RPC wrappers use, after the branch was just
+      // written by that RPC.
+      const db = createFakeSupabase();
+      queueTransactionSingle(db);
+      queueShopTimeZone(db);
+
+      await getTransaction(db.client, 'txn-1');
+
+      assert.deepEqual(FakeSupabase.filtersOf(db.lastCall('sales_transactions', 'select'), 'eq'), [['id', 'txn-1']]);
     });
   });
 
@@ -181,11 +238,27 @@ describe('payments.service', () => {
     it('returns the transaction a checkout committed under that key', async () => {
       const db = createFakeSupabase();
       queueTransactionSingle(db);
+      queueShopTimeZone(db);
 
-      const transaction = await findTransactionByIdempotencyKey(db.client, 'key-1');
+      const transaction = await findTransactionByIdempotencyKey(db.client, 'key-1', BRANCH);
 
       assert.ok(transaction);
       assert.equal(transaction.id, 'txn-1');
+    });
+
+    it('scopes the lookup to the caller\'s branch', async () => {
+      // The key is a uuid and unguessable, but a lookup that returns another
+      // shop's receipt is still the wrong answer to give.
+      const db = createFakeSupabase();
+      queueTransactionSingle(db);
+      queueShopTimeZone(db);
+
+      await findTransactionByIdempotencyKey(db.client, 'key-1', BRANCH);
+
+      assert.deepEqual(FakeSupabase.filtersOf(db.lastCall('sales_transactions', 'select'), 'eq'), [
+        ['idempotency_key', 'key-1'],
+        ['branch_id', BRANCH],
+      ]);
     });
 
     it('returns null — not an error — when nothing carries the key', async () => {
@@ -195,7 +268,7 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: null, error: null });
 
-      assert.equal(await findTransactionByIdempotencyKey(db.client, 'key-unknown'), null);
+      assert.equal(await findTransactionByIdempotencyKey(db.client, 'key-unknown', BRANCH), null);
     });
 
     it('raises 503 rather than reporting "no sale" when the lookup itself fails', async () => {
@@ -205,7 +278,7 @@ describe('payments.service', () => {
       db.queueTable('sales_transactions', { data: null, error: { message: 'connection reset' } });
 
       await assertAppError(
-        () => findTransactionByIdempotencyKey(db.client, 'key-1'),
+        () => findTransactionByIdempotencyKey(db.client, 'key-1', BRANCH),
         503,
         'TRANSACTION_LOOKUP_FAILED',
       );
@@ -228,8 +301,9 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueRpc('create_transaction_with_payment', { data: { id: 'txn-1' } });
       queueTransactionSingle(db);
+      queueShopTimeZone(db);
 
-      const transaction = await createTransaction(db.client, baseInput, 'actor-1');
+      const transaction = await createTransaction(db.client, baseInput, 'actor-1', BRANCH);
 
       const payload = db.lastCall('create_transaction_with_payment')?.payload as Record<string, unknown>;
       assert.equal(payload.p_subtotal, 200);
@@ -240,6 +314,9 @@ describe('payments.service', () => {
       assert.equal(payload.p_received_amount, 250);
       assert.equal(payload.p_created_by, 'actor-1');
       assert.equal(payload.p_idempotency_key, baseInput.idempotencyKey);
+      // The branch that rings up the sale, and the branch whose stock it
+      // deducts. Required by the RPC as of 20261002000400.
+      assert.equal(payload.p_branch_id, BRANCH);
       assert.equal(transaction.id, 'txn-1');
     });
 
@@ -247,8 +324,9 @@ describe('payments.service', () => {
       const db = createFakeSupabase();
       db.queueRpc('create_transaction_with_payment', { data: { id: 'txn-1' } });
       queueTransactionSingle(db);
+      queueShopTimeZone(db);
 
-      await runWithRequestContext(REQUEST_CONTEXT, () => createTransaction(db.client, baseInput, 'actor-1'));
+      await runWithRequestContext(REQUEST_CONTEXT, () => createTransaction(db.client, baseInput, 'actor-1', BRANCH));
 
       const payload = db.lastCall('create_transaction_with_payment')?.payload as Record<string, unknown>;
       assert.equal(payload.p_audit_request_id, 'req-sale-1');
@@ -261,7 +339,7 @@ describe('payments.service', () => {
       db.queueRpc('create_transaction_with_payment', { data: null, error: { message: 'totals do not match items' } });
 
       await assertAppError(
-        () => createTransaction(db.client, { ...baseInput, subtotal: 999, total: 999 }, 'actor-1'),
+        () => createTransaction(db.client, { ...baseInput, subtotal: 999, total: 999 }, 'actor-1', BRANCH),
         400,
         'TRANSACTION_CREATE_FAILED',
         'totals do not match items',
@@ -279,7 +357,7 @@ describe('payments.service', () => {
       });
 
       const error = await assertAppError(
-        () => createTransaction(db.client, baseInput, 'actor-1'),
+        () => createTransaction(db.client, baseInput, 'actor-1', BRANCH),
         409,
         'INSUFFICIENT_STOCK',
       );
@@ -299,7 +377,7 @@ describe('payments.service', () => {
       });
 
       const error = await assertAppError(
-        () => createTransaction(db.client, baseInput, 'actor-1'),
+        () => createTransaction(db.client, baseInput, 'actor-1', BRANCH),
         400,
         'TRANSACTION_CREATE_FAILED',
       );
@@ -309,13 +387,40 @@ describe('payments.service', () => {
   });
 
   describe('voidTransaction', () => {
-    it('voids through the RPC and returns the refreshed transaction', async () => {
+    it('checks the sale belongs to the caller\'s branch before voiding it', async () => {
+      // `void_transaction` takes no branch and voids by id, so the check has to
+      // happen here — the same shape as `deleteOrder`.
       const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: { id: 'txn-1' }, error: null });
       db.queueRpc('void_transaction', { data: { id: 'txn-1' } });
       db.queueTable('sales_transactions', { data: { ...TRANSACTION_ROW, status: 'voided' }, error: null });
       queueTransactionChildren(db);
+      queueShopTimeZone(db);
 
-      const transaction = await voidTransaction(db.client, 'txn-1', 'actor-1');
+      await voidTransaction(db.client, 'txn-1', 'actor-1', BRANCH);
+
+      const ownershipRead = db.callsFor('sales_transactions', 'select')[0];
+      assert.ok(FakeSupabase.hasFilter(ownershipRead, 'eq', ['branch_id', BRANCH]));
+    });
+
+    it('refuses to void a sale outside the caller\'s branch', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: null, error: null });
+      db.queueRpc('void_transaction', { data: { id: 'txn-1' } });
+
+      await assertAppError(() => voidTransaction(db.client, 'txn-1', 'actor-1', BRANCH), 404, 'TRANSACTION_NOT_FOUND');
+      assert.equal(db.callsFor('void_transaction').length, 0);
+    });
+
+    it('voids through the RPC and returns the refreshed transaction', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: { id: 'txn-1' }, error: null });
+      db.queueRpc('void_transaction', { data: { id: 'txn-1' } });
+      db.queueTable('sales_transactions', { data: { ...TRANSACTION_ROW, status: 'voided' }, error: null });
+      queueTransactionChildren(db);
+      queueShopTimeZone(db);
+
+      const transaction = await voidTransaction(db.client, 'txn-1', 'actor-1', BRANCH);
 
       const payload = db.lastCall('void_transaction')?.payload as Record<string, unknown>;
       assert.equal(payload.p_transaction_id, 'txn-1');
@@ -325,11 +430,13 @@ describe('payments.service', () => {
 
     it('carries the request context into the void RPC, which audits the reversal', async () => {
       const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: { id: 'txn-1' }, error: null });
       db.queueRpc('void_transaction', { data: { id: 'txn-1' } });
       db.queueTable('sales_transactions', { data: { ...TRANSACTION_ROW, status: 'voided' }, error: null });
       queueTransactionChildren(db);
+      queueShopTimeZone(db);
 
-      await runWithRequestContext(REQUEST_CONTEXT, () => voidTransaction(db.client, 'txn-1', 'actor-1'));
+      await runWithRequestContext(REQUEST_CONTEXT, () => voidTransaction(db.client, 'txn-1', 'actor-1', BRANCH));
 
       const payload = db.lastCall('void_transaction')?.payload as Record<string, unknown>;
       assert.equal(payload.p_audit_request_id, 'req-sale-1');
@@ -339,28 +446,31 @@ describe('payments.service', () => {
 
     it('maps a void failure to a 400 TRANSACTION_VOID_FAILED', async () => {
       const db = createFakeSupabase();
+      db.queueTable('sales_transactions', { data: { id: 'txn-1' }, error: null });
       db.queueRpc('void_transaction', { data: null, error: { message: 'already voided' } });
 
-      await assertAppError(() => voidTransaction(db.client, 'txn-1', 'actor-1'), 400, 'TRANSACTION_VOID_FAILED', 'already voided');
+      await assertAppError(() => voidTransaction(db.client, 'txn-1', 'actor-1', BRANCH), 400, 'TRANSACTION_VOID_FAILED', 'already voided');
     });
   });
 
   describe('exportTransactions', () => {
-    it('reads the whole table without a range', async () => {
+    it('reads the whole branch without a range', async () => {
       const db = createFakeSupabase();
       queueTransactionList(db, [TRANSACTION_ROW]);
+      queueShopTimeZone(db);
 
-      const transactions = await exportTransactions(db.client);
+      const transactions = await exportTransactions(db.client, BRANCH);
 
       assert.equal(transactions.length, 1);
       assert.equal(FakeSupabase.filterOf(db.callsFor('sales_transactions')[0], 'range'), undefined);
+      assert.ok(FakeSupabase.hasFilter(db.callsFor('sales_transactions')[0], 'eq', ['branch_id', BRANCH]));
     });
 
     it('maps a lookup failure to a 503', async () => {
       const db = createFakeSupabase();
       db.queueTable('sales_transactions', { data: null, error: { message: 'down' } });
 
-      await assertAppError(() => exportTransactions(db.client), 503, 'TRANSACTIONS_LOOKUP_FAILED');
+      await assertAppError(() => exportTransactions(db.client, BRANCH), 503, 'TRANSACTIONS_LOOKUP_FAILED');
     });
   });
 });
