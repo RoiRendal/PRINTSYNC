@@ -23,6 +23,16 @@ export const settingsRouter = Router();
  */
 const settingsSchema = z.object({
   businessName: z.string().trim().min(1).max(160),
+  /**
+   * The shop's printed address, shown on receipts.
+   *
+   * `''` is accepted and means "print no address line" — a branch that has not
+   * filled one in yet must be representable, and it is not the same as omitting the
+   * field (which leaves the stored value alone). Multiline is allowed because a
+   * Philippine street address with a barangay and landmark naturally wraps, and the
+   * receipt renders it with `whitespace-pre-line`.
+   */
+  address: z.string().trim().max(400).optional(),
   vatRate: z.number().min(0).max(100).optional(),
   currencySymbol: z.string().trim().min(1).max(10).optional(),
 });

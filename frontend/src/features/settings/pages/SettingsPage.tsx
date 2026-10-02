@@ -12,6 +12,8 @@ export default function Settings() {
   const {
     businessDisplayName,
     setBusinessDisplayName,
+    businessAddress,
+    setBusinessAddress,
     businessLogoUrl,
     uploadBusinessLogo,
     vatRate,
@@ -23,6 +25,7 @@ export default function Settings() {
   } = useBusinessBranding();
   const { settings, toggleStockAlerts, toggleExportAlerts } = useNotifications();
   const [companyDraft, setCompanyDraft] = useState(businessDisplayName);
+  const [addressDraft, setAddressDraft] = useState(businessAddress);
   const [vatDraft, setVatDraft] = useState(String(vatRate));
   const [currencyDraft, setCurrencyDraft] = useState(currencySymbol);
   const [logoUploadError, setLogoUploadError] = useState('');
@@ -43,6 +46,10 @@ export default function Settings() {
   }, [businessDisplayName]);
 
   useEffect(() => {
+    setAddressDraft(businessAddress);
+  }, [businessAddress]);
+
+  useEffect(() => {
     setVatDraft(String(vatRate));
   }, [vatRate]);
 
@@ -52,7 +59,11 @@ export default function Settings() {
 
   const handleSaveCompanyName = async () => {
     try {
+      // Address is saved alongside the name because they are one record on screen
+      // and one heading on a receipt. Two buttons would let a manager update the
+      // shop's name and leave a stale address printed under it.
       await setBusinessDisplayName(companyDraft);
+      await setBusinessAddress(addressDraft);
     } catch (error) {
       setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be saved.');
     }
@@ -146,6 +157,23 @@ export default function Settings() {
                 autoComplete="organization"
               />
             </label>
+            <label className="block space-y-1.5" htmlFor="company-display-address">
+              <span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">
+                Address <span className="font-normal">— printed on receipts</span>
+              </span>
+              {/* A textarea, not an input: a Philippine street address with a
+                  barangay and a landmark naturally wraps, and a single-line box
+                  would hide the second line rather than let it be reviewed. */}
+              <textarea
+                id="company-display-address"
+                value={addressDraft}
+                onChange={(e) => setAddressDraft(e.target.value)}
+                rows={2}
+                autoComplete="street-address"
+                placeholder="Leave blank to print no address"
+                className="w-full resize-none rounded-[var(--radius-control)] border border-app-border bg-app-surface px-3 py-2 text-sm text-app-ink placeholder:text-app-text-muted focus:border-app-accent focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </label>
             <div className="flex flex-wrap gap-2">
               <Button type="button" onClick={handleSaveCompanyName}>Save identity</Button>
               <Button
@@ -153,9 +181,12 @@ export default function Settings() {
                 variant="secondary"
                 onClick={() => {
                   setCompanyDraft(DEFAULT_BUSINESS_DISPLAY_NAME);
-                  void setBusinessDisplayName(DEFAULT_BUSINESS_DISPLAY_NAME).catch((error: unknown) => {
-                    setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be reset.');
-                  });
+                  setAddressDraft('');
+                  void setBusinessDisplayName(DEFAULT_BUSINESS_DISPLAY_NAME)
+                    .then(() => setBusinessAddress(''))
+                    .catch((error: unknown) => {
+                      setLogoUploadError(error instanceof Error ? error.message : 'Business name could not be reset.');
+                    });
                 }}
               >
                 Reset default

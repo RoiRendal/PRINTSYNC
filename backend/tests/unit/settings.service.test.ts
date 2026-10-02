@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import {
+  getBranchBranding,
   getBusinessSettings,
   getPublicBranding,
   setBusinessLogo,
@@ -158,6 +159,83 @@ describe('settings.service', () => {
     });
   });
 
+  describe('getBranchBranding', () => {
+    /*
+     * This is the fix for the receipt header. Until it existed, the app took its
+     * displayed identity from `getPublicBranding` even when signed in — and that
+     * read is branch-blind by design, so every receipt anywhere carried one shop's
+     * name. A sale at Nasugbu printed a Balayan header, and nothing looked wrong in
+     * a one-branch business, which is why it survived until the second site existed.
+     *
+     * The assertions below are therefore about WHICH branch is read, not just that
+     * a read happens: the fake returns whatever the test registered, so a test that
+     * only checked the returned name would pass with the branch filter deleted —
+     * exactly the defect being fixed.
+     */
+
+    it('scopes the read to the caller\'s branch and never falls back to another shop', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, branch_id: NASUGBU_ID }, error: null });
+
+      await getBranchBranding(db.client, NASUGBU_ID);
+
+      const call = db.callsFor('business_settings')[0];
+      assert.deepEqual(FakeSupabase.filterOf(call, 'eq'), ['branch_id', NASUGBU_ID]);
+      // No `order`/`limit` fallback chain: this read must either find the caller's
+      // own row or fail. A quiet fall-through to the oldest row is the bug.
+      assert.equal(FakeSupabase.filterOf(call, 'limit'), undefined);
+      assert.equal(FakeSupabase.filterOf(call, 'order'), undefined);
+    });
+
+    it('returns the address, so a receipt can print where the sale happened', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', {
+        data: { ...SETTINGS_ROW, address: 'Poblacion, Balayan, Batangas' },
+        error: null,
+      });
+
+      const branding = await getBranchBranding(db.client, BALAYAN_ID);
+
+      assert.equal(branding.address, 'Poblacion, Balayan, Batangas');
+    });
+
+    it('maps a null address to an empty string, not the word "null"', async () => {
+      // A row written before the address column existed. `String(null)` would put
+      // the four-letter word "null" in the middle of a customer's receipt.
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, address: null }, error: null });
+
+      const branding = await getBranchBranding(db.client, BALAYAN_ID);
+
+      assert.equal(branding.address, '');
+    });
+
+    it('carries the defaults a receipt needs, from the same read as the name', async () => {
+      // VAT rate and currency used to come from a SECOND request (`getBusiness`),
+      // while the name came from the branch-blind public read. Two reads can
+      // disagree about which branch they describe; one read cannot. This asserts
+      // the single-read shape, so a future split has to be deliberate.
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: { ...SETTINGS_ROW, vat_rate: 7, currency_symbol: '$' }, error: null });
+
+      const branding = await getBranchBranding(db.client, BALAYAN_ID);
+
+      assert.equal(branding.vatRate, 7);
+      assert.equal(branding.currencySymbol, '$');
+      assert.equal(db.callsFor('business_settings').length, 1, 'one read must answer the whole question');
+    });
+
+    it('maps a missing row to a 503 rather than inventing an identity', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: null, error: null });
+
+      // A branch with no settings row is a real possibility (Nasugbu's row is
+      // seeded, but a future branch might not be). Returning another shop's name
+      // would be worse than an error: it would print the wrong header silently.
+      await assertAppError(() => getBranchBranding(db.client, NASUGBU_ID), 503, 'BRANDING_LOOKUP_FAILED');
+    });
+  });
+
   describe('updateBusinessSettings', () => {
     it('writes snake_case columns and stamps the actor', async () => {
       const db = createFakeSupabase();
@@ -188,6 +266,32 @@ describe('settings.service', () => {
       // The logo has its own writer, so a generic save must not touch `logo_url`
       // — otherwise editing the VAT rate would silently wipe the logo.
       assert.equal('logo_url' in payload, false);
+    });
+
+    it('an omitted address does not blank the stored one', async () => {
+      // The same class of bug as `updateInventoryItem`, where a price-only save
+      // wiped the stock photo: the object was built from every field, so an
+      // absent optional arrived as `undefined` and was written as null. Here it
+      // would erase the address printed on every future receipt.
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      await updateBusinessSettings(db.client, BALAYAN_ID, { businessName: 'IC Printing Services', vatRate: 15 }, 'actor-1');
+
+      const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
+      assert.equal('address' in payload, false, 'an omitted address must not be written at all');
+    });
+
+    it('writes the address when one is supplied, including an empty one', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('business_settings', { data: SETTINGS_ROW, error: null });
+
+      await updateBusinessSettings(db.client, BALAYAN_ID, { businessName: 'IC Printing Services', address: '' }, 'actor-1');
+
+      const payload = db.lastCall('business_settings', 'update')?.payload as Record<string, unknown>;
+      // `''` is a real value — "print no address line" — and must survive as a
+      // write rather than being treated as "not supplied".
+      assert.equal(payload.address, '');
     });
 
     it('persists the name and defaults together', async () => {

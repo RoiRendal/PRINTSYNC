@@ -203,6 +203,16 @@ export const PURCHASE_ORDERS: readonly PurchaseOrderTemplate[] = [
 
 export const BUSINESS = {
   name: 'IC Printing Services',
+  /**
+   * Printed on every receipt. Seeded rather than left blank so the slip is complete
+   * from the first demo sale — an empty address prints no line at all, which reads
+   * as an unfinished receipt rather than a deliberate choice.
+   *
+   * This is the Balayan shop. Nasugbu's row is seeded empty by the branches
+   * migration and filled in from Settings once the shop supplies it; guessing a
+   * second address would put invented text on a customer's receipt.
+   */
+  address: 'IC Printing Services — Balayan\nPoblacion, Balayan, Batangas',
   vatRate: 12,
   currencySymbol: '₱',
 } as const;

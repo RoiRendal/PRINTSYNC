@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { BusinessSettings, PublicBranding } from '@printsync/shared-types';
+import type { BranchBranding, BusinessSettings, PublicBranding } from '@printsync/shared-types';
 import { AppError } from '../../shared/errors.js';
 
-export type { BusinessSettings, PublicBranding };
+export type { BranchBranding, BusinessSettings, PublicBranding };
 
 /**
  * Fields the generic settings form owns.
@@ -14,15 +14,25 @@ export type { BusinessSettings, PublicBranding };
  */
 export interface BusinessSettingsInput {
   businessName: string;
+  /**
+   * The shop's printed address. Optional so a caller that only changes the VAT
+   * rate does not have to echo it back — the update writes only the keys it was
+   * sent, which is what stops a VAT-only save from blanking the address.
+   */
+  address?: string | undefined;
   vatRate?: number | undefined;
   currencySymbol?: string | undefined;
 }
 
-const SETTINGS_COLUMNS = 'branch_id, business_name, logo_url, vat_rate, currency_symbol, updated_at';
+const SETTINGS_COLUMNS = 'branch_id, business_name, address, logo_url, vat_rate, currency_symbol, updated_at';
 
 function toSettings(row: Record<string, unknown>): BusinessSettings {
   return {
     businessName: String(row.business_name),
+    // `?? ''` rather than `String(...)`: a null from a row written before this
+    // column existed must become an empty address, not the four-letter word
+    // "null" printed in the middle of a customer's receipt.
+    address: row.address ? String(row.address) : '',
     logoUrl: row.logo_url ? String(row.logo_url) : null,
     vatRate: Number(row.vat_rate ?? 12),
     currencySymbol: String(row.currency_symbol ?? '₱'),
@@ -97,20 +107,71 @@ export async function getPublicBranding(
   };
 }
 
+/**
+ * Brand identity for a **signed-in** caller: its own branch's name, address and
+ * logo, plus the currency symbol and VAT rate the receipt needs.
+ *
+ * ### Why this exists separately from `getPublicBranding`
+ *
+ * The app used to take its header identity from the unauthenticated endpoint even
+ * after sign-in, because that was the only branding read available. That endpoint
+ * cannot know which branch is asking — it runs before anyone has a session — so it
+ * falls back to one row, and every receipt therefore carried that one shop's name.
+ * A sale at Nasugbu printed a Balayan header.
+ *
+ * The fix could not be "make `/branding` branch-aware": an unauthenticated route
+ * that took a branch from the query string would let anyone enumerate branches, and
+ * would still not answer the login screen's question (which branch *is* this?).
+ * So there are two reads with two different questions, and this is the one that
+ * runs once a branch is known.
+ *
+ * `branchId` is required rather than optional. There is no sensible fallback here:
+ * the caller is authenticated and has a branch, so an absent branch is a bug
+ * upstream, and silently substituting another shop's identity is the defect this
+ * function exists to remove.
+ */
+export async function getBranchBranding(
+  supabase: SupabaseClient,
+  branchId: string,
+): Promise<BranchBranding> {
+  const { data, error } = await supabase
+    .from('business_settings')
+    .select('business_name, address, logo_url, vat_rate, currency_symbol')
+    .eq('branch_id', branchId)
+    .maybeSingle();
+
+  if (error || !data) throw new AppError(503, 'BRANDING_LOOKUP_FAILED', 'Business branding could not be loaded.');
+  return {
+    businessName: String(data.business_name),
+    address: data.address ? String(data.address) : '',
+    logoUrl: data.logo_url ? String(data.logo_url) : null,
+    vatRate: Number(data.vat_rate ?? 12),
+    currencySymbol: String(data.currency_symbol ?? '₱'),
+  };
+}
+
 export async function updateBusinessSettings(
   supabase: SupabaseClient,
   branchId: string,
   input: BusinessSettingsInput,
   actorId: string,
 ): Promise<BusinessSettings> {
+  // Only the keys actually supplied are written. Passing an absent optional as
+  // `undefined` to Supabase omits the column from the UPDATE, but building the
+  // object literally is what makes that visible — and it is the same rule
+  // `updateInventoryItem` learned the hard way, where a price-only save wiped the
+  // stock photo. Here it would blank the printed address on a VAT-rate change.
+  const patch: Record<string, unknown> = {
+    business_name: input.businessName,
+    updated_by: actorId,
+  };
+  if (input.address !== undefined) patch.address = input.address;
+  if (input.vatRate !== undefined) patch.vat_rate = input.vatRate;
+  if (input.currencySymbol !== undefined) patch.currency_symbol = input.currencySymbol;
+
   const { data, error } = await supabase
     .from('business_settings')
-    .update({
-      business_name: input.businessName,
-      vat_rate: input.vatRate,
-      currency_symbol: input.currencySymbol,
-      updated_by: actorId,
-    })
+    .update(patch)
     .eq('branch_id', branchId)
     .select(SETTINGS_COLUMNS)
     .single();
