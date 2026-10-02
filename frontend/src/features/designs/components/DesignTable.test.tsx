@@ -1,19 +1,17 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { DesignTable } from './DesignTable';
+import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import type { Design } from '../types';
 
 /*
- * The design repository's List View.
+ * The design repository's List View, pinned at the component level.
  *
- * The claim this file pins is that the four per-card actions survive the move
- * into a row, unchanged and in the same order — View, Download, Edit, Delete.
- * A staff member switching shape should not have to relearn where things are,
- * and "the delete button moved" is not a thing a type-check or a screenshot of
- * the grid would catch.
- *
- * Also pinned: no select column. The repository has no bulk action, so a
- * checkbox column would be an affordance with nothing behind it.
+ * The repository now draws the SAME table every other list screen draws: a tick
+ * column, a clickable row, and no per-row action buttons. Those are the parts
+ * that fail silently — a leftover per-row trash can would look perfectly fine
+ * and would quietly delete one design while the header button says "Delete (3)",
+ * and a row that stopped opening the editor is invisible in a screenshot.
  */
 
 function design(overrides: Partial<Design> = {}): Design {
@@ -30,69 +28,119 @@ function design(overrides: Partial<Design> = {}): Design {
   };
 }
 
-function renderTable(props: Partial<React.ComponentProps<typeof DesignTable>> = {}) {
-  const handlers = { onView: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn() };
-  const result = render(<DesignTable designs={[design()]} {...handlers} {...props} />);
-  return { ...result, handlers };
+const DESIGNS = [design(), design({ id: 'd2', name: 'Second' })];
+
+/** Stands in for the page: it owns the selection, as `DesignRepository` does. */
+function Harness({
+  designs = DESIGNS,
+  onEdit = vi.fn(),
+}: {
+  designs?: Design[];
+  onEdit?: (design: Design) => void;
+}) {
+  const selection = useRowSelection(designs.map((entry) => entry.id));
+
+  return (
+    <DesignTable
+      designs={designs}
+      onEdit={onEdit}
+      selection={selection}
+      footer={<span>Pager</span>}
+    />
+  );
 }
 
-describe('DesignTable', () => {
+describe('DesignTable — the shared list-table shape', () => {
   it('shows the name, category and added date', () => {
-    renderTable();
+    render(<Harness designs={[design()]} />);
     expect(screen.getByText('Modern Minimalist Logo')).toBeInTheDocument();
     expect(screen.getByText('Logo')).toBeInTheDocument();
     expect(screen.getByText('2026-09-01')).toBeInTheDocument();
   });
 
-  it('carries all four actions, in the order the card used', () => {
-    renderTable();
-    const labels = screen.getAllByRole('button').map((b) => (b.getAttribute('aria-label') ?? '').split(' ')[0]);
-    expect(labels).toEqual(['View', 'Download', 'Edit', 'Delete']);
+  it('has no Actions column — the row is the edit target', () => {
+    render(<Harness designs={[design()]} />);
+    expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull();
+    // No column labels are missing beyond the three data columns + tick box.
+    expect(screen.getAllByRole('columnheader')).toHaveLength(4);
   });
 
-  it('view, edit and delete call back with the design', () => {
-    const { handlers } = renderTable();
-    fireEvent.click(screen.getByRole('button', { name: 'View Modern Minimalist Logo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Edit Modern Minimalist Logo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete Modern Minimalist Logo' }));
-    expect(handlers.onView).toHaveBeenCalledWith(expect.objectContaining({ id: 'd1' }));
-    expect(handlers.onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: 'd1' }));
-    expect(handlers.onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: 'd1' }));
+  it('carries no button of any kind — the header owns the only controls', () => {
+    render(<Harness />);
+    expect(within(screen.getByRole('table')).queryAllByRole('button')).toHaveLength(0);
   });
 
-  it('download opens the artwork in a new tab rather than navigating away', () => {
-    const openSpy = vi.fn();
-    const original = window.open;
-    window.open = openSpy;
-    renderTable();
-    fireEvent.click(screen.getByRole('button', { name: 'Download Modern Minimalist Logo' }));
-    window.open = original;
-    expect(openSpy).toHaveBeenCalledWith('https://example.test/a.png', '_blank', 'noopener,noreferrer');
+  it('opens the editor when a row is clicked', () => {
+    const onEdit = vi.fn();
+    render(<Harness onEdit={onEdit} />);
+    // Row 0 is the header, so the data rows start at 1.
+    const dataRows = screen.getAllByRole('row').slice(1);
+    expect(dataRows).toHaveLength(DESIGNS.length);
+    fireEvent.click(dataRows[0]);
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    expect(onEdit).toHaveBeenCalledWith(DESIGNS[0]);
   });
 
-  it('has no select column — there is no bulk action to tick for', () => {
-    renderTable();
-    expect(screen.queryByRole('checkbox')).toBeNull();
+  it('renders the pager the caller passes', () => {
+    render(<Harness designs={[design()]} />);
+    expect(screen.getByText('Pager')).toBeInTheDocument();
   });
 
-  it('renders one row per design', () => {
-    renderTable({ designs: [design(), design({ id: 'd2', name: 'Second' })] });
-    expect(screen.getAllByRole('row')).toHaveLength(3); // header + 2
-  });
-
-  it('shows the empty state, spanning every column, when there are none', () => {
-    renderTable({ designs: [] });
+  it('shows the empty state, spanning tick column and every data column', () => {
+    render(<Harness designs={[]} />);
     expect(screen.getByText('No designs found')).toBeInTheDocument();
     const cell = screen.getByText('No designs found').closest('td');
+    // Three data columns plus the tick column.
     expect(cell).toHaveAttribute('colspan', '4');
   });
+});
 
-  it('renders the pager only when the caller passes one', () => {
-    const { rerender } = renderTable();
-    expect(screen.queryByText('Pager')).toBeNull();
-    rerender(
-      <DesignTable designs={[design()]} onView={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} footer={<span>Pager</span>} />,
-    );
-    expect(screen.getByText('Pager')).toBeInTheDocument();
+describe('DesignTable — ticking rows', () => {
+  it('gives every row a box, plus one in the header', () => {
+    render(<Harness />);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(DESIGNS.length + 1);
+  });
+
+  it('collapses the whole header to the "# item(s) selected" message when a row is ticked', () => {
+    render(<Harness />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Modern Minimalist Logo' }));
+
+    // Every column label disappears; only the message is left in the header
+    // (ERPNext item-list behaviour).
+    expect(screen.queryByRole('columnheader', { name: 'Name' })).toBeNull();
+    expect(screen.getByRole('columnheader', { name: '1 item selected' })).toBeInTheDocument();
+  });
+
+  it('does NOT open the editor when the box is clicked', () => {
+    // The box sits inside the clickable row, so a tick that does not stop
+    // propagation would open the edit form every time somebody tidies the list.
+    const onEdit = vi.fn();
+    render(<Harness onEdit={onEdit} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Modern Minimalist Logo' }));
+    expect(onEdit).not.toHaveBeenCalled();
+  });
+
+  it('unticking the header box clears the whole selection', () => {
+    render(<Harness />);
+    const headerBox = screen.getByRole('checkbox', { name: /select all designs on this page/i });
+
+    fireEvent.click(headerBox);
+    expect(screen.getByRole('checkbox', { name: 'Select Modern Minimalist Logo' })).toBeChecked();
+
+    fireEvent.click(headerBox);
+    expect(screen.getByRole('checkbox', { name: 'Select Modern Minimalist Logo' })).not.toBeChecked();
+  });
+
+  it('reports the header box as neither fully ticked nor empty on a partial selection', () => {
+    render(<Harness />);
+    const headerBox = screen.getByRole('checkbox', { name: /select all designs on this page/i });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Second' }));
+    // `indeterminate` is a DOM property, not an attribute.
+    expect((headerBox as HTMLInputElement).indeterminate).toBe(true);
+  });
+
+  it('disables the header box when there is nothing to tick', () => {
+    render(<Harness designs={[]} />);
+    expect(screen.getByRole('checkbox', { name: /select all designs on this page/i })).toBeDisabled();
   });
 });

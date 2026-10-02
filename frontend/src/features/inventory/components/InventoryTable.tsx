@@ -23,6 +23,7 @@ import {
 } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
 
@@ -64,18 +65,18 @@ export function InventoryTable({
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
+      <CardHeader className="mb-0 border-b p-4">
+        <div className={TOOLBAR_ROW_CLASS}>
           {/*
             The view picker leads the toolbar row — left of the search box — so
             the established order reads view, search, refresh, delete, add, and
             the dark `+` stays rightmost where the toolbar convention wants it.
-            Below `md` this row is a column, so the picker takes its own line
+            Below `sm` this row is a column, so the picker takes its own line
             instead of squeezing the search box.
           */}
           <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />
           <SearchInput
-            className="flex-1"
+            className={TOOLBAR_SEARCH_WIDTH_CLASS}
             value={searchTerm}
             onChange={(e) => onSearchTermChange(e.target.value)}
           />

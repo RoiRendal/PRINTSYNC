@@ -23,6 +23,7 @@ import {
   cellTitle,
 } from '../../../shared/components/ui';
 import type { BadgeVariant } from '../../../shared/components/ui';
+import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import { useAuditLogs } from '../hooks/useAuditLogs';
 
 const ACTION_OPTIONS = [
@@ -164,9 +165,15 @@ export default function AuditLogPage() {
                   flight because, unlike the other list tables whose whole toolbar
                   is replaced by a skeleton, this header stays on screen: the
                   button is the only thing that can report that a fetch is running.
+
+                  The wrapper is the shared toolbar row now. It used to be a bare
+                  `flex w-full gap-2` with a `sm:max-w-xs` cap and no `sm:flex-row`
+                  — so on a mid-width screen the search box and Refresh stacked
+                  into two rows instead of sitting side by side, while every other
+                  table's toolbar stayed one row.
                 */}
-                <div className="flex w-full gap-2 sm:max-w-xs">
-                  <SearchInput className="flex-1" value={search} onChange={(e) => setSearch(e.target.value)} />
+                <div className={TOOLBAR_ROW_CLASS}>
+                  <SearchInput className={TOOLBAR_SEARCH_WIDTH_CLASS} value={search} onChange={(e) => setSearch(e.target.value)} />
                   <Button
                     type="button"
                     variant="secondary"

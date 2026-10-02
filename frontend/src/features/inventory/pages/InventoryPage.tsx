@@ -207,8 +207,8 @@ export default function Inventory() {
           // back is what clears the param — passing '' would store `?surface=`.
           onChange={setSurfaceParam}
           options={[
-            { value: 'inventory', label: 'Stock List' },
-            { value: 'designs', label: 'Design Repo' },
+            { value: 'inventory', label: 'Stocks' },
+            { value: 'designs', label: 'Designs' },
           ]}
         />
       </div>

@@ -5,16 +5,17 @@ import { DesignRepository } from './DesignRepository';
 import type { Design } from '../types';
 
 /*
- * Store mocked so the tests prove the form's wiring without a backend.
+ * Store mocked so the tests prove the screen's wiring without a backend.
  *
- * The two lists and the two mutators are mutable because these cases render a
- * real design and then assert on what the edit form did with it; the view-shape
- * cases above only ever wanted an empty, inert store.
+ * The two lists and the mutators are mutable because these cases render real
+ * designs and then assert on what the toolbar, the row and the edit form did
+ * with them; the view-shape cases only ever wanted an empty, inert store.
  */
 const store = vi.hoisted(() => ({
   designs: [] as Design[],
   addDesign: vi.fn(),
   updateDesign: vi.fn(),
+  deleteDesign: vi.fn(),
 }));
 
 vi.mock('../../../app/stores/useDesignStore', () => ({
@@ -29,7 +30,7 @@ vi.mock('../../../app/stores/useDesignStore', () => ({
     goToPage: vi.fn(),
     addDesign: store.addDesign,
     updateDesign: store.updateDesign,
-    deleteDesign: vi.fn(),
+    deleteDesign: store.deleteDesign,
   }),
 }));
 
@@ -67,6 +68,7 @@ beforeEach(() => {
   store.designs = [];
   store.addDesign.mockClear();
   store.updateDesign.mockClear();
+  store.deleteDesign.mockReset();
 });
 
 /*
@@ -76,9 +78,6 @@ beforeEach(() => {
  * defaults to the table — so these assertions exist to stop that asymmetry
  * being quietly "fixed" into sameness by a later edit. It is deliberate (D4):
  * the repository has always been a wall of artwork.
- *
- * The picker itself is scaffolding and is replaced by the ERPNext-style dropdown
- * in P5; these tests name the buttons by label so that swap lands under them.
  */
 describe('DesignRepository — view in the URL', () => {
   const trigger = () => screen.getByRole('button', { name: 'Design view' });
@@ -121,12 +120,141 @@ describe('DesignRepository — view in the URL', () => {
   });
 });
 
-describe('DesignRepository — the list view column set', () => {
-  it('renders Name, Category, Added and Actions headers', () => {
+/*
+ * The toolbar row, and where each control sits in it.
+ *
+ * The order is the convention every list page follows — view, search, refresh,
+ * delete, add — and it is the kind of thing that survives review while being
+ * wrong: every control still works in any order, so nothing fails. What breaks
+ * is the muscle memory, and the delete square is only findable if it stays where
+ * the other tables put it. Asserted on DOM order, because jsdom applies no
+ * stylesheet and every `getBoundingClientRect()` here is zeroes.
+ */
+describe('DesignRepository — the toolbar row', () => {
+  /** The labels of the toolbar's direct children, left to right. */
+  function toolbarOrder(): string[] {
+    const search = screen.getByPlaceholderText('Search...');
+    const row = search.parentElement;
+    if (!row) throw new Error('the search box has no toolbar row');
+    return Array.from(row.children).map((child) => {
+      if (child.tagName === 'INPUT') return 'search';
+      if (child.tagName === 'BUTTON') return child.getAttribute('aria-label') ?? 'button';
+      const inner = child.querySelector('button');
+      return inner?.getAttribute('aria-label') ?? child.tagName;
+    });
+  }
+
+  it('leads with the view picker, then search, refresh, delete, add', () => {
     renderAt('/inventory?designView=list');
-    for (const label of ['Name', 'Category', 'Added', 'Actions']) {
-      expect(screen.getByText(label)).toBeInTheDocument();
-    }
+    const order = toolbarOrder();
+    expect(order).toHaveLength(5);
+    expect(order[0]).toBe('Design view');
+    expect(order[1]).toBe('search');
+    expect(order[2]).toBe('Refresh');
+    expect(order[3]).toMatch(/^Delete/);
+    expect(order[4]).toBe('Upload Design');
+  });
+
+  it('renders exactly one delete control, disabled until a row is ticked', () => {
+    store.designs = [makeDesign()];
+    renderAt('/inventory?designView=list');
+    const deleteButton = screen.getByRole('button', { name: /delete selected designs/i });
+    expect(deleteButton).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: /delete/i })).toHaveLength(1);
+  });
+
+  it('reports a ticked count in the table header, and nowhere else', () => {
+    store.designs = [makeDesign(), makeDesign({ id: 'design-2', name: 'Second Design' })];
+    renderAt('/inventory?designView=list');
+
+    // The header block is the controls alone — no "N designs" line above it.
+    expect(screen.queryByText('2 designs')).toBeNull();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Logo Design' }));
+    // Exactly once: the collapsed table header is now the only thing that
+    // states the count (ERPNext item-list behaviour).
+    expect(screen.getByText('1 item selected')).toBeInTheDocument();
+  });
+
+  it('never renders the card title, description or count line', () => {
+    store.designs = [makeDesign()];
+    renderAt('/inventory?designView=list');
+    // The sidebar entry says where you are; chrome above the controls is gone.
+    expect(screen.queryByText('Design Repository')).toBeNull();
+    expect(screen.queryByText(/Search, upload, and manage reusable artwork assets/)).toBeNull();
+    expect(screen.queryByText('1 design')).toBeNull();
+  });
+});
+
+/*
+ * Bulk delete. The dialog names every design it will take, the deletes run one
+ * row at a time, and the ticks are only cleared once the whole batch succeeded.
+ */
+describe('DesignRepository — deleting ticked designs', () => {
+  function openDeleteDialog() {
+    store.designs = [
+      makeDesign(),
+      makeDesign({ id: 'design-2', name: 'Second Design' }),
+    ];
+    const { container } = renderAt('/inventory?designView=list');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Logo Design' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Second Design' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete 2 selected designs' }));
+    return container;
+  }
+
+  it('names every design the delete is about to take', () => {
+    openDeleteDialog();
+    const dialog = within(screen.getByRole('dialog', { name: 'Confirm Deletion' }));
+    expect(dialog.getByText('Logo Design')).toBeInTheDocument();
+    expect(dialog.getByText('Second Design')).toBeInTheDocument();
+  });
+
+  it('deletes each ticked design and closes the dialog', async () => {
+    store.deleteDesign = vi.fn().mockResolvedValue(undefined);
+    openDeleteDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await vi.waitFor(() => expect(store.deleteDesign).toHaveBeenCalledTimes(2));
+    expect(store.deleteDesign.mock.calls.map((call) => call[0])).toEqual(['design-1', 'design-2']);
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Confirm Deletion' })).toBeNull());
+  });
+
+  it('keeps the dialog open and names the survivors when one delete fails', async () => {
+    store.deleteDesign = vi.fn().mockImplementation((id: string) =>
+      id === 'design-2' ? Promise.reject(new Error('nope')) : Promise.resolve(undefined),
+    );
+    openDeleteDialog();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    await vi.waitFor(() => expect(store.deleteDesign).toHaveBeenCalledTimes(2));
+    // The dialog stays open, still holding only the design that survived.
+    const dialog = within(screen.getByRole('dialog', { name: 'Confirm Deletion' }));
+    await vi.waitFor(() => expect(dialog.getByText('Second Design')).toBeInTheDocument());
+    expect(dialog.queryByText('Logo Design')).toBeNull();
+  });
+});
+
+describe('DesignRepository — the repository has no view modal', () => {
+  it('never renders a design view dialog from a row click', async () => {
+    store.designs = [makeDesign()];
+    renderAt('/inventory?designView=list');
+    fireEvent.click(screen.getByText('Logo Design'));
+
+    // The click opens the EDIT form, and nothing else. There is no second
+    // read-only screen showing the same record.
+    expect(screen.getByRole('dialog', { name: 'Edit Design' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Design View' })).toBeNull();
+  });
+
+  it('never renders the Reference ID anywhere', () => {
+    store.designs = [makeDesign()];
+    renderAt('/inventory');
+    fireEvent.click(screen.getByText(/Logo Design/));
+    expect(screen.queryByText('Reference ID')).toBeNull();
+    expect(document.body.textContent).not.toContain('design-1');
   });
 });
 
@@ -134,7 +262,7 @@ describe('DesignRepository — the edit form never shows the stored image URL', 
   function openEditModal() {
     store.designs = [makeDesign()];
     renderAt('/inventory');
-    fireEvent.click(screen.getByTitle('Edit design'));
+    fireEvent.click(screen.getByTitle('Logo Design — click to edit'));
     return within(screen.getByRole('dialog', { name: 'Edit Design' }));
   }
 
@@ -150,19 +278,72 @@ describe('DesignRepository — the edit form never shows the stored image URL', 
     }
   });
 
-  it('the Storage URL never reaches the page as text at all', () => {
-    openEditModal();
-
-    // A document-level check as well as a control-level one: the point is that
-    // the link is not displayed, so it must not appear anywhere at all.
-    expect(document.body.textContent).not.toContain('supabase.co');
-  });
-
   it('shows the current artwork and a control that replaces it', () => {
     const dialog = openEditModal();
 
     expect(dialog.getByAltText('Logo Design')).toHaveAttribute('src', STORAGE_IMAGE_URL);
     expect(dialog.getByText(/Choose a file to replace the artwork/)).toBeInTheDocument();
+  });
+
+  /*
+   * What the removed View modal used to be the only place to see: when the
+   * design was added and the download that hands over the stored original.
+   */
+  it('carries the created date the View modal used to show', () => {
+    const dialog = openEditModal();
+    expect(dialog.getByText('Created Date')).toBeInTheDocument();
+    expect(dialog.getByText('2026-09-01')).toBeInTheDocument();
+  });
+
+  it('carries the Download Assets button the View modal used to show', () => {
+    const openSpy = vi.fn();
+    const original = window.open;
+    window.open = openSpy;
+    try {
+      const dialog = openEditModal();
+      fireEvent.click(dialog.getByRole('button', { name: 'Download Assets' }));
+    } finally {
+      window.open = original;
+    }
+    expect(openSpy).toHaveBeenCalledWith(STORAGE_IMAGE_URL, '_blank', 'noopener,noreferrer');
+  });
+
+  it('ends in exactly two buttons — Download Assets and Save Changes', () => {
+    const dialog = openEditModal();
+    // The modal's own close square is chrome, so only named buttons count.
+    const labels = dialog
+      .getAllByRole('button')
+      .map((b) => (b.textContent ?? '').trim())
+      .filter((label) => label.length > 0);
+    expect(labels).toEqual(['Download Assets', 'Save Changes']);
+  });
+
+  it('offers no Cancel — the modal header still closes it', () => {
+    const dialog = openEditModal();
+    expect(dialog.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  });
+
+  it('does not submit the form when Download Assets is pressed', async () => {
+    const openSpy = vi.fn();
+    const original = window.open;
+    window.open = openSpy;
+    try {
+      const dialog = openEditModal();
+      fireEvent.change(dialog.getByDisplayValue('Logo Design'), { target: { value: 'Renamed' } });
+      fireEvent.click(dialog.getByRole('button', { name: 'Download Assets' }));
+    } finally {
+      window.open = original;
+    }
+    // A download that submitted would save the rename behind the user's back.
+    expect(store.updateDesign).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Edit Design' })).toBeInTheDocument();
+  });
+
+  it('shows the created date as a plain label, with no tile around it', () => {
+    const dialog = openEditModal();
+    const label = dialog.getByText('Created Date');
+    // The value sits beside the label it belongs to, not inside a stat tile.
+    expect(label.nextElementSibling).toHaveTextContent('2026-09-01');
   });
 });
 
@@ -170,7 +351,7 @@ describe('DesignRepository — what an edit submits', () => {
   function openEditModal() {
     store.designs = [makeDesign()];
     renderAt('/inventory');
-    fireEvent.click(screen.getByTitle('Edit design'));
+    fireEvent.click(screen.getByTitle('Logo Design — click to edit'));
     return within(screen.getByRole('dialog', { name: 'Edit Design' }));
   }
 
@@ -193,7 +374,7 @@ describe('DesignRepository — what an edit submits', () => {
     // seeded design (Branding, Apparel, Patterns, Stationery) uneditable.
     store.designs = [makeDesign({ category: 'Branding' })];
     renderAt('/inventory');
-    fireEvent.click(screen.getByTitle('Edit design'));
+    fireEvent.click(screen.getByTitle('Logo Design — click to edit'));
 
     const dialog = within(screen.getByRole('dialog', { name: 'Edit Design' }));
     expect(dialog.getByRole('combobox')).toHaveValue('Branding');
