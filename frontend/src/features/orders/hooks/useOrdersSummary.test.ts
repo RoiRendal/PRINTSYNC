@@ -23,6 +23,8 @@ const SUMMARY: OrdersSummary = {
     { status: 'Delivered', count: 19 },
   ],
   lowStock: 5,
+  totalStock: 148,
+  totalValue: 52340.5,
 };
 
 describe('useOrdersSummary', () => {

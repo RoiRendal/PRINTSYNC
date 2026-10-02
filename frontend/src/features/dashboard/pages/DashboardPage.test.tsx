@@ -22,6 +22,8 @@ const SUMMARY: OrdersSummary = {
     { status: 'Delivered', count: 19 },
   ],
   lowStock: 5,
+  totalStock: 148,
+  totalValue: 52340.5,
 };
 
 interface StateShape {
@@ -59,7 +61,6 @@ describe('DashboardPage — the Workspace', () => {
     expect(hrefFor(/designing/i)).toBe('/orders?status=Designing');
     expect(hrefFor(/in production/i)).toContain('status=In');
     expect(hrefFor(/ready for pickup/i)).toContain('status=Ready');
-    expect(hrefFor(/low stock/i)).toBe('/inventory?lowStock=1');
   });
 
   it('shows the counts from the summary, zero-filling an empty status', () => {
@@ -69,6 +70,21 @@ describe('DashboardPage — the Workspace', () => {
     expect(screen.getByRole('link', { name: /pending/i })).toHaveTextContent('3');
     // Designing has no orders — the card still renders a 0, it does not vanish.
     expect(screen.getByRole('link', { name: /designing/i })).toHaveTextContent('0');
+  });
+
+  it("shows Inventory's three figures in the stock row, with Low Stock linked", () => {
+    setState({ summary: SUMMARY });
+    renderPage();
+
+    expect(screen.getByText('Total Stock')).toBeInTheDocument();
+    expect(screen.getByText('148')).toBeInTheDocument();
+    expect(screen.getByText('Stock Value')).toBeInTheDocument();
+    expect(screen.getByText('₱52340.50')).toBeInTheDocument();
+
+    // The low-stock figure appears exactly once on the page — the queue row no
+    // longer carries a second copy — and it still opens the filtered list.
+    expect(screen.getAllByRole('link', { name: /low stock/i })).toHaveLength(1);
+    expect(hrefFor(/low stock/i)).toBe('/inventory?lowStock=1');
     expect(screen.getByRole('link', { name: /low stock/i })).toHaveTextContent('5');
   });
 

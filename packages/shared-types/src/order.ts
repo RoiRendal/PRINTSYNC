@@ -126,15 +126,23 @@ export interface OrderStatusCount {
  * 1. **`byStatus` is zero-filled.** Every one of the six known statuses appears,
  *    carrying `0` when no order is in it. A card must be able to render a zero; a
  *    status that vanishes from the array would make a card disappear from the page.
- * 2. **It counts work waiting, not money.** `open` is the orders still moving —
+ * 2. **It counts work waiting, not revenue.** `open` is the orders still moving —
  *    everything not `Completed` and not `Delivered`. Revenue is deliberately absent:
  *    it is a figure with a date range and belongs on Analytics, not here.
  *
- * `lowStock` rides along on an order-shaped payload on purpose: the Workspace's
- * cards are one screen fetched in one round trip, and splitting the inventory count
- * into a second request would only give the page two ways to disagree with itself.
- * It is the same predicate the inventory list applies at `?lowStock=1` — stock at or
- * below reorder level — so the two must agree.
+ * The inventory figures ride along on an order-shaped payload on purpose: the
+ * Workspace's cards are one screen fetched in one round trip, and splitting the
+ * stock numbers into a second request would only give the page two ways to
+ * disagree with itself.
+ *
+ *   - `lowStock` is the same predicate the inventory list applies at
+ *     `?lowStock=1` — stock at or below reorder level — so the two must agree.
+ *   - `totalStock` and `totalValue` are the Inventory page's own two totals,
+ *     summed over the whole branch rather than over page 1 of a 20-row list.
+ *     `totalValue` is `stock * price` — a stock valuation, not revenue. It is
+ *     the one money figure on the Workspace, and it is allowed here because a
+ *     valuation is a snapshot with no period, unlike the revenue rule 2 keeps
+ *     out.
  */
 export interface OrdersSummary {
   /** Every order in the table, regardless of status. */
@@ -145,4 +153,8 @@ export interface OrdersSummary {
   byStatus: OrderStatusCount[];
   /** Inventory items at or below their reorder level. */
   lowStock: number;
+  /** Units of stock across every item in the branch. */
+  totalStock: number;
+  /** The branch's stock valuation — `stock * price` summed, not revenue. */
+  totalValue: number;
 }

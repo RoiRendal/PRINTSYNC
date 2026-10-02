@@ -55,7 +55,7 @@ vi.mock('../hooks/useOrdersSummary', () => ({
 
 beforeEach(() => {
   summaryHook.useOrdersSummary.mockReturnValue({
-    summary: { total: 0, open: 0, byStatus: [], lowStock: 0 },
+    summary: { total: 0, open: 0, byStatus: [], lowStock: 0, totalStock: 0, totalValue: 0 },
     error: null,
     isLoading: false,
     refresh: vi.fn(),
