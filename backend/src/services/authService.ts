@@ -26,7 +26,7 @@ export async function loadAuthContext(
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches')
+    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches, roles(name)')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -36,6 +36,26 @@ export async function loadAuthContext(
 
   if (!profile) {
     throw new AppError(403, 'PROFILE_NOT_PROVISIONED', 'The authenticated user has not been provisioned.');
+  }
+
+  /*
+   * The role NAME, resolved from the joined row.
+   *
+   * The context used to carry only `roleId`. The session payload has to report a
+   * role the client can act on, and the client's `isAdminTier` compares against
+   * the name ('admin' | 'owner'), not a uuid — so the name is loaded here rather
+   * than making the client map ids it has no table for.
+   *
+   * PostgREST returns an embedded to-one relation as an object, but the generated
+   * types widen it to an array-or-object union, so both shapes are read. A profile
+   * whose role row is missing is not a valid state: it is refused rather than
+   * silently defaulted to the narrowest role, because defaulting would hand the
+   * account a page list while leaving its permissions intact.
+   */
+  const embeddedRole = (profile as { roles?: { name?: string } | { name?: string }[] | null }).roles;
+  const roleName = Array.isArray(embeddedRole) ? embeddedRole[0]?.name : embeddedRole?.name;
+  if (roleName !== 'admin' && roleName !== 'staff' && roleName !== 'owner') {
+    throw new AppError(503, 'INVALID_ROLE_CONFIGURATION', 'A user has an invalid role configuration.');
   }
 
   const { data: rolePermissions, error: rolePermissionsError } = await supabase
@@ -70,6 +90,7 @@ export async function loadAuthContext(
       phone: profile.phone,
       position: profile.position,
       roleId: profile.role_id,
+      role: roleName,
       branchId: profile.branch_id ? String(profile.branch_id) : null,
       // Coerced rather than trusted: PostgREST hands back a real boolean for a
       // `boolean not null default false` column, but this value decides whether an

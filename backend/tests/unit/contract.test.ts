@@ -10,6 +10,7 @@ import type {
   OrderLineItem as SharedOrderLineItem,
   OrderPayment as SharedOrderPayment,
   OrdersSummary as SharedOrdersSummary,
+  SessionUser as SharedSessionUser,
   Supplier as SharedSupplier,
   Transaction as SharedTransaction,
   UserSummary as SharedUserSummary,
@@ -24,6 +25,16 @@ import type { OrderPayment } from '../../src/modules/orderPayments/orderPayments
 import type { TransactionRecord } from '../../src/modules/payments/payments.service.js';
 import type { Supplier } from '../../src/modules/suppliers/suppliers.service.js';
 import type { UserSummary } from '../../src/modules/users/users.service.js';
+import { sessionUserPayload } from '../../src/routes/auth.routes.js';
+
+/**
+ * The shape `/login`, `/refresh` and `/session` return.
+ *
+ * `ReturnType` of the one helper all three routes now share, so this assertion
+ * tracks the real serialiser rather than a hand-copied interface that could drift
+ * from it — which is precisely how the fields went missing.
+ */
+type SessionPayload = ReturnType<typeof sessionUserPayload>;
 
 /**
  * The API's record types must agree with the published contract, in both
@@ -105,6 +116,14 @@ export type ApiMatchesPublishedContract = [
   Expect<Provides<SharedDesign, DesignRecord>>,
   Expect<Provides<UserSummary, SharedUserSummary>>,
   Expect<Provides<SharedUserSummary, UserSummary>>,
+  // The session payload. `SharedSessionUser` is what the frontend's `AuthUser`
+  // is built from, and the frontend reads `role`, `branchId` and
+  // `canViewAllBranches` off it. All three were absent from the payload while
+  // being present in the contract, which clamped every account — admin included —
+  // to the staff page list and bounced Analytics, Users, Settings and Audit Log
+  // back to the Dashboard. Adding this pair is what makes that a compile error.
+  Expect<Provides<SessionPayload, SharedSessionUser>>,
+  Expect<Provides<SharedSessionUser, SessionPayload>>,
   Expect<Provides<AuditLogRecord, SharedAuditLogRecord>>,
   Expect<Provides<SharedAuditLogRecord, AuditLogRecord>>,
   Expect<Provides<Expense, SharedExpense>>,
@@ -118,8 +137,7 @@ export type ApiMatchesPublishedContract = [
 ];
 
 describe('the API and the published contract agree', () => {
-  it('carries the compare-and-swap token the order editor depends on', () => {
-    // The concrete field that went missing. A runtime assertion as well as the
+  it('carries the compare-and-swap token the order editor depends on', () => {    // The concrete field that went missing. A runtime assertion as well as the
     // compile-time one above, because this is the field whose absence caused the
     // defect and a reader should be able to see what it protects.
     const record: OrderRecord = {
@@ -146,5 +164,56 @@ describe('the API and the published contract agree', () => {
     // Echoed back verbatim: the microseconds are part of the token, so a client
     // that parsed and re-serialised it would make every save look like a conflict.
     assert.equal(contract, '2026-09-21T09:15:00.123456+00:00');
+  });
+
+  it('reports the role, branch and head-office flag the session is for', () => {
+    // The runtime half of the assertion above. `Provides` proves the shape
+    // compiles; this proves the values actually travel, because the defect was
+    // silent in exactly the way a compile-time check cannot cover: the fields
+    // existed on the auth context and were simply never copied out.
+    const owner = sessionUserPayload({
+      user: { id: 'u-1', email: 'owner@printsync.com' },
+      profile: {
+        id: 'u-1',
+        name: 'Owner',
+        phone: '09170000000',
+        position: 'Owner',
+        roleId: 'role-owner',
+        role: 'owner',
+        branchId: 'branch-bal',
+        canViewAllBranches: true,
+      },
+      permissions: ['analytics.read', 'users.read'],
+    } as unknown as Parameters<typeof sessionUserPayload>[0]);
+
+    // Without `role`, `isAdminTier(undefined)` is false and the account is clamped
+    // to the staff page list — which is what removed Analytics, Users, Settings and
+    // the Audit Log from the sidebar.
+    assert.equal(owner.role, 'owner');
+    // Without this the head-office branch picker never renders and the whole
+    // cross-branch comparison feature is unreachable.
+    assert.equal(owner.canViewAllBranches, true);
+    // Without this the account cannot be labelled as belonging to a branch.
+    assert.equal(owner.branchId, 'branch-bal');
+
+    // A staff account must still report its own branch and no cross-branch reach.
+    const staff = sessionUserPayload({
+      user: { id: 'u-2', email: 'noah@printsync.com' },
+      profile: {
+        id: 'u-2',
+        name: 'Noah',
+        phone: '09170000001',
+        position: 'Cashier',
+        roleId: 'role-staff',
+        role: 'staff',
+        branchId: 'branch-bal',
+        canViewAllBranches: false,
+      },
+      permissions: ['orders.read'],
+    } as unknown as Parameters<typeof sessionUserPayload>[0]);
+
+    assert.equal(staff.role, 'staff');
+    assert.equal(staff.canViewAllBranches, false);
+    assert.equal(staff.branchId, 'branch-bal');
   });
 });

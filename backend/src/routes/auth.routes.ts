@@ -8,8 +8,53 @@ import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { loadAuthContext, invalidateAuthCache } from '../services/authService.js';
 import { writeAuditLog } from '../services/auditLogService.js';
+import type { AuthenticatedRequestContext } from '../types/auth.js';
 
 export const authRouter = Router();
+
+/**
+ * The signed-in user, as the three session-establishing routes return them.
+ *
+ * ### Why this exists
+ *
+ * `/login`, `/refresh` and `/session` each built this object inline, and each
+ * omitted `role`, `branchId` and `canViewAllBranches`. The frontend's `AuthUser`
+ * is `Omit<UserSummary, 'createdAt'>`, which *declares* those fields present, and
+ * `toAuthUser` reads all three:
+ *
+ *   - `role` feeds `normalizeAccess(role, ...)`. With `role` absent,
+ *     `isAdminTier(undefined)` is false, so every account was clamped to
+ *     `STAFF_PAGE_ACCESS` — including `admin`. Analytics, Users, Settings and the
+ *     Audit Log fell off the sidebar for everyone and `RequirePageAccess` bounced
+ *     the route back to the Dashboard.
+ *   - `canViewAllBranches` gates the head-office branch picker.
+ *   - `branchId` labels the account's own branch ("… (mine)").
+ *
+ * The backend had all three on `auth.profile` the whole time; they were simply not
+ * serialized. One helper, used by all three routes, so the payload cannot drift
+ * back apart. The fields come from the same `auth` context the rest of the API
+ * authorises against, so the client can never be told it may do more than the
+ * server will allow: `canViewAllBranches` widens *reading* in analytics only, and
+ * every write is still branch-scoped server-side.
+ *
+ * Exported so `tests/unit/contract.test.ts` can assert this shape against
+ * `SessionUser` at compile time. That assertion is the reason this cannot silently
+ * lose a field again.
+ */
+export function sessionUserPayload(auth: AuthenticatedRequestContext) {
+  return {
+    id: auth.user.id,
+    email: auth.user.email,
+    name: auth.profile.name,
+    phone: auth.profile.phone,
+    position: auth.profile.position,
+    roleId: auth.profile.roleId,
+    role: auth.profile.role,
+    branchId: auth.profile.branchId,
+    canViewAllBranches: auth.profile.canViewAllBranches,
+    permissions: auth.permissions,
+  };
+}
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -73,17 +118,7 @@ authRouter.post('/login', loginLimiter, async (request, response) => {
     userAgent: request.get('user-agent'),
   });
   setAuthCookies(response, data.session.access_token, data.session.refresh_token);
-  sendSuccess(response, {
-    user: {
-      id: auth.user.id,
-      email: auth.user.email,
-      name: auth.profile.name,
-      phone: auth.profile.phone,
-      position: auth.profile.position,
-      roleId: auth.profile.roleId,
-      permissions: auth.permissions,
-    },
-  });
+  sendSuccess(response, { user: sessionUserPayload(auth) });
 });
 
 authRouter.post('/refresh', refreshLimiter, async (request, response) => {
@@ -109,17 +144,7 @@ authRouter.post('/refresh', refreshLimiter, async (request, response) => {
   invalidateAuthCache(data.user.id);
   const auth = await loadAuthContext(adminClient, data.user);
   setAuthCookies(response, data.session.access_token, data.session.refresh_token);
-  sendSuccess(response, {
-    user: {
-      id: auth.user.id,
-      email: auth.user.email,
-      name: auth.profile.name,
-      phone: auth.profile.phone,
-      position: auth.profile.position,
-      roleId: auth.profile.roleId,
-      permissions: auth.permissions,
-    },
-  });
+  sendSuccess(response, { user: sessionUserPayload(auth) });
 });
 
 authRouter.post('/logout', async (request, response) => {
@@ -158,15 +183,5 @@ authRouter.get('/session', authenticate, (request, response) => {
     return;
   }
 
-  sendSuccess(response, {
-    user: {
-      id: auth.user.id,
-      email: auth.user.email,
-      name: auth.profile.name,
-      phone: auth.profile.phone,
-      position: auth.profile.position,
-      roleId: auth.profile.roleId,
-      permissions: auth.permissions,
-    },
-  });
+  sendSuccess(response, { user: sessionUserPayload(auth) });
 });

@@ -51,7 +51,27 @@ export type UpdateUserInput = Partial<Omit<CreateUserInput, 'password'>> & {
   password?: string;
 };
 
-export interface SessionUser extends UserSummary {
+/**
+ * The signed-in account, as `/auth/login`, `/auth/refresh` and `/auth/session`
+ * return it.
+ *
+ * ### Why it is not `UserSummary`
+ *
+ * It used to extend `UserSummary`, which promised `createdAt` and `access` that
+ * the session has never sent. Neither is meaningful here: `createdAt` describes a
+ * *directory row* ("when was this person added"), not the act of signing in, and
+ * `access` is **derived**, not stored — the client computes it from `permissions`
+ * via `normalizeAccess`, which is also what clamps it to the pages the role may
+ * reach. A session payload that shipped an `access` list would let the client
+ * decide its own page access, which is the opposite of the intended direction.
+ *
+ * The `Omit` is therefore written out explicitly rather than inherited, so the
+ * difference from a directory row is stated instead of implied. `role` is
+ * required here because the client's `isAdminTier` compares against it — while it
+ * was absent, `normalizeAccess(undefined, …)` clamped *every* account, admin
+ * included, to the staff page list.
+ */
+export interface SessionUser extends Omit<UserSummary, 'createdAt' | 'access'> {
   roleId: string;
   permissions: string[];
 }
