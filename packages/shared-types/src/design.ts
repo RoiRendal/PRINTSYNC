@@ -5,7 +5,6 @@ export interface Design {
   imageUrl: string;
   createdAt: string;
   updatedAt: string;
-  tags: string[];
   assetType: string | null;
   assetSizeBytes: number | null;
 }

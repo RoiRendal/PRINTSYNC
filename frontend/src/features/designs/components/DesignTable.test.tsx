@@ -22,7 +22,6 @@ function design(overrides: Partial<Design> = {}): Design {
     name: 'Modern Minimalist Logo',
     category: 'Logo',
     imageUrl: 'https://example.test/a.png',
-    tags: [],
     assetType: 'image/png',
     assetSizeBytes: 1234,
     createdAt: '2026-09-01',

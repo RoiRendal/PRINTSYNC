@@ -441,7 +441,7 @@ async function seedDesigns(supabase: SupabaseClient, adminId: string): Promise<s
   const rows = [];
   for (const design of DESIGNS) {
     const slug = design.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const svg = designArtwork(design.name, design.category, design.tags);
+    const svg = designArtwork(design.name, design.category);
     let imageUrl: string;
     if (skipUploads) {
       const { data } = supabase.storage.from(DESIGN_BUCKET).getPublicUrl(`seed/designs/${slug}.svg`);
@@ -454,7 +454,6 @@ async function seedDesigns(supabase: SupabaseClient, adminId: string): Promise<s
       name: design.name,
       category: design.category,
       image_url: imageUrl,
-      tags: design.tags,
       asset_type: 'image/svg+xml',
       asset_size_bytes: Buffer.byteLength(svg, 'utf8'),
       created_by: adminId,

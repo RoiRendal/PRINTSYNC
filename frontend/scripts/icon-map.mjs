@@ -50,7 +50,6 @@ export const ICON_MAP = {
   ShoppingBag: 'bag-handle',
   ShoppingCart: 'cart',
   Sun: 'sunny',
-  Tag: 'pricetag',
   Trash2: 'trash',
   User: 'person',
   UserCircle: 'person-circle',

@@ -138,25 +138,24 @@ export const SUPPLIERS: readonly SupplierSeed[] = [
 export interface DesignSeed {
   name: string;
   category: string;
-  tags: string[];
 }
 
 export const DESIGNS: readonly DesignSeed[] = [
-  { name: 'Grand Opening Tarp - Sari-Sari Store', category: 'Tarpaulin', tags: ['grand opening', 'tarpaulin', 'retail'] },
-  { name: 'Enrollment Banner Layout A3', category: 'Tarpaulin', tags: ['school', 'enrollment', 'banner'] },
-  { name: 'Barangay Fiesta Tarp 8x4', category: 'Tarpaulin', tags: ['fiesta', 'community', 'tarpaulin'] },
-  { name: 'Coffee Shop Menu Board', category: 'Large Format', tags: ['menu', 'food', 'poster'] },
-  { name: 'For Sale Standee - Reyes Realty', category: 'Large Format', tags: ['real estate', 'standee', 'corporate'] },
-  { name: 'Die-Cut Logo Stickers - Brew House', category: 'Stickers & Decals', tags: ['logo', 'die-cut', 'branding'] },
-  { name: 'Product Label - Golden Harvest Honey', category: 'Stickers & Decals', tags: ['label', 'product', 'food'] },
-  { name: 'Wedding Invitation Suite', category: 'Cards & Stationery', tags: ['wedding', 'invitation', 'premium'] },
-  { name: 'Business Card - Reyes Realty', category: 'Cards & Stationery', tags: ['business card', 'corporate', 'minimal'] },
-  { name: 'Certificate of Appreciation', category: 'Cards & Stationery', tags: ['certificate', 'school', 'formal'] },
-  { name: 'Class Reunion T-Shirt Design', category: 'Apparel', tags: ['reunion', 't-shirt', 'school'] },
-  { name: 'Team Building Jersey Layout', category: 'Apparel', tags: ['jersey', 'corporate', 'team'] },
-  { name: 'Personalized Mug - Teacher Gift', category: 'Giveaways', tags: ['mug', 'gift', 'sublimation'] },
-  { name: 'Acrylic Keychain - Paw Prints', category: 'Giveaways', tags: ['keychain', 'pet', 'acrylic'] },
-  { name: 'Restaurant Flyer - Buy 1 Take 1', category: 'Cards & Stationery', tags: ['flyer', 'promo', 'food'] },
+  { name: 'Grand Opening Tarp - Sari-Sari Store', category: 'Tarpaulin' },
+  { name: 'Enrollment Banner Layout A3', category: 'Tarpaulin' },
+  { name: 'Barangay Fiesta Tarp 8x4', category: 'Tarpaulin' },
+  { name: 'Coffee Shop Menu Board', category: 'Large Format' },
+  { name: 'For Sale Standee - Reyes Realty', category: 'Large Format' },
+  { name: 'Die-Cut Logo Stickers - Brew House', category: 'Stickers & Decals' },
+  { name: 'Product Label - Golden Harvest Honey', category: 'Stickers & Decals' },
+  { name: 'Wedding Invitation Suite', category: 'Cards & Stationery' },
+  { name: 'Business Card - Reyes Realty', category: 'Cards & Stationery' },
+  { name: 'Certificate of Appreciation', category: 'Cards & Stationery' },
+  { name: 'Class Reunion T-Shirt Design', category: 'Apparel' },
+  { name: 'Team Building Jersey Layout', category: 'Apparel' },
+  { name: 'Personalized Mug - Teacher Gift', category: 'Giveaways' },
+  { name: 'Acrylic Keychain - Paw Prints', category: 'Giveaways' },
+  { name: 'Restaurant Flyer - Buy 1 Take 1', category: 'Cards & Stationery' },
 ];
 
 export interface ExpenseSeed {

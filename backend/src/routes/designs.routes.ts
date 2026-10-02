@@ -17,7 +17,6 @@ const designSchema = z.object({
   name: z.string().trim().min(1),
   category: z.string().trim().default(''),
   imageUrl: z.string().trim().url().or(z.string().trim().startsWith('/')).refine((value) => value.length > 0),
-  tags: z.array(z.string().trim().min(1)).default([]),
   assetType: z.string().trim().nullable().optional(),
   assetSizeBytes: z.number().int().min(0).nullable().optional(),
 });
