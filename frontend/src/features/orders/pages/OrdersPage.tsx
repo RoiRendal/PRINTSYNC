@@ -8,7 +8,6 @@ import { cn } from '../../../shared/lib/cn';
 import { ApiError } from '../../../shared/api/errors';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { OrderDetailModal } from '../components/orders/OrderDetailModal';
-import { OrderSummaryCards } from '../components/orders/OrderSummaryCards';
 import { OrdersTable } from '../components/orders/OrdersTable';
 import { RetailSalesTable } from '../components/orders/RetailSalesTable';
 import { readOrderConflict } from '../api/ordersApi';
@@ -242,8 +241,6 @@ export default function Orders() {
             <ErrorState message={error} onRetry={refresh} className="min-h-64" />
           ) : (
             <>
-              <OrderSummaryCards />
-
               <div className="flex flex-col gap-3">
                 <div className="flex flex-wrap gap-1.5">
                   {STATUS_FILTERS.map((filter) => {
