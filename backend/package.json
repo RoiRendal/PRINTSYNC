@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "provision:user": "tsx src/scripts/provisionUser.ts",
+    "branding:sync": "tsx src/scripts/syncBranchBranding.ts",
     "seed:demo": "tsx src/scripts/seedDemoData.ts",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "tsx --test tests/unit/*.test.ts",

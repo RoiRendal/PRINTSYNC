@@ -203,7 +203,24 @@ export async function listUsers(
   const emails = new Map(authUsers.users.map((user) => [user.id, user.email ?? '']));
   const items = await Promise.all(profiles.map((profile) => {
     const role = (profile.roles as unknown as { name: UserRole } | null)?.name;
-    if (role !== 'admin' && role !== 'staff') {
+    /*
+     * `owner` is a valid role and must be listed.
+     *
+     * This check used to read `role !== 'admin' && role !== 'staff'`, written
+     * before the owner role existed (`20261002000200_branches.sql`). Once an
+     * owner account was provisioned, EVERY page of the directory that contained
+     * the owner row threw — so `GET /users` answered 503, and the staff
+     * management screen (`/users`) was unreachable for the only two roles that
+     * can open it, admin and owner. That is the failure mode this guard was
+     * meant to prevent, inverted.
+     *
+     * The list is now driven by the same set the API accepts when creating a
+     * user (`userSchema.role` in `users.routes.ts`) and the same one the frontend
+     * treats as admin-tier (`features/users/utils/access.ts`). A role the enum
+     * allows but this list omits is a 503 waiting for the next person to be
+     * hired, so the three must move together.
+     */
+    if (role !== 'admin' && role !== 'staff' && role !== 'owner') {
       throw new AppError(503, 'INVALID_ROLE_CONFIGURATION', 'A user has an invalid role configuration.');
     }
     return toSummary(supabase, profile, emails.get(profile.id) ?? '', role);
