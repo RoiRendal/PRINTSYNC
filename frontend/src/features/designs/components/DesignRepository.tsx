@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Download, Image as ImageIcon, Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
+import { Image as ImageIcon, Plus, RefreshCw, Trash2 } from '../../../shared/components/ui/icons';
 
 import { designsApi } from '../api/designsApi';
 import { useDesigns } from '../../../app/stores/useDesignStore';
@@ -13,9 +13,8 @@ import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
 import { useRefocusOnChange } from '../../../shared/hooks/useRefocusOnChange';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
-import { Button, Card, CardContent, CardHeader, CardDescription, CardTitle, Checkbox, DeleteConfirmModal, ImageGrid, ImageGridCard, Input, Modal, Pagination, SearchInput, Skeleton, StatTile, StatusLabel, SurfaceCard, ViewSelect, parseViewShape, Select } from '../../../shared/components/ui';
+import { Button, Card, CardContent, CardHeader, Checkbox, DeleteConfirmModal, ImageGrid, ImageGridCard, Input, Modal, Pagination, SearchInput, Skeleton, StatusLabel, SurfaceCard, ViewSelect, parseViewShape, Select } from '../../../shared/components/ui';
 import type { ViewShape } from '../../../shared/components/ui';
-import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import { DesignTable } from './DesignTable';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
@@ -374,33 +373,20 @@ export function DesignRepository() {
       )}
 
       <Card padding="none" className="overflow-hidden">
-        <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <CardTitle>Design Repository</CardTitle>
-            <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
+        {/*
+          A single toolbar row, with no title block above it — the same shape the
+          stock table has. "Design Repository" and its one-line description were
+          chrome around a screen whose sidebar entry already says where you are,
+          and the count line went with them, so this header is the controls and
+          nothing else. The card still runs the width it did; only the words are
+          gone.
+        */}
+        <CardHeader className="mb-0 border-b p-4">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
             {/*
-              The count line, the same one the stock gallery carries: how many
-              designs are on offer, replaced by "# items selected" while rows are
-              ticked (ERPNext collapses the header to that message). Omitted
-              entirely when there is nothing to count — "0 designs" beside "No
-              designs found" states the same fact twice, and the empty state says
-              it better.
-            */}
-            {selection.count === 0 && filteredDesigns.length === 0 ? null : (
-              <p className="mt-2 text-2xs font-bold text-app-text-muted dark:text-zinc-500">
-                {selection.count > 0
-                  ? formatSelectedCount(selection.count)
-                  : `${filteredDesigns.length} design${filteredDesigns.length === 1 ? '' : 's'}`}
-              </p>
-            )}
-          </div>
-          <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-2xl">
-            {/*
-              The same order every other list toolbar uses — view, search,
-              refresh, delete, add — because it is the same row of controls. The
-              delete square is only findable if it stays where the tables put it,
-              and it now leads the pair of action squares rather than sitting
-              alone, since the repository deletes in bulk like the rest.
+              The view picker leads the row, left of the search box — the position
+              both surfaces put it in, so switching between Stocks and Designs
+              does not move the control. Then search, refresh, delete, add.
             */}
             <ViewSelect value={designView} onChange={setDesignViewParam} ariaLabel="Design view" />
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -593,26 +579,38 @@ export function DesignRepository() {
                 <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Design Name</span><Input required type="text" value={editDesignData.name} onChange={(e) => setEditDesignData({ ...editDesignData, name: e.target.value })} /></label>
                 <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Category</span><Select required value={editDesignData.category} onChange={(e) => setEditDesignData({ ...editDesignData, category: e.target.value })}><option value="">Select Category</option>{editCategories(editDesignData.category).map((category) => <option key={category} value={category}>{category}</option>)}</Select></label>
                 {/*
-                  The two things the removed View modal was the only place to see:
-                  when the design was added, and the download that hands over the
-                  stored original. Both belong on the record's own screen — the
-                  View dialog was a second screen that showed the same record and
-                  one extra stat, which is not a screen.
+                  When the design was added — the one fact the removed View modal
+                  held that this form did not. A plain field label and value, the
+                  same shape as the two controls above it rather than a bordered
+                  tile around a single date: it is read-only information about
+                  this record, not a third input, and a box around it would claim
+                  it was something you could change.
                 */}
-                <StatTile label="Created Date" value={editDesignData.createdAt} />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  onClick={() => window.open(editDesignData.imageUrl, '_blank', 'noopener,noreferrer')}
-                >
-                  <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                  Download Assets
-                </Button>
+                <div className="space-y-1.5">
+                  <span className="block text-2xs font-bold text-app-text-muted dark:text-zinc-500">Created Date</span>
+                  <p className="tabular-nums text-sm text-app-ink dark:text-zinc-100">{editDesignData.createdAt}</p>
+                </div>
               </div>
             </div>
             {mutationError && <InlineAlert message={mutationError} />}
-            <div className="flex gap-3 border-t pt-4"><Button type="button" variant="secondary" fullWidth onClick={() => setIsEditModalOpen(false)}>Cancel</Button><Button type="submit" fullWidth isLoading={isUploading}>Save Changes</Button></div>
+            {/*
+              Download Assets takes the slot Cancel had, so the form ends in the
+              two things you can actually do with a design: take the artwork, or
+              save what you changed. It stays `type="button"` — a download that
+              submitted the form would be the kind of surprise that loses work.
+              The modal's X and Escape still close it, which is what Cancel did.
+            */}
+            <div className="flex gap-3 border-t pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                fullWidth
+                onClick={() => window.open(editDesignData.imageUrl, '_blank', 'noopener,noreferrer')}
+              >
+                Download Assets
+              </Button>
+              <Button type="submit" fullWidth isLoading={isUploading}>Save Changes</Button>
+            </div>
           </form>
         )}
       </Modal>

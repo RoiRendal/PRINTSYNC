@@ -163,30 +163,34 @@ describe('DesignRepository — the toolbar row', () => {
     expect(screen.getAllByRole('button', { name: /delete/i })).toHaveLength(1);
   });
 
-  it('reports how many designs are on offer, and swaps to the selection count', () => {
+  it('reports a ticked count in the table header, and nowhere else', () => {
     store.designs = [makeDesign(), makeDesign({ id: 'design-2', name: 'Second Design' })];
     renderAt('/inventory?designView=list');
-    expect(screen.getByText('2 designs')).toBeInTheDocument();
+
+    // The header block is the controls alone — no "N designs" line above it.
+    expect(screen.queryByText('2 designs')).toBeNull();
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select Logo Design' }));
-    // Two places say it once a row is ticked, and that is deliberate: the count
-    // line follows the stock page's, and the table header collapses to the same
-    // message (ERPNext item-list behaviour). The stock page shows both too.
-    expect(screen.getAllByText('1 item selected')).toHaveLength(2);
-    expect(screen.queryByText('2 designs')).toBeNull();
+    // Exactly once: the collapsed table header is now the only thing that
+    // states the count (ERPNext item-list behaviour).
+    expect(screen.getByText('1 item selected')).toBeInTheDocument();
   });
 
-  it('says nothing at all when there is nothing to count', () => {
+  it('never renders the card title, description or count line', () => {
+    store.designs = [makeDesign()];
     renderAt('/inventory?designView=list');
-    // "0 designs" beside "No designs found" states the same fact twice.
-    expect(screen.queryByText('0 designs')).toBeNull();
+    // The sidebar entry says where you are; chrome above the controls is gone.
+    expect(screen.queryByText('Design Repository')).toBeNull();
+    expect(screen.queryByText(/Search, upload, and manage reusable artwork assets/)).toBeNull();
+    expect(screen.queryByText('1 design')).toBeNull();
   });
 });
 
 /*
  * Bulk delete. The dialog names every design it will take, the deletes run one
  * row at a time, and the ticks are only cleared once the whole batch succeeded.
- */describe('DesignRepository — deleting ticked designs', () => {
+ */
+describe('DesignRepository — deleting ticked designs', () => {
   function openDeleteDialog() {
     store.designs = [
       makeDesign(),
@@ -302,6 +306,44 @@ describe('DesignRepository — the edit form never shows the stored image URL', 
       window.open = original;
     }
     expect(openSpy).toHaveBeenCalledWith(STORAGE_IMAGE_URL, '_blank', 'noopener,noreferrer');
+  });
+
+  it('ends in exactly two buttons — Download Assets and Save Changes', () => {
+    const dialog = openEditModal();
+    // The modal's own close square is chrome, so only named buttons count.
+    const labels = dialog
+      .getAllByRole('button')
+      .map((b) => (b.textContent ?? '').trim())
+      .filter((label) => label.length > 0);
+    expect(labels).toEqual(['Download Assets', 'Save Changes']);
+  });
+
+  it('offers no Cancel — the modal header still closes it', () => {
+    const dialog = openEditModal();
+    expect(dialog.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  });
+
+  it('does not submit the form when Download Assets is pressed', async () => {
+    const openSpy = vi.fn();
+    const original = window.open;
+    window.open = openSpy;
+    try {
+      const dialog = openEditModal();
+      fireEvent.change(dialog.getByDisplayValue('Logo Design'), { target: { value: 'Renamed' } });
+      fireEvent.click(dialog.getByRole('button', { name: 'Download Assets' }));
+    } finally {
+      window.open = original;
+    }
+    // A download that submitted would save the rename behind the user's back.
+    expect(store.updateDesign).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Edit Design' })).toBeInTheDocument();
+  });
+
+  it('shows the created date as a plain label, with no tile around it', () => {
+    const dialog = openEditModal();
+    const label = dialog.getByText('Created Date');
+    // The value sits beside the label it belongs to, not inside a stat tile.
+    expect(label.nextElementSibling).toHaveTextContent('2026-09-01');
   });
 });
 

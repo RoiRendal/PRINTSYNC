@@ -64,13 +64,13 @@ export function InventoryTable({
 }: InventoryTableProps) {
   return (
     <Card padding="none" className="overflow-hidden">
-      <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
+      <CardHeader className="mb-0 border-b p-4">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
           {/*
             The view picker leads the toolbar row — left of the search box — so
             the established order reads view, search, refresh, delete, add, and
             the dark `+` stays rightmost where the toolbar convention wants it.
-            Below `md` this row is a column, so the picker takes its own line
+            Below `sm` this row is a column, so the picker takes its own line
             instead of squeezing the search box.
           */}
           <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />

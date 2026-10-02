@@ -211,9 +211,21 @@ export function DropdownMenu<T extends string>({
         ref={triggerRef}
         type="button"
         variant="secondary"
-        // `h-7` matches every other control in the toolbar row; `px-2` and the
-        // 2xs label keep it from dwarfing the search box beside it.
-        className={cn('h-7 shrink-0 gap-1 px-2 text-2xs font-bold', className)}
+        /*
+          The trigger's type is the SEARCH BOX's type, not the toolbar's.
+          
+          It sits immediately left of the search field, and a bold 12px label up
+          against a normal-weight 14px field reads as two different kinds of
+          control in one row. So this follows `Input`'s `md` size exactly —
+          `text-sm`, normal weight — and only the geometry stays toolbar-sized
+          (`h-7`, `px-2`). That is also why there is no `font-bold`: the same
+          words at the same weight is the whole point.
+          
+          The 1px border the `secondary` variant draws is kept, because it is
+          what marks this as a control that opens rather than a field you type
+          into — the distinct affordance belongs to shape, not to type.
+        */
+        className={cn('h-7 shrink-0 gap-1 px-2 text-sm font-normal', className)}
         aria-label={ariaLabel}
         aria-haspopup="menu"
         aria-expanded={isOpen}
