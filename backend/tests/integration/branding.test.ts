@@ -46,14 +46,16 @@ describe('public branding API', () => {
     assert.ok(branding.businessName.length > 0);
   });
 
-  it('returns a logo that is either hosted or the same-origin fallback', async () => {
+  it('returns a logo that is a hosted Storage URL or nothing', async () => {
     const branding = dataOf<BrandingResponse>((await get('/branding')).body);
 
     if (branding.logoUrl === null) return;
-    // Never an inline data URL: the base64 fallback was removed when logos moved
-    // to Storage, and a data URL here would mean the migration regressed.
+    // Never an inline data URL and never a same-origin path: the base64 fallback
+    // and the bundled `/brand-logo.png` were both removed when the logo moved to
+    // Storage, so either form here would mean a migration regressed.
     assert.equal(branding.logoUrl.startsWith('data:'), false);
-    assert.match(branding.logoUrl, /^(https?:\/\/|\/)/);
+    assert.match(branding.logoUrl, /^https?:\/\//);
+    assert.match(branding.logoUrl, /business-assets/);
   });
 
   it('exposes only the brand fields', async () => {

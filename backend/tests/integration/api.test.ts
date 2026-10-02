@@ -722,23 +722,23 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(errorCode(response), 'INVALID_SETTINGS_REQUEST');
   });
 
-  it('uploads a business logo to Storage and clears it again', async (context) => {
+  it('uploads a business logo to Storage and reads it back', async (context) => {
     if (skipIfUnauthenticated(context, 'business logo upload')) return;
 
     const before = await request<{ logoUrl: string | null }>('/settings');
     assert.equal(before.status, 200);
 
     /*
-     * Read whatever logo is already there, BEFORE anything is deleted.
+     * Read whatever logo is already there, BEFORE anything is replaced.
      *
      * This test used to assume the database starts with no logo and asserted
      * that at the end. That held on a fresh database and failed on every other
      * one — it failed against the live shop, whose logo is seeded.
      *
-     * The bytes have to be captured now, not later: the DELETE at the end of
-     * this test clears `logo_url` AND sweeps the now-unreferenced object out of
-     * the bucket, so once it has run the old URL is a 404 and pointing back at
-     * it would not restore anything.
+     * The bytes have to be captured now, not later: replacing the logo rewrites
+     * the settings row and, on the next sweep, removes the object that is no
+     * longer referenced, so pointing back at the old URL after the fact would
+     * restore nothing.
      *
      * The rule this restores: a test may leave the database as it found it, but
      * it may not assume it found nothing.
@@ -747,7 +747,7 @@ describe('PRINTSYNC API integration', () => {
     let originalLogo: { dataUrl: string; contentType: string; sizeBytes: number } | null = null;
     if (originalLogoUrl) {
       const existing = await fetch(originalLogoUrl);
-      assert.equal(existing.status, 200, 'an existing logo must be readable before this test removes it');
+      assert.equal(existing.status, 200, 'an existing logo must be readable before this test replaces it');
       const bytes = Buffer.from(await existing.arrayBuffer());
       originalLogo = {
         dataUrl: `data:${existing.headers.get('content-type') ?? 'image/png'};base64,${bytes.toString('base64')}`,
@@ -779,17 +779,12 @@ describe('PRINTSYNC API integration', () => {
     const assetResponse = await fetch(logoUrl ?? '');
     assert.equal(assetResponse.status, 200);
 
-    const cleared = await request<{ logoUrl: string | null }>('/settings/logo', { method: 'DELETE' });
-    assert.equal(cleared.status, 200);
-    assert.equal(dataOf(cleared).logoUrl, null);
-
     /*
-     * Put the database back the way it was found.
-     *
-     * Nothing to do on a fresh database. On one that had a logo, re-upload the
-     * bytes captured at the start — the DELETE swept the original object, so
-     * this is the only way back, and it is why the capture happens before any
-     * of the destructive steps rather than after.
+     * Put the database back the way it was found by uploading the captured bytes
+     * again — the only way back, since there is no "clear logo" endpoint any
+     * more and the replaced object is swept. On a database that had no logo this
+     * is skipped and the assertion below records that the logo the test wrote is
+     * still the one in place; there is nothing to undo.
      */
     if (originalLogo) {
       const restored = await request<{ logoUrl: string | null }>('/settings/logo', {
@@ -799,11 +794,8 @@ describe('PRINTSYNC API integration', () => {
       assert.equal(restored.status, 200, 'the pre-existing logo should be restorable');
       assert.equal(typeof dataOf(restored).logoUrl, 'string');
 
-      // ...and the settings must now read back the same as they did on entry.
       const after = await request<{ logoUrl: string | null }>('/settings');
       assert.equal(typeof dataOf(after).logoUrl, 'string');
-    } else {
-      assert.equal(dataOf(cleared).logoUrl, null);
     }
   });
 

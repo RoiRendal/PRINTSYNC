@@ -18,6 +18,13 @@
       `createRoot(...).render(...)` clears the container's existing children on
       its first commit. The React tree then takes over with the app shell.
 
+      It carries the business initials, not a logo image. The logo lives in
+      Supabase Storage and is read over the network, which has not happened yet at
+      this point in the page's life — so the only honest mark here is the one that
+      can be drawn from a constant. "IC" for IC Printing Services. It stays in
+      step with `businessInitials()`; if the shop is ever renamed, this is the one
+      string that needs the same edit.
+
       The two colour values mirror `--app-surface` (#f5f5f7 light / #1c1c1e dark,
       `index.css`). They are literals because the token does not exist yet at this
       point in the page's life — the stylesheet has not been fetched. Dark is
@@ -40,12 +47,19 @@
         background: #f5f5f7;
       }
       /* 56px — the app's one logo size (`h-14 w-14 object-contain`), so the mark
-         does not change size between this frame and the login screen. */
-      #boot-splash img {
+         does not change size between this frame and the login screen. Colours
+         mirror `--app-accent` (#185fa5 light / #2f7cc4 dark). */
+      #boot-splash span {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 56px;
         height: 56px;
-        width: auto;
-        max-width: 200px;
-        object-fit: contain;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1;
+        color: #185fa5;
       }
       @media (prefers-color-scheme: dark) {
         html,
@@ -53,13 +67,16 @@
         #boot-splash {
           background: #1c1c1e;
         }
+        #boot-splash span {
+          color: #2f7cc4;
+        }
       }
     </style>
   </head>
   <body>
     <div id="root">
       <div id="boot-splash">
-        <img src="/brand-logo.png" alt="" width="56" height="56" />
+        <span aria-hidden="true">IC</span>
       </div>
     </div>
     <script type="module" src="/src/app/main.tsx"></script>

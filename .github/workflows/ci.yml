@@ -83,6 +83,18 @@ jobs:
         run: npm run lint:tests
         working-directory: backend
 
+      # Every layer that normally touches an image identifies it by extension and
+      # then sniffs the real bytes, so a misnamed file is invisible until
+      # something stops sniffing. This repository shipped a logo called `.png`
+      # that was a JPEG, and twelve of fourteen product/design images that were
+      # WebP, JPEG or AVIF. Once the logo became an *upload* that mattered:
+      # Storage serves an object under the type it was stored with, so the wrong
+      # name would publish a mislabelled object, and an AVIF is not on the
+      # allowlist at all. Decodes every shipped image and compares the two.
+      - name: Image-format gate
+        run: npm run check:image-formats
+        working-directory: backend
+
       # `test:integration` is deliberately excluded: it drives the real API and
       # needs live Supabase credentials, which must not be handed to CI.
       - name: Unit tests

@@ -205,12 +205,13 @@ describe('businessAssetService', () => {
       await assert.rejects(() => sweep(db, null), /Could not remove 1 orphaned logo object/);
     });
 
-    it('treats a logo URL that is not a Storage object as "nothing to keep"', async () => {
+    it('treats a non-Storage logo value as "nothing to keep"', async () => {
       const db = bucketWith([{ path: 'actor-1/old.png' }]);
 
-      // The bundled fallback is a same-origin path, so the sweep has no object to
-      // protect and every aged object is fair game.
-      const result = await sweep(db, '/brand-logo.png');
+      // A same-origin path is not a Storage object, so the sweep has nothing to
+      // protect and every aged object is fair game. The bundled-logo fallback it
+      // was written for is gone, but a legacy row can still hold such a value.
+      const result = await sweep(db, '/legacy-logo.png');
 
       assert.deepEqual(result.deleted, ['actor-1/old.png']);
     });

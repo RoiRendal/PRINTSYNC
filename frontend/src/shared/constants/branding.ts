@@ -8,12 +8,33 @@ export const APP_NAME = 'PRINTSYNC';
 export const DEFAULT_BUSINESS_DISPLAY_NAME = 'IC Printing Services';
 
 /**
- * Brand logo served from the Vite `public/` folder, used whenever no custom logo
- * has been uploaded.
- * Place your image file at: `public/brand-logo.png` (URL path `/brand-logo.png`).
- * Supported formats: png, jpg, svg, webp — if you use another name/extension, update this constant.
+ * Brand logo source.
+ *
+ * The logo is seeded into Supabase Storage and read from `business_settings`
+ * (see the backend's `seed/brandLogo.ts`). The frontend deliberately ships **no**
+ * bundled image: a fallback file would be a second copy that the database value
+ * silently outranks, which is exactly the conflict this removed. A deployment
+ * that cannot reach the stored URL therefore renders the initials mark below,
+ * not a stale or duplicate logo.
  */
-export const BRAND_LOGO_URL = '/brand-logo.png';
+
+/**
+ * Letters shown when no logo is available.
+ *
+ * Derived from the business name so the mark stays recognisable as the shop's —
+ * "IC Printing Services" gives "IC". Two initials keep the mark legible at the
+ * 20px the sidebar renders it at.
+ */
+export function businessInitials(businessName: string): string {
+  const initials = businessName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0))
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+  return initials || 'PS';
+}
 
 /**
  * Image types accepted for a custom business logo.

@@ -28,10 +28,12 @@ export function createSettingsApi(client: ApiClient = apiClient) {
      * Upload a logo to the `business-assets` bucket and persist its public URL.
      * Returns the updated settings, so the caller never has to follow up with a
      * separate write.
+     *
+     * Upload is the only way to change the logo. There is no bundled fallback
+     * file and no "reset" endpoint: the database holds the one logo the shop
+     * has, so replacing it means uploading another.
      */
     uploadLogo: (payload: LogoUploadPayload) => client.post<BusinessSettings, LogoUploadPayload>('/settings/logo', payload),
-    /** Clear the stored URL and fall back to the bundled `/brand-logo.png`. */
-    clearLogo: () => client.delete<BusinessSettings>('/settings/logo'),
   };
 }
 

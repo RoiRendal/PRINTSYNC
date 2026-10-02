@@ -85,8 +85,8 @@
      up. Frappe does the same: its list view sets `font-variant-numeric:
      tabular-nums` on a row's figures (frappe/public/scss/desk/list.scss) and
      keeps monospace for code alone (.diffview). Mono now survives in exactly two
-     places — code (the ErrorBoundary stack block) and URLs (the
-     `BRAND_LOGO_URL` display in Settings). Everywhere else, including the POS
+     places — code (the ErrorBoundary stack block) and URLs (the logo size
+     ceiling in Settings). Everywhere else, including the POS
      panel, the printed receipt, and bare identifiers (order #id, SKU, reference
      id), figures and ids are Geist + `tabular-nums`: on 2026-09-27 the Boss
      overrode the earlier till-roll / one-character-at-a-time rationale. */

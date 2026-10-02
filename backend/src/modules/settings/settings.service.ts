@@ -84,9 +84,15 @@ export async function updateBusinessSettings(
 /**
  * The single writer for `logo_url`.
  *
- * Pass a Storage public URL after an upload, or `null` to fall back to the
- * bundled `/brand-logo.png`. Only the logo column is touched, so this can never
- * clobber a concurrent edit of the business name or defaults.
+ * Pass a Storage public URL after an upload, or `null` for a shop with no logo.
+ * Only the logo column is touched, so this can never clobber a concurrent edit
+ * of the business name or defaults.
+ *
+ * `null` is no longer a "reset to the default logo" — there is no bundled logo
+ * file any more, so it means the shop genuinely has none and the UI renders the
+ * business initials. Nothing in the current app calls it with `null`; the
+ * parameter stays because it is the only way to represent that state and a
+ * future "remove logo" control would need it.
  */
 export async function setBusinessLogo(
   supabase: SupabaseClient,

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { NAV_ITEMS } from '../../shared/constants/navigation';
-import { APP_NAME } from '../../shared/constants/branding';
+import { businessInitials } from '../../shared/constants/branding';
 import { ChevronLeft, ChevronRight } from '../../shared/components/ui/icons';
 import { Button, Skeleton } from '../../shared/components/ui';
 import { cn } from '../../shared/lib/cn';
@@ -40,7 +40,7 @@ export const Sidebar = ({
   onNavigate?: () => void;
 }) => {
   const { currentUser } = useAuth();
-  const { effectiveBusinessLogoUrl } = useBusinessBranding();
+  const { businessLogoUrl, businessDisplayName } = useBusinessBranding();
   const [logoFailed, setLogoFailed] = useState(false);
 
   const handleLogoError = useCallback(() => {
@@ -50,7 +50,17 @@ export const Sidebar = ({
   // A new logo URL is a fresh chance to render it, so clear any past failure.
   useEffect(() => {
     setLogoFailed(false);
-  }, [effectiveBusinessLogoUrl]);
+  }, [businessLogoUrl]);
+
+  /**
+   * The initials fallback and the image are driven by the same condition.
+   *
+   * There is no bundled logo file any more, so "no logo stored" and "the stored
+   * logo would not load" are the same state as far as the user is concerned —
+   * both leave the initials mark. One guard therefore covers both, instead of a
+   * separate `businessLogoUrl` test that could drift from the error state.
+   */
+  const showInitials = businessLogoUrl === '' || logoFailed;
 
   const visibleItems = currentUser
     ? NAV_ITEMS.filter((item) => currentUser.access.includes(item.key))
@@ -91,14 +101,14 @@ export const Sidebar = ({
             header's `h-12` so the navigation still starts on the same line as the
             toolbar in the column beside it. */}
         <div className="flex h-12 shrink-0 items-center justify-center px-2.5">
-          {logoFailed ? (
+          {showInitials ? (
             <div className="flex h-7 w-7 shrink-0 items-center justify-center text-sm font-bold text-app-accent dark:text-app-accent-soft">
-              {APP_NAME.charAt(0)}
+              {businessInitials(businessDisplayName)}
             </div>
           ) : (
             <span className="flex h-7 w-7 shrink-0 items-center justify-center">
               <img
-                src={effectiveBusinessLogoUrl}
+                src={businessLogoUrl}
                 alt=""
                 width={20}
                 height={20}

@@ -33,14 +33,12 @@ vi.mock('../../../app/stores/useOrderStore', () => ({
 vi.mock('../../../app/providers/BusinessBrandingProvider', () => ({
   useBusinessBranding: () => ({
     businessDisplayName: 'PrintSync',
-    businessLogoUrl: null,
-    effectiveBusinessLogoUrl: '',
+    businessLogoUrl: '',
     currencySymbol: '₱',
     vatRate: 12,
     brandingError: null,
     setBusinessDisplayName: vi.fn(),
     uploadBusinessLogo: vi.fn(),
-    clearBusinessLogo: vi.fn(),
     setVatRate: vi.fn(),
     setCurrencySymbol: vi.fn(),
   }),

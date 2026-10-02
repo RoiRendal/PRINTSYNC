@@ -10,9 +10,16 @@ import {
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
 
+/**
+ * A stored logo is always a Supabase Storage public URL now — there is no
+ * bundled `/brand-logo.png` fallback to model. `logo_url: null` below is the
+ * genuinely-no-logo state, which the UI renders as the business initials.
+ */
+const STORED_LOGO_URL = 'https://example.supabase.co/storage/v1/object/public/business-assets/seed/brand-logo.png';
+
 const SETTINGS_ROW = {
   business_name: 'IC Printing Services',
-  logo_url: '/brand-logo.png',
+  logo_url: STORED_LOGO_URL,
   vat_rate: 12,
   currency_symbol: '₱',
   updated_at: '2026-09-15T00:00:00.000Z',
@@ -27,7 +34,7 @@ describe('settings.service', () => {
       const settings = await getBusinessSettings(db.client);
 
       assert.equal(settings.businessName, 'IC Printing Services');
-      assert.equal(settings.logoUrl, '/brand-logo.png');
+      assert.equal(settings.logoUrl, STORED_LOGO_URL);
       assert.equal(settings.vatRate, 12);
       assert.equal(settings.currencySymbol, '₱');
       assert.equal(settings.updatedAt, '2026-09-15T00:00:00.000Z');
@@ -74,7 +81,7 @@ describe('settings.service', () => {
 
       assert.deepEqual(branding, {
         businessName: 'IC Printing Services',
-        logoUrl: '/brand-logo.png',
+        logoUrl: STORED_LOGO_URL,
       });
     });
 
@@ -93,7 +100,7 @@ describe('settings.service', () => {
       assert.equal(columns.includes('currency_symbol'), false);
     });
 
-    it('returns a null logo when the bundled asset is in use', async () => {
+    it('returns a null logo when the shop has none', async () => {
       const db = createFakeSupabase();
       db.queueTable('business_settings', { data: { ...SETTINGS_ROW, logo_url: null }, error: null });
 

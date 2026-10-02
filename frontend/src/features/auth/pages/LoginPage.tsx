@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Lock, Mail } from '../../../shared/components/ui/icons';
+import { businessInitials } from '../../../shared/constants/branding';
 import { useBusinessBranding } from '../../../app/providers/BusinessBrandingProvider';
 import { Button, SurfaceCard, Input } from '../../../shared/components/ui';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
@@ -8,9 +9,10 @@ import { useAuth } from '../../../app/stores/useAuthStore';
 
 export default function LoginPage() {
   const { login, currentUser, isSessionLoading, authError } = useAuth();
-  const { effectiveBusinessLogoUrl } = useBusinessBranding();
+  const { businessLogoUrl, businessDisplayName } = useBusinessBranding();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [logoFailed, setLogoFailed] = useState(false);
 
   if (currentUser) {
     return <Navigate to="/" replace />;
@@ -33,8 +35,24 @@ export default function LoginPage() {
             tile, which was the same box the icon frames were; a logo is not a
             badge and does not need one. Same bare treatment the sidebar brand
             block already uses.
+
+            There is no bundled fallback: when the shop has no logo stored, or
+            the stored one will not load, the mark is the business initials in
+            the same 56px box — so the header never collapses to empty space and
+            never shows a second, conflicting logo file.
           */}
-          <img src={effectiveBusinessLogoUrl} alt="PRINTSYNC logo" className="mb-4 h-14 w-14 object-contain" />
+          {businessLogoUrl === '' || logoFailed ? (
+            <div className="mb-4 flex h-14 w-14 items-center justify-center text-2xl font-bold text-app-accent dark:text-app-accent-soft">
+              {businessInitials(businessDisplayName)}
+            </div>
+          ) : (
+            <img
+              src={businessLogoUrl}
+              alt="PRINTSYNC logo"
+              className="mb-4 h-14 w-14 object-contain"
+              onError={() => setLogoFailed(true)}
+            />
+          )}
 
           <h1 className="mt-4 text-3xl font-bold tracking-tight text-app-ink dark:text-zinc-100">Welcome back</h1>
           <p className="mt-2 max-w-sm text-sm leading-relaxed text-app-text-muted dark:text-zinc-400">

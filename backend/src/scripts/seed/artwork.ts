@@ -107,22 +107,3 @@ export function designArtwork(name: string, category: string): string {
 ${textBlock}
 </svg>`;
 }
-
-export function businessLogo(businessName: string): string {
-  const initials = businessName
-    .split(' ')
-    .map((word) => word.charAt(0))
-    .join('')
-    .slice(0, 3)
-    .toUpperCase();
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="96" fill="#185FA5"/>
-<rect x="96" y="128" width="320" height="256" rx="28" fill="#FFFFFF" opacity="0.94"/>
-<rect x="128" y="160" width="256" height="32" rx="16" fill="#185FA5" opacity="0.35"/>
-<rect x="128" y="216" width="192" height="24" rx="12" fill="#185FA5" opacity="0.55"/>
-<rect x="128" y="264" width="224" height="24" rx="12" fill="#185FA5" opacity="0.4"/>
-<rect x="128" y="312" width="144" height="24" rx="12" fill="#185FA5" opacity="0.28"/>
-<text x="256" y="440" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="700" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">${escapeXml(initials)}</text>
-</svg>`;
-}
