@@ -18,8 +18,8 @@ import type { PrintableDocument } from '../../types/printableDocument';
  * because the identity is exactly what the receipt-header tests vary.
  */
 const branding = {
-  businessDisplayName: 'IC Printing Services',
-  businessAddress: '',
+  businessDisplayName: 'IC Printing Services - Balayan',
+  businessAddress: 'Balayan, Batangas',
   currencySymbol: '₱',
 };
 
@@ -326,28 +326,30 @@ describe('the slip is composed as labelled blocks', () => {
  */
 describe('the receipt is headed by the branch that printed it', () => {
   beforeEach(() => {
-    branding.businessDisplayName = 'IC Printing Services';
-    branding.businessAddress = '';
+    branding.businessDisplayName = 'IC Printing Services - Balayan';
+    branding.businessAddress = 'Balayan, Batangas';
   });
 
   it('prints the branch name it was given', () => {
-    branding.businessDisplayName = 'IC Printing Services — Nasugbu';
+    branding.businessDisplayName = 'IC Printing Services - Nasugbu';
 
     render(<PrintableDocumentView document={makeRetailDocument()} />);
 
-    expect(screen.getByText('IC Printing Services — Nasugbu')).toBeInTheDocument();
+    expect(screen.getByText('IC Printing Services - Nasugbu')).toBeInTheDocument();
   });
 
   it('prints the address under the name', () => {
-    branding.businessAddress = 'Poblacion, Balayan, Batangas';
+    branding.businessAddress = 'Balayan, Batangas';
 
     render(<PrintableDocumentView document={makeRetailDocument()} />);
 
-    expect(screen.getByText('Poblacion, Balayan, Batangas')).toBeInTheDocument();
+    expect(screen.getByText('Balayan, Batangas')).toBeInTheDocument();
   });
 
   it('keeps a multi-line address on its own lines', () => {
-    branding.businessAddress = 'IC Printing Services\nPoblacion, Balayan';
+    // Multi-line is still a supported shape even though both seeded addresses are
+    // now a single line — a shop may add a barangay or landmark line in Settings.
+    branding.businessAddress = 'Poblacion, Balayan\nBatangas';
 
     render(<PrintableDocumentView document={makeRetailDocument()} />);
 
@@ -368,15 +370,29 @@ describe('the receipt is headed by the branch that printed it', () => {
     expect(container.querySelector('.whitespace-pre-line')).toBeNull();
   });
 
+  it('does not restate the shop name in the address line', () => {
+    // The defect this pins: the address used to begin with the shop name, which the
+    // receipt ALREADY prints as its bold heading — so every slip carried the name
+    // twice. The address is the town and province only.
+    branding.businessDisplayName = 'IC Printing Services - Balayan';
+    branding.businessAddress = 'Balayan, Batangas';
+
+    const { container } = render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    const address = container.querySelector('.whitespace-pre-line');
+    expect(address?.textContent).toBe('Balayan, Batangas');
+    expect(address?.textContent).not.toContain('IC Printing Services');
+  });
+
   it('heads an order ticket the same way as a receipt', () => {
     // One component serves both papers, so a fix applied to the receipt alone
     // would leave job tickets carrying the other branch's name.
-    branding.businessDisplayName = 'IC Printing Services — Nasugbu';
+    branding.businessDisplayName = 'IC Printing Services - Nasugbu';
     branding.businessAddress = 'Nasugbu, Batangas';
 
     render(<PrintableDocumentView document={makeOrderDocument()} />);
 
-    expect(screen.getByText('IC Printing Services — Nasugbu')).toBeInTheDocument();
+    expect(screen.getByText('IC Printing Services - Nasugbu')).toBeInTheDocument();
     expect(screen.getByText('Nasugbu, Batangas')).toBeInTheDocument();
   });
 });

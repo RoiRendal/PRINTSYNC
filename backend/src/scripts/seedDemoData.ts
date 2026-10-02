@@ -617,16 +617,24 @@ async function uploadBinaryAsset(supabase: SupabaseClient, bucket: string, path:
  * onto whichever row happened to be first, and Nasugbu's row would keep whatever
  * it had — which is how a receipt ends up headed by the wrong shop.
  *
- * The address is written because the receipt prints it and an empty one is
- * indistinguishable from "not configured yet". Each branch gets its own line, so
- * a customer handed a slip at Nasugbu is not told to go to Balayan.
+ * ### Both fields are derived from the branch, and neither repeats the name
+ *
+ * The receipt renders `business_name` as a bold heading and `address` beneath it.
+ * The address therefore must NOT restate the shop name — doing so printed the name
+ * twice on every slip. It carries the town and province only.
+ *
+ * The name is `"${BUSINESS.baseName} - ${branch.name}"` for **every** branch, so
+ * Balayan and Nasugbu are built by the same rule. The earlier version special-cased
+ * Balayan to a bare `BUSINESS.name`; once that constant gained its own "- Balayan"
+ * suffix, deriving Nasugbu from it produced "… - Balayan - Nasugbu". One rule with
+ * no exception is what keeps the two shops consistent.
  */
 async function seedSettings(supabase: SupabaseClient, adminId: string, branch: SeededBranch): Promise<void> {
   const patch: Record<string, unknown> = {
-    business_name: branch.code === 'BAL' ? BUSINESS.name : `${BUSINESS.name} - ${branch.name}`,
+    business_name: `${BUSINESS.baseName} - ${branch.name}`,
     vat_rate: BUSINESS.vatRate,
     currency_symbol: BUSINESS.currencySymbol,
-    address: branch.code === 'BAL' ? BUSINESS.address : `${BUSINESS.name} — ${branch.name}\n${branch.name}, Batangas`,
+    address: `${branch.name}, Batangas`,
     updated_by: adminId,
   };
 
