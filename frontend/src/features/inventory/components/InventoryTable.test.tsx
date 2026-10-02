@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { InventoryTable } from './InventoryTable';
 import { useRowSelection } from '../../../shared/hooks/useRowSelection';
+import type { ViewShape } from '../../../shared/components/ui';
 import type { InventoryItem } from '../types';
 
 /*
@@ -38,7 +39,15 @@ const ITEMS = [item('i1', 'SKU-1'), item('i2', 'SKU-2'), item('i3', 'SKU-3')];
  * Stands in for the page: it owns the selection, exactly as `InventoryPage` does,
  * and records what the delete control hands back.
  */
-function Harness({ items = ITEMS, onEditItem = vi.fn() }: { items?: InventoryItem[]; onEditItem?: (item: InventoryItem) => void }) {
+function Harness({
+  items = ITEMS,
+  onEditItem = vi.fn(),
+  onViewChange = vi.fn(),
+}: {
+  items?: InventoryItem[];
+  onEditItem?: (item: InventoryItem) => void;
+  onViewChange?: (view: ViewShape) => void;
+}) {
   const selection = useRowSelection(items.map((entry) => entry.id));
   const [requested, setRequested] = useState('');
 
@@ -54,7 +63,7 @@ function Harness({ items = ITEMS, onEditItem = vi.fn() }: { items?: InventoryIte
         onDeleteSelected={() => setRequested([...selection.selectedIds].join(','))}
         selection={selection}
         view="list"
-        onViewChange={vi.fn()}
+        onViewChange={onViewChange}
       />
       <output data-testid="delete-request">{requested}</output>
     </>
@@ -164,5 +173,70 @@ describe('InventoryTable — what the delete button hands to the page', () => {
     render(<Harness items={[]} />);
     expect(screen.getByRole('checkbox', { name: /select all stock items/i })).toBeDisabled();
     expect(deleteButton()).toBeDisabled();
+  });
+});
+
+/*
+ * The toolbar row, and where the view picker sits in it.
+ *
+ * The order is the convention every list page follows — view, search, refresh,
+ * delete, add — and it is the kind of thing that survives review while being
+ * wrong: the controls all still work in any order, so nothing fails. What breaks
+ * is the muscle memory, and the delete square is only findable if it stays where
+ * the other tables put it.
+ *
+ * Asserted on DOM order rather than geometry, because jsdom applies no
+ * stylesheet and every `getBoundingClientRect()` here is zeroes.
+ */
+describe('InventoryTable — the toolbar row', () => {
+  /** The labels of the toolbar's direct children, left to right. */
+  function toolbarOrder(): string[] {
+    const search = screen.getByPlaceholderText('Search...');
+    const row = search.parentElement;
+    if (!row) throw new Error('the search box has no toolbar row');
+    return Array.from(row.children).map((child) => {
+      if (child.tagName === 'INPUT') return 'search';
+      if (child.tagName === 'BUTTON') return child.getAttribute('aria-label') ?? 'button';
+      const inner = child.querySelector('button');
+      return inner?.getAttribute('aria-label') ?? child.tagName;
+    });
+  }
+
+  it('leads with the view picker, then search, refresh, delete, add', () => {
+    render(<Harness />);
+    const order = toolbarOrder();
+    expect(order).toHaveLength(5);
+    expect(order[0]).toBe('Stock view');
+    expect(order[1]).toBe('search');
+    expect(order[2]).toBe('Refresh');
+    expect(order[3]).toMatch(/^Delete/);
+    expect(order[4]).toBe('Add Stock');
+  });
+
+  it('puts the view picker to the LEFT of the search box', () => {
+    render(<Harness />);
+    const order = toolbarOrder();
+    expect(order.indexOf('Stock view')).toBeLessThan(order.indexOf('search'));
+  });
+
+  it('keeps the primary add control last', () => {
+    render(<Harness />);
+    const order = toolbarOrder();
+    expect(order[order.length - 1]).toBe('Add Stock');
+  });
+
+  it('hands the chosen view back to the page', () => {
+    const onViewChange = vi.fn();
+    render(<Harness onViewChange={onViewChange} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Stock view' }));
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Image View' }));
+
+    expect(onViewChange).toHaveBeenCalledWith('image');
+  });
+
+  it('shows the current view on the trigger', () => {
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: 'Stock view' })).toHaveTextContent('List View');
   });
 });
