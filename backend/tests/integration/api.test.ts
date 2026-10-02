@@ -728,6 +728,34 @@ describe('PRINTSYNC API integration', () => {
     const before = await request<{ logoUrl: string | null }>('/settings');
     assert.equal(before.status, 200);
 
+    /*
+     * Read whatever logo is already there, BEFORE anything is deleted.
+     *
+     * This test used to assume the database starts with no logo and asserted
+     * that at the end. That held on a fresh database and failed on every other
+     * one — it failed against the live shop, whose logo is seeded.
+     *
+     * The bytes have to be captured now, not later: the DELETE at the end of
+     * this test clears `logo_url` AND sweeps the now-unreferenced object out of
+     * the bucket, so once it has run the old URL is a 404 and pointing back at
+     * it would not restore anything.
+     *
+     * The rule this restores: a test may leave the database as it found it, but
+     * it may not assume it found nothing.
+     */
+    const originalLogoUrl = dataOf(before).logoUrl;
+    let originalLogo: { dataUrl: string; contentType: string; sizeBytes: number } | null = null;
+    if (originalLogoUrl) {
+      const existing = await fetch(originalLogoUrl);
+      assert.equal(existing.status, 200, 'an existing logo must be readable before this test removes it');
+      const bytes = Buffer.from(await existing.arrayBuffer());
+      originalLogo = {
+        dataUrl: `data:${existing.headers.get('content-type') ?? 'image/png'};base64,${bytes.toString('base64')}`,
+        contentType: existing.headers.get('content-type') ?? 'image/png',
+        sizeBytes: bytes.byteLength,
+      };
+    }
+
     // Minimal 1x1 PNG as a base64 data URL.
     const dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     const uploaded = await request<{ logoUrl: string | null }>('/settings/logo', {
@@ -755,8 +783,28 @@ describe('PRINTSYNC API integration', () => {
     assert.equal(cleared.status, 200);
     assert.equal(dataOf(cleared).logoUrl, null);
 
-    // The suite starts from a null logo, so assert we left it that way.
-    assert.equal(dataOf(before).logoUrl, null);
+    /*
+     * Put the database back the way it was found.
+     *
+     * Nothing to do on a fresh database. On one that had a logo, re-upload the
+     * bytes captured at the start — the DELETE swept the original object, so
+     * this is the only way back, and it is why the capture happens before any
+     * of the destructive steps rather than after.
+     */
+    if (originalLogo) {
+      const restored = await request<{ logoUrl: string | null }>('/settings/logo', {
+        method: 'POST',
+        body: JSON.stringify({ ...originalLogo, fileName: 'restored-logo' }),
+      });
+      assert.equal(restored.status, 200, 'the pre-existing logo should be restorable');
+      assert.equal(typeof dataOf(restored).logoUrl, 'string');
+
+      // ...and the settings must now read back the same as they did on entry.
+      const after = await request<{ logoUrl: string | null }>('/settings');
+      assert.equal(typeof dataOf(after).logoUrl, 'string');
+    } else {
+      assert.equal(dataOf(cleared).logoUrl, null);
+    }
   });
 
   it('rejects a business logo above the 2 MB ceiling', async (context) => {
