@@ -92,7 +92,7 @@ paymentsRouter.post('/transactions', authenticate, requirePermission('payments.c
   // replayed idempotency key writes no second row, because no second sale exists.
   const transaction = await createTransaction(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   // A retail sale writes a payment *and* decrements stock in one RPC.
-  publishDataChange('payments', 'inventory');
+  publishDataChange(getCallerBranch(request), 'payments', 'inventory');
   response.status(201).json({ data: transaction });
 });
 
@@ -103,6 +103,6 @@ paymentsRouter.post('/transactions/:id/void', authenticate, requirePermission('p
   // as the reversal of the sale, its stock and its payment.
   const transaction = await voidTransaction(getSupabase(), transactionId, request.auth.user.id, getCallerBranch(request));
   // Voiding restores the deducted stock and voids the payment.
-  publishDataChange('payments', 'inventory');
+  publishDataChange(getCallerBranch(request), 'payments', 'inventory');
   sendSuccess(response, transaction);
 });

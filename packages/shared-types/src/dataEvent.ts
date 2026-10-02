@@ -52,6 +52,19 @@ export type RealtimeEventName = 'connected' | 'data-change' | 'heartbeat';
 export interface DataChangeEvent {
   /** The domains whose data changed. Never empty. */
   domains: DataDomain[];
+  /**
+   * The branch whose data changed, or `null` for a change with no branch.
+   *
+   * This is what keeps the push channel honest across branches. A change made at
+   * Balayan must not tell a Nasugbu workstation to refetch — the refetch would
+   * return nothing new, and the *signal itself* would leak cross-branch
+   * activity: a quiet branch could infer the other shop's trading rhythm purely
+   * from how often its screens were told to reload.
+   *
+   * `null` is for the few changes that genuinely belong to no branch — a user
+   * account, a business-wide setting. Those fan out to everyone.
+   */
+  branchId: string | null;
   /** ISO-8601 instant the change was announced, for debugging and ordering. */
   at: string;
 }

@@ -76,7 +76,7 @@ settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), as
   });
   // The business name and currency symbol appear in page headers and every
   // receipt, so the whole app needs to pick the new values up.
-  publishDataChange('settings');
+  publishDataChange(getCallerBranch(request), 'settings');
   sendSuccess(response, settings);
 });
 
@@ -108,7 +108,7 @@ settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'),
     entityId: branchId,
     metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes, branchId },
   });
-  publishDataChange('settings');
+  publishDataChange(getCallerBranch(request), 'settings');
   // Housekeeping runs after the response is ready and never throws: the logo is
   // already persisted, so a Storage hiccup here must not fail the request.
   await sweepOrphanedBusinessLogosSafely(getSupabase(), settings.logoUrl);

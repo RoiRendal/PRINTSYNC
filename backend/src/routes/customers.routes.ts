@@ -65,7 +65,7 @@ customersRouter.post('/', authenticate, requirePermission('customers.manage'), a
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
   const customer = await createCustomer(getSupabase(), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.created', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   response.status(201).json({ data: customer });
 });
 
@@ -74,7 +74,7 @@ customersRouter.patch('/:id', authenticate, requirePermission('customers.manage'
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
   const customer = await updateCustomer(getSupabase(), getCustomerId(request), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.updated', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   sendSuccess(response, customer);
 });
 
@@ -83,6 +83,6 @@ customersRouter.delete('/:id', authenticate, requirePermission('customers.manage
   const customerId = getCustomerId(request);
   await deleteCustomer(getSupabase(), customerId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.deleted', entityType: 'customer', entityId: customerId });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   response.status(204).send();
 });

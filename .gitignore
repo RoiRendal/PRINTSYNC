@@ -29,6 +29,12 @@ supabase/.temp/
 # killed test run from leaving one staged.
 **/.tmp-image-gate/
 
+# The same, for the branch-source gate's test suite. Kept as its own line rather
+# than a shared `**/.tmp-*/` so a new `.tmp-` directory cannot become invisible
+# to git by accident — a scratch tree that silently stops being reported is how
+# stray files reach a commit.
+**/.tmp-branch-gate/
+
 # Compiled output must never sit next to its TypeScript source. `shared-types`
 # compiles src -> dist; stale `src/*.js` files were committed once, and any tool
 # that prefers `.js` over `.ts` would silently resolve the stale build instead.

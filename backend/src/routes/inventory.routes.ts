@@ -100,7 +100,7 @@ inventoryRouter.post('/', authenticate, requirePermission('inventory.manage'), a
   if (!parsed.success) throw new AppError(400, 'INVALID_INVENTORY_REQUEST', 'The inventory details are invalid.');
   const item = await createInventoryItem(getSupabase(), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.created', entityType: 'inventory_item', entityId: item.id, metadata: { sku: item.sku } });
-  publishDataChange('inventory');
+  publishDataChange(getCallerBranch(request), 'inventory');
   response.status(201).json({ data: item });
 });
 
@@ -110,7 +110,7 @@ inventoryRouter.patch('/:id', authenticate, requirePermission('inventory.manage'
   const itemId = getItemId(request);
   const item = await updateInventoryItem(getSupabase(), itemId, getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.updated', entityType: 'inventory_item', entityId: item.id, metadata: { sku: item.sku } });
-  publishDataChange('inventory');
+  publishDataChange(getCallerBranch(request), 'inventory');
   sendSuccess(response, item);
 });
 
@@ -120,7 +120,7 @@ inventoryRouter.post('/:id/movements', authenticate, requirePermission('inventor
   const itemId = getItemId(request);
   const item = await adjustInventoryStock(getSupabase(), itemId, getCallerBranch(request), parsed.data.quantity, parsed.data.reason, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'inventory.adjusted', entityType: 'inventory_item', entityId: item.id, metadata: { quantity: parsed.data.quantity, reason: parsed.data.reason } });
-  publishDataChange('inventory');
+  publishDataChange(getCallerBranch(request), 'inventory');
   sendSuccess(response, item);
 });
 
@@ -128,7 +128,7 @@ inventoryRouter.delete('/:id', authenticate, requirePermission('inventory.manage
   const itemId = getItemId(request);
   await deleteInventoryItem(getSupabase(), itemId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'inventory.deleted', entityType: 'inventory_item', entityId: itemId });
-  publishDataChange('inventory');
+  publishDataChange(getCallerBranch(request), 'inventory');
   response.status(204).send();
 });
 

@@ -14,7 +14,8 @@
     "start": "node dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.json",
     "lint:tests": "tsc --noEmit -p tsconfig.test.json",
-    "check:image-formats": "node scripts/check-image-formats.mjs"
+    "check:image-formats": "node scripts/check-image-formats.mjs",
+    "check:branch-source": "node scripts/check-branch-source.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

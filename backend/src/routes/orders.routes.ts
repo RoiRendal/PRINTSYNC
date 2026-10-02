@@ -109,7 +109,7 @@ ordersRouter.post('/', authenticate, requirePermission('orders.create'), async (
   // would write the row twice.
   const order = await createOrder(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   // `create_order_with_items` reserves stock, so the inventory pages are stale too.
-  publishDataChange('orders', 'inventory');
+  publishDataChange(getCallerBranch(request), 'orders', 'inventory');
   response.status(201).json({ data: order });
 });
 
@@ -136,8 +136,8 @@ ordersRouter.patch('/:id', authenticate, requirePermission('orders.update'), asy
   // Only a line-item change re-reserves stock (`replace_order_with_items`); a
   // status/notes-only update leaves inventory untouched, so we do not wake the
   // inventory pages for it.
-  if (updates.lineItems !== undefined) publishDataChange('orders', 'inventory');
-  else publishDataChange('orders');
+  if (updates.lineItems !== undefined) publishDataChange(getCallerBranch(request), 'orders', 'inventory');
+  else publishDataChange(getCallerBranch(request), 'orders');
   sendSuccess(response, order);
 });
 
@@ -147,6 +147,6 @@ ordersRouter.delete('/:id', authenticate, requirePermission('orders.delete'), as
   // Audited by `delete_order_with_items`, in the same transaction as the delete.
   await deleteOrder(getSupabase(), orderId, request.auth.user.id, getCallerBranch(request));
   // `delete_order_with_items` releases the reserved stock back to inventory.
-  publishDataChange('orders', 'inventory');
+  publishDataChange(getCallerBranch(request), 'orders', 'inventory');
   response.status(204).send();
 });

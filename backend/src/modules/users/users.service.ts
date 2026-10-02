@@ -211,6 +211,25 @@ export async function listUsers(
   return createPaginatedResponse(items, count ?? 0, params.page, params.limit);
 }
 
+/**
+ * The branch a single account belongs to, or `null` if the profile is gone.
+ *
+ * A one-column read, for the one caller that needs the branch of a row it is
+ * about to destroy: `DELETE /users/:id` must announce the change to the branch
+ * that lost the account, and once the delete has run there is nothing left to
+ * ask. `listUsers` would answer the same question by paging the whole directory
+ * and an auth lookup — this reads the column it needs.
+ */
+export async function getUserBranch(supabase: SupabaseClient, id: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('branch_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new AppError(503, 'USERS_LOOKUP_FAILED', 'The user could not be loaded.');
+  return data?.branch_id ? String(data.branch_id) : null;
+}
+
 export async function createUser(supabase: SupabaseClient, input: UserInput): Promise<UserSummary> {
   if (!input.password) {
     throw new AppError(400, 'PASSWORD_REQUIRED', 'A password is required when creating a user.');

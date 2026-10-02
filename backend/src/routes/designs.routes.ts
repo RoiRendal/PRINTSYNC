@@ -63,7 +63,7 @@ designsRouter.post('/', authenticate, requirePermission('designs.manage'), async
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
   const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'design.created', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   response.status(201).json({ data: design });
 });
 
@@ -86,7 +86,7 @@ designsRouter.patch('/:id', authenticate, requirePermission('designs.manage'), a
   const designId = getDesignId(request);
   const design = await updateDesign(getSupabase(), designId, parsed.data, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.updated', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   sendSuccess(response, design);
 });
 
@@ -94,7 +94,7 @@ designsRouter.delete('/:id', authenticate, requirePermission('designs.manage'), 
   const designId = getDesignId(request);
   await deleteDesign(getSupabase(), designId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.deleted', entityType: 'design', entityId: designId });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   response.status(204).send();
 });
 

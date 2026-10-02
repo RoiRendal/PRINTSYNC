@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js'
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { createOrderPayment, deleteOrderPayment, listOrderPayments } from '../modules/orderPayments/orderPayments.service.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
@@ -27,16 +28,21 @@ function getSupabase() {
 orderPaymentsRouter.get('/:orderId', authenticate, requirePermission('order_payments.read'), async (request, response) => {
   const orderId = request.params.orderId;
   if (!orderId || Array.isArray(orderId)) throw new AppError(400, 'INVALID_ORDER_ID', 'The order id is invalid.');
-  sendSuccess(response, await listOrderPayments(getSupabase(), orderId));
+  // Branch-scoped through the parent order: an id from the other branch is
+  // refused rather than answered with an empty list.
+  sendSuccess(response, await listOrderPayments(getSupabase(), orderId, getCallerBranch(request)));
 });
 
 orderPaymentsRouter.post('/', authenticate, requirePermission('order_payments.create'), async (request, response) => {
   const parsed = paymentSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_PAYMENT_REQUEST', 'The payment details are invalid.');
-  const payment = await createOrderPayment(getSupabase(), parsed.data, request.auth.user.id);
+  const branchId = getCallerBranch(request);
+  const payment = await createOrderPayment(getSupabase(), parsed.data, request.auth.user.id, branchId);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order_payment.created', entityType: 'order_payment', entityId: payment.id, metadata: { orderId: payment.orderId, amount: payment.amount } });
-  // Recording a payment changes the order's balance due, so both domains move.
-  publishDataChange('orders', 'payments');
+  // Recording a payment changes the order's balance due, so both domains move —
+  // and the announcement carries the branch, so only the branch that owns the
+  // order is told to refetch.
+  publishDataChange(branchId, 'orders', 'payments');
   response.status(201).json({ data: payment });
 });
 
@@ -55,9 +61,10 @@ orderPaymentsRouter.delete('/:id', authenticate, requirePermission('order_paymen
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const id = request.params.id;
   if (!id || Array.isArray(id)) throw new AppError(400, 'INVALID_PAYMENT_ID', 'The payment id is invalid.');
-  await deleteOrderPayment(getSupabase(), id);
+  const branchId = getCallerBranch(request);
+  await deleteOrderPayment(getSupabase(), id, branchId);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'order_payment.deleted', entityType: 'order_payment', entityId: id });
   // Removing a payment also moves the order's balance due.
-  publishDataChange('orders', 'payments');
+  publishDataChange(branchId, 'orders', 'payments');
   response.status(204).send();
 });
