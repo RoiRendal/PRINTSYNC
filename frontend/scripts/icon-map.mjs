@@ -18,6 +18,7 @@ export const ICON_MAP = {
   Calendar: 'calendar',
   CheckCheck: 'checkmark-done',
   CheckCircle2: 'checkmark-circle',
+  ChevronDown: 'chevron-down',
   ChevronLeft: 'chevron-back',
   ChevronRight: 'chevron-forward',
   Clock: 'time',

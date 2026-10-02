@@ -76,7 +76,7 @@ describe('InventoryPage — surface in the URL', () => {
   it('opens the design repository when the URL asks for it', () => {
     renderAt('/inventory?surface=designs');
     expect(screen.queryByRole('button', { name: /low stock only/i })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Image View' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Design view' })).toBeInTheDocument();
   });
 
   it('falls back to the stock list for a value it does not recognise', () => {
@@ -85,9 +85,11 @@ describe('InventoryPage — surface in the URL', () => {
   });
 
   it('the two surfaces read their own view param and ignore the other', () => {
-    // A stock view param must not confuse the repository, and vice versa.
+    // A stock view param must not confuse the repository, and vice versa: each
+    // surface owns its own control, named for the surface it belongs to.
     renderAt('/inventory?surface=designs&stockView=image');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Design view' })).toHaveTextContent('Image View');
+    expect(screen.queryByRole('button', { name: 'Stock view' })).toBeNull();
   });
 });
 
@@ -104,32 +106,43 @@ describe('InventoryPage — surface in the URL', () => {
  * implementation under them rather than the expectations.
  */
 describe('InventoryPage — stock view in the URL', () => {
-  it('opens the list view by default', () => {
+  const trigger = () => screen.getByRole('button', { name: 'Stock view' });
+
+  it('shows the list view as current by default', () => {
     renderAt('/inventory');
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'false');
+    expect(trigger()).toHaveTextContent('List View');
   });
 
-  it('opens the image view when the URL asks for it', () => {
+  it('is a menu button, not a pair of pressed buttons', () => {
+    renderAt('/inventory');
+    expect(trigger()).toHaveAttribute('aria-haspopup', 'menu');
+    expect(trigger()).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('shows the image view as current when the URL asks for it', () => {
     renderAt('/inventory?stockView=image');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(trigger()).toHaveTextContent('Image View');
   });
 
   it('falls back to the list for a value it does not recognise', () => {
     renderAt('/inventory?stockView=gallery');
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(trigger()).toHaveTextContent('List View');
   });
 
-  it('switching to the image view marks it pressed', () => {
+  it('the menu lists both views, in order, marking the current one', () => {
     renderAt('/inventory');
-    fireEvent.click(screen.getByRole('button', { name: 'Image View' }));
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(trigger());
+    const options = screen.getAllByRole('menuitemradio');
+    expect(options.map((option) => option.textContent)).toEqual(['List View', 'Image View']);
+    expect(options[0]).toHaveAttribute('aria-checked', 'true');
+    expect(options[1]).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('switching back to the list marks it pressed again', () => {
-    renderAt('/inventory?stockView=image');
-    fireEvent.click(screen.getByRole('button', { name: 'List View' }));
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'false');
+  it('choosing the other view makes it current and closes the menu', () => {
+    renderAt('/inventory');
+    fireEvent.click(trigger());
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'Image View' }));
+    expect(trigger()).toHaveTextContent('Image View');
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
   });
 });

@@ -61,6 +61,12 @@ export const CheckCircle2 = ({ className, ...props }: SVGProps<SVGSVGElement>) =
   </svg>
 );
 
+export const ChevronDown = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
+    <path d="m112 184 144 144 144-144" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48px"/>
+  </svg>
+);
+
 export const ChevronLeft = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 512 512" width="24" height="24" fill="currentColor" className={className} {...props}>
     <path d="M328 112 184 256l144 144" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48px"/>

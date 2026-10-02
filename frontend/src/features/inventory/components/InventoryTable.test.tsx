@@ -53,6 +53,8 @@ function Harness({ items = ITEMS, onEditItem = vi.fn() }: { items?: InventoryIte
         onEditItem={onEditItem}
         onDeleteSelected={() => setRequested([...selection.selectedIds].join(','))}
         selection={selection}
+        view="list"
+        onViewChange={vi.fn()}
       />
       <output data-testid="delete-request">{requested}</output>
     </>

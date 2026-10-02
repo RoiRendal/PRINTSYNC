@@ -11,7 +11,9 @@ import {
   ImageGridCard,
   SearchInput,
   StatusLabel,
+  ViewSelect,
 } from '../../../shared/components/ui';
+import type { ViewShape } from '../../../shared/components/ui';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import type { RowSelection } from '../../../shared/hooks/useRowSelection';
 import type { InventoryItem } from '../types';
@@ -25,6 +27,9 @@ interface InventoryImageGridProps {
   onEditItem: (item: InventoryItem) => void;
   onDeleteSelected: () => void;
   selection: RowSelection;
+  /** Which shape this gallery is currently drawn in. */
+  view: ViewShape;
+  onViewChange: (view: ViewShape) => void;
   footer?: ReactNode;
 }
 
@@ -69,6 +74,8 @@ export function InventoryImageGrid({
   onEditItem,
   onDeleteSelected,
   selection,
+  view,
+  onViewChange,
   footer,
 }: InventoryImageGridProps) {
   return (
@@ -97,6 +104,9 @@ export function InventoryImageGrid({
           only findable if it stays where the table put it.
         */}
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:max-w-2xl">
+          {/* Leading edge of the toolbar row, left of the search box — the same
+              position the table puts it in, so the two shapes read alike. */}
+          <ViewSelect value={view} onChange={onViewChange} ariaLabel="Stock view" />
           <SearchInput
             className="flex-1"
             value={searchTerm}

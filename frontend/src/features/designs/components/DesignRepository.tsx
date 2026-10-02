@@ -11,9 +11,10 @@ import { EmptyState } from '../../../shared/components/feedback/EmptyState';
 import { ErrorState } from '../../../shared/components/feedback/ErrorState';
 import { InlineAlert } from '../../../shared/components/feedback/InlineAlert';
 import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton';
-import { cn } from '../../../shared/lib/cn';
 import { useUrlFilter } from '../../../shared/hooks/useUrlFilter';
-import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, Pagination, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, Input, Modal, Select } from '../../../shared/components/ui';
+import { useRefocusOnChange } from '../../../shared/hooks/useRefocusOnChange';
+import { Badge, Button, Card, CardContent, CardDescription, CardHeader, CardTitle, DeleteConfirmModal, ImageGrid, ImageGridCard, Pagination, SearchInput, Skeleton, StatTile, StatTileRow, SurfaceCard, ViewSelect, parseViewShape, Input, Modal, Select } from '../../../shared/components/ui';
+import type { ViewShape } from '../../../shared/components/ui';
 import { DesignTable } from './DesignTable';
 
 const DESIGN_CATEGORIES = ['Logo', 'Abstract', 'Typography', 'Graphic', 'Pattern'];
@@ -29,9 +30,7 @@ const DESIGN_SKELETON_COUNT = 10;
  * using it expect to land on. `?designView=list` asks for the table; an absent
  * param means the grid, so the common case stays a clean `/inventory`.
  */
-const DESIGN_VIEWS = ['image', 'list'] as const;
-type DesignView = (typeof DESIGN_VIEWS)[number];
-const DEFAULT_DESIGN_VIEW: DesignView = 'image';
+const DEFAULT_DESIGN_VIEW: ViewShape = 'image';
 
 /**
  * The loading form of this component's own card grid.
@@ -82,10 +81,14 @@ export function DesignRepository() {
    * An unrecognised value falls back to the grid instead of rendering an empty
    * screen — a stale bookmark must still show the artwork.
    */
-  const [designViewParam, setDesignViewParam] = useUrlFilter('designView', '');
-  const designView: DesignView = DESIGN_VIEWS.includes(designViewParam as DesignView)
-    ? (designViewParam as DesignView)
-    : DEFAULT_DESIGN_VIEW;
+  // The clear value IS the default (see the stock surface): choosing the grid
+  // removes the param rather than storing `?designView=image`.
+  const [designViewParam, setDesignViewParam] = useUrlFilter('designView', DEFAULT_DESIGN_VIEW);
+  const designView = parseViewShape(designViewParam, DEFAULT_DESIGN_VIEW);
+
+  // Switching shape rebuilds the header that holds the picker, so focus is put
+  // back on the rebuilt one. Same reason as the stock surface.
+  useRefocusOnChange('button[aria-label="Design view"]', designView);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -255,31 +258,6 @@ export function DesignRepository() {
         <InlineAlert message={mutationError} onDismiss={() => setMutationError(null)} />
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {/*
-          TEMPORARY: a plain two-button toggle, replaced by the ERPNext-style
-          dropdown in P5. Switchers are the look the Boss retired, so this is
-          scaffolding to keep this phase about the table itself — not a pattern
-          to copy. It sits at the leading edge, where the dropdown will go.
-        */}
-        {DESIGN_VIEWS.map((view) => (
-          <button
-            key={view}
-            type="button"
-            onClick={() => setDesignViewParam(view === DEFAULT_DESIGN_VIEW ? '' : view)}
-            aria-pressed={designView === view}
-            className={cn(
-              'cursor-pointer rounded-full px-3 py-1.5 text-2xs font-bold',
-              designView === view
-                ? 'bg-[var(--app-state-hover-sub)] text-app-ink dark:text-zinc-100'
-                : 'border text-app-text-muted hover:bg-[var(--app-state-hover)] hover:text-app-ink dark:text-zinc-400 dark:hover:bg-[var(--app-tint-neutral)] dark:hover:text-zinc-200',
-            )}
-          >
-            {view === 'list' ? 'List View' : 'Image View'}
-          </button>
-        ))}
-      </div>
-
       <Card padding="none" className="overflow-hidden">
         <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -288,6 +266,13 @@ export function DesignRepository() {
             <CardDescription>Search, upload, and manage reusable artwork assets for custom production.</CardDescription>
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row md:max-w-xl">
+            {/*
+              The view picker leads this toolbar row too — left of the search
+              box, the same place the stock table puts its own, so the two
+              surfaces read alike. Below `md` the row is a column and it takes
+              its own line rather than squeezing the search box.
+            */}
+            <ViewSelect value={designView} onChange={setDesignViewParam} ariaLabel="Design view" />
             <SearchInput className="flex-1" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             {/*
               Re-reads the repository. This header has no delete square to sit to

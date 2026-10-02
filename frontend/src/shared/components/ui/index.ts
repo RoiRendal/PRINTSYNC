@@ -8,6 +8,8 @@ export { Checkbox } from './Checkbox';
 export type { CheckboxProps } from './Checkbox';
 export { DeleteConfirmModal } from './DeleteConfirmModal';
 export type { DeleteConfirmModalProps } from './DeleteConfirmModal';
+export { DropdownMenu } from './DropdownMenu';
+export type { DropdownMenuProps, DropdownOption } from './DropdownMenu';
 export { ImageGrid, ImageGridCard } from './ImageGrid';
 export type { ImageGridCardProps } from './ImageGrid';
 export { Input, Select, Textarea } from './Input';
@@ -39,3 +41,5 @@ export {
 } from './Table';
 export type { TableContainerProps } from './Table';
 export { Tooltip } from './Tooltip';
+export { ViewSelect, parseViewShape } from './ViewSelect';
+export type { ViewSelectProps, ViewShape } from './ViewSelect';

@@ -40,40 +40,43 @@ function renderAt(path: string) {
  * in P5; these tests name the buttons by label so that swap lands under them.
  */
 describe('DesignRepository — view in the URL', () => {
-  it('opens the image view by default', () => {
+  const trigger = () => screen.getByRole('button', { name: 'Design view' });
+
+  it('shows the image view as current by default', () => {
     renderAt('/inventory');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'false');
+    expect(trigger()).toHaveTextContent('Image View');
   });
 
-  it('opens the list view when the URL asks for it', () => {
+  it('shows the list view as current when the URL asks for it', () => {
     renderAt('/inventory?designView=list');
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(trigger()).toHaveTextContent('List View');
   });
 
   it('falls back to the grid for a value it does not recognise', () => {
     renderAt('/inventory?designView=table');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(trigger()).toHaveTextContent('Image View');
   });
 
-  it('switching to the list view marks it pressed', () => {
-    renderAt('/inventory');
-    fireEvent.click(screen.getByRole('button', { name: 'List View' }));
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('switching back to the grid marks it pressed again', () => {
+  it('the menu lists both views, in order, marking the current one', () => {
     renderAt('/inventory?designView=list');
-    fireEvent.click(screen.getByRole('button', { name: 'Image View' }));
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'List View' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(trigger());
+    const options = screen.getAllByRole('menuitemradio');
+    expect(options.map((option) => option.textContent)).toEqual(['List View', 'Image View']);
+    expect(options[0]).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('the repository opens as a grid even when the stock surface is a table', () => {
+  it('choosing the other view makes it current', () => {
+    renderAt('/inventory');
+    fireEvent.click(trigger());
+    fireEvent.click(screen.getByRole('menuitemradio', { name: 'List View' }));
+    expect(trigger()).toHaveTextContent('List View');
+  });
+
+  it('the repository keeps its own default even when the stock param is set', () => {
     // The two surfaces keep independent defaults, and the stock param must not
     // be read by the repository.
     renderAt('/inventory?stockView=image');
-    expect(screen.getByRole('button', { name: 'Image View' })).toHaveAttribute('aria-pressed', 'true');
+    expect(trigger()).toHaveTextContent('Image View');
   });
 });
 

@@ -60,6 +60,8 @@ function renderGrid(props: Partial<React.ComponentProps<typeof InventoryImageGri
       items={[item()]}
       searchTerm=""
       selection={selection()}
+      view="image"
+      onViewChange={vi.fn()}
       {...handlers}
       {...props}
     />,
@@ -169,6 +171,8 @@ describe('InventoryImageGrid', () => {
         onAddItem={vi.fn()}
         onEditItem={vi.fn()}
         onDeleteSelected={vi.fn()}
+        view="image"
+        onViewChange={vi.fn()}
         footer={<span>Pager</span>}
       />,
     );
