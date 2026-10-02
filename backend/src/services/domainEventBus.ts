@@ -57,20 +57,34 @@ export function subscribeToDataChange(subscriber: Subscriber): () => void {
 }
 
 /**
- * Announces that one or more domains changed.
+ * Announces that one or more domains changed **in one branch**.
  *
  * Call this **after** the database write has committed — never before. An event
  * published for a write that then fails would make every client refetch data
  * that never changed.
  *
- * Duplicate domains are collapsed, so `publishDataChange('inventory',
+ * ### The branch argument is not decoration
+ *
+ * `branchId` is what stops one shop's activity being broadcast to the other. The
+ * payload carries no business rows — only domain names — so a leaked event
+ * exposes no record, but it does expose *activity*: how often the other branch is
+ * trading, and when. A stream that tells Nasugbu every time Balayan takes an
+ * order is a leak of the other shop's rhythm even though no row crosses.
+ *
+ * Pass `null` only for a change that genuinely belongs to no branch — a user
+ * account or a business-wide setting — and it will fan out to every subscriber.
+ * **Passing `null` to avoid a type error is the mistake this signature is shaped
+ * to prevent**: choose it deliberately or pass the caller's branch.
+ *
+ * Duplicate domains are collapsed, so `publishDataChange(branch, 'inventory',
  * 'inventory')` notifies once.
  */
-export function publishDataChange(...domains: DataDomain[]): void {
+export function publishDataChange(branchId: string | null, ...domains: DataDomain[]): void {
   if (domains.length === 0) return;
 
   const event: DataChangeEvent = {
     domains: [...new Set(domains)],
+    branchId,
     at: new Date().toISOString(),
   };
   publishedCount += 1;
@@ -84,6 +98,7 @@ export function publishDataChange(...domains: DataDomain[]): void {
     } catch (error) {
       logger.error('Data-change subscriber threw', {
         domains: event.domains,
+        branchId: event.branchId,
         message: error instanceof Error ? error.message : String(error),
       });
     }

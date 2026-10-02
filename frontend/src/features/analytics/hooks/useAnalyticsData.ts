@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   analyticsApi,
   type AnalyticsSummary,
+  type BranchComparison,
+  type BranchScope,
   type InventoryForecast,
   type ProductTrends,
   type SalesTimeline,
@@ -52,13 +54,29 @@ export interface AnalyticsDataState {
   inventoryForecast: InventoryForecast | null;
   inventoryForecastError: string | null;
   isInventoryForecastLoading: boolean;
+  /** Head office only: the per-branch breakdown. `null` for a staff account. */
+  branchComparison: BranchComparison | null;
+  branchComparisonError: string | null;
+  isBranchComparisonLoading: boolean;
 }
 
+/**
+ * @param branchScope Which branch the page is reporting on. `undefined` means "my
+ *   own" and is the only value a staff account ever passes — the server refuses the
+ *   rest. `'all'` or another branch id is passed only for a head-office account,
+ *   and the server 403s it for anyone else, so the client cannot widen its own
+ *   access by sending one.
+ * @param includeBranchComparison Whether to fetch the per-branch breakdown. True
+ *   only when the signed-in account is head office, so a staff session never issues
+ *   a request it would be refused.
+ */
 export function useAnalyticsData(
   salesPeriod: Period,
   profitPeriod: Period,
   trendPeriod: Period,
   forecastPeriod: Period,
+  branchScope: BranchScope = undefined,
+  includeBranchComparison = false,
 ): AnalyticsDataState {
   const [liveSummary, setLiveSummary] = useState<AnalyticsSummary | null>(null);
   const [liveSummaryError, setLiveSummaryError] = useState<string | null>(null);
@@ -75,6 +93,9 @@ export function useAnalyticsData(
   const [inventoryForecast, setInventoryForecast] = useState<InventoryForecast | null>(null);
   const [inventoryForecastError, setInventoryForecastError] = useState<string | null>(null);
   const [isInventoryForecastLoading, setIsInventoryForecastLoading] = useState(true);
+  const [branchComparison, setBranchComparison] = useState<BranchComparison | null>(null);
+  const [branchComparisonError, setBranchComparisonError] = useState<string | null>(null);
+  const [isBranchComparisonLoading, setIsBranchComparisonLoading] = useState(includeBranchComparison);
 
   const dateRange = useMemo(() => {
     const now = new Date();
@@ -120,7 +141,7 @@ export function useAnalyticsData(
 
   useEffect(() => {
     let mounted = true;
-    void analyticsApi.summary(dateRange.from, dateRange.to)
+    void analyticsApi.summary(dateRange.from, dateRange.to, branchScope)
       .then((summary) => {
         if (mounted) {
           setLiveSummary(summary);
@@ -134,12 +155,12 @@ export function useAnalyticsData(
         if (mounted) setIsLiveSummaryLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, reloadToken]);
+  }, [dateRange.from, dateRange.to, branchScope, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
     setIsSalesTimelineLoading(true);
-    void analyticsApi.salesTimeline(dateRange.from, dateRange.to, periodToBucket[salesPeriod])
+    void analyticsApi.salesTimeline(dateRange.from, dateRange.to, periodToBucket[salesPeriod], branchScope)
       .then((data) => {
         if (mounted) {
           setSalesTimeline(data);
@@ -153,12 +174,12 @@ export function useAnalyticsData(
         if (mounted) setIsSalesTimelineLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, salesPeriod, reloadToken]);
+  }, [dateRange.from, dateRange.to, salesPeriod, branchScope, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
     setIsProfitTimelineLoading(true);
-    void analyticsApi.salesTimeline(dateRange.from, dateRange.to, periodToBucket[profitPeriod])
+    void analyticsApi.salesTimeline(dateRange.from, dateRange.to, periodToBucket[profitPeriod], branchScope)
       .then((data) => {
         if (mounted) {
           setProfitTimeline(data);
@@ -172,12 +193,12 @@ export function useAnalyticsData(
         if (mounted) setIsProfitTimelineLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, profitPeriod, reloadToken]);
+  }, [dateRange.from, dateRange.to, profitPeriod, branchScope, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
     setIsProductTrendsLoading(true);
-    void analyticsApi.productTrends(dateRange.from, dateRange.to, periodToBucket[trendPeriod])
+    void analyticsApi.productTrends(dateRange.from, dateRange.to, periodToBucket[trendPeriod], branchScope)
       .then((data) => {
         if (mounted) {
           setProductTrends(data);
@@ -191,12 +212,12 @@ export function useAnalyticsData(
         if (mounted) setIsProductTrendsLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, trendPeriod, reloadToken]);
+  }, [dateRange.from, dateRange.to, trendPeriod, branchScope, reloadToken]);
 
   useEffect(() => {
     let mounted = true;
     setIsInventoryForecastLoading(true);
-    void analyticsApi.inventoryForecast(dateRange.from, dateRange.to, periodToHorizonDays[forecastPeriod])
+    void analyticsApi.inventoryForecast(dateRange.from, dateRange.to, periodToHorizonDays[forecastPeriod], branchScope)
       .then((data) => {
         if (mounted) {
           setInventoryForecast(data);
@@ -210,7 +231,44 @@ export function useAnalyticsData(
         if (mounted) setIsInventoryForecastLoading(false);
       });
     return () => { mounted = false; };
-  }, [dateRange.from, dateRange.to, forecastPeriod, reloadToken]);
+  }, [dateRange.from, dateRange.to, forecastPeriod, branchScope, reloadToken]);
+
+  /*
+   * The per-branch breakdown is head-office only, so the request is not made at all
+   * for a staff session — a staff account would be refused with a 403 and the page
+   * would show an error for a panel it is not supposed to have. Gating the *fetch*
+   * rather than the *render* is what keeps the network log honest: no request is
+   * issued that the server would reject.
+   *
+   * It deliberately does not depend on `branchScope`: the comparison shows every
+   * branch regardless of which one the selector is on, because "compare" is the
+   * question it answers. The combined figure in its payload is fetched by the server
+   * itself, not derived from the selected branch.
+   */
+  useEffect(() => {
+    if (!includeBranchComparison) {
+      setIsBranchComparisonLoading(false);
+      return;
+    }
+    let mounted = true;
+    setIsBranchComparisonLoading(true);
+    void analyticsApi.branchComparison(dateRange.from, dateRange.to)
+      .then((data) => {
+        if (mounted) {
+          setBranchComparison(data);
+          setBranchComparisonError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (mounted) {
+          setBranchComparisonError(error instanceof ApiError ? error.message : 'The branch comparison could not be loaded.');
+        }
+      })
+      .finally(() => {
+        if (mounted) setIsBranchComparisonLoading(false);
+      });
+    return () => { mounted = false; };
+  }, [dateRange.from, dateRange.to, includeBranchComparison, reloadToken]);
 
   return {
     dateRange,
@@ -229,5 +287,8 @@ export function useAnalyticsData(
     inventoryForecast,
     inventoryForecastError,
     isInventoryForecastLoading,
+    branchComparison,
+    branchComparisonError,
+    isBranchComparisonLoading,
   };
 }

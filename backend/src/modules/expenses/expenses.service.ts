@@ -36,11 +36,14 @@ function toExpense(row: Record<string, unknown>): Expense {
 export async function listExpenses(
   supabase: SupabaseClient,
   params: PaginationParams,
+  branchId: string,
 ): Promise<PaginatedResponse<Expense>> {
   const { start, end } = calculateRange(params.page, params.limit);
   const { data, error, count } = await supabase
     .from('operating_expenses')
     .select('*', { count: 'exact' })
+    // A branch's books only count its own expenses.
+    .eq('branch_id', branchId)
     .order('expense_date', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'EXPENSES_LOOKUP_FAILED', 'Expenses could not be loaded.');
@@ -49,12 +52,15 @@ export async function listExpenses(
 
 export async function createExpense(
   supabase: SupabaseClient,
+  // "Today at the shop" has to be *this* shop: an expense logged at Nasugbu is
+  // filed in Nasugbu's calendar day — and now, also, in Nasugbu's book.
+  branchId: string,
   input: ExpenseInput,
   actorId: string,
 ): Promise<Expense> {
   // A defaulted expense date is "today at the shop", not "today in UTC". Logging a
   // receipt at 07:00 local used to file it under yesterday's books.
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   const { data, error } = await supabase
     .from('operating_expenses')
     .insert({
@@ -63,6 +69,7 @@ export async function createExpense(
       amount: input.amount,
       expense_date: input.expenseDate ?? shopToday(timeZone),
       created_by: actorId,
+      branch_id: branchId,
     })
     .select('*')
     .single();
@@ -70,7 +77,12 @@ export async function createExpense(
   return toExpense(data);
 }
 
-export async function updateExpense(supabase: SupabaseClient, id: string, input: ExpenseInput): Promise<Expense> {
+export async function updateExpense(
+  supabase: SupabaseClient,
+  id: string,
+  branchId: string,
+  input: ExpenseInput,
+): Promise<Expense> {
   const { data, error } = await supabase
     .from('operating_expenses')
     .update({
@@ -80,13 +92,16 @@ export async function updateExpense(supabase: SupabaseClient, id: string, input:
       expense_date: input.expenseDate,
     })
     .eq('id', id)
+    // Scoped, so a staff member cannot edit another branch's expense by id — and
+    // so the branch of an expense can never be changed by an update.
+    .eq('branch_id', branchId)
     .select('*')
     .single();
   if (error || !data) throw new AppError(404, 'EXPENSE_NOT_FOUND', 'The expense was not found.');
   return toExpense(data);
 }
 
-export async function deleteExpense(supabase: SupabaseClient, id: string): Promise<void> {
-  const { error } = await supabase.from('operating_expenses').delete().eq('id', id);
+export async function deleteExpense(supabase: SupabaseClient, id: string, branchId: string): Promise<void> {
+  const { error } = await supabase.from('operating_expenses').delete().eq('id', id).eq('branch_id', branchId);
   if (error) throw new AppError(400, 'EXPENSE_DELETE_FAILED', 'The expense could not be deleted.');
 }

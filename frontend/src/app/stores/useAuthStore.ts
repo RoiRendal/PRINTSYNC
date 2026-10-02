@@ -27,22 +27,20 @@ interface AuthState {
 const toAuthUser = (user: Awaited<ReturnType<typeof usersApi.session>>): AuthUser | null => {
   if (!user) return null;
   /**
-   * `users.manage` is the admin marker, not `users.read`.
+   * The session's role, taken from the server.
    *
-   * The two keys are separate on purpose — the API gates `GET /users` on
-   * `users.read` and the write routes on `users.manage` — but this app models two
-   * roles, and the line between them is "can change things", so `manage` is the
-   * right discriminator here.
+   * This used to be inferred from permissions (`users.manage` => admin), which
+   * worked while there were exactly two roles. There are three now, and
+   * inferring would silently label every `owner` as `admin` — losing the one
+   * distinction that matters for branch reporting. The API returns `role`
+   * directly, so the client reads it rather than reconstructing it.
    *
-   * Known limitation, and the reason `normalizeAccess` is called just below: a
-   * hypothetical read-only role holding `users.read` without `users.manage` would
-   * be labelled `staff`, and `normalizeAccess` clamps a `staff` session to
-   * `STAFF_PAGE_ACCESS`, which does not list `users` — so the grant would be
-   * stripped and the Users page would disappear. Adding a third role means
-   * teaching `RbacRole`, `normalizeAccess` and the page-access lists about it;
-   * it is not a one-line change.
+   * `normalizeAccess` is still called just below: it clamps the access list to the
+   * pages the role may reach, so a permission granted to a narrower role cannot
+   * widen the sidebar. That is why a read-only role holding `users.read` without
+   * `users.manage` stays clamped even though the role now comes from the server.
    */
-  const role: RbacRole = user.permissions.includes('users.manage') ? 'admin' : 'staff';
+  const role: RbacRole = user.role;
   // Backend permissions look like `orders.read`; the page key is the prefix.
   const access = user.permissions
     .map((permission) => permission.split('.')[0])
@@ -54,6 +52,11 @@ const toAuthUser = (user: Awaited<ReturnType<typeof usersApi.session>>): AuthUse
     phone: user.phone,
     role,
     position: user.position,
+    // Carried through from the session so the UI can name the signed-in user's own
+    // branch without a second request, and so a head-office account knows it may
+    // reach across branches (Phase 4 surfaces that as a selector).
+    branchId: user.branchId ?? null,
+    canViewAllBranches: user.canViewAllBranches === true,
     access: normalizeAccess(role, access),
   };
 };

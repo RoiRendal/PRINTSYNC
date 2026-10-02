@@ -6,6 +6,7 @@ import { requirePermission } from '../middleware/authorize.js';
 import { createSupplier, deleteSupplier, getSupplier, listSuppliers, updateSupplier } from '../modules/suppliers/suppliers.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
@@ -32,17 +33,17 @@ function getSupplierId(request: { params: Record<string, string | string[] | und
 }
 
 suppliersRouter.get('/', authenticate, requirePermission('suppliers.read'), async (request, response) => {
-  sendSuccess(response, await listSuppliers(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listSuppliers(getSupabase(), parsePaginationQuery(request.query), getCallerBranch(request)));
 });
 
 suppliersRouter.get('/:id', authenticate, requirePermission('suppliers.read'), async (request, response) => {
-  sendSuccess(response, await getSupplier(getSupabase(), getSupplierId(request)));
+  sendSuccess(response, await getSupplier(getSupabase(), getSupplierId(request), getCallerBranch(request)));
 });
 
 suppliersRouter.post('/', authenticate, requirePermission('suppliers.manage'), async (request, response) => {
   const parsed = supplierSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_SUPPLIER_REQUEST', 'The supplier details are invalid.');
-  const supplier = await createSupplier(getSupabase(), parsed.data);
+  const supplier = await createSupplier(getSupabase(), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'supplier.created', entityType: 'supplier', entityId: supplier.id, metadata: { name: supplier.name } });
   response.status(201).json({ data: supplier });
 });
@@ -50,7 +51,7 @@ suppliersRouter.post('/', authenticate, requirePermission('suppliers.manage'), a
 suppliersRouter.patch('/:id', authenticate, requirePermission('suppliers.manage'), async (request, response) => {
   const parsed = supplierSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_SUPPLIER_REQUEST', 'The supplier details are invalid.');
-  const supplier = await updateSupplier(getSupabase(), getSupplierId(request), parsed.data);
+  const supplier = await updateSupplier(getSupabase(), getSupplierId(request), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'supplier.updated', entityType: 'supplier', entityId: supplier.id, metadata: { name: supplier.name } });
   sendSuccess(response, supplier);
 });
@@ -58,7 +59,7 @@ suppliersRouter.patch('/:id', authenticate, requirePermission('suppliers.manage'
 suppliersRouter.delete('/:id', authenticate, requirePermission('suppliers.manage'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const supplierId = getSupplierId(request);
-  await deleteSupplier(getSupabase(), supplierId);
+  await deleteSupplier(getSupabase(), supplierId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'supplier.deleted', entityType: 'supplier', entityId: supplierId });
   response.status(204).send();
 });

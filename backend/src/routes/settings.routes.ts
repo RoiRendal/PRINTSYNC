@@ -5,6 +5,7 @@ import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { getBusinessSettings, setBusinessLogo, updateBusinessSettings } from '../modules/settings/settings.service.js';
 import { AppError } from '../shared/errors.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { sendSuccess } from '../shared/apiResponse.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
@@ -22,6 +23,16 @@ export const settingsRouter = Router();
  */
 const settingsSchema = z.object({
   businessName: z.string().trim().min(1).max(160),
+  /**
+   * The shop's printed address, shown on receipts.
+   *
+   * `''` is accepted and means "print no address line" — a branch that has not
+   * filled one in yet must be representable, and it is not the same as omitting the
+   * field (which leaves the stored value alone). Multiline is allowed because a
+   * Philippine street address with a barangay and landmark naturally wraps, and the
+   * receipt renders it with `whitespace-pre-line`.
+   */
+  address: z.string().trim().max(400).optional(),
   vatRate: z.number().min(0).max(100).optional(),
   currencySymbol: z.string().trim().min(1).max(10).optional(),
 });
@@ -39,24 +50,43 @@ function getSupabase() {
   return supabase;
 }
 
-settingsRouter.get('/', authenticate, requirePermission('settings.read'), async (_request, response) => {
-  sendSuccess(response, await getBusinessSettings(getSupabase()));
+/**
+ * The branch whose settings this request is about.
+ *
+ * Always the signed-in user's own branch — read from the auth context, never from
+ * the query string or body. Phase 1 has one settings row per branch, so a
+ * caller-supplied branch id would let any staff member read or rewrite another
+ * branch's name, VAT rate and logo.
+ *
+ * Moved to `shared/branchContext.ts` when Phase 2 gave the same requirement to
+ * every operational route; it is imported at the top of this file. The shared
+ * module's doc comment carries the full reasoning, including why an account with
+ * no branch is a 403 rather than a default.
+ */
+
+settingsRouter.get('/', authenticate, requirePermission('settings.read'), async (request, response) => {
+  sendSuccess(response, await getBusinessSettings(getSupabase(), getCallerBranch(request)));
 });
 
 settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), async (request, response) => {
   const parsed = settingsSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_SETTINGS_REQUEST', 'The business settings are invalid.');
-  const settings = await updateBusinessSettings(getSupabase(), parsed.data, request.auth.user.id);
+  const branchId = getCallerBranch(request);
+  const settings = await updateBusinessSettings(getSupabase(), branchId, parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), {
     actorId: request.auth.user.id,
     action: 'settings.business_updated',
     entityType: 'business_settings',
-    entityId: '1',
-    metadata: { businessName: settings.businessName },
+    // The audit row names the branch, not the surrogate id. `entityId` used to be
+    // the literal '1' because there was one row; with one row per branch that
+    // value is no longer meaningful, and the branch is what a person reading the
+    // log is actually looking for.
+    entityId: branchId,
+    metadata: { businessName: settings.businessName, branchId },
   });
   // The business name and currency symbol appear in page headers and every
   // receipt, so the whole app needs to pick the new values up.
-  publishDataChange('settings');
+  publishDataChange(getCallerBranch(request), 'settings');
   sendSuccess(response, settings);
 });
 
@@ -78,16 +108,17 @@ settingsRouter.patch('/', authenticate, requirePermission('settings.manage'), as
 settingsRouter.post('/logo', authenticate, requirePermission('settings.manage'), async (request, response) => {
   const parsed = logoUploadSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_BUSINESS_LOGO', 'The business logo is invalid.');
+  const branchId = getCallerBranch(request);
   const asset = await uploadBusinessLogo(getSupabase(), parsed.data, request.auth.user.id);
-  const settings = await setBusinessLogo(getSupabase(), asset.imageUrl, request.auth.user.id);
+  const settings = await setBusinessLogo(getSupabase(), branchId, asset.imageUrl, request.auth.user.id);
   await writeAuditLog(getSupabase(), {
     actorId: request.auth.user.id,
     action: 'settings.logo_uploaded',
     entityType: 'business_settings',
-    entityId: '1',
-    metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes },
+    entityId: branchId,
+    metadata: { fileName: parsed.data.fileName, assetType: asset.assetType, assetSizeBytes: asset.assetSizeBytes, branchId },
   });
-  publishDataChange('settings');
+  publishDataChange(getCallerBranch(request), 'settings');
   // Housekeeping runs after the response is ready and never throws: the logo is
   // already persisted, so a Storage hiccup here must not fail the request.
   await sweepOrphanedBusinessLogosSafely(getSupabase(), settings.logoUrl);

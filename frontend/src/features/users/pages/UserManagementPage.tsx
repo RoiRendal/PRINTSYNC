@@ -38,7 +38,8 @@ import { useRowSelection } from '../../../shared/hooks/useRowSelection';
 import { formatSelectedCount } from '../../../shared/lib/selectionLabels';
 import { TOOLBAR_ROW_CLASS, TOOLBAR_SEARCH_WIDTH_CLASS } from '../../../shared/lib/toolbar';
 import type { RbacRole, UserSummary } from '../types';
-import { normalizeAccess } from '../utils/access';
+import { useBranches } from '../hooks/useBranches';
+import { isAdminTier, normalizeAccess } from '../utils/access';
 import { useAuth } from '../../../app/stores/useAuthStore';
 
 interface FormState {
@@ -47,6 +48,15 @@ interface FormState {
   phone: string;
   role: RbacRole;
   position: string;
+  /**
+   * Required, with no default.
+   *
+   * Every account belongs to exactly one branch. Defaulting this to the first
+   * branch would silently file a new Nasugbu hire under Balayan, and the mistake
+   * would only surface when they logged in and saw the wrong shop's stock — so an
+   * unset value has to block the save rather than resolve itself.
+   */
+  branchId: string;
   createdAt: string;
   password: string;
   access: PageAccessKey[];
@@ -58,6 +68,7 @@ const EMPTY_FORM: FormState = {
   phone: '',
   role: 'staff',
   position: '',
+  branchId: '',
   createdAt: '',
   password: '',
   access: STAFF_PAGE_ACCESS,
@@ -66,6 +77,7 @@ const EMPTY_FORM: FormState = {
 export default function UserManagement() {
   const { users, total, page, limit, isUsersLoading, userError, refreshUsers, goToPage, createUser, updateUser, deleteUser } = useUserContext();
   const { currentUser, getDefaultAccess } = useAuth();
+  const { branches } = useBranches();
   const firstAdminId = currentUser?.id ?? '';
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -122,6 +134,7 @@ export default function UserManagement() {
       phone: user.phone,
       role: user.role,
       position: user.position,
+      branchId: user.branchId ?? '',
       createdAt: user.createdAt,
       password: '',
       // The shared contract types `access` as `string[]` (the API may emit codes
@@ -220,7 +233,19 @@ export default function UserManagement() {
     }
   };
 
-  const roleAccessOptions = form.role === 'admin' ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
+  const roleAccessOptions = isAdminTier(form.role) ? ADMIN_PAGE_ACCESS : STAFF_PAGE_ACCESS;
+
+  /**
+   * A branch id as its name, for the directory.
+   *
+   * Falls back to an em dash rather than the raw id: a uuid on screen tells a
+   * manager nothing, and an unassigned account is a real state worth seeing as one
+   * (an account provisioned before its branch was set).
+   */
+  const branchName = (branchId: string | null) => {
+    if (!branchId) return '—';
+    return branches.find((branch) => branch.id === branchId)?.name ?? '—';
+  };
 
   if (isUsersLoading) return <TableSkeleton columns={5} className="min-h-64" />;
   if (userError) return <ErrorState message={userError} onRetry={refreshUsers} className="min-h-64" />;
@@ -366,6 +391,7 @@ export default function UserManagement() {
                         <TableCell title={cellTitle('Phone', user.phone)}>{user.phone}</TableCell>
                         <TableCell title={cellTitle('RBAC Role', user.role)}><StatusLabel tone={user.role === 'admin' ? 'purple' : 'accent'}>{user.role}</StatusLabel></TableCell>
                         <TableCell className="text-app-ink dark:text-zinc-200" title={cellTitle('Position', user.position)}>{user.position}</TableCell>
+                        <TableCell className="text-app-ink dark:text-zinc-200" title={cellTitle('Branch', branchName(user.branchId))}>{branchName(user.branchId)}</TableCell>
                       </TableRow>
                     ))}
                     {filteredUsers.length === 0 && (
@@ -400,6 +426,29 @@ export default function UserManagement() {
             <Select value={form.role} onChange={(e) => { const role = e.target.value as RbacRole; setForm((prev) => ({ ...prev, role, access: getDefaultAccess(role) })); }}>
               <option value="admin">admin</option>
               <option value="staff">staff</option>
+              {/*
+                Head office / owner. Deliberately a role rather than a checkbox:
+                picking it is what grants read-across for analytics, so the one
+                exception to branch separation is granted knowingly and shows up in
+                the directory as `owner` instead of hiding in a flag.
+              */}
+              <option value="owner">owner</option>
+            </Select>
+            {/*
+              A plain dropdown, per the standing rule — no switcher. It is required
+              and starts empty: an account with no branch is not a valid state, and
+              a silent default would put staff in the wrong shop.
+            */}
+            <Select
+              required
+              value={form.branchId}
+              onChange={(e) => setForm((prev) => ({ ...prev, branchId: e.target.value }))}
+              disabled={editingUserId !== null && form.branchId === ''}
+            >
+              <option value="" disabled>Branch</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
             </Select>
             <Input required value={form.position} onChange={(e) => setForm((prev) => ({ ...prev, position: e.target.value }))} placeholder="Position" />
             <Input type="date" value={form.createdAt} onChange={(e) => setForm((prev) => ({ ...prev, createdAt: e.target.value }))} />
@@ -408,7 +457,7 @@ export default function UserManagement() {
 
           <SurfaceCard className="space-y-3 p-3">
             <p className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">
-              {form.role === 'admin' ? 'Admin Page Access' : 'Staff Page Access'}
+              {isAdminTier(form.role) ? 'Admin Page Access' : 'Staff Page Access'}
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {roleAccessOptions.map((key) => {

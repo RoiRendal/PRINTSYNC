@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PrintableDocumentView } from './PrintableDocumentView';
 import type { PrintableDocument } from '../../types/printableDocument';
@@ -12,9 +12,19 @@ import type { PrintableDocument } from '../../types/printableDocument';
  * markup. The branding hook is stubbed instead of wrapped in its provider: the
  * real provider fetches settings over the network on mount, which would make a
  * layout test depend on an API being up.
+ *
+ * The stub mirrors the provider's real shape, including `businessAddress`, so a test
+ * can drive the shop's identity without a network. `branding` is mutable per-test
+ * because the identity is exactly what the receipt-header tests vary.
  */
+const branding = {
+  businessDisplayName: 'IC Printing Services',
+  businessAddress: '',
+  currencySymbol: '₱',
+};
+
 vi.mock('../../../../app/providers/BusinessBrandingProvider', () => ({
-  useBusinessBranding: () => ({ businessDisplayName: 'IC Printing Services', currencySymbol: '₱' }),
+  useBusinessBranding: () => branding,
 }));
 
 function makeRetailDocument(overrides: Partial<PrintableDocument> = {}): PrintableDocument {
@@ -300,5 +310,73 @@ describe('the slip is composed as labelled blocks', () => {
     // Anchored at the start of a node's text: the negative CONTAINS the positive,
     // so an unanchored query would match the very sentence it is excluding.
     expect(screen.queryByText(/^collected at the till/i)).not.toBeInTheDocument();
+  });
+});
+
+/*
+ * The shop's identity on the paper.
+ *
+ * This is the fix for a real defect: the app took its displayed identity from the
+ * branch-blind public branding route even when signed in, so a receipt printed at
+ * one shop was headed with the other shop's name. Nothing looked wrong while there
+ * was only one shop, which is exactly why it survived to the second one.
+ *
+ * `beforeEach` restores the stub because these tests mutate it, and a leak here
+ * would make the rest of the file depend on execution order.
+ */
+describe('the receipt is headed by the branch that printed it', () => {
+  beforeEach(() => {
+    branding.businessDisplayName = 'IC Printing Services';
+    branding.businessAddress = '';
+  });
+
+  it('prints the branch name it was given', () => {
+    branding.businessDisplayName = 'IC Printing Services — Nasugbu';
+
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    expect(screen.getByText('IC Printing Services — Nasugbu')).toBeInTheDocument();
+  });
+
+  it('prints the address under the name', () => {
+    branding.businessAddress = 'Poblacion, Balayan, Batangas';
+
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    expect(screen.getByText('Poblacion, Balayan, Batangas')).toBeInTheDocument();
+  });
+
+  it('keeps a multi-line address on its own lines', () => {
+    branding.businessAddress = 'IC Printing Services\nPoblacion, Balayan';
+
+    render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    // The receipt renders the address with `whitespace-pre-line`, so the newline
+    // survives. Without it a two-line address collapses onto one line — which is
+    // still readable, so the failure would go unnoticed.
+    const address = screen.getByText(/Poblacion, Balayan/);
+    expect(address).toHaveClass('whitespace-pre-line');
+  });
+
+  it('prints no address line at all when the shop has none', () => {
+    branding.businessAddress = '';
+
+    const { container } = render(<PrintableDocumentView document={makeRetailDocument()} />);
+
+    // An empty address must produce NO element. A rendered empty paragraph would
+    // leave a blank gap under the name, and `getByText('')` would match it.
+    expect(container.querySelector('.whitespace-pre-line')).toBeNull();
+  });
+
+  it('heads an order ticket the same way as a receipt', () => {
+    // One component serves both papers, so a fix applied to the receipt alone
+    // would leave job tickets carrying the other branch's name.
+    branding.businessDisplayName = 'IC Printing Services — Nasugbu';
+    branding.businessAddress = 'Nasugbu, Batangas';
+
+    render(<PrintableDocumentView document={makeOrderDocument()} />);
+
+    expect(screen.getByText('IC Printing Services — Nasugbu')).toBeInTheDocument();
+    expect(screen.getByText('Nasugbu, Batangas')).toBeInTheDocument();
   });
 });

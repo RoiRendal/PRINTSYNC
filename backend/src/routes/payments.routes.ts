@@ -6,6 +6,7 @@ import { requirePermission } from '../middleware/authorize.js';
 import { createTransaction, findTransactionByIdempotencyKey, getTransaction, listTransactions, voidTransaction } from '../modules/payments/payments.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
@@ -55,7 +56,7 @@ function getTransactionId(request: { params: Record<string, string | string[] | 
 }
 
 paymentsRouter.get('/transactions', authenticate, requirePermission('payments.read'), async (request, response) => {
-  sendSuccess(response, await listTransactions(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listTransactions(getSupabase(), parsePaginationQuery(request.query), getCallerBranch(request)));
 });
 
 const idempotencyKeySchema = z.string().uuid();
@@ -76,11 +77,11 @@ paymentsRouter.get('/transactions/by-key/:key', authenticate, requirePermission(
   const rawKey = request.params.key;
   const parsedKey = idempotencyKeySchema.safeParse(Array.isArray(rawKey) ? rawKey[0] : rawKey);
   if (!parsedKey.success) throw new AppError(400, 'INVALID_IDEMPOTENCY_KEY', 'The checkout reference is invalid.');
-  sendSuccess(response, await findTransactionByIdempotencyKey(getSupabase(), parsedKey.data));
+  sendSuccess(response, await findTransactionByIdempotencyKey(getSupabase(), parsedKey.data, getCallerBranch(request)));
 });
 
 paymentsRouter.get('/transactions/:id', authenticate, requirePermission('payments.read'), async (request, response) => {
-  sendSuccess(response, await getTransaction(getSupabase(), getTransactionId(request)));
+  sendSuccess(response, await getTransaction(getSupabase(), getTransactionId(request), getCallerBranch(request)));
 });
 
 paymentsRouter.post('/transactions', authenticate, requirePermission('payments.create'), async (request, response) => {
@@ -89,9 +90,9 @@ paymentsRouter.post('/transactions', authenticate, requirePermission('payments.c
   // `transaction.created` is audited by `create_transaction_with_payment`, inside
   // the same transaction as the sale, its stock deduction and its payment row. A
   // replayed idempotency key writes no second row, because no second sale exists.
-  const transaction = await createTransaction(getSupabase(), parsed.data, request.auth.user.id);
+  const transaction = await createTransaction(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   // A retail sale writes a payment *and* decrements stock in one RPC.
-  publishDataChange('payments', 'inventory');
+  publishDataChange(getCallerBranch(request), 'payments', 'inventory');
   response.status(201).json({ data: transaction });
 });
 
@@ -100,8 +101,8 @@ paymentsRouter.post('/transactions/:id/void', authenticate, requirePermission('p
   const transactionId = getTransactionId(request);
   // `transaction.voided` is audited by `void_transaction`, in the same transaction
   // as the reversal of the sale, its stock and its payment.
-  const transaction = await voidTransaction(getSupabase(), transactionId, request.auth.user.id);
+  const transaction = await voidTransaction(getSupabase(), transactionId, request.auth.user.id, getCallerBranch(request));
   // Voiding restores the deducted stock and voids the payment.
-  publishDataChange('payments', 'inventory');
+  publishDataChange(getCallerBranch(request), 'payments', 'inventory');
   sendSuccess(response, transaction);
 });

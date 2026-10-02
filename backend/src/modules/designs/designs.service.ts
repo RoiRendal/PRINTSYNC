@@ -56,15 +56,19 @@ function toRecord(row: Record<string, unknown>, timeZone: string): DesignRecord 
 export async function listDesigns(
   supabase: SupabaseClient,
   params: PaginationParams,
+  branchId: string,
 ): Promise<PaginatedResponse<DesignRecord>> {
   const { start, end } = calculateRange(params.page, params.limit);
   const { data, error, count } = await supabase
     .from('designs')
     .select(designSelect, { count: 'exact' })
+    // A branch's catalogue is its own. Nasugbu's started as a copy of Balayan's
+    // but the two diverge, so the list is the caller's branch and nothing else.
+    .eq('branch_id', branchId)
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'DESIGNS_LOOKUP_FAILED', 'Designs could not be loaded.');
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId);
   return createPaginatedResponse(data.map((row) => toRecord(row, timeZone)), count ?? 0, params.page, params.limit);
 }
 
@@ -72,6 +76,7 @@ export async function createDesign(
   supabase: SupabaseClient,
   input: DesignInput,
   actorId: string,
+  branchId: string,
 ): Promise<DesignRecord> {
   const { data, error } = await supabase
     .from('designs')
@@ -82,14 +87,20 @@ export async function createDesign(
       asset_type: input.assetType ?? null,
       asset_size_bytes: input.assetSizeBytes ?? null,
       created_by: actorId,
+      branch_id: branchId,
     })
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(400, 'DESIGN_CREATE_FAILED', 'The design could not be created.');
-  return toRecord(data, await getShopTimeZone(supabase));
+  return toRecord(data, await getShopTimeZone(supabase, branchId));
 }
 
-export async function updateDesign(supabase: SupabaseClient, id: string, input: DesignUpdateInput): Promise<DesignRecord> {
+export async function updateDesign(
+  supabase: SupabaseClient,
+  id: string,
+  input: DesignUpdateInput,
+  branchId: string,
+): Promise<DesignRecord> {
   /*
    * Only the columns actually sent are written. `image_url` is `not null`, so
    * writing a missing one as `null` would fail the constraint rather than leave
@@ -105,13 +116,14 @@ export async function updateDesign(supabase: SupabaseClient, id: string, input: 
     .from('designs')
     .update(patch)
     .eq('id', id)
+    .eq('branch_id', branchId)
     .select(designSelect)
     .single();
   if (error || !data) throw new AppError(404, 'DESIGN_NOT_FOUND', 'The design was not found.');
-  return toRecord(data, await getShopTimeZone(supabase));
+  return toRecord(data, await getShopTimeZone(supabase, branchId));
 }
 
-export async function deleteDesign(supabase: SupabaseClient, id: string): Promise<void> {
-  const { error } = await supabase.from('designs').delete().eq('id', id);
+export async function deleteDesign(supabase: SupabaseClient, id: string, branchId: string): Promise<void> {
+  const { error } = await supabase.from('designs').delete().eq('id', id).eq('branch_id', branchId);
   if (error) throw new AppError(404, 'DESIGN_DELETE_FAILED', 'The design could not be deleted.');
 }

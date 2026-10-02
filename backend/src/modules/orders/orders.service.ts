@@ -169,14 +169,25 @@ async function loadPayments(supabase: SupabaseClient, orderIds: string[]): Promi
 /**
  * The one place rows become `OrderRecord`s, so the shop's time zone is resolved
  * once per call rather than threaded through every caller. `getShopTimeZone` is
- * cached, so this is not a settings query per order.
+ * cached per branch, so this is not a settings query per order.
+ *
+ * `branchId` decides which branch's calendar day an order's date is rendered in.
+ * It is optional in Phase 1 — reads are not yet branch-scoped, so passing the
+ * caller's branch would label a mixed set of rows with one branch's zone. Phase 3
+ * scopes the reads and makes this required. `getOrdersSummary` below is the one
+ * caller that must pass it now, because it is reachable from a branch's own
+ * Workspace and its `lowStock` count is already branch-specific.
  */
-async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>[]): Promise<OrderRecord[]> {
+async function mapOrders(
+  supabase: SupabaseClient,
+  rows: Record<string, unknown>[],
+  branchId?: string,
+): Promise<OrderRecord[]> {
   const ids = rows.map((row) => String(row.id));
   const [itemMap, paymentMap, timeZone] = await Promise.all([
     loadItems(supabase, ids),
     loadPayments(supabase, ids),
-    getShopTimeZone(supabase),
+    getShopTimeZone(supabase, branchId),
   ]);
   return rows.map((row) =>
     toRecord(row, itemMap.get(String(row.id)) ?? [], paymentMap.get(String(row.id)) ?? 0, timeZone),
@@ -201,9 +212,13 @@ async function mapOrders(supabase: SupabaseClient, rows: Record<string, unknown>
  *
  * The current in-browser aggregation is not kept as a fallback. It is deleted in
  * the phase that rebuilds the page — that is part of the work, not a cleanup.
+ *
+ * `get_orders_summary` takes `p_branch_id` as of migration 20261002000500, so the
+ * count is the caller's branch. The parameter was accepted-and-ignored while the
+ * RPC had no parameters at all; now it is the one the RPC reads.
  */
-export async function getOrdersSummary(supabase: SupabaseClient): Promise<OrdersSummary> {
-  const { data, error } = await supabase.rpc('get_orders_summary');
+export async function getOrdersSummary(supabase: SupabaseClient, branchId: string): Promise<OrdersSummary> {
+  const { data, error } = await supabase.rpc('get_orders_summary', { p_branch_id: branchId });
 
   if (error || !data) {
     logger.error('Orders summary RPC failed', { error: error?.message });
@@ -251,6 +266,7 @@ export async function getOrdersSummary(supabase: SupabaseClient): Promise<Orders
 export async function listOrders(
   supabase: SupabaseClient,
   params: PaginationParams,
+  branchId: string,
   status?: OrderStatus,
 ): Promise<PaginatedResponse<OrderRecord>> {
   const { start, end } = calculateRange(params.page, params.limit);
@@ -267,24 +283,31 @@ export async function listOrders(
    * it for `planned` or dropping it would silently restore the old lie, because the
    * rows would still be filtered while the total went back to counting everything.
    */
-  let query = supabase.from('orders').select(orderSelect, { count: 'exact' });
+  let query = supabase.from('orders').select(orderSelect, { count: 'exact' }).eq('branch_id', branchId);
   if (status) query = query.eq('status', status);
   const { data, error, count } = await query
     .order('created_at', { ascending: false })
     .range(start, end);
   if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');
-  const orders = await mapOrders(supabase, data);
+  const orders = await mapOrders(supabase, data, branchId);
   return createPaginatedResponse(orders, count ?? 0, params.page, params.limit);
 }
 
-export async function getOrder(supabase: SupabaseClient, id: string): Promise<OrderRecord> {
-  const { data, error } = await supabase.from('orders').select(orderSelect).eq('id', id).maybeSingle();
+export async function getOrder(supabase: SupabaseClient, id: string, branchId?: string): Promise<OrderRecord> {
+  // `branchId` is optional here and required on the entry points above: this is
+  // the internal read the RPC wrappers call *after* they have already acted, and
+  // it is also called by `mapOrders`-based paths that pass their own. When given,
+  // it is applied so a by-id fetch cannot reach across branches; when omitted,
+  // the caller is an RPC result whose branch was just written by that RPC.
+  let query = supabase.from('orders').select(orderSelect).eq('id', id);
+  if (branchId) query = query.eq('branch_id', branchId);
+  const { data, error } = await query.maybeSingle();
   if (error || !data) throw new AppError(404, 'ORDER_NOT_FOUND', 'The order was not found.');
-  const [order] = await mapOrders(supabase, [data]);
+  const [order] = await mapOrders(supabase, [data], branchId);
   return order as OrderRecord;
 }
 
-export async function createOrder(supabase: SupabaseClient, input: OrderInput, actorId: string): Promise<OrderRecord> {
+export async function createOrder(supabase: SupabaseClient, input: OrderInput, actorId: string, branchId: string): Promise<OrderRecord> {
   const { data, error } = await supabase.rpc('create_order_with_items', {
     p_customer: input.customer,
     p_status: input.status ?? 'Pending',
@@ -298,9 +321,12 @@ export async function createOrder(supabase: SupabaseClient, input: OrderInput, a
     // The RPC writes the `order.created` audit row itself, inside its own
     // transaction, so the row cannot be lost while the order survives.
     ...auditRpcArguments(),
+    // The branch the order is filed under, and the branch whose stock it
+    // reserves. Required by the RPC as of 20261002000400.
+    p_branch_id: branchId,
   });
   if (error || !data) throw new AppError(400, 'ORDER_CREATE_FAILED', error?.message ?? 'The order could not be created.');
-  return getOrder(supabase, String((data as Record<string, unknown>).id));
+  return getOrder(supabase, String((data as Record<string, unknown>).id), branchId);
 }
 
 function isOrderConflictDetails(value: unknown): value is OrderConflictDetails {
@@ -349,9 +375,16 @@ export async function updateOrder(
   input: OrderUpdateInput,
   actorId: string,
   expectedUpdatedAt: string,
+  branchId: string,
 ): Promise<OrderRecord> {
+  /*
+   * An order's branch is fixed at creation and never moved — there is no
+   * inter-branch transfer, so no update path writes `branch_id`. The branch is
+   * used only to scope the read that loads the current values and the stock the
+   * line-item path reserves.
+   */
   if (input.lineItems !== undefined) {
-    const existing = await getOrder(supabase, id);
+    const existing = await getOrder(supabase, id, branchId);
     const { data, error } = await supabase.rpc('replace_order_with_items', {
       p_order_id: id,
       p_customer: input.customer ?? existing.customer,
@@ -368,9 +401,10 @@ export async function updateOrder(
       // path below has no RPC, so it still audits from the route — see
       // `orders.routes.ts`, which has to tell the two apart.
       ...auditRpcArguments(),
+      p_branch_id: branchId,
     });
     if (error || !data) throw mapUpdateFailure(error);
-    return getOrder(supabase, id);
+    return getOrder(supabase, id, branchId);
   }
 
   const updates: Record<string, unknown> = {};
@@ -386,12 +420,14 @@ export async function updateOrder(
    * A compare-and-swap rather than a plain update: carrying the loaded version in
    * the filter means the statement matches no row at all if someone else got
    * there first. This path has no RPC to lock inside, so the WHERE clause is what
-   * makes it atomic.
+   * makes it atomic. The branch predicate is a third condition for the same
+   * reason it is everywhere else — an id from another branch must not match.
    */
   const { data, error } = await supabase
     .from('orders')
     .update(updates)
     .eq('id', id)
+    .eq('branch_id', branchId)
     .eq('updated_at', expectedUpdatedAt)
     .select(orderSelect)
     .maybeSingle();
@@ -400,7 +436,12 @@ export async function updateOrder(
   if (!data) {
     // Nothing matched. Ask why, so a lost race reads as a conflict rather than a
     // bare "not found" that would send the user hunting for a deleted order.
-    const current = await supabase.from('orders').select('id, updated_at').eq('id', id).maybeSingle();
+    const current = await supabase
+      .from('orders')
+      .select('id, updated_at')
+      .eq('id', id)
+      .eq('branch_id', branchId)
+      .maybeSingle();
     if (!current.data) throw new AppError(404, 'ORDER_NOT_FOUND', 'The order was not found.');
     throw new AppError(
       409,
@@ -414,10 +455,25 @@ export async function updateOrder(
     );
   }
 
-  return getOrder(supabase, String(data.id));
+  return getOrder(supabase, String(data.id), branchId);
 }
 
-export async function deleteOrder(supabase: SupabaseClient, id: string, actorId: string): Promise<void> {
+export async function deleteOrder(supabase: SupabaseClient, id: string, actorId: string, branchId: string): Promise<void> {
+  /*
+   * `delete_order_with_items` takes no branch and deletes by id, so the order must
+   * be checked as belonging to this branch first. A plain read is used rather than
+   * a new RPC parameter, because adding a parameter would leave the old arity
+   * behind as an overload — the trap the replay's overload check exists to catch.
+   */
+  const { data: owned, error: lookupError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', id)
+    .eq('branch_id', branchId)
+    .maybeSingle();
+  if (lookupError) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'The order could not be checked.');
+  if (!owned) throw new AppError(404, 'ORDER_NOT_FOUND', 'The order was not found.');
+
   const { error } = await supabase.rpc('delete_order_with_items', {
     p_order_id: id,
     p_actor_id: actorId,
@@ -428,8 +484,12 @@ export async function deleteOrder(supabase: SupabaseClient, id: string, actorId:
   if (error) throw new AppError(404, 'ORDER_DELETE_FAILED', error.message || 'The order could not be deleted.');
 }
 
-export async function exportOrders(supabase: SupabaseClient): Promise<OrderRecord[]> {
-  const { data, error } = await supabase.from('orders').select(orderSelect).order('created_at', { ascending: false });
+export async function exportOrders(supabase: SupabaseClient, branchId: string): Promise<OrderRecord[]> {
+  const { data, error } = await supabase
+    .from('orders')
+    .select(orderSelect)
+    .eq('branch_id', branchId)
+    .order('created_at', { ascending: false });
   if (error) throw new AppError(503, 'ORDERS_LOOKUP_FAILED', 'Orders could not be loaded.');
-  return mapOrders(supabase, data);
+  return mapOrders(supabase, data, branchId);
 }

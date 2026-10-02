@@ -65,10 +65,32 @@ function writeFrame(response: Response, event: RealtimeEventName, payload: unkno
  *
  * See `services/dataChangePermissions.ts` for exactly which domains a staff
  * session receives.
+ *
+ * ### Scope is the signed-in user's own branch, always
+ *
+ * The stream carries the branch of the data that changed and each subscriber
+ * receives only its own. Note this is **not** widened for `can_view_all_branches`:
+ * a head-office account is still *sitting in* one branch, and "all branches at
+ * once" is not something a single push channel can express without telling that
+ * subscriber about activity it is not looking at. Head office sees every branch
+ * through the analytics surface, which queries on demand and can label what it
+ * is showing (Phase 4) — a live stream cannot. Widening here would also mean an
+ * owner's open tab receives both shops' activity continuously, which is the
+ * leak this route was fixed to close.
  */
 eventsRouter.get('/', authenticate, (request, response) => {
   const allowedDomains = visibleDomainsFor(request.auth?.permissions ?? []);
   const allowed = new Set<DataDomain>(allowedDomains);
+
+  /*
+   * The branch this stream is scoped to. `null` for an account with no branch —
+   * such an account receives only branch-less events (business-wide settings and
+   * user administration), never another shop's trading. `requirePermission`
+   * elsewhere refuses a branch-less account outright, but this route has no
+   * permission gate, so an explicit `null` is the honest answer rather than an
+   * assumption that the branch is present.
+   */
+  const subBranchId = request.auth?.profile.branchId ?? null;
 
   response.status(200);
   response.set({
@@ -126,13 +148,29 @@ eventsRouter.get('/', authenticate, (request, response) => {
   };
 
   // Tells the client which domains it will actually receive, so the UI can
-  // distinguish "connected but nothing to watch" from "connected".
-  send('connected', { domains: allowedDomains, at: new Date().toISOString() });
+  // distinguish "connected but nothing to watch" from "connected". The branch is
+  // included for the same reason: a stream scoped to the wrong branch is a bug
+  // that is otherwise invisible from the browser.
+  send('connected', { domains: allowedDomains, branchId: subBranchId, at: new Date().toISOString() });
 
   const unsubscribe = subscribeToDataChange((event: DataChangeEvent) => {
+    /*
+     * Two filters, and both matter.
+     *
+     * The domain filter answers "is this session allowed to know about this kind
+     * of change?" — admin-only `users` activity never reaches the shop floor.
+     *
+     * The **branch filter** answers "is this change mine?" and is the one that
+     * keeps the two shops separate. Without it a Balayan sale told every Nasugbu
+     * workstation to refetch: no row crossed the wire, but the *timing* did — a
+     * branch could infer the other's trading rhythm from how often its screens
+     * reloaded. A change with no branch (`null`, e.g. a user account edit) is
+     * business-wide and reaches everyone who may see the domain.
+     */
+    if (event.branchId !== null && event.branchId !== subBranchId) return;
     const visible = event.domains.filter((domain) => allowed.has(domain));
     if (visible.length === 0) return;
-    send('data-change', { domains: visible, at: event.at });
+    send('data-change', { domains: visible, branchId: event.branchId, at: event.at });
   });
 
   const heartbeat = setInterval(() => {
@@ -171,6 +209,7 @@ eventsRouter.get('/', authenticate, (request, response) => {
 
   logger.info('SSE client connected', {
     userId: request.auth?.user.id,
+    branchId: subBranchId,
     domains: allowedDomains,
     subscribers: countDataChangeSubscribers(),
   });

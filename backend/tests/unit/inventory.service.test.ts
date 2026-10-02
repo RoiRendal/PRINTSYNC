@@ -12,6 +12,17 @@ import {
 import { createFakeSupabase, FakeSupabase } from './helpers/fakeSupabase.js';
 import { assertAppError } from './helpers/assertAppError.js';
 
+/*
+ * Stock is entirely separate per branch (migration 20261002000300): every item
+ * carries a `branch_id`, and every read and write is narrowed to the caller's.
+ * The `lowStock` filter and the branch filter now travel together, so an
+ * assertion about one of them must not accidentally read the other — which is
+ * exactly what `filterOf` did once `branch_id` became the first `.eq` on every
+ * query. `hasFilter` names the predicate instead of its position.
+ */
+
+const BRANCH = 'branch-balayan';
+
 const ITEM_ROW = {
   id: 'inv-1',
   sku: 'INV-0001',
@@ -21,7 +32,9 @@ const ITEM_ROW = {
   reorder_level: 10,
   price: 12.5,
   cost_price: 8,
+  uom: 'pc',
   image_url: '/product-images/INV-001.png',
+  branch_id: BRANCH,
   created_at: '2026-09-01T00:00:00.000Z',
   updated_at: '2026-09-10T00:00:00.000Z',
 };
@@ -32,7 +45,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
 
-      const [item] = (await listInventory(db.client, { page: 1, limit: 20 })).data;
+      const [item] = (await listInventory(db.client, { page: 1, limit: 20 }, BRANCH)).data;
 
       assert.ok(item);
       assert.equal(item.id, 'inv-1');
@@ -55,7 +68,7 @@ describe('inventory.service', () => {
         count: 1,
       });
 
-      const [item] = (await listInventory(db.client, { page: 1, limit: 20 })).data;
+      const [item] = (await listInventory(db.client, { page: 1, limit: 20 }, BRANCH)).data;
 
       assert.ok(item);
       assert.equal(item.costPrice, 0);
@@ -66,7 +79,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [], error: null, count: 0 });
 
-      await listInventory(db.client, { page: 2, limit: 25 });
+      await listInventory(db.client, { page: 2, limit: 25 }, BRANCH);
 
       assert.deepEqual(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'range'), [25, 49]);
     });
@@ -75,7 +88,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 42 });
 
-      const response = await listInventory(db.client, { page: 1, limit: 20 });
+      const response = await listInventory(db.client, { page: 1, limit: 20 }, BRANCH);
 
       assert.deepEqual(
         { total: response.total, page: response.page, limit: response.limit, rows: response.data.length },
@@ -87,16 +100,27 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: null, error: { message: 'timeout' } });
 
-      await assertAppError(() => listInventory(db.client, { page: 1, limit: 20 }), 503, 'INVENTORY_LOOKUP_FAILED');
+      await assertAppError(() => listInventory(db.client, { page: 1, limit: 20 }, BRANCH), 503, 'INVENTORY_LOOKUP_FAILED');
+    });
+
+    it('always narrows the list to the caller\'s branch', async () => {
+      // The shelf is the branch's own. Without this predicate the list would mix
+      // both shops' stock and every count on the page would be wrong.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
+
+      await listInventory(db.client, { page: 1, limit: 20 }, BRANCH);
+
+      assert.ok(FakeSupabase.hasFilter(db.callsFor('inventory_items')[0], 'eq', ['branch_id', BRANCH]));
     });
 
     it('filters to low-stock items when asked', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
 
-      await listInventory(db.client, { page: 1, limit: 20 }, true);
+      await listInventory(db.client, { page: 1, limit: 20 }, BRANCH, true);
 
-      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'eq'), ['is_low_stock', true]);
+      assert.ok(FakeSupabase.hasFilter(db.callsFor('inventory_items')[0], 'eq', ['is_low_stock', true]));
     });
 
     it('sends no low-stock filter when not asked', async () => {
@@ -106,9 +130,9 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
 
-      await listInventory(db.client, { page: 1, limit: 20 });
+      await listInventory(db.client, { page: 1, limit: 20 }, BRANCH);
 
-      assert.deepEqual(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'eq'), undefined);
+      assert.equal(FakeSupabase.hasFilter(db.callsFor('inventory_items')[0], 'eq', ['is_low_stock', true]), false);
     });
 
     it('reports the filtered total, not the table total', async () => {
@@ -118,7 +142,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 5 });
 
-      const response = await listInventory(db.client, { page: 1, limit: 20 }, true);
+      const response = await listInventory(db.client, { page: 1, limit: 20 }, BRANCH, true);
 
       assert.equal(response.total, 5);
       assert.equal(response.data.length, 1);
@@ -130,10 +154,10 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null, count: 1 });
 
-      await listInventory(db.client, { page: 2, limit: 5 }, true);
+      await listInventory(db.client, { page: 2, limit: 5 }, BRANCH, true);
 
       const call = db.callsFor('inventory_items')[0];
-      assert.deepEqual(FakeSupabase.filterOf(call, 'eq'), ['is_low_stock', true]);
+      assert.ok(FakeSupabase.hasFilter(call, 'eq', ['is_low_stock', true]));
       assert.deepEqual(FakeSupabase.filterOf(call, 'range'), [5, 9]);
     });
   });
@@ -143,7 +167,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await createInventoryItem(db.client, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 });
+      await createInventoryItem(db.client, BRANCH, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 });
 
       const payload = db.lastCall('inventory_items', 'insert')?.payload as Record<string, unknown>;
       assert.match(String(payload.sku), /^INV-[0-9A-F]{8}$/);
@@ -153,7 +177,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await createInventoryItem(db.client, {
+      await createInventoryItem(db.client, BRANCH, {
         sku: 'CUSTOM-1',
         name: 'New Item',
         category: 'Supplies',
@@ -169,7 +193,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await createInventoryItem(db.client, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 });
+      await createInventoryItem(db.client, BRANCH, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 });
 
       const payload = db.lastCall('inventory_items', 'insert')?.payload as Record<string, unknown>;
       assert.equal(payload.stock, 0);
@@ -178,12 +202,25 @@ describe('inventory.service', () => {
       assert.equal(payload.reorder_level, 5);
     });
 
+    it('files the new item on the caller\'s branch', async () => {
+      // An item cannot exist without a shop that holds it: the column is
+      // `not null` with no default, and the branch is the service argument
+      // rather than anything the client can send.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
+
+      await createInventoryItem(db.client, BRANCH, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 });
+
+      const payload = db.lastCall('inventory_items', 'insert')?.payload as Record<string, unknown>;
+      assert.equal(payload.branch_id, BRANCH);
+    });
+
     it('maps an insert failure to a 400 INVENTORY_CREATE_FAILED', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: null, error: { message: 'duplicate sku' } });
 
       await assertAppError(
-        () => createInventoryItem(db.client, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 }),
+        () => createInventoryItem(db.client, BRANCH, { name: 'New Item', category: 'Supplies', reorderLevel: 5, price: 10 }),
         400,
         'INVENTORY_CREATE_FAILED',
       );
@@ -195,7 +232,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await updateInventoryItem(db.client, 'inv-1', {
+      await updateInventoryItem(db.client, 'inv-1', BRANCH, {
         name: 'Glossy Paper (A4)',
         category: 'Supplies',
         reorderLevel: 10,
@@ -212,7 +249,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await updateInventoryItem(db.client, 'inv-1', {
+      await updateInventoryItem(db.client, 'inv-1', BRANCH, {
         sku: 'INV-NEW',
         name: 'Glossy Paper',
         category: 'Supplies',
@@ -235,7 +272,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await updateInventoryItem(db.client, 'inv-1', {
+      await updateInventoryItem(db.client, 'inv-1', BRANCH, {
         name: 'Glossy Paper (A4)',
         category: 'Supplies',
         reorderLevel: 10,
@@ -250,7 +287,7 @@ describe('inventory.service', () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await updateInventoryItem(db.client, 'inv-1', {
+      await updateInventoryItem(db.client, 'inv-1', BRANCH, {
         name: 'Glossy Paper (A4)',
         category: 'Supplies',
         reorderLevel: 10,
@@ -262,13 +299,16 @@ describe('inventory.service', () => {
       assert.equal(payload.image_url, null);
     });
 
-    it('scopes the update to the requested id', async () => {
+    it('scopes the update to the requested id and branch', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: ITEM_ROW, error: null });
 
-      await updateInventoryItem(db.client, 'inv-1', { name: 'x', category: 'y', reorderLevel: 1, price: 1 });
+      await updateInventoryItem(db.client, 'inv-1', BRANCH, { name: 'x', category: 'y', reorderLevel: 1, price: 1 });
 
-      assert.deepEqual(FakeSupabase.filterOf(db.lastCall('inventory_items', 'update'), 'eq'), ['id', 'inv-1']);
+      assert.deepEqual(FakeSupabase.filtersOf(db.lastCall('inventory_items', 'update'), 'eq'), [
+        ['id', 'inv-1'],
+        ['branch_id', BRANCH],
+      ]);
     });
 
     it('maps a missing row to a 404 INVENTORY_NOT_FOUND', async () => {
@@ -276,7 +316,7 @@ describe('inventory.service', () => {
       db.queueTable('inventory_items', { data: null, error: null });
 
       await assertAppError(
-        () => updateInventoryItem(db.client, 'missing', { name: 'x', category: 'y', reorderLevel: 1, price: 1 }),
+        () => updateInventoryItem(db.client, 'missing', BRANCH, { name: 'x', category: 'y', reorderLevel: 1, price: 1 }),
         404,
         'INVENTORY_NOT_FOUND',
       );
@@ -284,30 +324,66 @@ describe('inventory.service', () => {
   });
 
   describe('deleteInventoryItem', () => {
-    it('deletes the requested row', async () => {
+    it('deletes the requested row from the caller\'s branch', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: null, error: null });
 
-      await deleteInventoryItem(db.client, 'inv-1');
+      await deleteInventoryItem(db.client, 'inv-1', BRANCH);
 
       const call = db.lastCall('inventory_items', 'delete');
-      assert.deepEqual(FakeSupabase.filterOf(call, 'eq'), ['id', 'inv-1']);
+      assert.deepEqual(FakeSupabase.filtersOf(call, 'eq'), [
+        ['id', 'inv-1'],
+        ['branch_id', BRANCH],
+      ]);
     });
 
     it('maps a delete failure to a 404 INVENTORY_DELETE_FAILED', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: null, error: { message: 'referenced by an order' } });
 
-      await assertAppError(() => deleteInventoryItem(db.client, 'inv-1'), 404, 'INVENTORY_DELETE_FAILED');
+      await assertAppError(() => deleteInventoryItem(db.client, 'inv-1', BRANCH), 404, 'INVENTORY_DELETE_FAILED');
     });
   });
 
   describe('adjustInventoryStock', () => {
-    it('forwards the movement to the RPC and returns the recalculated item', async () => {
+    it('checks the item belongs to the caller\'s branch before moving any stock', async () => {
+      // `adjust_inventory_stock` takes only an item id and has no branch
+      // predicate inside it, so the check has to happen here. Without it a
+      // Nasugbu staff member who knew a Balayan item id could move Balayan's
+      // stock — so the read is asserted, not just the RPC call.
       const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: { id: 'inv-1' }, error: null });
       db.queueRpc('adjust_inventory_stock', { data: { ...ITEM_ROW, stock: 22 } });
 
-      const item = await adjustInventoryStock(db.client, 'inv-1', -3, 'Damaged in transit', 'actor-1');
+      await adjustInventoryStock(db.client, 'inv-1', BRANCH, -3, 'Damaged in transit', 'actor-1');
+
+      assert.deepEqual(FakeSupabase.filtersOf(db.lastCall('inventory_items', 'select'), 'eq'), [
+        ['id', 'inv-1'],
+        ['branch_id', BRANCH],
+      ]);
+    });
+
+    it('refuses to move stock for an item outside the caller\'s branch', async () => {
+      // The ownership read finds nothing, so the RPC is never reached: a 404
+      // rather than a successful adjustment of the other shop's shelf.
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: null, error: null });
+      db.queueRpc('adjust_inventory_stock', { data: { ...ITEM_ROW, stock: 22 } });
+
+      await assertAppError(
+        () => adjustInventoryStock(db.client, 'inv-1', BRANCH, -3, 'Damaged in transit', 'actor-1'),
+        404,
+        'INVENTORY_NOT_FOUND',
+      );
+      assert.equal(db.callsFor('adjust_inventory_stock').length, 0);
+    });
+
+    it('forwards the movement to the RPC and returns the recalculated item', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: { id: 'inv-1' }, error: null });
+      db.queueRpc('adjust_inventory_stock', { data: { ...ITEM_ROW, stock: 22 } });
+
+      const item = await adjustInventoryStock(db.client, 'inv-1', BRANCH, -3, 'Damaged in transit', 'actor-1');
 
       const payload = db.lastCall('adjust_inventory_stock')?.payload as Record<string, unknown>;
       assert.equal(payload.p_item_id, 'inv-1');
@@ -319,41 +395,55 @@ describe('inventory.service', () => {
 
     it('accepts a positive restock movement', async () => {
       const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: { id: 'inv-1' }, error: null });
       db.queueRpc('adjust_inventory_stock', { data: { ...ITEM_ROW, stock: 40 } });
 
-      const item = await adjustInventoryStock(db.client, 'inv-1', 15, 'Delivery received', 'actor-1');
+      const item = await adjustInventoryStock(db.client, 'inv-1', BRANCH, 15, 'Delivery received', 'actor-1');
 
       assert.equal(item.stock, 40);
     });
 
     it('maps an adjustment failure to a 400 INVENTORY_ADJUSTMENT_FAILED', async () => {
       const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: { id: 'inv-1' }, error: null });
       db.queueRpc('adjust_inventory_stock', { data: null, error: { message: 'stock cannot go negative' } });
 
       await assertAppError(
-        () => adjustInventoryStock(db.client, 'inv-1', -100, 'Correction', 'actor-1'),
+        () => adjustInventoryStock(db.client, 'inv-1', BRANCH, -100, 'Correction', 'actor-1'),
         400,
         'INVENTORY_ADJUSTMENT_FAILED',
+      );
+    });
+
+    it('reports a failed ownership read as an outage, not a missing item', async () => {
+      const db = createFakeSupabase();
+      db.queueTable('inventory_items', { data: null, error: { message: 'timeout' } });
+
+      await assertAppError(
+        () => adjustInventoryStock(db.client, 'inv-1', BRANCH, -3, 'Damaged', 'actor-1'),
+        503,
+        'INVENTORY_LOOKUP_FAILED',
       );
     });
   });
 
   describe('exportInventory', () => {
-    it('reads the whole table without a range', async () => {
+    it('reads the whole branch without a range', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: [ITEM_ROW], error: null });
 
-      const items = await exportInventory(db.client);
+      const items = await exportInventory(db.client, BRANCH);
 
       assert.equal(items.length, 1);
       assert.equal(FakeSupabase.filterOf(db.callsFor('inventory_items')[0], 'range'), undefined);
+      assert.ok(FakeSupabase.hasFilter(db.callsFor('inventory_items')[0], 'eq', ['branch_id', BRANCH]));
     });
 
     it('maps a lookup failure to a 503', async () => {
       const db = createFakeSupabase();
       db.queueTable('inventory_items', { data: null, error: { message: 'down' } });
 
-      await assertAppError(() => exportInventory(db.client), 503, 'INVENTORY_LOOKUP_FAILED');
+      await assertAppError(() => exportInventory(db.client, BRANCH), 503, 'INVENTORY_LOOKUP_FAILED');
     });
   });
 });

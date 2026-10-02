@@ -100,6 +100,42 @@ interface InventoryItemRow {
 }
 
 /**
+ * Adds a branch predicate to a query, or leaves it alone for the combined view.
+ *
+ * A tiny helper with a large job: it is the difference between "this read is scoped
+ * to a branch" and "this read aggregates everything". Writing the ternary at each
+ * of the six call sites invites one of them to be written the other way round — and
+ * a missing branch predicate on an analytics query does not throw, it just returns
+ * a bigger number. Keeping it in one function means the check has one place to be
+ * wrong, and that place is tested.
+ *
+ * `column` is a parameter because `sales_transaction_items` has no `branch_id` of
+ * its own and is scoped through its embedded parent (`transaction.branch_id`).
+ *
+ * ### Why the parameter is typed as a bare `.eq()` shape, not the builder
+ *
+ * The obvious signature is `<T extends { eq(...): T }>(query: T): T`. It does not
+ * compile: PostgREST's query builder is a recursively nested generic, and asking
+ * TypeScript to prove it satisfies a self-referential constraint makes it give up
+ * with `TS2589: Type instantiation is excessively deep and possibly infinite`.
+ *
+ * The signature below retains the caller's concrete type with `query: T` (no
+ * constraint) and reads `.eq` through a narrow cast *inside* the function, so the
+ * call site keeps the builder's real type — including its `PromiseLike` surface,
+ * which is what `await` needs — while the type-checker is never asked to relate the
+ * two. The cast is confined to one expression and is honest: `.eq()` returns the
+ * same builder in every PostgREST overload.
+ */
+interface BranchFilterable {
+  eq(column: string, value: string): unknown;
+}
+
+function applyBranch<T>(query: T, branchId: string | null | undefined, column = 'branch_id'): T {
+  if (!branchId) return query;
+  return (query as unknown as BranchFilterable).eq(column, branchId) as T;
+}
+
+/**
  * Widens `YYYY-MM-DD` endpoints to whole days **in the shop's zone**.
  *
  * Previously the boundaries were UTC (`T00:00:00.000Z` / `T23:59:59.999Z`). For a
@@ -117,14 +153,38 @@ function normalizeRange(range: AnalyticsRange, timeZone: string): AnalyticsRange
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
-export async function getAnalyticsSummary(supabase: SupabaseClient, range: AnalyticsRange): Promise<AnalyticsSummary> {
-  const timeZone = await getShopTimeZone(supabase);
+/**
+ * `branchId` is now the effective branch, resolved by
+ * `resolveAnalyticsBranchFilter` — the caller's own branch for staff, an explicitly
+ * chosen one (or `null`, meaning "all branches") for a head-office account.
+ *
+ * `null` therefore reaches this function only from a head-office combined view,
+ * never from a staff request: the resolver refuses that combination with a 403
+ * before the call is made. The RPC reads `null` as "no branch predicate", which is
+ * the whole point of the nullable parameter (see
+ * `20261002000600_analytics_summary_branch.sql`).
+ *
+ * The **same** `branchId` drives the time zone. It has to: the range is widened to
+ * whole days in that zone before the RPC sees it, and the RPC buckets `salesByDay`
+ * in the same zone. Two different branches in two zones would each expand their own
+ * range correctly; the combined view has no zone of its own, so `getShopTimeZone`
+ * falls back to the oldest settings row (Balayan's), matching the RPC.
+ */
+export async function getAnalyticsSummary(
+  supabase: SupabaseClient,
+  range: AnalyticsRange,
+  branchId?: string | null,
+): Promise<AnalyticsSummary> {
+  const timeZone = await getShopTimeZone(supabase, branchId ?? undefined);
   const normalizedRange = normalizeRange(range, timeZone);
 
   const { data: rpcData, error: rpcError } = await supabase
     .rpc('get_analytics_summary', {
       p_from: normalizedRange.from,
       p_to: normalizedRange.to,
+      // Null means "every branch" — see the migration header. Sent explicitly so a
+      // combined read and a branch read are the same call shape.
+      p_branch_id: branchId ?? null,
     });
 
   /*
@@ -234,24 +294,45 @@ export async function getSalesTimeline(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
+  branchId?: string | null,
 ): Promise<SalesTimeline> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId ?? undefined);
   const normalizedRange = normalizeRange(range, timeZone);
   const [transactionsResult, itemsResult, inventoryResult] = await Promise.all([
-    supabase
-      .from('sales_transactions')
-      .select('total, created_at')
-      .eq('status', 'completed')
-      .gte('created_at', normalizedRange.from)
-      .lte('created_at', normalizedRange.to)
-      .order('created_at', { ascending: true }),
-    supabase
-      .from('sales_transaction_items')
-      .select('name, quantity, unit_price, inventory_item_id, transaction:sales_transactions!inner(total, created_at)')
-      .eq('transaction.status', 'completed')
-      .gte('transaction.created_at', normalizedRange.from)
-      .lte('transaction.created_at', normalizedRange.to),
-    supabase.from('inventory_items').select('id, cost_price'),
+    /*
+     * `.eq('branch_id', branchId)` only when a branch was chosen.
+     *
+     * `sales_transactions` carries its own `branch_id`; `sales_transaction_items`
+     * does not (20261002000300_branch_scoping.sql) and is scoped through its joined
+     * parent instead. The inventory cost map is branch-scoped too, or a Nasugbu
+     * item's cost could be matched against a Balayan sale — the COGS would be wrong
+     * with no visible symptom.
+     *
+     * For the combined view (`branchId === null`) no predicate is added at all,
+     * which is exactly the "all branches" read. This is safe only because the
+     * resolver has already refused `null` for anyone without `canViewAllBranches`.
+     */
+    applyBranch(
+      supabase
+        .from('sales_transactions')
+        .select('total, created_at')
+        .eq('status', 'completed')
+        .gte('created_at', normalizedRange.from)
+        .lte('created_at', normalizedRange.to)
+        .order('created_at', { ascending: true }),
+      branchId,
+    ),
+    applyBranch(
+      supabase
+        .from('sales_transaction_items')
+        .select('name, quantity, unit_price, inventory_item_id, transaction:sales_transactions!inner(total, created_at)')
+        .eq('transaction.status', 'completed')
+        .gte('transaction.created_at', normalizedRange.from)
+        .lte('transaction.created_at', normalizedRange.to),
+      branchId,
+      'transaction.branch_id',
+    ),
+    applyBranch(supabase.from('inventory_items').select('id, cost_price'), branchId),
   ]);
 
   if (transactionsResult.error || itemsResult.error || inventoryResult.error) {
@@ -317,15 +398,22 @@ export async function getProductTrends(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   bucket: AnalyticsBucket,
+  branchId?: string | null,
 ): Promise<ProductTrends> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId ?? undefined);
   const normalizedRange = normalizeRange(range, timeZone);
-  const itemsResult = await supabase
-    .from('sales_transaction_items')
-    .select('name, quantity, transaction:sales_transactions!inner(total, created_at)')
-    .eq('transaction.status', 'completed')
-    .gte('transaction.created_at', normalizedRange.from)
-    .lte('transaction.created_at', normalizedRange.to);
+  // Scoped through the joined parent — `sales_transaction_items` has no
+  // `branch_id` of its own. See `getSalesTimeline` for the full reasoning.
+  const itemsResult = await applyBranch(
+    supabase
+      .from('sales_transaction_items')
+      .select('name, quantity, transaction:sales_transactions!inner(total, created_at)')
+      .eq('transaction.status', 'completed')
+      .gte('transaction.created_at', normalizedRange.from)
+      .lte('transaction.created_at', normalizedRange.to),
+    branchId,
+    'transaction.branch_id',
+  );
 
   if (itemsResult.error) {
     throw new AppError(503, 'ANALYTICS_LOOKUP_FAILED', 'Product trends could not be generated.');
@@ -379,8 +467,9 @@ export async function getInventoryForecast(
   supabase: SupabaseClient,
   range: AnalyticsRange,
   horizonDays: number,
+  branchId?: string | null,
 ): Promise<InventoryForecast> {
-  const timeZone = await getShopTimeZone(supabase);
+  const timeZone = await getShopTimeZone(supabase, branchId ?? undefined);
   const normalizedRange = normalizeRange(range, timeZone);
 
   const from = new Date(normalizedRange.from);
@@ -388,15 +477,23 @@ export async function getInventoryForecast(
   const rangeSpanDays = Math.max(1, Math.round((to.getTime() - from.getTime()) / 86_400_000));
 
   const [itemsResult, inventoryResult] = await Promise.all([
-    supabase
-      .from('sales_transaction_items')
-      .select('inventory_item_id, name, quantity, unit_price, transaction:sales_transactions!inner(created_at)')
-      .eq('transaction.status', 'completed')
-      .gte('transaction.created_at', normalizedRange.from)
-      .lte('transaction.created_at', normalizedRange.to),
-    supabase
-      .from('inventory_items')
-      .select('id, name, sku, stock, reorder_level, price, cost_price'),
+    // Demand comes from the branch's own completed sales; stock on hand from the
+    // branch's own inventory. Leaving either unscoped would forecast one shop's
+    // demand against the other shop's stock — a recommendation that is wrong twice.
+    applyBranch(
+      supabase
+        .from('sales_transaction_items')
+        .select('inventory_item_id, name, quantity, unit_price, transaction:sales_transactions!inner(created_at)')
+        .eq('transaction.status', 'completed')
+        .gte('transaction.created_at', normalizedRange.from)
+        .lte('transaction.created_at', normalizedRange.to),
+      branchId,
+      'transaction.branch_id',
+    ),
+    applyBranch(
+      supabase.from('inventory_items').select('id, name, sku, stock, reorder_level, price, cost_price'),
+      branchId,
+    ),
   ]);
 
   if (itemsResult.error || inventoryResult.error) {

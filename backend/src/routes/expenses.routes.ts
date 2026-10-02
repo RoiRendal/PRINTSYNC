@@ -6,6 +6,7 @@ import { requirePermission } from '../middleware/authorize.js';
 import { createExpense, deleteExpense, listExpenses, updateExpense } from '../modules/expenses/expenses.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
 
@@ -31,13 +32,13 @@ function getExpenseId(request: { params: Record<string, string | string[] | unde
 }
 
 expensesRouter.get('/', authenticate, requirePermission('expenses.read'), async (request, response) => {
-  sendSuccess(response, await listExpenses(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listExpenses(getSupabase(), parsePaginationQuery(request.query), getCallerBranch(request)));
 });
 
 expensesRouter.post('/', authenticate, requirePermission('expenses.manage'), async (request, response) => {
   const parsed = expenseSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_EXPENSE_REQUEST', 'The expense details are invalid.');
-  const expense = await createExpense(getSupabase(), parsed.data, request.auth.user.id);
+  const expense = await createExpense(getSupabase(), getCallerBranch(request), parsed.data, request.auth.user.id);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'expense.created', entityType: 'expense', entityId: expense.id, metadata: { category: expense.category, amount: expense.amount } });
   response.status(201).json({ data: expense });
 });
@@ -45,7 +46,7 @@ expensesRouter.post('/', authenticate, requirePermission('expenses.manage'), asy
 expensesRouter.patch('/:id', authenticate, requirePermission('expenses.manage'), async (request, response) => {
   const parsed = expenseSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_EXPENSE_REQUEST', 'The expense details are invalid.');
-  const expense = await updateExpense(getSupabase(), getExpenseId(request), parsed.data);
+  const expense = await updateExpense(getSupabase(), getExpenseId(request), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'expense.updated', entityType: 'expense', entityId: expense.id, metadata: { category: expense.category, amount: expense.amount } });
   sendSuccess(response, expense);
 });
@@ -53,7 +54,7 @@ expensesRouter.patch('/:id', authenticate, requirePermission('expenses.manage'),
 expensesRouter.delete('/:id', authenticate, requirePermission('expenses.manage'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const expenseId = getExpenseId(request);
-  await deleteExpense(getSupabase(), expenseId);
+  await deleteExpense(getSupabase(), expenseId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'expense.deleted', entityType: 'expense', entityId: expenseId });
   response.status(204).send();
 });

@@ -1,0 +1,34 @@
+-- Owner role — the enum value on its own, so it can actually be used.
+--
+-- ## Why this is a separate file and not a line in 20261002000200_branches.sql
+--
+-- PostgreSQL refuses to use an enum value in the same transaction that added it
+-- ("unsafe use of new value ... of enum type"). `CREATE TYPE`/`ALTER TYPE ... ADD
+-- VALUE` take a lock that is only released at commit, and reading the new label
+-- inside that transaction is rejected because the value a concurrent reader would
+-- see is ambiguous.
+--
+-- Supabase runs **each migration file inside a single transaction**. So anything
+-- that both adds 'owner' and then writes a row using it — which is exactly what
+-- the owner role needs, because `roles.name` is typed `public.app_role` — cannot
+-- live in one file. It must be split so the `ADD VALUE` commits on its own before
+-- the value is read.
+--
+-- This is not a hypothetical: the migration-replay gate caught it as
+-- `FAILED 20261002000200_branches.sql — unsafe use of new value "owner" of enum
+-- type app_role`, an abort that would also have stopped `supabase db push`.
+--
+-- ## Why the value is added here rather than the enum being recreated
+--
+-- `20260910000100_identity_authorization.sql` created `app_role` as
+-- `('admin', 'staff')`. Adding a value with `if not exists` is idempotent and
+-- needs no table rewrite; recreating the type would require dropping and restoring
+-- every dependent column, and `roles.name` has a unique constraint on it. `ADD
+-- VALUE` is the only supported way to extend an enum in place.
+--
+-- `IF NOT EXISTS` (PostgreSQL 12+) makes a replay — or a re-run against a project
+-- where the value already exists — a clean no-op rather than an error.
+--
+-- Plan of record: 0_never-push-this-dump-folder/printsync-two-branch-plan.md
+
+alter type public.app_role add value if not exists 'owner';

@@ -173,46 +173,75 @@ interface CachedTimeZone {
   expiresAt: number;
 }
 
-let cachedTimeZone: CachedTimeZone | null = null;
-let warnedAboutLookupFailure = false;
+/**
+ * Zones are cached **per branch**, keyed by branch id.
+ *
+ * A single cached value was correct while `business_settings` was a singleton.
+ * It is now one row per branch, so a single slot would mean whichever branch was
+ * read first decided the calendar day for every branch for the next 30 seconds —
+ * Balayan's 08:00 sale could be reported on Nasugbu's yesterday. The key is part
+ * of the cache identity, not an optimisation.
+ */
+const timeZoneCache = new Map<string, CachedTimeZone>();
+const warnedAboutLookupFailure = new Set<string>();
+
+/** Sentinel key for the branch-less read (login screen, first paint). */
+const NO_BRANCH_KEY = '';
+
+export function resetShopTimeZoneCache(): void {
+  timeZoneCache.clear();
+  warnedAboutLookupFailure.clear();
+}
 
 /**
  * The shop's configured IANA zone, falling back to `Asia/Manila`.
  *
  * A failed or nonsensical read degrades to the default rather than throwing: a
- * missing time zone should not take down the orders list. It is logged once, not
- * per request, so a persistent misconfiguration is visible without flooding.
+ * missing time zone should not take down the orders list. It is logged once per
+ * branch, not per request, so a persistent misconfiguration is visible without
+ * flooding.
+ *
+ * `branchId` is required for anything that renders or aggregates operational data.
+ * With no branch — the pre-login path — it reads the oldest settings row, which is
+ * Balayan's, keeping the previous behaviour for callers that genuinely have no
+ * branch to ask about.
  */
-export async function getShopTimeZone(supabase: SupabaseClient): Promise<string> {
-  if (cachedTimeZone && cachedTimeZone.expiresAt > Date.now()) return cachedTimeZone.value;
+export async function getShopTimeZone(supabase: SupabaseClient, branchId?: string): Promise<string> {
+  const cacheKey = branchId ?? NO_BRANCH_KEY;
+  const cached = timeZoneCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
 
   let resolved = DEFAULT_SHOP_TIME_ZONE;
   try {
-    const { data } = await supabase.from('business_settings').select('time_zone').eq('id', 1).maybeSingle();
+    const query = supabase
+      .from('business_settings')
+      .select('time_zone')
+      .order('created_at', { ascending: true })
+      .limit(1);
+
+    const { data } = branchId
+      ? await query.eq('branch_id', branchId).maybeSingle()
+      : await query.maybeSingle();
+
     const candidate = (data as { time_zone?: unknown } | null)?.time_zone;
     if (typeof candidate === 'string' && isValidTimeZone(candidate)) {
       resolved = candidate;
     } else if (candidate !== undefined && candidate !== null) {
       logger.warn('business_settings.time_zone is not a valid IANA zone; falling back to the default', {
         candidate,
+        branchId: branchId ?? null,
       });
     }
   } catch (error) {
-    if (!warnedAboutLookupFailure) {
-      warnedAboutLookupFailure = true;
-      logger.warn('The shop time zone could not be read; falling back to the default', { error });
+    if (!warnedAboutLookupFailure.has(cacheKey)) {
+      warnedAboutLookupFailure.add(cacheKey);
+      logger.warn('The shop time zone could not be read; falling back to the default', {
+        error,
+        branchId: branchId ?? null,
+      });
     }
   }
 
-  cachedTimeZone = { value: resolved, expiresAt: Date.now() + CACHE_TTL_MS };
+  timeZoneCache.set(cacheKey, { value: resolved, expiresAt: Date.now() + CACHE_TTL_MS });
   return resolved;
-}
-
-/**
- * Drops the cached zone. For tests, which change `business_settings` between cases
- * in one process — without this the first test's zone would leak into the rest.
- */
-export function resetShopTimeZoneCache(): void {
-  cachedTimeZone = null;
-  warnedAboutLookupFailure = false;
 }

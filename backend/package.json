@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "provision:user": "tsx src/scripts/provisionUser.ts",
+    "branding:sync": "tsx src/scripts/syncBranchBranding.ts",
     "seed:demo": "tsx src/scripts/seedDemoData.ts",
     "test": "npm run test:unit && npm run test:integration",
     "test:unit": "tsx --test tests/unit/*.test.ts",
@@ -14,7 +15,8 @@
     "start": "node dist/server.js",
     "lint": "tsc --noEmit -p tsconfig.json",
     "lint:tests": "tsc --noEmit -p tsconfig.test.json",
-    "check:image-formats": "node scripts/check-image-formats.mjs"
+    "check:image-formats": "node scripts/check-image-formats.mjs",
+    "check:branch-source": "node scripts/check-branch-source.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

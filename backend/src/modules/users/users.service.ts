@@ -4,7 +4,7 @@ import { AppError } from '../../shared/errors.js';
 import { calculateRange, createPaginatedResponse } from '../../shared/pagination.js';
 import { getShopTimeZone, toShopDateKey } from '../../shared/shopClock.js';
 
-export type UserRole = 'admin' | 'staff';
+export type UserRole = 'admin' | 'staff' | 'owner';
 
 export interface UserSummary {
   id: string;
@@ -13,6 +13,8 @@ export interface UserSummary {
   phone: string;
   role: UserRole;
   position: string;
+  branchId: string | null;
+  canViewAllBranches: boolean;
   createdAt: string;
   access: string[];
 }
@@ -23,6 +25,7 @@ interface UserInput {
   phone: string;
   role: UserRole;
   position: string;
+  branchId: string;
   createdAt?: string | undefined;
   password?: string | undefined;
 }
@@ -150,7 +153,16 @@ async function getRoleAccess(supabase: SupabaseClient, roleId: string): Promise<
 
 async function toSummary(
   supabase: SupabaseClient,
-  profile: { id: string; name: string; phone: string; position: string; role_id: string; created_at: string },
+  profile: {
+    id: string;
+    name: string;
+    phone: string;
+    position: string;
+    role_id: string;
+    created_at: string;
+    branch_id?: string | null;
+    can_view_all_branches?: boolean | null;
+  },
   email: string,
   role: UserRole,
 ): Promise<UserSummary> {
@@ -165,6 +177,8 @@ async function toSummary(
     phone: profile.phone,
     role,
     position: profile.position,
+    branchId: profile.branch_id ? String(profile.branch_id) : null,
+    canViewAllBranches: profile.can_view_all_branches === true,
     createdAt: toShopDateKey(profile.created_at, timeZone),
     access: await getRoleAccess(supabase, profile.role_id),
   };
@@ -177,7 +191,7 @@ export async function listUsers(
   const { start, end } = calculateRange(params.page, params.limit);
   const { data: profiles, error, count } = await supabase
     .from('profiles')
-    .select('id, name, phone, position, role_id, created_at, roles(name)', { count: 'exact' })
+    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches, created_at, roles(name)', { count: 'exact' })
     .order('created_at', { ascending: true })
     .range(start, end);
 
@@ -189,12 +203,48 @@ export async function listUsers(
   const emails = new Map(authUsers.users.map((user) => [user.id, user.email ?? '']));
   const items = await Promise.all(profiles.map((profile) => {
     const role = (profile.roles as unknown as { name: UserRole } | null)?.name;
-    if (role !== 'admin' && role !== 'staff') {
+    /*
+     * `owner` is a valid role and must be listed.
+     *
+     * This check used to read `role !== 'admin' && role !== 'staff'`, written
+     * before the owner role existed (`20261002000200_branches.sql`). Once an
+     * owner account was provisioned, EVERY page of the directory that contained
+     * the owner row threw — so `GET /users` answered 503, and the staff
+     * management screen (`/users`) was unreachable for the only two roles that
+     * can open it, admin and owner. That is the failure mode this guard was
+     * meant to prevent, inverted.
+     *
+     * The list is now driven by the same set the API accepts when creating a
+     * user (`userSchema.role` in `users.routes.ts`) and the same one the frontend
+     * treats as admin-tier (`features/users/utils/access.ts`). A role the enum
+     * allows but this list omits is a 503 waiting for the next person to be
+     * hired, so the three must move together.
+     */
+    if (role !== 'admin' && role !== 'staff' && role !== 'owner') {
       throw new AppError(503, 'INVALID_ROLE_CONFIGURATION', 'A user has an invalid role configuration.');
     }
     return toSummary(supabase, profile, emails.get(profile.id) ?? '', role);
   }));
   return createPaginatedResponse(items, count ?? 0, params.page, params.limit);
+}
+
+/**
+ * The branch a single account belongs to, or `null` if the profile is gone.
+ *
+ * A one-column read, for the one caller that needs the branch of a row it is
+ * about to destroy: `DELETE /users/:id` must announce the change to the branch
+ * that lost the account, and once the delete has run there is nothing left to
+ * ask. `listUsers` would answer the same question by paging the whole directory
+ * and an auth lookup — this reads the column it needs.
+ */
+export async function getUserBranch(supabase: SupabaseClient, id: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('branch_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new AppError(503, 'USERS_LOOKUP_FAILED', 'The user could not be loaded.');
+  return data?.branch_id ? String(data.branch_id) : null;
 }
 
 export async function createUser(supabase: SupabaseClient, input: UserInput): Promise<UserSummary> {
@@ -226,9 +276,15 @@ export async function createUser(supabase: SupabaseClient, input: UserInput): Pr
       phone: input.phone.trim(),
       position: input.position.trim(),
       role_id: role.id,
+      branch_id: input.branchId,
+      // Derived from the role rather than accepted from the client. The owner role
+      // is the one the owner asked for ("a role several people share"); letting a
+      // request set this flag directly would make the head-office exception a
+      // thing any admin can grant themselves silently.
+      can_view_all_branches: input.role === 'owner',
       ...(input.createdAt ? { created_at: input.createdAt } : {}),
     })
-    .select('id, name, phone, position, role_id, created_at')
+    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches, created_at')
     .single();
 
   if (profileError || !profile) {
@@ -254,10 +310,12 @@ export async function updateUser(supabase: SupabaseClient, id: string, input: Us
       phone: input.phone.trim(),
       position: input.position.trim(),
       role_id: role.id,
+      branch_id: input.branchId,
+      can_view_all_branches: input.role === 'owner',
       ...(input.createdAt ? { created_at: input.createdAt } : {}),
     })
     .eq('id', id)
-    .select('id, name, phone, position, role_id, created_at')
+    .select('id, name, phone, position, role_id, branch_id, can_view_all_branches, created_at')
     .single();
 
   if (profileError || !profile) throw new AppError(404, 'USER_NOT_FOUND', 'The user profile was not found.');

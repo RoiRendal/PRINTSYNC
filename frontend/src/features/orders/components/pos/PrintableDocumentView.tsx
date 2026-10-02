@@ -42,7 +42,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
  * itself because three ancestors were clipping it).
  */
 export function PrintableDocumentView({ document, reprintNote }: PrintableDocumentViewProps) {
-  const { businessDisplayName, currencySymbol } = useBusinessBranding();
+  const { businessDisplayName, businessAddress, currencySymbol } = useBusinessBranding();
   const { kind, lines, totals, payment, customerName, soldBy, notes, balance, voided } = document;
   const isOrder = kind === 'order';
   const money = (value: number) => `${currencySymbol}${value.toFixed(2)}`;
@@ -73,8 +73,27 @@ export function PrintableDocumentView({ document, reprintNote }: PrintableDocume
         </div>
       )}
 
+      {/*
+        The shop's identity, as printed.
+
+        The name and address come from the SIGNED-IN caller's own branch — see
+        `BusinessBrandingProvider`, which replaces the public branding with
+        `GET /branding/current` the moment a session exists. Before that change the
+        app used the public route for both purposes, and since that route runs before
+        anyone has a session it can only serve one shop's row — so a receipt printed
+        at Nasugbu came out headed with Balayan's name. Nothing looked wrong in a
+        one-branch business, which is exactly why it survived.
+
+        The address is rendered only when there is one: `whitespace-pre-line` keeps a
+        multi-line Philippine street address on the lines the manager typed, and an
+        unset address prints nothing rather than an empty gap. A wrong address on a
+        customer's receipt is worse than no address.
+      */}
       <div className="text-center">
         <h3 className="text-sm font-bold uppercase tracking-widest">{businessDisplayName}</h3>
+        {businessAddress && (
+          <p className="mt-0.5 whitespace-pre-line text-[10px] leading-snug text-zinc-500">{businessAddress}</p>
+        )}
         <p className="mt-1 text-[10px] text-zinc-500">{document.date}</p>
         <p className="mt-0.5 text-[10px] text-zinc-500">
           {isOrder ? 'CUSTOM ORDER SUMMARY' : 'SALES RECEIPT'}

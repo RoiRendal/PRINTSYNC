@@ -13,6 +13,7 @@ import {
 } from '../modules/customers/customers.service.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
@@ -39,7 +40,7 @@ function getCustomerId(request: { params: Record<string, string | string[] | und
 }
 
 customersRouter.get('/', authenticate, requirePermission('customers.read'), async (request, response) => {
-  sendSuccess(response, await listCustomers(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listCustomers(getSupabase(), parsePaginationQuery(request.query), getCallerBranch(request)));
 });
 
 /*
@@ -51,37 +52,37 @@ customersRouter.get('/', authenticate, requirePermission('customers.read'), asyn
  * the orders list already exposes, and the delete dialog is the only caller.
  */
 customersRouter.get('/:id/order-count', authenticate, requirePermission('customers.read'), async (request, response) => {
-  const orderCount = await countOrdersForCustomer(getSupabase(), getCustomerId(request));
+  const orderCount = await countOrdersForCustomer(getSupabase(), getCustomerId(request), getCallerBranch(request));
   sendSuccess(response, { orderCount });
 });
 
 customersRouter.get('/:id', authenticate, requirePermission('customers.read'), async (request, response) => {
-  sendSuccess(response, await getCustomer(getSupabase(), getCustomerId(request)));
+  sendSuccess(response, await getCustomer(getSupabase(), getCustomerId(request), getCallerBranch(request)));
 });
 
 customersRouter.post('/', authenticate, requirePermission('customers.manage'), async (request, response) => {
   const parsed = customerSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
-  const customer = await createCustomer(getSupabase(), parsed.data);
+  const customer = await createCustomer(getSupabase(), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.created', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   response.status(201).json({ data: customer });
 });
 
 customersRouter.patch('/:id', authenticate, requirePermission('customers.manage'), async (request, response) => {
   const parsed = customerSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_CUSTOMER_REQUEST', 'The customer details are invalid.');
-  const customer = await updateCustomer(getSupabase(), getCustomerId(request), parsed.data);
+  const customer = await updateCustomer(getSupabase(), getCustomerId(request), getCallerBranch(request), parsed.data);
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.updated', entityType: 'customer', entityId: customer.id, metadata: { name: customer.name } });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   sendSuccess(response, customer);
 });
 
 customersRouter.delete('/:id', authenticate, requirePermission('customers.manage'), async (request, response) => {
   if (!request.auth) throw new AppError(401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.');
   const customerId = getCustomerId(request);
-  await deleteCustomer(getSupabase(), customerId);
+  await deleteCustomer(getSupabase(), customerId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'customer.deleted', entityType: 'customer', entityId: customerId });
-  publishDataChange('customers');
+  publishDataChange(getCallerBranch(request), 'customers');
   response.status(204).send();
 });

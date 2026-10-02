@@ -42,6 +42,15 @@ const RPC_PAYLOAD = {
 
 const RANGE = { from: '2026-09-01', to: '2026-09-30' };
 
+/**
+ * The branch these cases act as.
+ *
+ * Every analytics read is branch-scoped, and the zone it derives its calendar days
+ * from comes from *that branch's* settings row — so a test that wants to prove the
+ * zone is being read has to name the branch it configured the zone for.
+ */
+const BRANCH_ID = '11111111-1111-4111-8111-111111111111';
+
 describe('analytics summary prefers the database function', () => {
   beforeEach(() => {
     // `getShopTimeZone` caches the resolved zone in the module, so without this a
@@ -52,7 +61,7 @@ describe('analytics summary prefers the database function', () => {
   it('uses the RPC result and never touches the fallback tables', async () => {
     const supabase = createFakeSupabase().onRpc('get_analytics_summary', { data: RPC_PAYLOAD });
 
-    const summary = await getAnalyticsSummary(supabase as never, RANGE);
+    const summary = await getAnalyticsSummary(supabase as never, RANGE, BRANCH_ID);
 
     // Values that exist only in the RPC payload: if any of these came back the
     // number must have come from the function rather than from re-aggregation.
@@ -73,7 +82,7 @@ describe('analytics summary prefers the database function', () => {
   it('sends the range as whole days in the shop time zone', async () => {
     const supabase = createFakeSupabase().onRpc('get_analytics_summary', { data: RPC_PAYLOAD });
 
-    await getAnalyticsSummary(supabase as never, RANGE);
+    await getAnalyticsSummary(supabase as never, RANGE, BRANCH_ID);
 
     const call = supabase.lastCall('get_analytics_summary', 'rpc');
     assert.ok(call, 'the analysis function should have been called');
@@ -99,7 +108,7 @@ describe('analytics summary prefers the database function', () => {
       .onRpc('get_analytics_summary', { data: RPC_PAYLOAD })
       .onTable('business_settings', { data: { time_zone: 'UTC' } });
 
-    await getAnalyticsSummary(supabase as never, RANGE);
+    await getAnalyticsSummary(supabase as never, RANGE, BRANCH_ID);
 
     const args = supabase.lastCall('get_analytics_summary', 'rpc')?.payload as { p_from: string; p_to: string };
     assert.equal(args.p_from, '2026-09-01T00:00:00.000Z');

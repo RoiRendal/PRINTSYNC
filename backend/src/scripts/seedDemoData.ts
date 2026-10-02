@@ -2,7 +2,9 @@
  * Seeds PrintSync with a coherent four-month demo dataset.
  *
  * Run with:  npm run seed:demo   (from the backend workspace)
- * Options:   --snapshot-only   back up the current database and stop
+ * Options:   --branch CODE     which branch to seed (BAL, NAS, or a uuid) — default BAL
+ *            --all-branches    seed every active branch in one run
+ *            --snapshot-only   back up the current database and stop
  *            --no-snapshot     skip the pre-wipe backup
  *            --no-uploads      reuse existing artwork instead of uploading
  *            --verify-only     print a coverage report for the current data
@@ -10,6 +12,40 @@
  * The script never touches auth users, profiles, roles, permissions or
  * role_permissions. It writes business data through the same Postgres
  * functions the API calls, so stock, payments and totals always reconcile.
+ *
+ * ## Why this script had to learn about branches
+ *
+ * Two-branch rollout. Every operational table is now branch-owned, and after
+ * `20261002000400_branch_rpc_writes.sql` the two creating RPCs *refuse* a call
+ * that does not name a branch ("A branch is required to create an order"). So a
+ * branch-blind seed no longer just files rows in the wrong shop — it fails.
+ *
+ * The rules the seed now follows, and why each is the way it is:
+ *
+ *   * **Everything it writes belongs to one branch**, named by `--branch`. The
+ *     five child tables (`order_items`, `order_payments`, `payments`,
+ *     `sales_transaction_items`, `inventory_movements`) get no `branch_id` and
+ *     are not touched directly here — they inherit from the parent the RPC
+ *     created, which is the single source of truth for their branch.
+ *
+ *   * **`wipe()` is scoped to the branch it is about to seed.** The old wipe
+ *     emptied 13 tables unconditionally. Against two branches that would delete
+ *     the *other* shop's live book as a side effect of seeding this one, which
+ *     is unrecoverable and silent. Scoping it makes `--branch NAS` a operation
+ *     confined to Nasugbu's rows.
+ *
+ *   * **`business_settings` is never wiped.** It is per-branch *configuration*
+ *     (a shop's name, address, logo), not seeded business data. Deleting it
+ *     would leave a branch with no settings row at all, and `getBranchBranding`
+ *     deliberately 503s rather than substituting another shop's identity — so
+ *     wiping it would turn a working branch into a broken one. The seed updates
+ *     the branch's row in place.
+ *
+ *   * **Nasugbu's designs are NOT re-created here.** `20261002000300` already
+ *     copied Balayan's catalogue into Nasugbu, guarded so it only ever ran once.
+ *     Re-running that copy from the seed would duplicate the catalogue on every
+ *     seed. The seed writes designs only for the branch it is seeding and only
+ *     when that branch has none.
  */
 
 import 'dotenv/config';
@@ -50,13 +86,13 @@ const ALL_TABLES = [
   'customers', 'order_payments', 'suppliers', 'purchase_orders', 'operating_expenses',
 ] as const;
 
-/** Deleted in this order: every child table is cleared before its parent. */
-const WIPE_ORDER = [
-  'audit_logs', 'order_payments', 'order_items', 'orders', 'payments',
-  'sales_transaction_items', 'sales_transactions', 'inventory_movements',
-  'designs', 'inventory_items', 'suppliers',
-  'operating_expenses', 'customers',
-] as const;
+/**
+ * The deletes are ordered by hand in `wipe()` rather than listed here, because
+ * the correct order is no longer "children first" — it is "children of *this*
+ * branch first", which needs a query to know which parents those are. A static
+ * list could not express that, and the version that ignored it cleared both
+ * branches' children while paying lip service to the ordering.
+ */
 
 // A fourth spelling of the status list used to live here. It is imported from the
 // module that owns the list now, so a status added to the contract reaches the seed
@@ -156,6 +192,22 @@ const snapshotOnly = args.has('--snapshot-only');
 const skipSnapshot = args.has('--no-snapshot');
 const skipUploads = args.has('--no-uploads');
 const verifyOnly = args.has('--verify-only');
+const allBranches = args.has('--all-branches');
+
+/** `--branch NAS` / `--branch=<uuid>`. Absent means Balayan, the historical default. */
+function requestedBranchArgument(): string {
+  const inline = process.argv.slice(2).find((argument) => argument.startsWith('--branch='));
+  if (inline) return inline.slice('--branch='.length).trim();
+  const index = process.argv.indexOf('--branch');
+  if (index !== -1) {
+    const value = process.argv[index + 1];
+    if (!value || value.startsWith('--')) {
+      throw new Error('--branch needs a value: --branch NAS, --branch BAL, or --branch <uuid>.');
+    }
+    return value.trim();
+  }
+  return 'BAL';
+}
 
 // ─── Database plumbing ──────────────────────────────────────────────────────
 
@@ -190,6 +242,69 @@ async function countRows(supabase: SupabaseClient, table: string): Promise<numbe
   return count ?? 0;
 }
 
+/**
+ * A branch the seed can write into: the id every row carries, and the code and
+ * name a human reads in the console output.
+ */
+interface SeededBranch {
+  id: string;
+  code: string;
+  name: string;
+}
+
+const BRANCH_CODE = /^[A-Z][A-Z0-9]{1,7}$/;
+const BRANCH_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Turns `--branch` into a real branch row.
+ *
+ * Mirrors `provisionUser.ts`'s resolver deliberately: the two scripts are the
+ * only ways data enters the system outside the API, and a caller who learns
+ * that `BAL` works in one should not find it rejected by the other. An unknown
+ * or inactive branch is an error and the run stops — the alternative is seeding
+ * a branch that does not exist, or a shop that is closed.
+ */
+async function resolveSeedBranches(supabase: SupabaseClient): Promise<SeededBranch[]> {
+  const { data, error } = await supabase.from('branches').select('id, code, name, is_active').order('code');
+  if (error) throw new Error(`Could not read branches: ${error.message}`);
+  const all = (data ?? []) as Array<{ id: string; code: string; name: string; is_active: boolean }>;
+
+  if (all.length === 0) {
+    throw new Error('No branches are configured. Apply the branch migrations before seeding.');
+  }
+
+  if (allBranches) {
+    const active = all.filter((branch) => branch.is_active);
+    if (active.length === 0) throw new Error('No active branches to seed.');
+    return active.map((branch) => ({ id: branch.id, code: branch.code, name: branch.name }));
+  }
+
+  const requested = requestedBranchArgument();
+  const byCode = BRANCH_CODE.test(requested);
+  const byId = !byCode && BRANCH_UUID.test(requested);
+  if (!byCode && !byId) {
+    throw new Error(
+      `--branch must be a branch code such as BAL or NAS, or a branch uuid. Received "${requested}".`,
+    );
+  }
+
+  const match = byCode
+    ? all.find((branch) => branch.code.toUpperCase() === requested.toUpperCase())
+    : all.find((branch) => branch.id === requested);
+
+  if (!match) {
+    const list = all.map((branch) => `${branch.code} (${branch.name})`).join(', ');
+    throw new Error(`No branch matches "${requested}". Configured branches: ${list}.`);
+  }
+  if (!match.is_active) {
+    throw new Error(
+      `Branch ${match.code} (${match.name}) is inactive. Seeding it would create history for a closed shop. ` +
+        'Reactivate it first, or seed another branch.',
+    );
+  }
+  return [{ id: match.id, code: match.code, name: match.name }];
+}
+
 async function snapshot(supabase: SupabaseClient, directory: string): Promise<void> {
   mkdirSync(directory, { recursive: true });
   for (const table of ALL_TABLES) {
@@ -200,12 +315,92 @@ async function snapshot(supabase: SupabaseClient, directory: string): Promise<vo
   console.log(`Snapshot written to ${directory}`);
 }
 
-async function wipe(supabase: SupabaseClient): Promise<void> {
-  for (const table of WIPE_ORDER) {
-    const { error } = await supabase.from(table).delete().not('id', 'is', null);
+/**
+ * Clears one branch's business data, children before parents.
+ *
+ * The branch-owned tables are deleted by `branch_id`; the child tables are
+ * deleted through their parent, because they have no `branch_id` of their own
+ * (see `20261002000300_branch_scoping.sql` for why). Deleting a child by "every
+ * row" would be the old behaviour and is exactly the bug this replaces: it would
+ * clear the other branch's children too, leaving its orders and sales with no
+ * lines and no payments.
+ *
+ * `business_settings` is absent on purpose — it is per-branch configuration and
+ * is updated (never deleted) by `seedSettings`.
+ */
+async function wipe(supabase: SupabaseClient, branch: SeededBranch): Promise<void> {
+  const branchId = branch.id;
+
+  // Child rows first: each delete is scoped to rows whose parent is this branch.
+  const orderIds = await idsIn(supabase, 'orders', branchId);
+  const transactionIds = await idsIn(supabase, 'sales_transactions', branchId);
+  const itemIds = await idsIn(supabase, 'inventory_items', branchId);
+
+  await deleteWhere(supabase, 'order_payments', 'order_id', orderIds);
+  await deleteWhere(supabase, 'order_items', 'order_id', orderIds);
+  await deleteWhere(supabase, 'payments', 'transaction_id', transactionIds);
+  await deleteWhere(supabase, 'sales_transaction_items', 'transaction_id', transactionIds);
+  await deleteWhere(supabase, 'inventory_movements', 'item_id', itemIds);
+
+  // Parents next, by branch.
+  for (const table of [
+    'orders',
+    'sales_transactions',
+    'inventory_items',
+    'designs',
+    'customers',
+    'suppliers',
+    'purchase_orders',
+    'operating_expenses',
+  ] as const) {
+    const { error } = await supabase.from(table).delete().eq('branch_id', branchId);
     if (error) throw new Error(`Could not clear ${table}: ${error.message}`);
     console.log(`  cleared  ${table}`);
   }
+
+  // Audit rows are not branch-owned (they carry `entity_type`/`entity_id`, and an
+  // `auth.login_succeeded` entry has neither). Clearing the whole log is correct
+  // here and only here: it is a review of business data, and seeding replaces the
+  // business data it reviews. It is never run outside the seed.
+  const { error: auditError } = await supabase.from('audit_logs').delete().not('id', 'is', null);
+  if (auditError) throw new Error(`Could not clear audit_logs: ${auditError.message}`);
+  console.log('  cleared  audit_logs');
+}
+
+/** Ids of one branch's rows in an owned table, used to scope the child deletes. */
+async function idsIn(supabase: SupabaseClient, table: string, branchId: string): Promise<string[]> {
+  const { data, error } = await supabase.from(table).select('id').eq('branch_id', branchId);
+  if (error) throw new Error(`Could not list ${table}: ${error.message}`);
+  return ((data ?? []) as Array<{ id: string }>).map((row) => row.id);
+}
+
+/**
+ * Deletes child rows whose parent is in `parentIds`, chunked.
+ *
+ * `in (...)` with a few hundred uuids is fine, but a four-month history holds
+ * thousands of children, and a single predicate of that length exceeds what
+ * PostgREST will parse in a URL. Chunking keeps each request bounded.
+ */
+async function deleteWhere(
+  supabase: SupabaseClient,
+  table: string,
+  column: string,
+  parentIds: readonly string[],
+): Promise<number> {
+  if (parentIds.length === 0) {
+    console.log(`  cleared  ${table} (0 rows — no parent in this branch)`);
+    return 0;
+  }
+  const chunkSize = 200;
+  let deleted = 0;
+  for (let index = 0; index < parentIds.length; index += chunkSize) {
+    const chunk = parentIds.slice(index, index + chunkSize);
+    const { error } = await supabase.from(table).delete().in(column, chunk);
+    if (error) throw new Error(`Could not clear ${table}: ${error.message}`);
+    deleted += chunk.length;
+  }
+  console.log(`  cleared  ${table} (via ${parentIds.length} parents)`);
+  return deleted;
 }
 
 // ─── Planning (deterministic, computed before any write) ────────────────────
@@ -414,34 +609,56 @@ async function uploadBinaryAsset(supabase: SupabaseClient, bucket: string, path:
   return data.publicUrl;
 }
 
-async function seedSettings(supabase: SupabaseClient, adminId: string): Promise<void> {
+/**
+ * Points one branch's settings row at the shop's identity.
+ *
+ * Scoped by `branch_id`, not `id = 1`. The old `.eq('id', 1)` was correct while
+ * there was exactly one shop; with two rows it would have written Balayan's name
+ * onto whichever row happened to be first, and Nasugbu's row would keep whatever
+ * it had — which is how a receipt ends up headed by the wrong shop.
+ *
+ * The address is written because the receipt prints it and an empty one is
+ * indistinguishable from "not configured yet". Each branch gets its own line, so
+ * a customer handed a slip at Nasugbu is not told to go to Balayan.
+ */
+async function seedSettings(supabase: SupabaseClient, adminId: string, branch: SeededBranch): Promise<void> {
+  const patch: Record<string, unknown> = {
+    business_name: branch.code === 'BAL' ? BUSINESS.name : `${BUSINESS.name} - ${branch.name}`,
+    vat_rate: BUSINESS.vatRate,
+    currency_symbol: BUSINESS.currencySymbol,
+    address: branch.code === 'BAL' ? BUSINESS.address : `${BUSINESS.name} — ${branch.name}\n${branch.name}, Batangas`,
+    updated_by: adminId,
+  };
+
   if (!skipUploads) {
-    // The database becomes the one place the logo lives. The seed writes the
-    // owner's real PNG here; nothing else in the repository serves a logo, so a
-    // screen that cannot reach this URL has no logo to show — which is the
-    // honest state rather than a second, conflicting copy.
-    const logoUrl = await uploadBinaryAsset(supabase, BUSINESS_BUCKET, BRAND_LOGO_OBJECT_PATH, BRAND_LOGO_ASSET_PATH);
-    const { error } = await supabase
-      .from('business_settings')
-      .update({ business_name: BUSINESS.name, vat_rate: BUSINESS.vatRate, currency_symbol: BUSINESS.currencySymbol, logo_url: logoUrl, updated_by: adminId })
-      .eq('id', 1);
-    if (error) throw new Error(`Could not update business settings: ${error.message}`);
-  } else {
-    const { error } = await supabase
-      .from('business_settings')
-      .update({ business_name: BUSINESS.name, vat_rate: BUSINESS.vatRate, currency_symbol: BUSINESS.currencySymbol, updated_by: adminId })
-      .eq('id', 1);
-    if (error) throw new Error(`Could not update business settings: ${error.message}`);
+    // The database is the one place the logo lives. Each branch gets its own
+    // copy of the same object rather than sharing a URL by convention, so a
+    // branch that later uploads its own mark does not change the other's.
+    patch.logo_url = await uploadBinaryAsset(supabase, BUSINESS_BUCKET, BRAND_LOGO_OBJECT_PATH, BRAND_LOGO_ASSET_PATH);
   }
-  console.log(`  business settings set to ${BUSINESS.name} at ${BUSINESS.vatRate}% VAT`);
+
+  const { data, error } = await supabase
+    .from('business_settings')
+    .update(patch)
+    .eq('branch_id', branch.id)
+    .select('id');
+  if (error) throw new Error(`Could not update business settings: ${error.message}`);
+  if (!data || data.length === 0) {
+    throw new Error(
+      `No business_settings row exists for ${branch.code}. The branch migrations create one per branch; ` +
+        'run them before seeding.',
+    );
+  }
+  console.log(`  settings for ${branch.code} set to "${patch.business_name as string}" at ${BUSINESS.vatRate}% VAT`);
 }
 
-async function seedCustomers(supabase: SupabaseClient): Promise<Map<string, string>> {
+async function seedCustomers(supabase: SupabaseClient, branchId: string): Promise<Map<string, string>> {
   const rows = CUSTOMERS.map((customer) => ({
     name: customer.name,
     phone: customer.phone,
     email: customer.email,
     notes: customer.notes,
+    branch_id: branchId,
     created_at: manilaInstant(manilaDate(HISTORY_DAYS - randomInt(0, 20)), 9, randomInt(0, 59)),
     updated_at: manilaInstant(manilaDate(randomInt(0, 10)), 10, randomInt(0, 59)),
   }));
@@ -453,13 +670,14 @@ async function seedCustomers(supabase: SupabaseClient): Promise<Map<string, stri
   return byName;
 }
 
-async function seedSuppliers(supabase: SupabaseClient): Promise<string[]> {
+async function seedSuppliers(supabase: SupabaseClient, branchId: string): Promise<string[]> {
   const rows = SUPPLIERS.map((supplier) => ({
     name: supplier.name,
     contact_person: supplier.contactPerson,
     phone: supplier.phone,
     email: supplier.email,
     address: supplier.address,
+    branch_id: branchId,
     created_at: manilaInstant(manilaDate(HISTORY_DAYS + randomInt(0, 30)), 9, randomInt(0, 59)),
     updated_at: manilaInstant(manilaDate(randomInt(0, 15)), 9, randomInt(0, 59)),
   }));
@@ -470,7 +688,20 @@ async function seedSuppliers(supabase: SupabaseClient): Promise<string[]> {
   return ids;
 }
 
-async function seedDesigns(supabase: SupabaseClient, adminId: string): Promise<string[]> {
+async function seedDesigns(
+  supabase: SupabaseClient,
+  adminId: string,
+  branch: SeededBranch,
+): Promise<string[]> {
+  // `20261002000300` already copied Balayan's catalogue into Nasugbu. Re-creating
+  // it here would duplicate every design on each seed, so an occupied catalogue
+  // is left alone and its existing ids are returned for the order planner.
+  const existing = await idsIn(supabase, 'designs', branch.id);
+  if (existing.length > 0) {
+    console.log(`  ${existing.length} designs already present at ${branch.code}; left as they are`);
+    return existing;
+  }
+
   const rows = [];
   for (const design of DESIGNS) {
     const slug = design.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -489,6 +720,7 @@ async function seedDesigns(supabase: SupabaseClient, adminId: string): Promise<s
       image_url: imageUrl,
       asset_type: 'image/svg+xml',
       asset_size_bytes: Buffer.byteLength(svg, 'utf8'),
+      branch_id: branch.id,
       created_by: adminId,
       created_at: createdAt,
       updated_at: createdAt,
@@ -508,6 +740,7 @@ interface SeededInventory {
 async function seedInventory(
   supabase: SupabaseClient,
   adminId: string,
+  branch: SeededBranch,
   soldBySku: ReadonlyMap<string, number>,
   reservedBySku: ReadonlyMap<string, number>,
 ): Promise<SeededInventory> {
@@ -532,6 +765,7 @@ async function seedInventory(
       price: product.price,
       cost_price: product.cost,
       image_url: imageUrl,
+      branch_id: branch.id,
       created_at: createdAt,
       updated_at: createdAt,
     });
@@ -569,6 +803,7 @@ async function createOrders(
   orders: readonly PlannedOrder[],
   inventory: SeededInventory,
   customerIds: ReadonlyMap<string, string>,
+  branch: SeededBranch,
 ): Promise<Array<{ id: string; order: PlannedOrder }>> {
   const created: Array<{ id: string; order: PlannedOrder }> = [];
   await runPool(orders, 6, async (order) => {
@@ -594,6 +829,10 @@ async function createOrders(
         p_items: items,
         p_customer_id: customerId,
         p_due_date: order.dueDate,
+        // Required by the RPC since the branch rollout: a branch-less order is
+        // refused outright rather than filed against a default shop. It also
+        // scopes the stock reservation inside the function.
+        p_branch_id: branch.id,
       });
       if (error || !data) throw new Error(error?.message ?? 'no order returned');
       return data as { id: string };
@@ -629,6 +868,7 @@ async function createSales(
   supabase: SupabaseClient,
   sales: readonly PlannedSale[],
   inventory: SeededInventory,
+  branch: SeededBranch,
 ): Promise<void> {
   const stamped: Array<{ id: string; createdAt: string; actorId: string }> = [];
   await runPool(sales, 8, async (sale, index) => {
@@ -648,7 +888,11 @@ async function createSales(
         p_received_amount: sale.total,
         p_created_by: sale.actorId,
         p_items: items,
-        p_idempotency_key: `seed-${RANDOM_SEED}-${index}`,
+        p_idempotency_key: `seed-${RANDOM_SEED}-${branch.code}-${index}`,
+        // Required since the rollout, and it also scopes the stock decrement:
+        // the RPC will only draw down an item that belongs to this branch, so a
+        // sale can no longer consume the other shop's shelf.
+        p_branch_id: branch.id,
       });
       if (error || !data) throw new Error(error?.message ?? 'no transaction returned');
       return data as { id: string };
@@ -699,7 +943,7 @@ async function reconcileStock(supabase: SupabaseClient, inventory: SeededInvento
   console.log(`  stock take reconciled ${adjusted} items to their planned levels`);
 }
 
-async function seedExpenses(supabase: SupabaseClient, adminId: string): Promise<void> {
+async function seedExpenses(supabase: SupabaseClient, adminId: string, branchId: string): Promise<void> {
   const rows = [];
   const months = Math.max(1, Math.round(HISTORY_DAYS / 30));
   for (const template of EXPENSE_TEMPLATES) {
@@ -713,6 +957,7 @@ async function seedExpenses(supabase: SupabaseClient, adminId: string): Promise<
           description: template.description,
           amount: money(template.amount * jitter),
           expense_date: dayKey(manilaDate(dayOffset)),
+          branch_id: branchId,
           created_by: adminId,
           created_at: manilaInstant(manilaDate(dayOffset), 17, randomInt(0, 59)),
         });
@@ -727,9 +972,9 @@ async function seedExpenses(supabase: SupabaseClient, adminId: string): Promise<
 async function seedAuditLog(
   supabase: SupabaseClient,
   actorIds: readonly string[],
-  orders: ReadonlyArray<{ id: string; order: PlannedOrder }>,
   designIds: readonly string[],
   supplierIds: readonly string[],
+  branches: readonly SeededBranch[],
 ): Promise<void> {
   const rows: Array<Record<string, unknown>> = [];
   const push = (action: string, entityType: string, entityId: string | null, createdAt: string, metadata: Record<string, unknown> = {}) => {
@@ -745,7 +990,22 @@ async function seedAuditLog(
     });
   };
 
-  push('settings.business_updated', 'business_settings', '1', manilaInstant(manilaDate(HISTORY_DAYS), 8, 5), { businessName: BUSINESS.name, vatRate: BUSINESS.vatRate });
+  // Each branch's settings row is addressed by its own id — the old literal '1'
+  // pointed at Balayan's row from every context.
+  for (const branch of branches) {
+    const { data: settingsRow } = await supabase
+      .from('business_settings')
+      .select('id')
+      .eq('branch_id', branch.id)
+      .maybeSingle();
+    push(
+      'settings.business_updated',
+      'business_settings',
+      settingsRow ? String((settingsRow as { id: number }).id) : null,
+      manilaInstant(manilaDate(HISTORY_DAYS), 8, 5),
+      { businessName: BUSINESS.name, vatRate: BUSINESS.vatRate, branchCode: branch.code },
+    );
+  }
 
   for (const customer of CUSTOMERS) {
     push('customer.created', 'customer', null, manilaInstant(manilaDate(randomInt(1, HISTORY_DAYS - 5)), 9, randomInt(0, 59)), { name: customer.name });
@@ -757,15 +1017,39 @@ async function seedAuditLog(
     push('supplier.created', 'supplier', supplierId, manilaInstant(manilaDate(HISTORY_DAYS - randomInt(0, 10)), 11, randomInt(0, 59)), {});
   }
 
+  // Order entries are read back from the database rather than taken from the
+  // in-memory plan: this function runs once, after every branch has been seeded,
+  // and only the database knows all of them. Reading also means the audit says
+  // what was actually stored, including the statuses and timestamps the RPC and
+  // the later `created_at` stamp wrote.
   let orderUpdateCount = 0;
-  for (const { id, order } of orders) {
-    push('order.created', 'order', id, order.createdAt, { customer: order.customerName, status: 'Pending' });
-    if (order.status !== 'Pending' && orderUpdateCount < 90) {
-      push('order.updated', 'order', id, order.updatedAt, { status: order.status });
-      orderUpdateCount += 1;
+  for (const branch of branches) {
+    const { data: orderRows } = await supabase
+      .from('orders')
+      .select('id, customer, status, created_at, updated_at')
+      .eq('branch_id', branch.id)
+      .order('created_at', { ascending: true });
+    for (const row of (orderRows ?? []) as Array<{
+      id: string; customer: string; status: string; created_at: string; updated_at: string;
+    }>) {
+      push('order.created', 'order', row.id, row.created_at, { customer: row.customer, status: 'Pending' });
+      if (row.status !== 'Pending' && orderUpdateCount < 90) {
+        push('order.updated', 'order', row.id, row.updated_at, { status: row.status });
+        orderUpdateCount += 1;
+      }
     }
-    for (const payment of order.payments) {
-      push('order_payment.created', 'order_payment', id, payment.createdAt, { amount: payment.amount, method: payment.method });
+
+    const { data: paymentRows } = await supabase
+      .from('order_payments')
+      .select('order_id, amount, method, created_at, orders!inner(branch_id)')
+      .eq('orders.branch_id', branch.id);
+    for (const row of (paymentRows ?? []) as Array<{
+      order_id: string; amount: number; method: string; created_at: string;
+    }>) {
+      push('order_payment.created', 'order_payment', row.order_id, row.created_at, {
+        amount: row.amount,
+        method: row.method,
+      });
     }
   }
 
@@ -776,21 +1060,28 @@ async function seedAuditLog(
     push('auth.login_succeeded', 'auth', null, manilaInstant(manilaDate(randomInt(0, 30)), 8, randomInt(0, 25)), {});
   }
 
-  const { data: transactions, error } = await supabase
-    .from('sales_transactions')
-    .select('id, total, created_at')
-    .order('created_at', { ascending: false })
-    .limit(120);
-  if (!error && transactions) {
-    for (const transaction of transactions as Array<{ id: string; total: number; created_at: string }>) {
-      push('transaction.created', 'sales_transaction', transaction.id, transaction.created_at, { total: transaction.total });
+  for (const branch of branches) {
+    const { data: transactions, error } = await supabase
+      .from('sales_transactions')
+      .select('id, total, created_at')
+      .eq('branch_id', branch.id)
+      .order('created_at', { ascending: false })
+      .limit(120);
+    if (!error && transactions) {
+      for (const transaction of transactions as Array<{ id: string; total: number; created_at: string }>) {
+        push('transaction.created', 'sales_transaction', transaction.id, transaction.created_at, { total: transaction.total });
+      }
     }
-  }
 
-  const { data: expenses } = await supabase.from('operating_expenses').select('id, category, amount, created_at').limit(30);
-  if (expenses) {
-    for (const expense of expenses as Array<{ id: string; category: string; amount: number; created_at: string }>) {
-      push('expense.created', 'expense', expense.id, expense.created_at, { category: expense.category, amount: expense.amount });
+    const { data: expenses } = await supabase
+      .from('operating_expenses')
+      .select('id, category, amount, created_at')
+      .eq('branch_id', branch.id)
+      .limit(30);
+    if (expenses) {
+      for (const expense of expenses as Array<{ id: string; category: string; amount: number; created_at: string }>) {
+        push('expense.created', 'expense', expense.id, expense.created_at, { category: expense.category, amount: expense.amount });
+      }
     }
   }
 
@@ -804,16 +1095,48 @@ async function seedAuditLog(
 
 // ─── Verification ───────────────────────────────────────────────────────────
 
-async function verify(supabase: SupabaseClient): Promise<void> {
+/**
+ * Prints what actually landed, per branch.
+ *
+ * Branch-scoped throughout, because the two questions this report answers are
+ * "did this branch get its history" and "did the other branch stay untouched" —
+ * and an unscoped count answers neither. The analytics call passes no
+ * `p_branch_id`, which is the deliberate "all branches" reading (the parameter is
+ * nullable for exactly that), so the head-office view can be checked from here
+ * too.
+ */
+async function verify(supabase: SupabaseClient, branches: readonly SeededBranch[]): Promise<void> {
   console.log('\nVerification');
+
+  const BRANCH_OWNED = [
+    'orders', 'sales_transactions', 'inventory_items', 'designs',
+    'customers', 'suppliers', 'purchase_orders', 'operating_expenses',
+  ] as const;
+
+  const header = ['table'.padEnd(22), ...branches.map((branch) => branch.code.padStart(8))].join('');
+  console.log(`  ${header}`);
+  for (const table of BRANCH_OWNED) {
+    const counts: string[] = [];
+    for (const branch of branches) {
+      const { count, error } = await supabase
+        .from(table)
+        .select('*', { count: 'exact', head: true })
+        .eq('branch_id', branch.id);
+      counts.push((error ? 'err' : String(count ?? 0)).padStart(8));
+    }
+    console.log(`  ${table.padEnd(22)}${counts.join('')}`);
+  }
+
   for (const table of ALL_TABLES) {
-    console.log(`  ${table.padEnd(24)} ${await countRows(supabase, table)}`);
+    console.log(`  ${table.padEnd(22)}${String(await countRows(supabase, table)).padStart(8)} (all branches)`);
   }
 
   const ranges: Array<[string, number]> = [['last 7 days', 6], ['last 30 days', 29], ['last 90 days', 89]];
   for (const [label, offset] of ranges) {
     const from = manilaInstant(manilaDate(offset), 0, 0);
     const to = manilaInstant(manilaDate(0), 23, 59);
+    // No `p_branch_id`: the nullable parameter means "every branch", which is
+    // the head-office reading this line is checking.
     const { data, error } = await supabase.rpc('get_analytics_summary', { p_from: from, p_to: to });
     if (error) {
       console.log(`  analytics ${label}: RPC error - ${error.message}`);
@@ -821,22 +1144,27 @@ async function verify(supabase: SupabaseClient): Promise<void> {
     }
     const summary = data as { revenue?: number; transactionCount?: number; orderCount?: number };
     console.log(
-      `  analytics ${label.padEnd(14)} revenue ${BUSINESS.currencySymbol}${Number(summary.revenue ?? 0).toLocaleString('en-PH')} · ${summary.transactionCount ?? 0} sales · ${summary.orderCount ?? 0} orders`,
+      `  analytics ${label.padEnd(14)} revenue ${BUSINESS.currencySymbol}${Number(summary.revenue ?? 0).toLocaleString('en-PH')} · ${summary.transactionCount ?? 0} sales · ${summary.orderCount ?? 0} orders (all branches)`,
     );
   }
 
-  const { data: lowStock } = await supabase.from('inventory_items').select('sku, name, stock, reorder_level');
-  const alerts = (lowStock as Array<{ sku: string; name: string; stock: number; reorder_level: number }> | null)?.filter(
-    (item) => item.stock <= item.reorder_level,
-  ) ?? [];
-  console.log(`  low stock alerts: ${alerts.length}${alerts.length ? ` (${alerts.map((item) => item.sku).join(', ')})` : ''}`);
+  for (const branch of branches) {
+    const { data: lowStock } = await supabase
+      .from('inventory_items')
+      .select('sku, name, stock, reorder_level')
+      .eq('branch_id', branch.id);
+    const alerts = (lowStock as Array<{ sku: string; name: string; stock: number; reorder_level: number }> | null)?.filter(
+      (item) => item.stock <= item.reorder_level,
+    ) ?? [];
+    console.log(`  ${branch.code} low stock alerts: ${alerts.length}${alerts.length ? ` (${alerts.map((item) => item.sku).join(', ')})` : ''}`);
 
-  const { data: statusRows } = await supabase.from('orders').select('status');
-  const byStatus = new Map<string, number>();
-  for (const row of (statusRows ?? []) as Array<{ status: string }>) {
-    byStatus.set(row.status, (byStatus.get(row.status) ?? 0) + 1);
+    const { data: statusRows } = await supabase.from('orders').select('status').eq('branch_id', branch.id);
+    const byStatus = new Map<string, number>();
+    for (const row of (statusRows ?? []) as Array<{ status: string }>) {
+      byStatus.set(row.status, (byStatus.get(row.status) ?? 0) + 1);
+    }
+    console.log(`  ${branch.code} orders by status: ${[...byStatus.entries()].map(([status, count]) => `${status} ${count}`).join(' · ')}`);
   }
-  console.log(`  orders by status: ${[...byStatus.entries()].map(([status, count]) => `${status} ${count}`).join(' · ')}`);
 }
 
 // ─── Entry point ────────────────────────────────────────────────────────────
@@ -845,10 +1173,15 @@ async function main(): Promise<void> {
   const supabase = createServiceClient();
   const startedAt = Date.now();
 
+  const branches = await resolveSeedBranches(supabase);
+  const scopeLabel = branches.map((branch) => `${branch.code} (${branch.name})`).join(', ');
+
   if (verifyOnly) {
-    await verify(supabase);
+    await verify(supabase, branches);
     return;
   }
+
+  console.log(`Seeding: ${scopeLabel}`);
 
   if (!skipSnapshot) {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
@@ -860,45 +1193,71 @@ async function main(): Promise<void> {
     }
   }
 
-  const { data: profiles, error: profileError } = await supabase.from('profiles').select('id, name').order('name');
+  const { data: profiles, error: profileError } = await supabase.from('profiles').select('id, name, branch_id').order('name');
   if (profileError || !profiles || profiles.length === 0) throw new Error('No staff profiles found; nothing to attribute history to.');
-  const staff = profiles as Array<{ id: string; name: string }>;
-  const actorIds = staff.map((person) => person.id);
-  const adminId = actorIds[0] as string;
+  const staff = profiles as Array<{ id: string; name: string; branch_id: string | null }>;
+  const adminId = staff[0]?.id as string;
 
-  console.log('\nWipe');
-  await wipe(supabase);
+  for (const branch of branches) {
+    // Attribute the branch's history to its own people. Falling back to every
+    // profile would put a Balayan cashier's name on Nasugbu's sales, and the
+    // audit trail is the artefact that is supposed to say who did what.
+    const branchStaff = staff.filter((person) => person.branch_id === branch.id);
+    const actorIds = (branchStaff.length > 0 ? branchStaff : staff).map((person) => person.id);
+    if (branchStaff.length === 0) {
+      console.log(`\n⚠ ${branch.code} has no profiles; attributing its history to all accounts. Provision staff for it.`);
+    }
 
-  console.log('\nReference data');
-  await seedSettings(supabase, adminId);
-  const customerIds = await seedCustomers(supabase);
-  const supplierIds = await seedSuppliers(supabase);
-  const designIds = await seedDesigns(supabase, adminId);
+    console.log(`\n── ${branch.code} — ${branch.name} ──`);
 
-  console.log('\nPlan history');
-  const sales = planSales(actorIds);
-  const orders = planOrders(actorIds, designIds);
-  const soldBySku = new Map<string, number>();
-  for (const sale of sales) {
-    for (const line of sale.lines) soldBySku.set(line.sku, (soldBySku.get(line.sku) ?? 0) + line.quantity);
+    console.log('Wipe');
+    await wipe(supabase, branch);
+
+    console.log('Reference data');
+    await seedSettings(supabase, adminId, branch);
+    const customerIds = await seedCustomers(supabase, branch.id);
+    // Suppliers and designs are seeded for their side effects (the rows); their
+    // ids are read back once, after every branch, by the audit step.
+    await seedSuppliers(supabase, branch.id);
+    const designIds = await seedDesigns(supabase, adminId, branch);
+
+    console.log('Plan history');
+    const sales = planSales(actorIds);
+    const orders = planOrders(actorIds, designIds);
+    const soldBySku = new Map<string, number>();
+    for (const sale of sales) {
+      for (const line of sale.lines) soldBySku.set(line.sku, (soldBySku.get(line.sku) ?? 0) + line.quantity);
+    }
+    const reservedBySku = new Map<string, number>();
+    for (const order of orders) {
+      for (const line of order.lines) reservedBySku.set(line.sku, (reservedBySku.get(line.sku) ?? 0) + line.quantity);
+    }
+    console.log(`  planned ${sales.length} sales and ${orders.length} orders over ${HISTORY_DAYS} days`);
+
+    console.log('Operational history');
+    const inventory = await seedInventory(supabase, adminId, branch, soldBySku, reservedBySku);
+    const createdOrders = await createOrders(supabase, orders, inventory, customerIds, branch);
+    await createOrderPayments(supabase, createdOrders);
+    await createSales(supabase, sales, inventory, branch);
+    await reconcileStock(supabase, inventory, adminId);
+    await seedExpenses(supabase, adminId, branch.id);
+    // Audit rows are rewritten wholesale by the first branch's wipe, so the log
+    // is built once, after every branch's business data exists.
   }
-  const reservedBySku = new Map<string, number>();
-  for (const order of orders) {
-    for (const line of order.lines) reservedBySku.set(line.sku, (reservedBySku.get(line.sku) ?? 0) + line.quantity);
-  }
-  console.log(`  planned ${sales.length} sales and ${orders.length} orders over ${HISTORY_DAYS} days`);
 
-  console.log('\nOperational history');
-  const inventory = await seedInventory(supabase, adminId, soldBySku, reservedBySku);
-  const createdOrders = await createOrders(supabase, orders, inventory, customerIds);
-  await createOrderPayments(supabase, createdOrders);
-  await createSales(supabase, sales, inventory);
-  await reconcileStock(supabase, inventory, adminId);
-  await seedExpenses(supabase, adminId);
-  await seedAuditLog(supabase, actorIds, createdOrders, designIds, supplierIds);
+  console.log('\nAudit log');
+  const designIdsForAudit = await collectIds(supabase, 'designs', branches);
+  const supplierIdsForAudit = await collectIds(supabase, 'suppliers', branches);
+  await seedAuditLog(supabase, staff.map((person) => person.id), designIdsForAudit, supplierIdsForAudit, branches);
 
-  await verify(supabase);
+  await verify(supabase, branches);
   console.log(`\nDone in ${Math.round((Date.now() - startedAt) / 1000)}s.`);
+}
+
+async function collectIds(supabase: SupabaseClient, table: string, branches: readonly SeededBranch[]): Promise<string[]> {
+  const ids: string[] = [];
+  for (const branch of branches) ids.push(...(await idsIn(supabase, table, branch.id)));
+  return ids;
 }
 
 main().catch((error: unknown) => {

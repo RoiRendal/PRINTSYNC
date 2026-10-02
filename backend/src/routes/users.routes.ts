@@ -4,7 +4,7 @@ import { getSupabaseAdminClient } from '../integrations/supabase/adminClient.js'
 import { authenticate } from '../middleware/authenticate.js';
 import { requirePermission } from '../middleware/authorize.js';
 import { AppError } from '../shared/errors.js';
-import { createUser, deleteUser, listUsers, updateUser } from '../modules/users/users.service.js';
+import { createUser, deleteUser, getUserBranch, listUsers, updateUser } from '../modules/users/users.service.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { parsePaginationQuery } from '../shared/pagination.js';
@@ -15,8 +15,16 @@ const userSchema = z.object({
   name: z.string().trim().min(1),
   email: z.string().trim().email(),
   phone: z.string().trim().default(''),
-  role: z.enum(['admin', 'staff']),
+  // 'owner' is the head-office role the owner asked for. It is assignable, not a
+  // hidden flag: choosing it is what sets `can_view_all_branches`, so the
+  // cross-branch exception is granted by a deliberate role change rather than by a
+  // boolean anyone could flip.
+  role: z.enum(['admin', 'staff', 'owner']),
   position: z.string().trim().default(''),
+  // Required: every account belongs to exactly one branch (the owner's rule).
+  // There is no sensible default — silently filing a new hire under Balayan is how
+  // a Nasugbu staff member ends up seeing the wrong stock.
+  branchId: z.string().uuid(),
   createdAt: z.string().trim().optional(),
   password: z.string().min(8).optional(),
 });
@@ -76,7 +84,12 @@ usersRouter.post('/', authenticate, requirePermission('users.manage'), async (re
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
-  publishDataChange('users');
+  // The affected user's branch, not the caller's. User administration is
+  // performed from head office, but the account that changed belongs to a branch
+  // — and that is the branch whose staff screens show the directory. Publishing
+  // the *caller's* branch would tell the wrong shop to refetch, and tell the
+  // right one nothing.
+  publishDataChange(createdUser.branchId, 'users');
   response.status(201).json({ data: createdUser });
 });
 
@@ -93,7 +106,7 @@ usersRouter.patch('/:id', authenticate, requirePermission('users.manage'), async
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
-  publishDataChange('users');
+  publishDataChange(updatedUser.branchId, 'users');
   response.json({ data: updatedUser });
 });
 
@@ -102,6 +115,13 @@ usersRouter.delete('/:id', authenticate, requirePermission('users.manage'), asyn
   if (request.auth?.profile.id === userId) {
     throw new AppError(400, 'SELF_DELETE_NOT_ALLOWED', 'You cannot delete your own user account.');
   }
+  /*
+   * The branch is read **before** the delete, because after it there is nothing
+   * left to ask. The deletion is audited, and the audit row is the only remaining
+   * evidence of which shop the account belonged to — the same ordering reason the
+   * order-delete RPC captures its context before removing the row.
+   */
+  const targetBranchId = await getUserBranch(getSupabase(), userId);
   await deleteUser(getSupabase(), userId);
   await writeAuditLog(getSupabase(), {
     actorId: request.auth?.user.id,
@@ -111,6 +131,6 @@ usersRouter.delete('/:id', authenticate, requirePermission('users.manage'), asyn
     ipAddress: request.ip,
     userAgent: request.get('user-agent'),
   });
-  publishDataChange('users');
+  publishDataChange(targetBranchId, 'users');
   response.status(204).send();
 });

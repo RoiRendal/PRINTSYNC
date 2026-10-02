@@ -13,6 +13,7 @@ import { isAllowedStoredImageUrl } from '../shared/imageUrlPolicy.js';
 import { env } from '../config/env.js';
 import { AppError } from '../shared/errors.js';
 import { sendSuccess } from '../shared/apiResponse.js';
+import { getCallerBranch } from '../shared/branchContext.js';
 import { writeAuditLog } from '../services/auditLogService.js';
 import { publishDataChange } from '../services/domainEventBus.js';
 import { uploadDesignAsset } from '../services/designAssetService.js';
@@ -54,15 +55,15 @@ function getDesignId(request: { params: Record<string, string | string[] | undef
 }
 
 designsRouter.get('/', authenticate, requirePermission('designs.read'), async (request, response) => {
-  sendSuccess(response, await listDesigns(getSupabase(), parsePaginationQuery(request.query)));
+  sendSuccess(response, await listDesigns(getSupabase(), parsePaginationQuery(request.query), getCallerBranch(request)));
 });
 
 designsRouter.post('/', authenticate, requirePermission('designs.manage'), async (request, response) => {
   const parsed = designSchema.safeParse(request.body);
   if (!parsed.success || !request.auth) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
-  const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id);
+  const design = await createDesign(getSupabase(), parsed.data, request.auth.user.id, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth.user.id, action: 'design.created', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   response.status(201).json({ data: design });
 });
 
@@ -83,17 +84,17 @@ designsRouter.patch('/:id', authenticate, requirePermission('designs.manage'), a
   const parsed = designUpdateSchema.safeParse(request.body);
   if (!parsed.success) throw new AppError(400, 'INVALID_DESIGN_REQUEST', 'The design details are invalid.');
   const designId = getDesignId(request);
-  const design = await updateDesign(getSupabase(), designId, parsed.data);
+  const design = await updateDesign(getSupabase(), designId, parsed.data, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.updated', entityType: 'design', entityId: design.id, metadata: { category: design.category } });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   sendSuccess(response, design);
 });
 
 designsRouter.delete('/:id', authenticate, requirePermission('designs.manage'), async (request, response) => {
   const designId = getDesignId(request);
-  await deleteDesign(getSupabase(), designId);
+  await deleteDesign(getSupabase(), designId, getCallerBranch(request));
   await writeAuditLog(getSupabase(), { actorId: request.auth?.user.id, action: 'design.deleted', entityType: 'design', entityId: designId });
-  publishDataChange('designs');
+  publishDataChange(getCallerBranch(request), 'designs');
   response.status(204).send();
 });
 

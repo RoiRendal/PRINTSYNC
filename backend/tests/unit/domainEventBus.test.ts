@@ -43,7 +43,7 @@ describe('services/domainEventBus', () => {
       const { events, listener } = recorder();
       subscribe(listener);
 
-      publishDataChange('inventory');
+      publishDataChange('branch-balayan', 'inventory');
 
       assert.equal(events.length, 1);
       assert.deepEqual(events[0]?.domains, ['inventory']);
@@ -54,7 +54,7 @@ describe('services/domainEventBus', () => {
       subscribe(listener);
 
       // One user action — ringing up a retail sale — touches both.
-      publishDataChange('payments', 'inventory');
+      publishDataChange('branch-balayan', 'payments', 'inventory');
 
       assert.equal(events.length, 1, 'one action should wake a subscriber once, not once per domain');
       assert.deepEqual(events[0]?.domains, ['payments', 'inventory']);
@@ -64,7 +64,7 @@ describe('services/domainEventBus', () => {
       const { events, listener } = recorder();
       subscribe(listener);
 
-      publishDataChange('inventory', 'inventory', 'inventory');
+      publishDataChange('branch-balayan', 'inventory', 'inventory', 'inventory');
 
       assert.deepEqual(events[0]?.domains, ['inventory']);
     });
@@ -74,7 +74,7 @@ describe('services/domainEventBus', () => {
       subscribe(listener);
 
       const before = Date.now();
-      publishDataChange('orders');
+      publishDataChange('branch-balayan', 'orders');
       const after = Date.now();
 
       const at = Date.parse(events[0]!.at);
@@ -83,11 +83,13 @@ describe('services/domainEventBus', () => {
     });
 
     it('is a no-op when no domains are given', () => {
+      // The branch is required, so "an empty publish" is now a publish naming a
+      // branch and no domains — the semantics the old zero-argument call meant.
       const { events, listener } = recorder();
       subscribe(listener);
 
       const publishedBefore = countPublishedDataChanges();
-      publishDataChange();
+      publishDataChange('branch-balayan');
 
       assert.equal(events.length, 0);
       assert.equal(countPublishedDataChanges(), publishedBefore, 'an empty publish is not a publish');
@@ -99,7 +101,7 @@ describe('services/domainEventBus', () => {
       subscribe(first.listener);
       subscribe(second.listener);
 
-      publishDataChange('customers');
+      publishDataChange('branch-balayan', 'customers');
 
       assert.equal(first.events.length, 1);
       assert.equal(second.events.length, 1);
@@ -107,8 +109,35 @@ describe('services/domainEventBus', () => {
 
     it('increments the publish counter even with no subscribers', () => {
       const before = countPublishedDataChanges();
-      publishDataChange('designs');
+      publishDataChange('branch-balayan', 'designs');
       assert.equal(countPublishedDataChanges(), before + 1);
+    });
+
+    /*
+     * The branch is what stops one shop's activity being broadcast to the other.
+     * The bus carries it verbatim; the *filtering* is the SSE route's job, but a
+     * bus that dropped or mangled the value would make that filter impossible, so
+     * the value's integrity is asserted here.
+     */
+    it('carries the branch the change belongs to', () => {
+      const { events, listener } = recorder();
+      subscribe(listener);
+
+      publishDataChange('branch-nasugbu', 'orders');
+
+      assert.equal(events[0]?.branchId, 'branch-nasugbu');
+    });
+
+    it('carries a null branch for a business-wide change', () => {
+      // A user account or a business-wide setting belongs to no shop, and the
+      // subscriber treats null as "everyone" — so null must survive the trip
+      // rather than being coerced to a string.
+      const { events, listener } = recorder();
+      subscribe(listener);
+
+      publishDataChange(null, 'settings');
+
+      assert.equal(events[0]?.branchId, null);
     });
   });
 
@@ -122,7 +151,7 @@ describe('services/domainEventBus', () => {
 
       // A write has already committed by the time this runs, so a broken
       // connection must never prevent the others from being told.
-      publishDataChange('orders');
+      publishDataChange('branch-balayan', 'orders');
 
       assert.equal(healthy.events.length, 1);
     });
@@ -140,7 +169,7 @@ describe('services/domainEventBus', () => {
 
       // Iterating a copy is what makes this safe; iterating the live Set would
       // skip `healthy` because the Set shrank mid-loop.
-      publishDataChange('inventory');
+      publishDataChange('branch-balayan', 'inventory');
 
       assert.equal(self.events.length, 1);
       assert.equal(healthy.events.length, 1, 'the remaining subscriber must still be notified');
@@ -152,9 +181,9 @@ describe('services/domainEventBus', () => {
       const { events, listener } = recorder();
       const unsubscribe = subscribe(listener);
 
-      publishDataChange('orders');
+      publishDataChange('branch-balayan', 'orders');
       unsubscribe();
-      publishDataChange('orders');
+      publishDataChange('branch-balayan', 'orders');
 
       assert.equal(events.length, 1);
     });
