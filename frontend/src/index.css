@@ -198,7 +198,9 @@
      `grep` showed nothing had referenced either since the flat redesign. */
   --radius-button: 0.5rem;
   --radius-card: 0.75rem;
-  --radius-modal: 1rem;
+  /* 0.75rem = 12px, which is ERPNext's `--border-radius-lg` — the radius on
+     `.modal-content`. Was 1rem; the dialog was the only reader. */
+  --radius-modal: 0.75rem;
   --radius-pill: 9999px;
 }
 
@@ -349,6 +351,24 @@
   --app-tint-amber: #fef5e7;
   /* Theme-independent: the dialog dim is a focus cue, not a surface. */
   --app-scrim: rgb(0 0 0 / 0.45);
+  /* The dialog's OWN dim, and deliberately not `--app-scrim`.
+
+     `--app-scrim` has two other readers — the mobile nav overlay and the
+     image-grid hover wash — and neither is a dialog. Darkening it to match
+     ERPNext would dim a nav overlay and a hover state that were never part of
+     this decision.
+
+     ERPNext's is `.modal-backdrop { background: var(--gray-800) }` with
+     `.show { opacity: .8 }` — #383838 at 80%, which lands on #606060 over a
+     white page. PrintSync's black-at-45% lands on #8c8c8c, so ERPNext dims
+     noticeably harder and the dialog reads as sitting further forward.
+
+     Light is ERPNext's value exactly. Dark is NOT, on purpose: ERPNext's dark
+     `--gray-800` is #242424, which is LIGHTER than this app's dark page
+     (#1c1c1e) — copying it would brighten the background behind the dialog
+     instead of dimming it. Dark instead keeps a black dim at the opacity that
+     lands on the same ~0.38 luminance multiplier ERPNext's light scrim gives. */
+  --app-scrim-modal: rgb(56 56 56 / 0.8);
 }
 
 .dark {
@@ -432,6 +452,10 @@
      after dark — so the glyph has to invert with it. */
   --app-checkbox-tick: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L2.66667 5.8L7 1.2' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --app-checkbox-dash: url("data:image/svg+xml,%3Csvg viewBox='0 0 8 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.5 4h5' stroke='black' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+
+  /* See the note on the light declaration: a black dim, not ERPNext's #242424,
+     because that value is lighter than this page and would brighten it. */
+  --app-scrim-modal: rgb(0 0 0 / 0.6);
 }
 
 html {
