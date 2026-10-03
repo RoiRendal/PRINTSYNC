@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -81,8 +81,6 @@ export function ProductTrendSection({
     setTrendInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
   }, [productTrendSummary.totalUnits, productTrendSummary.leadingProduct?.label, productTrendSummary.leadingProduct?.units, productTrendSummary.lowestProduct?.label]);
 
-  useEffect(() => { if (trendInsight.autoGenerate) void generateTrendInsight(); }, [trendInsight.autoGenerate, generateTrendInsight]);
-
   return (
     <SectionCard
       title="Product Trend Identification"
@@ -91,7 +89,7 @@ export function ProductTrendSection({
     >
       {isLoading ? <AnalyticsSectionSkeleton chartHeight={380} /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
         <>
-          <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
+          <InsightPanel state={trendInsight} onGenerate={generateTrendInsight} />
           <div className="my-4">
             <StatTileRow columns={4}>
               <StatTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} />

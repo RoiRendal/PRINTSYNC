@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -82,8 +82,6 @@ export function ProfitMarginSection({
     setProfitInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
   }, [profitMarginStats.averageMargin, profitMarginStats.totalProfit, profitMarginStats.bestPoint.label, profitMarginStats.lowestPoint.label]);
 
-  useEffect(() => { if (profitInsight.autoGenerate) void generateProfitInsight(); }, [profitInsight.autoGenerate, generateProfitInsight]);
-
   return (
     <SectionCard
       title="Profit Margin Analysis"
@@ -92,7 +90,7 @@ export function ProfitMarginSection({
     >
       {isLoading ? <AnalyticsSectionSkeleton chartHeight={360} /> : error ? <ErrorState message={error} /> : profitMarginData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No transaction data available for this period.</p> : (
         <>
-          <InsightPanel state={profitInsight} onToggleAutoGenerate={() => setProfitInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateProfitInsight} />
+          <InsightPanel state={profitInsight} onGenerate={generateProfitInsight} />
           <div className="my-4">
             <StatTileRow columns={4}>
               <StatTile label="Revenue" value={money.format(profitMarginStats.totalRevenue)} />

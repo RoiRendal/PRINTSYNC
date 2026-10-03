@@ -81,14 +81,12 @@ export type InsightReport = {
 };
 
 export type InsightState = {
-  autoGenerate: boolean;
   isLoading: boolean;
   report: InsightReport | null;
   lastGeneratedAt: string | null;
 };
 
 export const createEmptyInsightState = (): InsightState => ({
-  autoGenerate: false,
   isLoading: false,
   report: null,
   lastGeneratedAt: null,

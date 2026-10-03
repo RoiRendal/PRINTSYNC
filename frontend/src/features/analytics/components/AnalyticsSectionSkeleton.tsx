@@ -20,17 +20,18 @@ export interface AnalyticsSectionSkeletonProps {
  * no domain knowledge — the tile row and the chart block.
  *
  * The InsightPanel's controls row is real chrome that a placeholder cannot
- * invent: a checkbox, a button, and a line of "last generated" text. What is
- * left to draw is their footprint — a label bar and a 24px button box (the real
- * `Button size="sm"` height) — so the card keeps its own height instead of
- * collapsing and pushing the chart up.
+ * invent: a single right-aligned "Generate Insights" button, and a line of
+ * "last generated" text. What is left to draw is their footprint — a 24px
+ * button box (the real `Button size="sm"` height) — so the card keeps its own
+ * height instead of collapsing and pushing the chart up. The button bar is
+ * pushed right (`justify-end`) to sit where the real button sits; there is no
+ * left-hand bar, because there is no longer a control on the left.
  */
 export function AnalyticsSectionSkeleton({ chartHeight = 390 }: AnalyticsSectionSkeletonProps) {
   return (
     <>
       <SurfaceCard className="mt-4 p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Skeleton className="h-4 w-44" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           <Skeleton className="h-6 w-36" />
         </div>
         <Skeleton className="mt-2 h-3 w-32" />

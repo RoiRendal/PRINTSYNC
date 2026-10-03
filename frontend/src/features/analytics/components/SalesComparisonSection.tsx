@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -72,8 +72,6 @@ export function SalesComparisonSection({
     setSalesInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
   }, [totals.growth, totals.totalA, totals.totalB, safeSelectionA, safeSelectionB]);
 
-  useEffect(() => { if (salesInsight.autoGenerate) void generateSalesInsight(); }, [salesInsight.autoGenerate, generateSalesInsight]);
-
   return (
     <div className="space-y-5">
       <SectionCard
@@ -87,7 +85,7 @@ export function SalesComparisonSection({
               <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Timeline A</span><Select value={safeSelectionA} onChange={(event) => setSelectionA(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
               <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Timeline B</span><Select value={safeSelectionB} onChange={(event) => setSelectionB(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
             </div>
-            <InsightPanel state={salesInsight} onToggleAutoGenerate={() => setSalesInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateSalesInsight} />
+            <InsightPanel state={salesInsight} onGenerate={generateSalesInsight} />
           </>
         )}
       </SectionCard>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   CartesianGrid,
   ComposedChart,
@@ -94,8 +94,6 @@ export function ForecastSection({
     setForecastInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
   }, [financialForecastStats.expectedGrowth, financialForecastStats.forecastAccuracyProxy, financialForecastStats.actual, financialForecastStats.forecast, forecastMetric]);
 
-  useEffect(() => { if (forecastInsight.autoGenerate) void generateForecastInsight(); }, [forecastInsight.autoGenerate, generateForecastInsight]);
-
   return (
     <SectionCard
       title="Financial Forecasting"
@@ -104,7 +102,7 @@ export function ForecastSection({
     >
       {isLoading ? <AnalyticsSectionSkeleton chartHeight={390} /> : error ? <ErrorState message={error} /> : !inventoryForecast || inventoryForecast.items.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No inventory forecast data available for this period.</p> : (
         <>
-          <InsightPanel state={forecastInsight} onToggleAutoGenerate={() => setForecastInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateForecastInsight} />
+          <InsightPanel state={forecastInsight} onGenerate={generateForecastInsight} />
           <div className="my-4">
             <StatTileRow columns={4}>
               <StatTile label={`Actual ${forecastMetric === 'income' ? 'Income' : 'Expenses'}`} value={money.format(financialForecastStats.actual)} />
