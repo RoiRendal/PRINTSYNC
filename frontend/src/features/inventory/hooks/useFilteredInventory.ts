@@ -1,12 +1,16 @@
 import { useMemo } from 'react';
 import type { InventoryItem } from '../types';
 
-export interface InventoryStats {
-  lowStock: number;
-  totalStock: number;
-  totalValue: number;
-}
-
+/**
+ * The stock list's derived data: the search-narrowed rows and the category list
+ * the form offers.
+ *
+ * The three stock totals — total stock, stock value and low stock — used to be
+ * computed here too, from the rows the page had loaded. That was only ever
+ * correct while the catalogue fitted in one page of 20: the figures were a tally
+ * of page 1, not of the branch. They now come from `GET /orders/summary`, summed
+ * in the database over the whole table, and are rendered on the Workspace.
+ */
 export function useFilteredInventory(items: InventoryItem[], searchTerm: string) {
   const filteredItems = useMemo(() => {
     const query = searchTerm.toLowerCase();
@@ -32,12 +36,5 @@ export function useFilteredInventory(items: InventoryItem[], searchTerm: string)
     ])].filter(Boolean).sort();
   }, [items]);
 
-  const inventoryStats = useMemo<InventoryStats>(() => {
-    const lowStock = items.filter((item) => item.stock <= item.reorderLevel).length;
-    const totalStock = items.reduce((sum, item) => sum + item.stock, 0);
-    const totalValue = items.reduce((sum, item) => sum + item.stock * item.price, 0);
-    return { lowStock, totalStock, totalValue };
-  }, [items]);
-
-  return { filteredItems, categories, inventoryStats };
+  return { filteredItems, categories };
 }

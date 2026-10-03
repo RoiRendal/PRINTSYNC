@@ -216,6 +216,11 @@ async function mapOrders(
  * `get_orders_summary` takes `p_branch_id` as of migration 20261002000500, so the
  * count is the caller's branch. The parameter was accepted-and-ignored while the
  * RPC had no parameters at all; now it is the one the RPC reads.
+ *
+ * `totalStock` and `totalValue` joined the payload in migration 20261003000100,
+ * when the Inventory page's two totals moved to the Workspace. They are summed in
+ * the database for the same reason the order counts are: the page used to derive
+ * them from page 1 of a 20-row list and under-report.
  */
 export async function getOrdersSummary(supabase: SupabaseClient, branchId: string): Promise<OrdersSummary> {
   const { data, error } = await supabase.rpc('get_orders_summary', { p_branch_id: branchId });
@@ -230,6 +235,8 @@ export async function getOrdersSummary(supabase: SupabaseClient, branchId: strin
     open: number;
     byStatus: Array<{ status: string; count: number }> | null;
     lowStock: number;
+    totalStock: number;
+    totalValue: number;
   };
 
   /*
@@ -260,6 +267,14 @@ export async function getOrdersSummary(supabase: SupabaseClient, branchId: strin
     open: Number(raw.open),
     byStatus,
     lowStock: Number(raw.lowStock),
+    /*
+     * `Number` on both: PostgREST hands `sum(stock)` back as a bigint and
+     * `sum(stock * price)` as a numeric, and the contract types them as `number`.
+     * An empty branch coalesces to `0` in the RPC, so a card renders a zero
+     * rather than `null`.
+     */
+    totalStock: Number(raw.totalStock),
+    totalValue: Number(raw.totalValue),
   };
 }
 

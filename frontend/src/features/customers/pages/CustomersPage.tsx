@@ -15,8 +15,6 @@ import {
   Modal,
   Pagination,
   SearchInput,
-  StatTile,
-  StatTileRow,
   Table,
   TableBody,
   TableCell,
@@ -225,10 +223,6 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-5">
-      <StatTileRow columns={1}>
-        <StatTile label="Total Customers" value={customers.length} />
-      </StatTileRow>
-
       <Card padding="none" className="overflow-hidden">
             <CardHeader className="mb-0 flex-col gap-3 border-b p-4 md:flex-row md:items-center md:justify-end">
               <div className={TOOLBAR_ROW_CLASS}>

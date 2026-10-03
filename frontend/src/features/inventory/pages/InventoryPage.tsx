@@ -7,7 +7,6 @@ import { TableSkeleton } from '../../../shared/components/feedback/TableSkeleton
 import { cn } from '../../../shared/lib/cn';
 import { InventoryFormModal } from '../components/InventoryFormModal';
 import { InventoryImageGrid } from '../components/InventoryImageGrid';
-import { InventoryStats } from '../components/InventoryStats';
 import { InventoryTable } from '../components/InventoryTable';
 import { useFilteredInventory } from '../hooks/useFilteredInventory';
 import { useInventory } from '../../../app/stores/useInventoryStore';
@@ -85,7 +84,7 @@ export default function Inventory() {
     setFilters(lowStockOnly ? { lowStock: 1 } : {});
   }, [lowStockOnly, setFilters]);
 
-  const { filteredItems, categories, inventoryStats } = useFilteredInventory(items, searchTerm);
+  const { filteredItems, categories } = useFilteredInventory(items, searchTerm);
 
   /*
    * Tick state lives on the page. The rows on offer are the filtered ones, so a
@@ -215,8 +214,6 @@ export default function Inventory() {
 
       {viewMode === 'inventory' ? (
         <div className="space-y-4">
-          <InventoryStats stats={inventoryStats} />
-
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
