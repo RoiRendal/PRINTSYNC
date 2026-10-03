@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Bar,
   CartesianGrid,
@@ -26,10 +26,10 @@ import {
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   periodLabel,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -76,12 +76,11 @@ export function ProductTrendSection({
   }, [productTrendData]);
 
   const generateTrendInsight = useCallback(async () => {
-    setTrendInsight((prev) => ({ ...prev, isLoading: true }));
-    const report = await generateInsight('trend', { totalUnits: productTrendSummary.totalUnits, leadingProduct: productTrendSummary.leadingProduct?.label ?? '-', leadingUnits: productTrendSummary.leadingProduct?.units ?? 0, lowestProduct: productTrendSummary.lowestProduct?.label ?? '-' });
-    setTrendInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
+    await runInsightRequest(
+      { feature: 'trend', totalUnits: productTrendSummary.totalUnits, leadingProduct: productTrendSummary.leadingProduct?.label ?? '-', leadingUnits: productTrendSummary.leadingProduct?.units ?? 0, lowestProduct: productTrendSummary.lowestProduct?.label ?? '-' },
+      setTrendInsight,
+    );
   }, [productTrendSummary.totalUnits, productTrendSummary.leadingProduct?.label, productTrendSummary.leadingProduct?.units, productTrendSummary.lowestProduct?.label]);
-
-  useEffect(() => { if (trendInsight.autoGenerate) void generateTrendInsight(); }, [trendInsight.autoGenerate, generateTrendInsight]);
 
   return (
     <SectionCard
@@ -91,7 +90,7 @@ export function ProductTrendSection({
     >
       {isLoading ? <AnalyticsSectionSkeleton chartHeight={380} /> : error ? <ErrorState message={error} /> : productTrendData.length === 0 ? <p className="text-xs text-app-text-muted dark:text-zinc-400">No product sales data available for this period.</p> : (
         <>
-          <InsightPanel state={trendInsight} onToggleAutoGenerate={() => setTrendInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateTrendInsight} />
+          <InsightPanel state={trendInsight} onGenerate={generateTrendInsight} />
           <div className="my-4">
             <StatTileRow columns={4}>
               <StatTile label="Total Units" value={productTrendSummary.totalUnits.toLocaleString()} />

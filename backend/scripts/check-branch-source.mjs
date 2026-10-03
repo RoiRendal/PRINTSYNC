@@ -81,7 +81,7 @@ const SKIP_DIRECTORIES = new Set(['node_modules', 'dist', 'coverage']);
 const ALLOWED = [
   {
     file: 'src/routes/analytics.routes.ts',
-    line: 43,
+    line: 47,
     reason:
       'Head-office analytics selector: the `branch` field of the query schema that ' +
       '`effectiveBranch()` parses from `request.query`. Read-only and analytics-only — ' +

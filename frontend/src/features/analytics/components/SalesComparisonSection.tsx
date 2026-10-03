@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -15,11 +15,11 @@ import { AnalyticsSectionSkeleton } from './AnalyticsSectionSkeleton';
 import { Select, StatTile, StatTileRow } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   money,
   periodLabel,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -67,12 +67,11 @@ export function SalesComparisonSection({
   }, [comparisonData]);
 
   const generateSalesInsight = useCallback(async () => {
-    setSalesInsight((prev) => ({ ...prev, isLoading: true }));
-    const report = await generateInsight('sales', { growth: totals.growth, totalA: totals.totalA, totalB: totals.totalB, selectionA: safeSelectionA, selectionB: safeSelectionB });
-    setSalesInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
+    await runInsightRequest(
+      { feature: 'sales', growth: totals.growth, totalA: totals.totalA, totalB: totals.totalB, selectionA: safeSelectionA, selectionB: safeSelectionB },
+      setSalesInsight,
+    );
   }, [totals.growth, totals.totalA, totals.totalB, safeSelectionA, safeSelectionB]);
-
-  useEffect(() => { if (salesInsight.autoGenerate) void generateSalesInsight(); }, [salesInsight.autoGenerate, generateSalesInsight]);
 
   return (
     <div className="space-y-5">
@@ -87,7 +86,7 @@ export function SalesComparisonSection({
               <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Timeline A</span><Select value={safeSelectionA} onChange={(event) => setSelectionA(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
               <label className="block space-y-1.5"><span className="text-2xs font-bold text-app-text-muted dark:text-zinc-500">Timeline B</span><Select value={safeSelectionB} onChange={(event) => setSelectionB(event.target.value)}>{salesBucketLabels.map((option) => <option key={option} value={option}>{option}</option>)}</Select></label>
             </div>
-            <InsightPanel state={salesInsight} onToggleAutoGenerate={() => setSalesInsight((prev) => ({ ...prev, autoGenerate: !prev.autoGenerate }))} onGenerate={generateSalesInsight} />
+            <InsightPanel state={salesInsight} onGenerate={generateSalesInsight} />
           </>
         )}
       </SectionCard>

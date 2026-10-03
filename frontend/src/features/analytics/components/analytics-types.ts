@@ -1,4 +1,6 @@
-import type { AnalyticsBucket } from '../api/analyticsApi';
+import type { AnalyticsBucket, InsightRequest } from '../api/analyticsApi';
+import { analyticsApi } from '../api/analyticsApi';
+import { describeApiError } from '../../../shared/api/errors';
 
 export type Period = 'weekly' | 'monthly' | 'yearly';
 
@@ -70,8 +72,6 @@ export function getChartColors(): ChartColors {
   };
 }
 
-export type InsightFeature = 'sales' | 'profit' | 'trend' | 'forecast';
-
 export type InsightReport = {
   overview: string;
   keyFindings: [string, string, string];
@@ -81,118 +81,104 @@ export type InsightReport = {
 };
 
 export type InsightState = {
-  autoGenerate: boolean;
   isLoading: boolean;
   report: InsightReport | null;
   lastGeneratedAt: string | null;
+  /**
+   * A sentence to show when the last attempt failed, or `null` when it did not.
+   *
+   * Held in state rather than thrown so the section keeps rendering: a manager
+   * whose AI report is unavailable should still see the chart and the tiles
+   * behind it, with one line explaining what happened.
+   */
+  error: string | null;
 };
 
 export const createEmptyInsightState = (): InsightState => ({
-  autoGenerate: false,
   isLoading: false,
   report: null,
   lastGeneratedAt: null,
+  error: null,
 });
-
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 export const formatInsightTime = (timestamp: string | null) => {
   if (!timestamp) return 'Not generated yet';
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
-export async function generateInsight(
-  feature: InsightFeature,
-  context: Record<string, number | string>,
-): Promise<InsightReport> {
-  await sleep(240);
+/**
+ * Ask the backend for an insight report and return it.
+ *
+ * ### What changed, and why
+ *
+ * This function used to fabricate the report in the browser: it interpolated the
+ * figures it was handed into fixed sentence templates, with a `sleep(240)` to
+ * imitate latency, and never left the page. So "AI-assisted insights" was a
+ * label rather than a capability, and the paper's §3.4 — which names Gemini and
+ * describes the numbers being sent as "tailored prompts" — described something
+ * that did not exist.
+ *
+ * It now posts those figures to `/analytics/insights`, which holds the API key
+ * and calls Gemini. The key is deliberately **not** here: anything in this bundle
+ * is readable by anyone who opens developer tools.
+ *
+ * ### Why this only sends aggregate figures
+ *
+ * The Gemini free tier may use submitted prompts to improve Google's products,
+ * with human review. Under the project's decision **B3**, only figures the system
+ * has already computed may leave it — never a customer name, a raw transaction
+ * row, or an identifier. `InsightRequest` is a closed union for that reason, so
+ * a caller cannot add a field to the payload without a type error.
+ *
+ * A failure is left to propagate: the panel shows it inline rather than this
+ * function inventing a fallback report, because a fabricated insight attributed
+ * to the AI would be worse than an honest error.
+ */
+export async function generateInsight(context: InsightRequest): Promise<InsightReport> {
+  return analyticsApi.insight(context);
+}
 
-  if (feature === 'sales') {
-    const growth = Number(context.growth ?? 0);
-    const totalA = Number(context.totalA ?? 0);
-    const totalB = Number(context.totalB ?? 0);
-    const selectionA = String(context.selectionA ?? 'Timeline A');
-    const selectionB = String(context.selectionB ?? 'Timeline B');
-    const trendWord = growth >= 0 ? 'higher' : 'lower';
-    return {
-      overview: `${selectionA} is ${Math.abs(growth).toFixed(1)}% ${trendWord} than ${selectionB} in the selected range.`,
-      keyFindings: [
-        `${selectionA} total sales: ${money.format(totalA)}.`,
-        `${selectionB} total sales: ${money.format(totalB)}.`,
-        `Absolute gap between both timelines: ${money.format(totalA - totalB)}.`,
-      ],
-      riskWatchout:
-        growth < 0
-          ? `Demand weakness in ${selectionA} may continue if campaign timing and product mix remain unchanged.`
-          : 'Performance may flatten if the same growth drivers are not sustained in the next period.',
-      recommendedAction:
-        growth < 0
-          ? `Prioritize underperforming segments in ${selectionA} and run targeted promotions for quick recovery.`
-          : `Replicate the strongest drivers from ${selectionA} into weaker segments to preserve momentum.`,
-      confidence: Math.max(72, Math.min(96, 88 + Math.min(8, Math.abs(growth) / 4))),
-    };
+/**
+ * Runs one insight request and folds the outcome back into `InsightState`.
+ *
+ * Shared by the four sections because they differ only in which figures they
+ * send — the loading flag, the error handling, the timestamp and the report all
+ * behave identically, and four copies of that is four places for the error path
+ * to be forgotten in.
+ *
+ * ### Why the failure is stored rather than thrown
+ *
+ * `generateInsight` rejects on a 503 (no key, or the whole model chain out of
+ * quota). Letting that escape would leave the section stuck on `isLoading` with
+ * an unhandled rejection, and the chart behind it would have no reason to
+ * disappear. So it is caught here, turned into a sentence for a person, and put
+ * in state for the panel to show.
+ *
+ * The message comes from the server where it has one: `describeApiError` prefers
+ * the server's own words for a 4xx/5xx and only falls back to the generic
+ * "try again" when there is nothing better. Either way the report is **not**
+ * replaced by an invented one — a fabricated insight attributed to the AI would
+ * be worse than an honest error.
+ */
+export async function runInsightRequest(
+  context: InsightRequest,
+  setState: (updater: (previous: InsightState) => InsightState) => void,
+): Promise<void> {
+  setState((previous) => ({ ...previous, isLoading: true, error: null }));
+  try {
+    const report = await generateInsight(context);
+    setState((previous) => ({
+      ...previous,
+      isLoading: false,
+      report,
+      lastGeneratedAt: new Date().toISOString(),
+      error: null,
+    }));
+  } catch (error) {
+    setState((previous) => ({
+      ...previous,
+      isLoading: false,
+      error: describeApiError(error, 'The insight report could not be generated.'),
+    }));
   }
-
-  if (feature === 'profit') {
-    const avgMargin = Number(context.avgMargin ?? 0);
-    const totalProfit = Number(context.totalProfit ?? 0);
-    const bestLabel = String(context.bestLabel ?? '-');
-    const lowestLabel = String(context.lowestLabel ?? '-');
-    return {
-      overview: `Average margin is ${avgMargin.toFixed(1)}% with a net profit of ${money.format(totalProfit)}.`,
-      keyFindings: [
-        `Best margin point: ${bestLabel}.`,
-        `Lowest margin point: ${lowestLabel}.`,
-        `Total net profit for this selection: ${money.format(totalProfit)}.`,
-      ],
-      riskWatchout:
-        avgMargin < 30
-          ? 'Margin compression risk is elevated due to expense pressure relative to revenue.'
-          : 'Margins are healthy, but rising expenses can quickly reduce profitability if not monitored.',
-      recommendedAction:
-        avgMargin < 30
-          ? 'Audit top expense categories and protect margin with pricing and procurement adjustments.'
-          : 'Lock in high-margin product bundles and keep expense growth below revenue growth.',
-      confidence: Math.max(74, Math.min(97, 85 + avgMargin / 6)),
-    };
-  }
-
-  if (feature === 'trend') {
-    const totalUnits = Number(context.totalUnits ?? 0);
-    const leadingProduct = String(context.leadingProduct ?? '-');
-    const leadingUnits = Number(context.leadingUnits ?? 0);
-    const lowestProduct = String(context.lowestProduct ?? '-');
-    return {
-      overview: `${leadingProduct} leads demand with ${leadingUnits.toLocaleString()} units out of ${totalUnits.toLocaleString()} total units.`,
-      keyFindings: [
-        `Top product: ${leadingProduct} (${leadingUnits.toLocaleString()} units).`,
-        `Lowest-ranked product: ${lowestProduct}.`,
-        `Total demand volume in this selection: ${totalUnits.toLocaleString()} units.`,
-      ],
-      riskWatchout: 'Demand concentration on a small set of products can increase stockout risk and forecast volatility.',
-      recommendedAction: `Increase buffer stock for ${leadingProduct} while testing demand lifts for lower-ranked products.`,
-      confidence: Math.max(73, Math.min(95, 84 + (leadingUnits / Math.max(totalUnits, 1)) * 10)),
-    };
-  }
-
-  const expectedGrowth = Number(context.expectedGrowth ?? 0);
-  const forecastConfidence = Number(context.forecastConfidence ?? 0);
-  const metric = String(context.metric ?? 'Income');
-  return {
-    overview: `${metric} is projected to move by ${expectedGrowth.toFixed(1)}% with a model confidence of ${forecastConfidence.toFixed(1)}%.`,
-    keyFindings: [
-      `Actual ${metric.toLowerCase()}: ${money.format(Number(context.actual ?? 0))}.`,
-      `Forecast ${metric.toLowerCase()}: ${money.format(Number(context.forecast ?? 0))}.`,
-      `Expected delta: ${money.format(Number(context.forecast ?? 0) - Number(context.actual ?? 0))}.`,
-    ],
-    riskWatchout:
-      expectedGrowth < 0
-        ? 'Downside trajectory can worsen if current demand softness persists.'
-        : 'Forecast upside may be overstated if recent demand spikes normalize quickly.',
-    recommendedAction:
-      expectedGrowth < 0
-        ? 'Prepare a conservative operating plan with tighter cost controls for near-term periods.'
-        : 'Align capacity and staffing with the projected increase while tracking variance weekly.',
-    confidence: Math.max(70, Math.min(98, forecastConfidence)),
-  };
 }
