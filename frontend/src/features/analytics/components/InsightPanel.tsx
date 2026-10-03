@@ -28,6 +28,23 @@ export function InsightPanel({ state, onGenerate }: InsightPanelProps) {
       </div>
       <p className="mt-2 text-2xs font-bold text-app-text-muted dark:text-zinc-500">Last generated: {formatInsightTime(state.lastGeneratedAt)}</p>
 
+      {/*
+        The failure is a line of text, not a replacement for the card. The chart
+        and tiles behind this panel are unaffected by the AI service being down,
+        so they stay — the manager loses the written interpretation and nothing
+        else, and is told why.
+
+        No hue and no glyph, matching `ErrorState`: the sentence says what
+        happened, so colour and an icon would only repeat it. `role="status"`
+        rather than `role="alert"` because this arrives after a deliberate click,
+        not unbidden.
+      */}
+      {state.error && (
+        <p role="status" className="mt-2 text-xs leading-relaxed text-app-ink dark:text-zinc-300">
+          {state.error}
+        </p>
+      )}
+
       {state.report ? (
         <div className="mt-4 space-y-3 text-xs leading-relaxed text-app-ink dark:text-zinc-300">
           <p><span className="font-bold text-app-ink dark:text-zinc-100">Overview:</span> {state.report.overview}</p>

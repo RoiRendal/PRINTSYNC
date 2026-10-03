@@ -20,6 +20,35 @@ const envSchema = z.object({
    * the default it falls back to.
    */
   FRONTEND_DIST: z.string().optional(),
+  /**
+   * The Gemini API key used by the AI insight reports.
+   *
+   * **Server-side only.** It is read in exactly one place —
+   * `integrations/gemini/client.ts` — and never returned in a response, written
+   * to a log, or exposed through a `VITE_*` variable (which would bake it into
+   * the public browser bundle).
+   *
+   * Optional on purpose: without it the insights endpoint answers with a clear
+   * "not configured" error instead of failing at boot, so development and the
+   * test suite run without a key. When it is absent the rest of the system is
+   * unaffected — analytics that does not need AI keeps working.
+   */
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  /**
+   * The model failover chain, in order, comma-separated.
+   *
+   * ### Why this is configuration rather than an array in the source
+   *
+   * Google retires models on its own schedule — it shut down the entire 2.0
+   * family while this feature was being built. Keeping the order in an
+   * environment variable means a retired model is corrected by changing a value,
+   * not by shipping a new image, so the failover chain cannot silently rot into
+   * a list of models that no longer exist.
+   *
+   * Unset means `DEFAULT_GEMINI_MODELS` in `integrations/gemini/models.ts`
+   * applies. Blank entries are dropped rather than treated as model names.
+   */
+  GEMINI_MODELS: z.string().optional(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

@@ -26,10 +26,10 @@ import {
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   periodLabel,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -76,9 +76,10 @@ export function ProductTrendSection({
   }, [productTrendData]);
 
   const generateTrendInsight = useCallback(async () => {
-    setTrendInsight((prev) => ({ ...prev, isLoading: true }));
-    const report = await generateInsight('trend', { totalUnits: productTrendSummary.totalUnits, leadingProduct: productTrendSummary.leadingProduct?.label ?? '-', leadingUnits: productTrendSummary.leadingProduct?.units ?? 0, lowestProduct: productTrendSummary.lowestProduct?.label ?? '-' });
-    setTrendInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
+    await runInsightRequest(
+      { feature: 'trend', totalUnits: productTrendSummary.totalUnits, leadingProduct: productTrendSummary.leadingProduct?.label ?? '-', leadingUnits: productTrendSummary.leadingProduct?.units ?? 0, lowestProduct: productTrendSummary.lowestProduct?.label ?? '-' },
+      setTrendInsight,
+    );
   }, [productTrendSummary.totalUnits, productTrendSummary.leadingProduct?.label, productTrendSummary.leadingProduct?.units, productTrendSummary.lowestProduct?.label]);
 
   return (

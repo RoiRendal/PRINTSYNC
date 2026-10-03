@@ -86,6 +86,61 @@ export interface BranchComparison {
 }
 
 /**
+ * The body of an AI insight request.
+ *
+ * A discriminated union mirroring the backend's schema field for field. It is
+ * typed rather than an open record for a privacy reason as much as a correctness
+ * one: these values are sent to a third-party service on the free tier, so the
+ * set of things that can leave the system should be enumerable at the type
+ * level. Adding a field here without adding it server-side is a compile error,
+ * not a silently-stripped one.
+ *
+ * There is deliberately no branch, customer, or identifier field — see the note
+ * on `insight` below.
+ */
+export type InsightRequest =
+  | {
+      feature: 'sales';
+      totalA: number;
+      totalB: number;
+      growth: number;
+      selectionA: string;
+      selectionB: string;
+    }
+  | {
+      feature: 'profit';
+      avgMargin: number;
+      totalProfit: number;
+      totalRevenue: number;
+      bestLabel: string;
+      lowestLabel: string;
+    }
+  | {
+      feature: 'trend';
+      totalUnits: number;
+      leadingProduct: string;
+      leadingUnits: number;
+      lowestProduct: string;
+    }
+  | {
+      feature: 'forecast';
+      metric: string;
+      actual: number;
+      forecast: number;
+      expectedGrowth: number;
+      forecastConfidence: number;
+    };
+
+/** The report shape the panel renders — identical to the backend's. */
+export interface InsightReportResponse {
+  overview: string;
+  keyFindings: [string, string, string];
+  riskWatchout: string;
+  recommendedAction: string;
+  confidence: number;
+}
+
+/**
  * The branch a request is *about*. `undefined` means "the caller's own branch" —
  * the server decides, and for staff that is the only thing it will ever return.
  * `'all'` is the head-office combined view. A specific branch id is honoured only
@@ -117,6 +172,20 @@ export function createAnalyticsApi(client: ApiClient = apiClient) {
      */
     branchComparison: (from: string, to: string) =>
       client.get<BranchComparison>(`/analytics/branch-comparison?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+    /**
+     * The AI insight report for one analytics section.
+     *
+     * A POST because it asks the server to *do* something — call Gemini — rather
+     * than to read a resource. The body is the figures the browser has already
+     * computed and is displaying; the server never re-derives them, so the report
+     * can never describe numbers that disagree with the screen behind it.
+     *
+     * Note what the body does **not** contain: a branch. The server resolves that
+     * from the caller's session, exactly as every other analytics route does, so
+     * this request cannot widen what it is allowed to see.
+     */
+    insight: (context: InsightRequest) =>
+      client.post<InsightReportResponse, InsightRequest>('/analytics/insights', context),
   };
 }
 

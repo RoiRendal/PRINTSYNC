@@ -44,6 +44,7 @@ services:
       #   SUPABASE_SERVICE_ROLE_KEY — the `sb_secret_…` key
       #   FRONTEND_ORIGIN           — the public URL Render assigns, e.g.
       #                               https://printsync.onrender.com
+      #   GEMINI_API_KEY            — the AI insight reports' key (server-side only)
       #
       # FRONTEND_ORIGIN must match the address bar exactly: CORS allows a single
       # explicit origin, not a wildcard, and no trailing slash.
@@ -54,4 +55,10 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: FRONTEND_ORIGIN
+        sync: false
+      # Held here and never written to the repository. Read only by
+      # `integrations/gemini/client.ts`; never sent to the browser. If it is left
+      # blank the insights endpoint answers 503 AI_NOT_CONFIGURED, and the rest
+      # of the system — including analytics without AI — is unaffected.
+      - key: GEMINI_API_KEY
         sync: false

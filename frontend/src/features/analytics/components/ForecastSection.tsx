@@ -26,10 +26,10 @@ import {
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   money,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -88,10 +88,11 @@ export function ForecastSection({
   }, [inventoryForecast, forecastMetric]);
 
   const generateForecastInsight = useCallback(async () => {
-    setForecastInsight((prev) => ({ ...prev, isLoading: true }));
     const confidence = Math.max(0, Math.min(100, financialForecastStats.forecastAccuracyProxy));
-    const report = await generateInsight('forecast', { metric: forecastMetric === 'income' ? 'Income' : 'Expenses', expectedGrowth: financialForecastStats.expectedGrowth, forecastConfidence: confidence, actual: financialForecastStats.actual, forecast: financialForecastStats.forecast });
-    setForecastInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
+    await runInsightRequest(
+      { feature: 'forecast', metric: forecastMetric === 'income' ? 'Income' : 'Expenses', expectedGrowth: financialForecastStats.expectedGrowth, forecastConfidence: confidence, actual: financialForecastStats.actual, forecast: financialForecastStats.forecast },
+      setForecastInsight,
+    );
   }, [financialForecastStats.expectedGrowth, financialForecastStats.forecastAccuracyProxy, financialForecastStats.actual, financialForecastStats.forecast, forecastMetric]);
 
   return (

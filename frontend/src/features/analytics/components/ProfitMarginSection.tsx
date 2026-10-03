@@ -27,11 +27,11 @@ import {
 } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   money,
   periodLabel,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -77,10 +77,11 @@ export function ProfitMarginSection({
   const sortedMarginRows = useMemo(() => [...profitMarginData].sort((a, b) => marginSortOrder === 'desc' ? b.margin - a.margin : a.margin - b.margin), [profitMarginData, marginSortOrder]);
 
   const generateProfitInsight = useCallback(async () => {
-    setProfitInsight((prev) => ({ ...prev, isLoading: true }));
-    const report = await generateInsight('profit', { avgMargin: profitMarginStats.averageMargin, totalProfit: profitMarginStats.totalProfit, bestLabel: profitMarginStats.bestPoint.label, lowestLabel: profitMarginStats.lowestPoint.label });
-    setProfitInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
-  }, [profitMarginStats.averageMargin, profitMarginStats.totalProfit, profitMarginStats.bestPoint.label, profitMarginStats.lowestPoint.label]);
+    await runInsightRequest(
+      { feature: 'profit', avgMargin: profitMarginStats.averageMargin, totalProfit: profitMarginStats.totalProfit, totalRevenue: profitMarginStats.totalRevenue, bestLabel: profitMarginStats.bestPoint.label, lowestLabel: profitMarginStats.lowestPoint.label },
+      setProfitInsight,
+    );
+  }, [profitMarginStats.averageMargin, profitMarginStats.totalProfit, profitMarginStats.totalRevenue, profitMarginStats.bestPoint.label, profitMarginStats.lowestPoint.label]);
 
   return (
     <SectionCard

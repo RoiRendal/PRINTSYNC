@@ -10,6 +10,10 @@ import {
   getSalesTimeline,
   type AnalyticsBucket,
 } from '../modules/analytics/analytics.service.js';
+import {
+  generateInsightReport,
+  type InsightContext,
+} from '../modules/analytics/insight.service.js';
 import { AppError } from '../shared/errors.js';
 import {
   ALL_BRANCHES,
@@ -80,6 +84,71 @@ const forecastQuerySchema = z.object({
   to: z.string().date(),
   horizonDays: z.coerce.number().int().min(1).max(365).default(30),
 });
+
+/**
+ * The body of an insight request.
+ *
+ * ### Why the body is a discriminated union, not a loose object
+ *
+ * This schema is the **outer edge of the B3 data rule** (see
+ * `insight.service.ts`): whatever it accepts is what may be sent to Gemini. A
+ * permissive shape — `z.record(z.unknown())`, or a `context` object with free
+ * keys — would let any caller push arbitrary data through to a third party,
+ * including a customer name, and it would type-check. Declaring each feature's
+ * figures explicitly means the set of things that can leave the system is
+ * readable here, in one place, and enforced before the service is reached.
+ *
+ * The union mirrors `InsightContext` exactly. The `satisfies` check below keeps
+ * the two from drifting: if the service's type gains a field, this stops
+ * compiling rather than silently rejecting a request the frontend is entitled to
+ * send.
+ *
+ * Deliberately **no `branch` field**. The branch is resolved server-side by
+ * `effectiveBranch()` from the caller's session — the same rule every other
+ * analytics route follows, and the one `check-branch-source.mjs` enforces.
+ */
+const insightBodySchema = z.discriminatedUnion('feature', [
+  z.object({
+    feature: z.literal('sales'),
+    totalA: z.number(),
+    totalB: z.number(),
+    growth: z.number(),
+    selectionA: z.string().min(1).max(120),
+    selectionB: z.string().min(1).max(120),
+  }),
+  z.object({
+    feature: z.literal('profit'),
+    avgMargin: z.number(),
+    totalProfit: z.number(),
+    totalRevenue: z.number(),
+    bestLabel: z.string().min(1).max(120),
+    lowestLabel: z.string().min(1).max(120),
+  }),
+  z.object({
+    feature: z.literal('trend'),
+    totalUnits: z.number(),
+    leadingProduct: z.string().min(1).max(200),
+    leadingUnits: z.number(),
+    lowestProduct: z.string().min(1).max(200),
+  }),
+  z.object({
+    feature: z.literal('forecast'),
+    metric: z.string().min(1).max(60),
+    actual: z.number(),
+    forecast: z.number(),
+    expectedGrowth: z.number(),
+    forecastConfidence: z.number(),
+  }),
+]);
+
+/**
+ * Compile-time proof that the accepted body and the service's input are the same
+ * set of fields. If one changes without the other, this line is the error.
+ */
+const _insightBodyMatchesContext: z.infer<typeof insightBodySchema> extends InsightContext
+  ? true
+  : never = true;
+void _insightBodyMatchesContext;
 
 function getSupabase() {
   const supabase = getSupabaseAdminClient();
@@ -190,3 +259,54 @@ analyticsRouter.get('/branch-comparison', authenticate, requireHeadOffice, async
 
 /** Re-exported so the selector's vocabulary lives in one place. */
 export { ALL_BRANCHES };
+
+/**
+ * The AI insight report — a POST, on request only.
+ *
+ * ### Why this is a request and not a background job
+ *
+ * The paper's Requirement 1.4 asks for an "option to generate" AI insights, and
+ * §3.4 says the system "will only call the API" when users "take specific
+ * actions". A POST driven by a button press is that sentence made literal. The
+ * screen previously carried a checkbox that armed unattended generation; it was
+ * removed (this branch, Phase A) precisely because it was the opposite —
+ * and because, being driven by a recomputing effect, it could call the API an
+ * unbounded number of times per session.
+ *
+ * ### What it does and does not do
+ *
+ * It does **not** read data. The figures arrive in the body because the browser
+ * already holds them — they are the same totals the four analytics sections have
+ * been displaying. Asking the server to recompute them would mean a second
+ * aggregation that could disagree with the screen the manager is looking at.
+ *
+ * What the body *cannot* influence is the **branch**. `effectiveBranch()` below
+ * resolves it from the caller's session and the same `?branch=` rule every other
+ * analytics route uses, so a staff account cannot cause another shop's figures to
+ * be interpreted — or, more precisely, cannot cause the *service* to be reached
+ * with a scope it may not have. (The figures themselves are the caller's to
+ * send; the AI is not a data source and returns no rows from any branch.)
+ *
+ * ### Failure modes, and why they are distinct
+ *
+ *   - `400 INVALID_ANALYTICS_QUERY` — the body does not match a known feature.
+ *   - `503 AI_NOT_CONFIGURED`     — no `GEMINI_API_KEY` in this environment.
+ *   - `503 AI_SERVICE_UNAVAILABLE`— the whole model chain was out of quota.
+ *   - `502 AI_RESPONSE_INVALID`   — the model answered, but not usably.
+ *
+ * The 5xx codes are deliberate: nothing was written, but the caller cannot fix
+ * any of them by changing the request, and the frontend shows "temporarily
+ * unavailable" rather than a validation message that would blame the user.
+ */
+analyticsRouter.post('/insights', authenticate, requirePermission('analytics.read'), async (request, response) => {
+  const parsed = insightBodySchema.safeParse(request.body);
+  if (!parsed.success) {
+    throw new AppError(400, 'INVALID_ANALYTICS_QUERY', 'The insight request is not valid.');
+  }
+
+  // Resolved on the server from the session. Reading a branch from the body
+  // would be the exact defect `scripts/check-branch-source.mjs` exists to catch.
+  effectiveBranch(request);
+
+  sendSuccess(response, await generateInsightReport(parsed.data));
+});

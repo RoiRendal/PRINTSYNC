@@ -15,11 +15,11 @@ import { AnalyticsSectionSkeleton } from './AnalyticsSectionSkeleton';
 import { Select, StatTile, StatTileRow } from '../../../shared/components/ui';
 import {
   chartTooltipStyle,
-  generateInsight,
   createEmptyInsightState,
   getChartColors,
   money,
   periodLabel,
+  runInsightRequest,
   type InsightState,
   type Period,
 } from './analytics-types';
@@ -67,9 +67,10 @@ export function SalesComparisonSection({
   }, [comparisonData]);
 
   const generateSalesInsight = useCallback(async () => {
-    setSalesInsight((prev) => ({ ...prev, isLoading: true }));
-    const report = await generateInsight('sales', { growth: totals.growth, totalA: totals.totalA, totalB: totals.totalB, selectionA: safeSelectionA, selectionB: safeSelectionB });
-    setSalesInsight((prev) => ({ ...prev, isLoading: false, report, lastGeneratedAt: new Date().toISOString() }));
+    await runInsightRequest(
+      { feature: 'sales', growth: totals.growth, totalA: totals.totalA, totalB: totals.totalB, selectionA: safeSelectionA, selectionB: safeSelectionB },
+      setSalesInsight,
+    );
   }, [totals.growth, totals.totalA, totals.totalB, safeSelectionA, safeSelectionB]);
 
   return (
