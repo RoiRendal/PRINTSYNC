@@ -135,14 +135,39 @@ describe('integrations/gemini — the quota failover chain', () => {
     );
   });
 
+  it('advances on a 404 too — a retired model is a per-model problem, not a fatal one', async () => {
+    /*
+     * Observed live: `gemini-2.0-flash` answers 404 against the real API, because
+     * Google shut the 2.0 family down. A 404 says nothing about the next model in
+     * the chain, so halting here would mean one retired entry — the exact thing
+     * the chain exists to survive — kills the whole feature.
+     */
+    const { impl, calls } = scriptedFetch([
+      { status: 404 },
+      { status: 200, body: okBody('survived a dead model') },
+    ]);
+
+    const text = await generateGeminiContent({
+      prompt: 'p',
+      apiKey: KEY,
+      models: THREE_MODELS,
+      fetchImpl: impl,
+    });
+
+    assert.equal(text, 'survived a dead model');
+    assert.equal(calls.length, 2, 'a 404 must advance to the next model');
+  });
+
   it('STOPS on a non-quota error instead of spending the rest of the chain', async () => {
     /*
-     * The behaviour most worth pinning down. A 400 (malformed request), a 401/403
-     * (bad key) or a 404 (unknown model) will be answered identically by every
-     * model, so falling through would burn three requests to collect three copies
-     * of the same failure.
+     * The behaviour most worth pinning down. A 400 (malformed request) or a
+     * 401/403 (bad key) will be answered identically by every model, so falling
+     * through would burn three requests to collect three copies of one failure.
+     *
+     * 404 is deliberately NOT in this list — it is per-model, and is covered by
+     * the test above.
      */
-    for (const status of [400, 401, 403, 404]) {
+    for (const status of [400, 401, 403]) {
       const { impl, calls } = scriptedFetch([{ status }]);
 
       await assert.rejects(
@@ -157,6 +182,19 @@ describe('integrations/gemini — the quota failover chain', () => {
 
       assert.equal(calls.length, 1, `status ${status} must not advance the chain`);
     }
+  });
+
+  it('walks the whole chain when every model is retired, then throws', async () => {
+    // The realistic end-state of the paper's own model list: every name is gone.
+    const { impl, calls } = scriptedFetch([{ status: 404 }]);
+
+    await assert.rejects(
+      () =>
+        generateGeminiContent({ prompt: 'p', apiKey: KEY, models: THREE_MODELS, fetchImpl: impl }),
+      (error: unknown) => error instanceof GeminiUnavailableError,
+    );
+
+    assert.equal(calls.length, THREE_MODELS.length);
   });
 
   it('stops rather than exhausts the chain when a model succeeds but answers nothing', async () => {

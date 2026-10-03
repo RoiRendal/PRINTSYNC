@@ -23,12 +23,24 @@ import { DEFAULT_GEMINI_MODELS, resolveGeminiModels } from './models.js';
  *
  * ### What "failover" means, precisely
  *
- * On a **quota** response (HTTP 429, or a 5xx — the model is there but
- * unavailable) the next model in the chain is tried. On any **other** error the
- * chain stops and the error surfaces: a malformed request, a bad key or a
- * content refusal will be answered identically by every model, so retrying it
- * down the list spends three requests to collect three copies of the same
- * failure. That distinction is the whole behaviour worth testing.
+ * On a response that says **this model** is the problem — a quota failure (429),
+ * a retired or unknown model (404), or a model that is momentarily unavailable
+ * (5xx) — the next model in the chain is tried.
+ *
+ * On any other error the chain stops and the error surfaces: a malformed request
+ * (400), or a bad or unauthorised key (401/403), will be answered identically by
+ * every model, so retrying it down the list spends three requests to collect
+ * three copies of the same failure. That distinction is the whole behaviour worth
+ * testing.
+ *
+ * ### Why 404 falls through rather than stopping
+ *
+ * 404 is the one status that is **per-model**: it means this model id does not
+ * exist. Google retires models on its own schedule — it shut down the whole 2.0
+ * family while this feature was being built, and `gemini-2.0-flash` now answers
+ * 404 against the live API. A chain containing a retired model is therefore a
+ * normal state of affairs, not a misconfiguration, and halting the entire chain
+ * because one link is gone would defeat the only reason the chain exists.
  *
  * Attempts are **sequential and bounded** — one model at a time, at most
  * `models.length` attempts. Fanning out to every model at once would multiply
@@ -125,8 +137,15 @@ export async function generateGeminiContent(options: GeminiCallOptions): Promise
   const doFetch = options.fetchImpl ?? fetch;
   const models = options.models ?? resolveGeminiModels(env.GEMINI_MODELS ?? DEFAULT_GEMINI_MODELS.join(','));
 
-  /** The last quota/availability failure, surfaced if the chain runs out. */
-  let lastFailure: { status: number; model: string } | null = null;
+  /**
+   * Every per-model failure, in order, surfaced in the log if the chain runs out.
+   *
+   * The whole list rather than only the last one, because the useful diagnostic
+   * question is "what did *each* model say?" — a chain that answered 404, 404,
+   * 404 is a naming or configuration problem, while 429, 429, 429 is a busy day,
+   * and the two need different responses from whoever reads the log.
+   */
+  const failures: Array<{ model: string; status: number }> = [];
 
   for (const model of models) {
     const response = await doFetch(endpointFor(model), {
@@ -165,9 +184,13 @@ export async function generateGeminiContent(options: GeminiCallOptions): Promise
       );
     }
 
-    // Quota exhaustion or a model that is temporarily unavailable — try the next.
-    if (response.status === 429 || response.status >= 500) {
-      lastFailure = { status: response.status, model };
+    /*
+     * 429 quota, 404 retired/unknown model, 5xx momentarily unavailable — all
+     * three say "this model is the problem", so the next one is tried. See the
+     * header note on why 404 belongs here and not with the fatal statuses.
+     */
+    if (response.status === 429 || response.status === 404 || response.status >= 500) {
+      failures.push({ model, status: response.status });
       logger.warn('Gemini model unavailable, trying the next in the chain', {
         model,
         status: response.status,
@@ -176,9 +199,9 @@ export async function generateGeminiContent(options: GeminiCallOptions): Promise
     }
 
     /*
-     * Anything else — 400 (malformed request), 401/403 (bad or unauthorised key),
-     * 404 (the model does not exist). Every remaining model would answer the same
-     * way, so the chain stops here and the failure is reported as itself.
+     * Anything else — 400 (malformed request), 401/403 (bad or unauthorised key).
+     * Every remaining model would answer the same way, so the chain stops here
+     * and the failure is reported as itself.
      *
      * The response body is deliberately not included: on a 403 it can echo
      * request details, and the status plus the model name is what an operator
@@ -191,9 +214,11 @@ export async function generateGeminiContent(options: GeminiCallOptions): Promise
     );
   }
 
-  logger.error('Gemini quota exhausted across every configured model', {
-    models: models.join(', '),
-    lastStatus: lastFailure?.status ?? null,
+  logger.error('Every configured Gemini model was unavailable', {
+    attempts: failures.map((failure) => `${failure.model}:${failure.status}`).join(', '),
+    // A chain where every model answered 404 is a naming/configuration problem
+    // rather than an outage, and the log should let a reader tell the difference.
+    allRetired: failures.length > 0 && failures.every((failure) => failure.status === 404),
   });
   throw new GeminiUnavailableError(
     'all_models_failed',

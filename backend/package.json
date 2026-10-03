@@ -16,7 +16,8 @@
     "lint": "tsc --noEmit -p tsconfig.json",
     "lint:tests": "tsc --noEmit -p tsconfig.test.json",
     "check:image-formats": "node scripts/check-image-formats.mjs",
-    "check:branch-source": "node scripts/check-branch-source.mjs"
+    "check:branch-source": "node scripts/check-branch-source.mjs",
+    "verify:ai": "tsx src/scripts/verifyAiInsights.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
