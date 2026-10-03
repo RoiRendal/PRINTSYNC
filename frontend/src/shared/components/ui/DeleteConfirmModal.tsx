@@ -40,35 +40,45 @@ export function DeleteConfirmModal({
   children,
 }: DeleteConfirmModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Confirm Deletion" maxWidth="max-w-sm">
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <p className="text-sm text-app-ink dark:text-zinc-100">Are you sure you want to delete:</p>
-          {itemLabels.length > 0 && (
-            <ul className="list-none space-y-1">
-              {itemLabels.map((label, index) => (
-                // Two rows can legitimately share a name, so the index is part
-                // of the key rather than the label alone.
-                <li
-                  key={`${label}-${index}`}
-                  className="text-sm font-bold text-app-ink dark:text-zinc-100"
-                >
-                  {label}
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="text-sm text-app-ink dark:text-zinc-100">This action cannot be undone.</p>
-          {children}
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="secondary" fullWidth onClick={onClose} disabled={isBusy}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Confirm Deletion"
+      maxWidth="max-w-sm"
+      /* The action row is the dialog's own region, not the tail of the message:
+         ERPNext's `.modal-footer` is a separate band under a 1px rule, with the
+         secondary action left and the dominant one right. The buttons used to be
+         full-width siblings inside the body, which put them inside the scrolling
+         area and made them look like part of the message. */
+      footer={
+        <>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isBusy}>
             Cancel
           </Button>
-          <Button type="button" variant="danger" fullWidth isLoading={isBusy} onClick={onConfirm}>
+          <Button type="button" variant="danger" isLoading={isBusy} onClick={onConfirm}>
             Confirm
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <p className="text-sm text-app-ink dark:text-zinc-100">Are you sure you want to delete:</p>
+        {itemLabels.length > 0 && (
+          <ul className="list-none space-y-1">
+            {itemLabels.map((label, index) => (
+              // Two rows can legitimately share a name, so the index is part
+              // of the key rather than the label alone.
+              <li
+                key={`${label}-${index}`}
+                className="text-sm font-bold text-app-ink dark:text-zinc-100"
+              >
+                {label}
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-sm text-app-ink dark:text-zinc-100">This action cannot be undone.</p>
+        {children}
       </div>
     </Modal>
   );
